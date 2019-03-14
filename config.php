@@ -9,7 +9,7 @@ $UpdateSources = array('https://github.com/zelon88/Diablo-Engine/');
 
 // / Security Salts.
 // / Set AT LEAST 4 array elements to use for authenticating operations that require additional security. 
-// / Add additional array elenents will be used where possible, but the first 4 are required. 
+// / Additional array elements are optional & will be used where possible. The first 4 are required. 
 $Salts = array('fgdsfg!sdhafbdegfgfdsg3i85_+#$@%<gdfsG345234381234120', '2lw12564165fgdgdfgsdasfsdf585&^e4f1e3djtjthfnb erfsdaf', 
  '><<>?#@$@%$f%^$#$#!$$#@!fdgsdfDFASF #$FERG#$F34f3F$42F34f$f4', '5683bnfrbnd7uh78r34hp9rhfgsgf437r8g34378734ryh37489ryh347r9');
 

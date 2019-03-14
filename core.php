@@ -21,9 +21,8 @@
 // / Make sure there is a session started.
 set_time_limit(0);
 if (session_status() == PHP_SESSION_NONE) session_start();
-if (!file_exists('config.php')) { 
-  $ConfigIsLoaded = FALSE; }
-else {
+if (!file_exists('config.php')) $ConfigIsLoaded = FALSE; 
+else { 
   require_once ('config.php'); 
   $ConfigIsLoaded = TRUE; }
 // / ----------------------------------------------------------------------------------
