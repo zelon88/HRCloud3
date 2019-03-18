@@ -91,26 +91,52 @@ function loadCache() {
   $CacheIsLoaded = TRUE;
   return(array($Users, $CacheIsLoaded)); }
 
+// / A function to generate required global cache files in case they are missing.
 function generateCache() { 
   global $Salts, $UserID;
 
 }
 
-function addUser() { 
+// / A function to add a user.
+function addUser($userToAdd) { 
 
 }
 
-function deleteUser() { 
+// / A function to delete a user.
+function deleteUser($userToDelete) { 
 
 }
 
-function resetPassword() { 
+// / A function to reset the users password.
+function resetPassword($originalPassword, $newPassword) { 
 
 }
 
-function sendEmail() { 
+// / A function to send an email.
+function sendEmail($address, $content, $template) { 
 
 }
+
+// / A function for updating a user setting.
+function updateUserSetting($setting, $value) {
+
+}
+
+// / A function for updating a global setting.
+function updateGlobalSetting($setting, $value) {
+
+}
+
+// / A function for updating the source for updates for a specific App.
+function updateAppSource($app, $source) {
+
+}
+
+// / A function for updating the primary source for engine updates.
+function updateMainSource($source) {
+
+}
+
 
 // / A function to validate and sanitize requried session and POST variables.
 function verifyGlobals() { 
