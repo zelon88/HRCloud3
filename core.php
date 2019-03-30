@@ -1,30 +1,44 @@
 <?php
+/*
+HonestRepair Diablo Engine  -  Data Core
+https://www.HonestRepair.net
+https://github.com/zelon88
 
-// / ----------------------------------------------------------------------------------
-// / HonestRepair Diablo Engine
+Licensed Under GNU GPLv3
+https://www.gnu.org/licenses/gpl-3.0.html
 
-// / Created by Justin Grimes (zelon88).
-// / https://www.HonestRepair.net
-// / https://github.com/zelon88/Diablo-Engine
-// / GPLv3
-// / <3 Open-Source
+Author: Justin Grimes
+Date: 3/29/2019
+<3 Open-Source
 
-// / The Diablo engine is a privacy-centric, nosql, lightweight, multipurpose web application platform
-// / with database-less user authentication, user management, & automatic updates with configurable sources. 
+This is the primary Core file for the Diablo Web Application Engine.
 
-// / If PHP is configured for cookieless sessions, it's also completely cookieless.
+The Diablo engine is a privacy-centric, nosql, lightweight, multipurpose web application platform
+with database-less user authentication, user management, & automatic updates with configurable sources. 
+If PHP is configured for cookieless sessions, it's also completely cookieless.
 
-// / This version of the Diablo engine was customized for HRCloud3, but it's code is modular and reusable.
-// / ----------------------------------------------------------------------------------
+This version of the Diablo engine was customized for HRCloud3, but it's code is modular and reusable.
+
+General Code Conventions Utilized:
+ -Paths are either relative to the installation directory or specified in config.php under libraries.
+ -Memory that isn't used at the end of a function is to be manually nulled and unset.
+ -Conditionals that only control simple assignments or one-liners are condensed to one line.
+ -Lower case variables denote severely limited scope (disposable).
+ -Upper case variables have scope that transcends functions. Either as global input or a return value.
+ -Don't let the interpreter see code it isn't going to use.
+ -Brackets aren't special enough to go on their own line.
+ -No database stuff anywhere.
+ -No cookie stuff anywhere.
+ -No frameworks.
+*/
 
 // / ----------------------------------------------------------------------------------
 // / Make sure there is a session started.
 set_time_limit(0);
 if (session_status() == PHP_SESSION_NONE) session_start();
 if (!file_exists('config.php')) $ConfigIsLoaded = FALSE; 
-else { 
-  require_once ('config.php'); 
-  $ConfigIsLoaded = TRUE; }
+else require_once ('config.php'); 
+$ConfigIsLoaded = TRUE; 
 // / ----------------------------------------------------------------------------------
 
 // / ----------------------------------------------------------------------------------
@@ -43,7 +57,7 @@ function verifyDate() {
 function verifyInstallation() {
   global $Date, $Time, $Salts;
   $dirCheck = $indexCheck = $dirExists = $indexExists = $logCheck = $cacheCheck = TRUE;
-  $requiredDirs = array('Logs', 'Cache', 'Data');
+  $requiredDirs = array('Logs', 'Data', 'Cache', 'Cache/Data');
   $InstallationIsVerified = FALSE;
   if (!file_exists('index.html')) $indexCheck = FALSE;
   foreach ($requiredDirs as $requiredDir) {
@@ -63,7 +77,7 @@ function verifyInstallation() {
   return(array($LogFile, $CacheFile, $InstallationIsVerified)); }
 
 // / A function to generate useful, consistent, and easily repeatable error messages.
-function dieGracefully($ErrorNumber, $ErrorMessage) {
+function dieGracefully($ErrorNumber, $ErrorMessage) { 
   global $LogFile, $Time;
   if (!is_numeric($ErrorNumber)) $ErrorNumber = 0;
   $ErrorOutput = 'ERROR!!! '.$ErrorNumber.', '.$Time.', '.$ErrorMessage.PHP_EOL;
@@ -71,7 +85,7 @@ function dieGracefully($ErrorNumber, $ErrorMessage) {
   die($ErrorOutput); } 
 
 // / A function to generate useful, consistent, and easily repeatable log messages.
-function logEntry($EntryText) {
+function logEntry($EntryText) { 
   global $LogFile, $Time;
   $ErrorOutput = 'OP-Act: '.$Time.', '.$EntryText.PHP_EOL;
   $LogWritten = file_put_contents($LogFile, $EntryOutput, FILE_APPEND);
@@ -97,46 +111,28 @@ function generateCache() {
 
 }
 
-// / A function to add a user.
-function addUser($userToAdd) { 
-
-}
-
-// / A function to delete a user.
-function deleteUser($userToDelete) { 
-
-}
-
-// / A function to reset the users password.
-function resetPassword($originalPassword, $newPassword) { 
-
-}
-
-// / A function to send an email.
-function sendEmail($address, $content, $template) { 
-
-}
-
-// / A function for updating a user setting.
-function updateUserSetting($setting, $value) {
-
-}
-
-// / A function for updating a global setting.
-function updateGlobalSetting($setting, $value) {
-
-}
-
-// / A function for updating the source for updates for a specific App.
-function updateAppSource($app, $source) {
-
-}
-
-// / A function for updating the primary source for engine updates.
-function updateMainSource($source) {
-
-}
-
+// / A function to load core files.
+// / Accepts either an array of cores or a single string.
+// / If input is an array, CoresLoaded output is an array. If input is a string, CoresLoaded output is a string.
+function loadCores($coresToLoad) {
+  global $AvailableCores; 
+  $CoresLoaded = $error = FALSE;
+  if (is_array($coresToLoad)) { 
+    $CoresLoaded = array();
+    foreach ($coresToLoad as $coreToLoad) { 
+      $coreFile = strtolower($coreToLoad).'Core.php';
+      if (file_exists($coreFile) && in_array(strtoupper($coreToLoad), $AvailableCores)) { 
+        require($coreFile);
+        $CoresLoaded = array_push($CoresLoaded, strtoupper($coreToLoad)); }
+      else $error = TRUE; } }
+  if is_string($coresToLoad) { 
+    $coreFile = strtolower($coresToLoad).'Core.php';
+    if (file_exists($coreFile) && in_array(strtoupper($coresToLoad), $AvailableCores)) { 
+      require($coreFile);
+      $CoresLoaded = strtoupper($coresToLoad); } }
+  $coresToLoad  = $coreFile = $coreToLoad = NULL;
+  unset($coresToLoad, $coreFile, $coreToLoad);
+  return ($CoresLoaded, $error); }
 
 // / A function to validate and sanitize requried session and POST variables.
 function verifyGlobals() { 
@@ -249,7 +245,7 @@ function generateUserCache() {
 function loadLibraries() { 
   // / Set variables. Note the default libraries that can be used as filters later in the application.
   global $Libraries;
-  $LibrariesDefault = array('MOVIES', 'MUSIC', 'SHOWS', 'CHANNELS', 'DRIVE', 'STREAMS', 'IMAGES', 'DOCUMENTS'); 
+  $LibrariesDefault = array('DATA', 'MOVIES', 'MUSIC', 'SHOWS', 'CHANNELS', 'DRIVE', 'STREAMS', 'IMAGES', 'DOCUMENTS'); 
   $LibrariesActive = array();
   $LibrariesInactive = array();
   $LibrariesCustom = array();
@@ -280,6 +276,26 @@ function loadLibraryData($LibrariesActive) {
     // / Stop validating as soon as an error is thrown.
     if (!$LibraryDataIsLoaded) break; }
   return(array($LibrariesActive, $LibraryError, $LibraryDataIsLoaded)); } 
+
+// / A function for loading notifications.
+function loadNotifications () { 
+
+}
+
+// / A function for marking notifications as read.
+function readNotification() { 
+
+}
+
+// / A function for purging notifications.
+function purgeNotifications() { 
+
+}
+
+// / A function to send an email.
+function sendEmail($address, $content, $template) { 
+
+}
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------

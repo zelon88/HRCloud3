@@ -1,12 +1,27 @@
 <?php
+/* 
+HonestRepair Diablo Engine  -  GUI Core
+https://www.HonestRepair.net
+https://github.com/zelon88
+
+Licensed Under GNU GPLv3
+https://www.gnu.org/licenses/gpl-3.0.html
+
+Author: Justin Grimes
+Date: 3/29/2019
+<3 Open-Source
+
+The GUI Core provides resources for the user interfaces & decides which interface to use.
+*/
+
 // / -----------------------------------------------------------------------------------
-// / The following code detects if the commonCore is in memory and loads it if neccesary. 
+// / The following code detects if the core is in memory and loads it if neccesary. 
 if (!isset($UserID)) {
-  if (!file_exists(realpath(dirname(__FILE__)).'/friendsnCore.php')) {
-    echo nl2br('ERROR!!! HRFriendsGC17, Cannot process the Friends Core file (friendsCore.php).'."\n"); 
+  if (!file_exists(realpath(dirname(__FILE__)).'/core.php')) {
+    echo nl2br('ERROR!!! HRCloud3, Cannot process the Friends Core file (core.php).'."\n"); 
     die (); }
   else {
-    require_once(realpath(dirname(__FILE__)).'/friendsCore.php'); } }
+    require_once(realpath(dirname(__FILE__)).'/core.php'); } }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
