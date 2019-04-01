@@ -16,6 +16,10 @@ The Configuration File contains all of the critical settings required for Diablo
 
 // / ----------------------------------------------------------------------------------
 
+// / Maintenance Mode
+// / Set  $MaintenanceMode  to  TRUE  if you want to prevent execution of the Diablo engine.
+$MaintenanceMode = FALSE;
+
 // / Log verbosity.
 // / Set  $Verbose  to  TRUE  if you want to log sucessful operations in addition to failed operations.
 $Verbose = TRUE;

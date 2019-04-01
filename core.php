@@ -1,6 +1,6 @@
 <?php
 /*
-HonestRepair Diablo Engine  -  Data Core
+HonestRepair Diablo Engine  -  Core
 https://www.HonestRepair.net
 https://github.com/zelon88
 
@@ -33,12 +33,14 @@ General Code Conventions Utilized:
 */
 
 // / ----------------------------------------------------------------------------------
-// / Make sure there is a session started.
+// / Make sure there is a session started and load the configuration file.
+// / Also kill the application if $MaintenanceMode is set to  TRUE.
 set_time_limit(0);
 if (session_status() == PHP_SESSION_NONE) session_start();
 if (!file_exists('config.php')) $ConfigIsLoaded = FALSE; 
 else require_once ('config.php'); 
 $ConfigIsLoaded = TRUE; 
+if ($MaintenanceMode === TRUE) die('The requested application is currently unavailable due to maintenance.'.PHP_EOL); 
 // / ----------------------------------------------------------------------------------
 
 // / ----------------------------------------------------------------------------------
@@ -82,7 +84,7 @@ function dieGracefully($ErrorNumber, $ErrorMessage) {
   if (!is_numeric($ErrorNumber)) $ErrorNumber = 0;
   $ErrorOutput = 'ERROR!!! '.$ErrorNumber.', '.$Time.', '.$ErrorMessage.PHP_EOL;
   file_put_contents($LogFile, $ErrorOutput, FILE_APPEND);
-  die($ErrorOutput); } 
+  die('<a class="errorMessage">'.$ErrorOutput'</a>'); } 
 
 // / A function to generate useful, consistent, and easily repeatable log messages.
 function logEntry($EntryText) { 
@@ -302,6 +304,7 @@ function sendEmail($address, $content, $template) {
 // / The following code specifies the logic flow for the session.
 list ($Date, $Time, $Minute, $LastMinute) = verifyDate();
 if (!$ConfigIsLoaded) die('ERROR!!! 0, '.$Time.', Could not process the Configuration file (config.php)!'.PHP_EOL); 
+  else if ($Verbose) logEntry('Verified time & configuration.');
 
 list ($LogFile, $CacheFile, $InstallationIsVerified) = verifyInstallation();
 if (!$InstallationIsVerified) dieGracefully(1, 'Could not verify installation!');

@@ -15,8 +15,13 @@ The Compatibility Core handles engine maintanence, updates & compatibility-relat
 */
 
 // / ----------------------------------------------------------------------------------
+// / Make sure the core is loaded.
+if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! compatibilityCore: The requested application is currently unavailable.'.PHP_EOL); 
+// / ----------------------------------------------------------------------------------
+
+// / ----------------------------------------------------------------------------------
 // / Specify the engine version.
-$EngineVersion = 'v0.5';
+$EngineVersion = 'v0.5.1';
 // / ----------------------------------------------------------------------------------
 
 // / ----------------------------------------------------------------------------------

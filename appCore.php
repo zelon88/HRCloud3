@@ -15,6 +15,11 @@ The App Core manages Diablo Engine apps like installing/uninstalling/updating & 
 */
 
 // / ----------------------------------------------------------------------------------
+// / Make sure the core is loaded.
+if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! appCore: The requested application is currently unavailable.'.PHP_EOL); 
+// / ----------------------------------------------------------------------------------
+
+// / ----------------------------------------------------------------------------------
 // / The following code sets the functions for the session.
 // / All functions accept arrays as inputs. 
 // / If using arrays as be sure all your array indicies align properly.
@@ -55,5 +60,11 @@ function automaticAppUpdate($app) {
   installMainUpdate();
   cleanMainUpdate();
   compatMainCheck();
+}
+
+// / A function for updating the source for updates for a specific App.
+// / AcceptS arrays as input. 
+function updateAppSource($app, $source) {
+
 }
 // / ----------------------------------------------------------------------------------

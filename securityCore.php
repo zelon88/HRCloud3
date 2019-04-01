@@ -15,8 +15,30 @@ The Security Core runs A/V scans & performs cryptographic validation for sensiti
 */
 
 // / ----------------------------------------------------------------------------------
+// / Make sure the core is loaded.
+if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! securityCore: The requested application is currently unavailable.'.PHP_EOL); 
+// / ----------------------------------------------------------------------------------
+
+// / ----------------------------------------------------------------------------------
 // / The following code sets the functions for the session.
 
-// COMING SOON!
+// / A function to scan a file or folder for viruses with ClamAV.
+function clamAVScan($path) { 
+  
+}
 
+// / A function to scan a file or folder for viruses with PHP-AV.
+function phpAVScan($path) { 
+  
+}
+
+// / A function to update the ClamAV virus definitions.
+function clamAVUpdate() { 
+  
+}
+
+// / A function to update PHP-AV virus definitions.
+function clamAVUpdate() { 
+  
+}
 // / ----------------------------------------------------------------------------------

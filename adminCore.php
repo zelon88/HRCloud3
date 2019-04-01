@@ -15,6 +15,11 @@ The Admin Core handles admin related functions like adding/removing users & chan
 */
 
 // / ----------------------------------------------------------------------------------
+// / Make sure the core is loaded.
+if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! adminCore: The requested application is currently unavailable.'.PHP_EOL); 
+// / ----------------------------------------------------------------------------------
+
+// / ----------------------------------------------------------------------------------
 // / The following code sets the functions for the session.
 
 // / A function to add a user.
@@ -32,12 +37,6 @@ function deleteUser($userToDelete) {
 // / A function for updating a global setting.
 // / AcceptS arrays as input. 
 function updateGlobalSetting($setting, $value) {
-
-}
-
-// / A function for updating the source for updates for a specific App.
-// / AcceptS arrays as input. 
-function updateAppSource($app, $source) {
 
 }
 

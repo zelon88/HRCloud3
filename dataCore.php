@@ -12,10 +12,26 @@ Date: 3/29/2019
 <3 Open-Source
 
 The Data Core handles complex bulk data operations like compression/extraction & encryption/decryption.
+Functions are prefaced with DC so they don't collide with other functions of other cores.
 */
 
 // / ----------------------------------------------------------------------------------
+// / Make sure the core is loaded.
+if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! dataCore: The requested application is currently unavailable.'.PHP_EOL); 
+// / ----------------------------------------------------------------------------------
+
+// / ----------------------------------------------------------------------------------
 // / The following code sets the functions for the session.
+
+// / A function to encrypt a large amount of data.
+function DCencryptData($data, $dataType, $key) { 
+
+}
+
+// / A function to decrypt a large amount of data.
+function DCdecryptData($data, $dataType, $key) { 
+
+}
 
 // / A function for loading a list of dictionary ID's.
 function DCloadDictionaryList() { 
