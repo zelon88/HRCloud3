@@ -71,7 +71,7 @@ function verifyInstallation() {
   $LogFile = 'Logs'.DIRECTORY_SEPARATOR.$Date.'_'.$logHash.'.log';
   if (!file_exists($LogFile)) $logCheck = file_put_contents($LogFile, 'OP-Act: '.$Time.' Created a log file, "'.$LogFile.'".');
   $CacheFile = 'Cache'.DIRECTORY_SEPARATOR.'Cache-'.hash('sha256',$Salts[0].'CACHE').'.php';
-  if (!file_exists($CacheFile)) $cacheCheck = file_put_contents($CacheFile, '<?php'.PHP_EOL);
+  if (!file_exists($CacheFile)) $cacheCheck = file_put_contents($CacheFile, '<?php'.PHP_EOL.'$PostConfigUsers = array();');
   $logCheck = file_put_contents($LogFile, 'OP-Act: '.$Time.' Created a cache file, "'.$CacheFile.'".');
   if ($dirCheck && $indexCheck && $logCheck && $cacheCheck) $InstallationIsVerified = TRUE;
   $dirCheck = $indexCheck = $logCheck = $cacheCheck = $requiredDirs = $requiredDir = $dirExists = $indexExists = $logHash = NULL;
@@ -106,12 +106,6 @@ function loadCache() {
   $Users = array_merge($PostConfigUsers, $Users);
   $CacheIsLoaded = TRUE;
   return(array($Users, $CacheIsLoaded)); }
-
-// / A function to generate required global cache files in case they are missing.
-function generateCache() { 
-  global $Salts, $UserID;
-
-}
 
 // / A function to load core files.
 // / Accepts either an array of cores or a single string.
@@ -199,21 +193,20 @@ function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) {
   unset($UserInput, $PasswordInput, $User); 
   return(array($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete)); }
 
-// / A funtion to load the user cache, which contains an individual users option settings.
+// / A function to load the user cache, which contains an individual users option settings.
 // / Cache files are stored as .php files and cache data is stores as an array. This ensures the files
 // / cannot simply be viewed with a browser to reveal sensitive content. The data must be programatically
 // / displayed or opened locally in a text editor.
 function loadUserCache() {
   // / Set variables. Note the default options that are used as filters for validating the $UserOptions later.
   // / Also note the user cache is hashed with salts.
-  global $Salts, $UserID;
-    $userCache = 'Data/'.$UserID.'/UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php');
-    $requiredOptions = array('COLOR', 'FONT', 'TIMEZONE', 'NICKNAME', 'AUDIO', 'TIPS');
+  global $Salts, $UserID, $UserCache;  usercache
+    $requiredOptions = array('COLOR', 'FONT', 'TIMEZONE', 'DISPLAYNAME', 'TIPS', 'THEME', 'HRAI', 'HRAIAUDIO', 'LANDINGPAGE');
     $UserOptions = array();
-    $UserCacheExists = FALSE;
+    $UserCacheIsLoaded = FALSE;
     // / If the user cache exists, load it.
     if (file_exists($userCache)) {
-      require ($userCache);
+      require ($UserCache);
       // / If the cache data variable is not set in the cache return an error and stop.
       if (!isset($userCacheData)) { 
         $requiredOptions = $userCache = NULL; 
@@ -235,13 +228,23 @@ function loadUserCache() {
           unset($UserOptions[$option]); } 
       $UserCacheIsLoaded = TRUE; }
   // / Clean up unneeded memory.
-  $requiredOptions = $userCache = $option = $value = NULL;
-  unset($requiredOptions, $userCache, $iption, $value);
+  $requiredOptions = $option = $value = NULL;
+  unset($requiredOptions, $iption, $value);
   return(array($UserOptions, $UserCacheIsLoaded)); }
 
+// / A function to generate a missing user cache file. Useful when new users log in for the first time.
+// / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded 
+// / by the loadUserCache() function.
 function generateUserCache() {
   global $Salts, $UserID;
-}
+  $UserCacheExists = $UserCache = FALSE;
+  $UserCache = 'Data/'.$UserID.'/UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php');
+  $arrayData = '\'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\',';
+  $userCacheData = '<?php'.PHP_EOL.'$userCacheData = array('.$arrayData.');'.PHP_EOL; 
+  $UserCacheExists = file_put_contents($UserCacheFile, $userCacheData);
+  $userCacheData = $arrayData = NULL;
+  unset($userCacheData, $arrayData); 
+  return($UserCacheExists, $UserCache); } 
 
 // / A function to initialize the libraries into categories based on their status.
 function loadLibraries() { 
@@ -333,4 +336,8 @@ if (!$LibrariesAreLoaded) dieGracefully(6, 'Could not load libraries!');
 list ($LibrariesActive, $LibraryError, $LibraryDataIsLoaded) = loadLibraryData($LibrariesActive);
 if (!$LibraryDataIsLoaded) dieGracefully(7, 'Could not load library data from '.$LibraryError.'!');
   else if ($Verbose) logEntry('Loaded library data.');
+
+list ($UserCacheExists, $UserCache) = generateUserCache();
+if (!$UserCacheExists) dieGracefully(8, 'Could not generate a user cache file!');
+  else if ($Verbose) logEntry('Loaded library data');
 // / -----------------------------------------------------------------------------------

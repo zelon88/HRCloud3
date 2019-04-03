@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/29/2019
+Date: 4/2/2019
 <3 Open-Source
 
 The Configuration File contains all of the critical settings required for Diablo to run on the server.
