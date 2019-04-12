@@ -1,6 +1,6 @@
 # HRCloud3
 
-This repo is a a very early version of a no-sql and cookieless web application with authentication. 
+This repo is a very early version of a no-sql and cookieless web application with authentication. 
 
 It is not currently functional in any capacity other than a proof-of-concept.
 
