@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/29/2019
+Date: 4/11/2019
 <3 Open-Source
 
 The Security Core runs A/V scans & performs cryptographic validation for sensitive operations.
@@ -38,7 +38,7 @@ function clamAVUpdate() {
 }
 
 // / A function to update PHP-AV virus definitions.
-function clamAVUpdate() { 
+function phpAVUpdate() { 
   
 }
 // / ----------------------------------------------------------------------------------

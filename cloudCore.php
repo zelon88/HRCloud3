@@ -24,93 +24,102 @@ if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! cloudCore
 // / All functions accept arrays as inputs. 
 // / If using arrays as be sure all your array indicies align properly.
 
-// / A function for determining which folder the user is currently in so relative paths can be constructed.
-function defineFolder() { 
+// / A function for verifying that the desired operation is allowable in the current context of execution.
+// / Also useful for debugging new functionality as a built-in integrity/type-checking test.
+function verifyOperation($operation, $arguments) { 
+  global $UserID, $UserIsAdmin;
 
+return $OperationIsVerified;
 }
 
+// / A function for verifying the active folder and constructing writable paths for Cloud operations.
+function defineFolder($UserDir) { 
+
+return(array($UserDir, $TempUserDir)); }
+
 // / A function for making simple files in the users Cloud.
-function makeFile($path, $fileType) { 
+function makeFile($library, $path, $fileType) { 
   // DON'T FORGET TO ENCODE/SANITIZE THE DATA
 
 }
 
 // / A function for making new folders in the users Cloud.
-function makeFolders($path) { 
+function makeFolders($library, $path) { 
   
 }
 
 // / A function for uploading files to a users Cloud.
-function uploadFiles($path, $uploadData) { 
+function uploadFiles($library, $path, $uploadData) { 
+  global $AvailableCores, $LibrariesActive, $UserID, $LogFile, $UserDir;
   
 }
 
 // / A function for downloading files from a users Cloud.
-function downloadFiles($path) { 
+function downloadFiles($library, $path) { 
   
 }
 
 // / A function for compressing a users files into a portable archive.
 // / Also works on folders.
-function compressFiles($path, $newPath) { 
+function compressFiles($library, $path, $newPath) { 
   
 }
 
 // / A function for decompressing a users files into a folder.
-function decompressFiles($path, $newPath) { 
+function decompressFiles($library, $path, $newPath) { 
   
 }
 
 // / A function for converting files between formats.
-function convertFiles($path, $newPath, $extension) { 
+function convertFiles($library, $path, $newPath, $extension) { 
   
 }
 
 // / A function for encrypting files for the user.
 // / Also works on folders.
-function encryptFiles($path, $newPath, $encryptionType, $key) { 
+function encryptFiles($library, $path, $newPath, $encryptionType, $key) { 
 
 }
 
 // / A function for decrypting files for the user.
 // / Also works on folders.
-function decryptFiles($path, $newPath, $encryptionType, $key) { 
+function decryptFiles($library, $path, $newPath, $encryptionType, $key) { 
 
 }
 
 // / A function for copying files between Cloud locations.
 // / Also works on folders.
-function moveFiles($path, $newPath) { 
+function moveFiles($library, $path, $newPath) { 
   
 } 
 
 // / A function for renaming files in a users Cloud.
 // / Also works on directories.
-function renameFiles($path, $newPath) { 
+function renameFiles($library, $path, $newPath) { 
   
 }
 
 // / A function for cutting files with the users clipboard.
 // / Also works on directories.
-function clipboardCut($path, $newPath) { 
+function clipboardCut($library, $path, $newPath) { 
   
 }
 
 // / A function for copying files to the users clipboard.
 // / Also works on directories.
-function clipboardCopy($path, $newPath) { 
+function clipboardCopy($library, $path, $newPath) { 
   
 }
 
 // / A function for pasting files from the users clipboard.
 // / Also works on directories.
-function clipboardPaste($path, $newPath) { 
+function clipboardPaste($library, $path, $newPath) { 
   
 }
 
 // / A function for deleting files and folders from the users Cloud.
 // / The token must be a string identical to the client token.
-function deleteFiles($path, $confirmToken) { 
+function deleteFiles($library, $path, $confirmToken) { 
 
 }
 // / ----------------------------------------------------------------------------------
