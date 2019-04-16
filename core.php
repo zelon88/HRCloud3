@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/11/2019
+Date: 4/15/2019
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -59,7 +59,7 @@ function verifyDate() {
 function verifyInstallation() {
   global $Date, $Time, $Salts;
   $dirCheck = $indexCheck = $dirExists = $indexExists = $logCheck = $cacheCheck = TRUE;
-  $requiredDirs = array('Logs', 'Data', 'Cache', 'Cache/Data');
+  $requiredDirs = array('Logs', 'Data', 'Cache', 'Cache'.DIRECTORY_SEPARATOR.'Data');
   $InstallationIsVerified = FALSE;
   if (!file_exists('index.html')) $indexCheck = FALSE;
   foreach ($requiredDirs as $requiredDir) {
@@ -89,7 +89,7 @@ function dieGracefully($ErrorNumber, $ErrorMessage) {
 // / A function to generate useful, consistent, and easily repeatable log messages.
 function logEntry($EntryText) { 
   global $LogFile, $Time;
-  $ErrorOutput = 'OP-Act: '.$Time.', '.$EntryText.PHP_EOL;
+  $EntryOutput = 'OP-Act: '.$Time.', '.$EntryText.PHP_EOL;
   $LogWritten = file_put_contents($LogFile, $EntryOutput, FILE_APPEND);
   return($LogWritten); } 
 
@@ -145,7 +145,7 @@ function verifyGlobals() {
   if (isset($_SESSION['SessionID'])) if ($_SESSION['SessionID'] === $Salts[3].$Date.$Salts[0].$PasswordInput.$UserInput) $SessionID = $_SESSION['SessionID']; 
   // / Set the UserDir based on user input or most recently used.
   if (isset($_POST['UserDir'])) $_SESSION['UserDir'] = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserDir']), ENT_QUOTES, 'UTF-8');
-  if (!isset($_SESSION['UserDir']) or $_SESSION['UserDir'] == '') $_SESSION['UserDir'] = '/';
+  if (!isset($_SESSION['UserDir']) or $_SESSION['UserDir'] == '') $_SESSION['UserDir'] = DIRECTORY_SEPARATOR;
   $UserDir = $_SESSION['UserDir'];
   // / Detect if required variables are set.
   if ($SessionID !== FALSE) $GlobalsAreVerified = TRUE;

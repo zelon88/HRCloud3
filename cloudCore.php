@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/29/2019
+Date: 4/15/2019
 <3 Open-Source
 
 The Cloud Core handles userland data-related operations like file creation, conversion, manipulation & removal.
@@ -29,13 +29,18 @@ if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! cloudCore
 function verifyOperation($operation, $arguments) { 
   global $UserID, $UserIsAdmin;
 
+
 return $OperationIsVerified;
 }
 
 // / A function for verifying the active folder and constructing writable paths for Cloud operations.
-function defineFolder($UserDir) { 
+function defineFolder($Library, $UserDir) { 
+  $DirPath = $FolderIsDefined = FALSE;
+  $dirToCheck = $Library[3].DIRECTORY_SEPARATOR.$UserDir);
 
-return(array($UserDir, $TempUserDir)); }
+  logEntry('Initiating directory writer in library \''.$Library.'\'.');
+
+}
 
 // / A function for making simple files in the users Cloud.
 function makeFile($library, $path, $fileType) { 
@@ -44,9 +49,26 @@ function makeFile($library, $path, $fileType) {
 }
 
 // / A function for making new folders in the users Cloud.
-function makeFolders($library, $path) { 
-  
-}
+// / Accepts a string or array of strings.
+// / Strings must be a subdirectory of the selected $Library directory set in config.php.
+// / If an intermediate directory doesn't exist this will fail and result in an error. 
+// / Library must be a valid $LibraryActive array element.
+function makeFolders($Library, $Paths) { 
+  $FoldersExist = $secCheck = FALSE;
+  // / Will be tripped to FALSE by the end of the loop if any errors occured.
+  $pathCheck = TRUE;
+  if (!is_array($Paths)) $Paths = array($Paths);
+  if (in_array($Library, $LibrariesActive) && !in_array($Library, $LibrariesInactive)) {
+    if (is_dir($Library[3]) && is_writable($Library[3])) { 
+      foreach ($Paths as $path) { 
+        if (!is_dir($dirToMake = $Library[3].DIRECTORY_SEPARATOR.$path)) mkdir($dirToMake);
+        if (!is_dir($dirToMake)) { 
+      	  $pathCheck = FALSE;
+      	  logEntry('Could not create folder \''.$path.'\' in library \''.$Library[0].'\'.'); } }
+    if ($pathCheck && $secCheck) $FoldersExist = TRUE; } }
+  $dirToMake = $path = $secCheck = $pathCheck = NULL;
+  unset($dirToMake, $path, $secCheck, $pathCheck);
+  return(array($Paths, $FoldersExist)); }
 
 // / A function for uploading files to a users Cloud.
 function uploadFiles($library, $path, $uploadData) { 
