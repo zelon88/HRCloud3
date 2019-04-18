@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/15/2019
+Date: 4/17/2019
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -40,7 +40,8 @@ if (session_status() == PHP_SESSION_NONE) session_start();
 if (!file_exists('config.php')) $ConfigIsLoaded = FALSE; 
 else require_once ('config.php'); 
 $ConfigIsLoaded = TRUE; 
-if ($MaintenanceMode === TRUE) die('The requested application is currently unavailable due to maintenance.'.PHP_EOL); 
+if ($MaintenanceMode === TRUE) die('ERROR!!! core: The requested application is currently unavailable due to maintenance.'.PHP_EOL); 
+if ($Libraries[0][2] === TRUE or $Libraries[0 !== 'DATA') die('ERROR!!! core: The application cannot continue because the \'DATA\' library is disabled in "config.php".'.PHP_EOL); 
 // / ----------------------------------------------------------------------------------
 
 // / ----------------------------------------------------------------------------------
@@ -177,10 +178,13 @@ function generateTokens($ClientTokenInput, $PasswordInput) {
 
 // / A function to sanitize an input string. Useful for preparing URL's or filepaths.
 function sanitize($Variable, $Strict) { 
+  $VariableIsSanitized = TRUE;
   if (!is_bool($Strict)) $Strict = TRUE; 
-  if ($Strict === TRUE) $Variable = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"/\''), '', $Variable);
-  if ($Strict === FALSE) $Variable = str_replace(str_split('|\\~#[](){};$!#^&%@>*<"\''), '', $Variable);
-  return ($Variable); }
+  if (!is_string($Variable)) $VariableIsSanitized = FALSE;
+  else { 
+    if ($Strict === TRUE) $Variable = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"/\''), '', $Variable);
+    if ($Strict === FALSE) $Variable = str_replace(str_split('|\\~#[](){};$!#^&%@>*<"\''), '', $Variable); }
+  return (array($Variable, $VariableIsSanitized)); }
 
 // / A function to authenticate a user and verify an encrypted input password with supplied tokens.
 function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) { 
@@ -207,7 +211,7 @@ function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) {
 function loadUserCache() {
   // / Set variables. Note the default options that are used as filters for validating the $UserOptions later.
   // / Also note the user cache is hashed with salts.
-  global $Salts, $UserID, $UserCache;  usercache
+  global $Salts, $UserID, $UserCache;
     $requiredOptions = array('COLOR', 'FONT', 'TIMEZONE', 'DISPLAYNAME', 'TIPS', 'THEME', 'HRAI', 'HRAIAUDIO', 'LANDINGPAGE');
     $UserOptions = array();
     $UserCacheIsLoaded = FALSE;
@@ -236,16 +240,16 @@ function loadUserCache() {
       $UserCacheIsLoaded = TRUE; }
   // / Clean up unneeded memory.
   $requiredOptions = $option = $value = NULL;
-  unset($requiredOptions, $iption, $value);
+  unset($requiredOptions, $option, $value);
   return(array($UserOptions, $UserCacheIsLoaded)); }
 
 // / A function to generate a missing user cache file. Useful when new users log in for the first time.
 // / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded 
 // / by the loadUserCache() function.
 function generateUserCache() {
-  global $Salts, $UserID;
+  global $Salts, $UserID, $Libraries;
   $UserCacheExists = $UserCache = FALSE;
-  $UserCache = 'Data/'.$UserID.'/UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php');
+  $UserCache = $Libraries[0][3].$UserID.'/UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php');
   $arrayData = '\'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\',';
   $userCacheData = '<?php'.PHP_EOL.'$userCacheData = array('.$arrayData.');'.PHP_EOL; 
   $UserCacheExists = file_put_contents($UserCacheFile, $userCacheData);
@@ -323,42 +327,42 @@ function sanitize($Variable, $strict) {
 // / This code verifies the date & time for file & log operations.
 list ($Date, $Time, $Minute, $LastMinute) = verifyDate();
 if (!$ConfigIsLoaded) die('ERROR!!! 0, '.$Time.', Could not process the Configuration file (config.php)!'.PHP_EOL); 
-  else if ($Verbose) logEntry('Verified time & configuration.');
+else if ($Verbose) logEntry('Verified time & configuration.');
 
 // / This code verifies the integrity of the application.
 // / Also generates required directories in case they are missing & creates required log & cache files.
 list ($LogFile, $CacheFile, $InstallationIsVerified) = verifyInstallation();
 if (!$InstallationIsVerified) dieGracefully(1, 'Could not verify installation!');
-  else if ($Verbose) logEntry('Verified installation.');
+else if ($Verbose) logEntry('Verified installation.');
 
 // / This code loads & sanitizes the global cache & prepares the user list.
 list ($Users, $CacheIsLoaded) = loadCache();
 if (!$CacheIsLoaded) dieGracefully(2, 'Could not load cache file!');
-  else if ($Verbose) logEntry('Loaded cache file.');
+else if ($Verbose) logEntry('Loaded cache file.');
 
 // / This code takes in all required inputs to build a session and ensures they exist & are a valid type.
 list ($UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $GlobalsAreVerified) = verifyGlobals();
 if (!$GlobalsAreVerified) requireLogin(); dieGracefully(3, 'User is not logged in!');
-  else if ($Verbose) logEntry('Verified global variables.');
+else if ($Verbose) logEntry('Verified global variables.');
 
 // / This code ensures that a same-origin UI element generated the login request.
 // / Also protects against packet replay attacks by ensuring that the request was generated recently and by making each request unique. 
 list ($ClientToken, $ServerToken, $TokensAreVerified) = generateTokens($ClientTokenInput, $PasswordInput);
 if (!$TokensAreValid) dieGracefully(4, 'Invalid tokens!');
-  else if ($Verbose) logEntry('Generated tokens.');
+else if ($Verbose) logEntry('Generated tokens.');
 
 // / This code validates credentials supplied by the user against the hashed ones stored on the server.
 // / Also removes the $Users user list from memory so it can not be leaked.
 // / Displays a login screen when authentication fails and kills the application. 
 list ($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete) = authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken);
 if (!$PasswordIsCorrect or !$AuthIsComplete) dieGracefully(5, 'Invalid username or password!'); 
-  else if ($Verbose) logEntry('Authenticated '.$UserName.', '.$UserID.'.');
+else if ($Verbose) logEntry('Authenticated '.$UserName.', '.$UserID.'.');
 
 // / This code builds arrays of good & bad libraries.
 // / Libraries are directory for storing specific types of information. 
 list ($LibrariesActive, $LibrariesInactive, $LibrariesCustom, $LibrariesDefault, $LibrariesAreLoaded) = loadLibraries();
 if (!$LibrariesAreLoaded) dieGracefully(6, 'Could not load libraries!');
-  else if ($Verbose) logEntry('Loaded libraries.');
+else if ($Verbose) logEntry('Loaded libraries.');
 
 // / This code verifies each active library directory exists.
 // / Verified libraries receive the $LibrariesActive[3] element & become fully activated. 
@@ -368,10 +372,10 @@ if (!$LibrariesAreLoaded) dieGracefully(6, 'Could not load libraries!');
 // / $LibrariesActive[3] contains an array containing library contents.
 list ($LibrariesActive, $LibraryError, $LibraryDataIsLoaded) = loadLibraryData($LibrariesActive);
 if (!$LibraryDataIsLoaded) dieGracefully(7, 'Could not load library data from '.$LibraryError.'!');
-  else if ($Verbose) logEntry('Loaded library data.');
+else if ($Verbose) logEntry('Loaded library data.');
 
 // / This code generates a user cache file if none exists. Useful for initializing new users logging-in for the first time.
 list ($UserCacheExists, $UserCache) = generateUserCache();
 if (!$UserCacheExists) dieGracefully(8, 'Could not generate a user cache file!');
-  else if ($Verbose) logEntry('Loaded library data');
+else if ($Verbose) logEntry('Loaded library data');
 // / -----------------------------------------------------------------------------------

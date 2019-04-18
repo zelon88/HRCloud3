@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/2/2019
+Date: 4/17/2019
 <3 Open-Source
 
 The Configuration File contains all of the critical settings required for Diablo to run on the server.
@@ -38,13 +38,14 @@ $Salts = array('fgdsfg!sdhafbde3i85_+#$@%<G345234381234120', '2lw12564165fgdasfs
 // / Libraries are treated as objects. They are defined in the following arrays.
 // / Arrays are formatted as  $Libraries['LIBRARY_NAME', "ENABLED/DISABLED(bool)", '/path/to/library/directory']
 // / Admins can add their own custom libraries by simply copy/pasting an existing entry and being cautious of the ending '('.
+// / The "DATA" library MUST be the first array item and MUST be enabled for the core to execute. All other libraries are optional.
 $Libraries = array(
- array('DATA', "TRUE", '/media/justin/Media/Media/Data'),
- array('MOVIES', "TRUE", '/media/justin/Media/Media/Movies'),
- array('MUSIC', "TRUE", '/media/justin/Media/Media/Music'),
- array('SHOWS', "TRUE", '/media/justin/Media/Media/Shows'),
- array('CHANNELS', "FALSE", '/media/justin/Media/Media/YouTube Subscriptions'),
- array('DRIVE', "FALSE", ''),
+ array('DATA', "TRUE", '/mnt/abcdefgh-1234-1234-1234-32abwewdawdasdsdfsadfsda56511651/CloudTestDATA'),
+ array('MOVIES', "TRUE", '/mnt/abcdefgh-1234-1234-1234-32abwewdawdasdsdfsadfsda56511651/CloudTestDATA'),
+ array('MUSIC', "TRUE", '/mnt/abcdefgh-1234-1234-8360-32abwewdawdasdsdfsadfsda56511651/CloudTestDATA'),
+ array('SHOWS', "TRUE", '/mnt/abcdefgh-1234-1234-8360-32abwewdawdasdsdfsadfsda56511651/CloudTestDATA'),
+ array('CHANNELS', "FALSE", '/mnt/abcdefgh-1234-1234-1234-32abwewdawdasdsdfsadfsda56511651/CloudTestDATA'),
+ array('DRIVE', "TRUE", ''),
  array('STREAMS', "FALSE", ''),
  array('IMAGES', "FALSE", ''),
  array('DOCUMENTS', "FALSE", ''),

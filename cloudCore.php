@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/15/2019
+Date: 4/17/2019
 <3 Open-Source
 
 The Cloud Core handles userland data-related operations like file creation, conversion, manipulation & removal.
@@ -20,9 +20,7 @@ if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! cloudCore
 // / ----------------------------------------------------------------------------------
 
 // / ----------------------------------------------------------------------------------
-// / The following code sets the functions for the session.
-// / All functions accept arrays as inputs. 
-// / If using arrays as be sure all your array indicies align properly.
+// / The following code sets the functions for the session. 
 
 // / A function for verifying that the desired operation is allowable in the current context of execution.
 // / Also useful for debugging new functionality as a built-in integrity/type-checking test.
@@ -33,14 +31,25 @@ function verifyOperation($operation, $arguments) {
 return $OperationIsVerified;
 }
 
+// / A function for detecting the active library and ensuring that it is active.
+function defineLibrary($LibrarySelected) { 
+  global $LibrariesActive, $LibrariesInactive;
+  $LibraryIsDefined = FALSE;
+  if (in_array($LibrarySelected, $LibrariesActive) && !in_array($LibrarySelected, $LibrariesInactive)) { 
+    if (is_dir($LibrariesActive[$LibrarySelected][3]) && is_writable($LibrariesActive[$LibrarySelected][3])) $LibraryIsDefined = TRUE; } 
+  return(array($LibrarySelected, $LibraryIsDefined)); }
+
 // / A function for verifying the active folder and constructing writable paths for Cloud operations.
 function defineFolder($Library, $UserDir) { 
-  $DirPath = $FolderIsDefined = FALSE;
-  $dirToCheck = $Library[3].DIRECTORY_SEPARATOR.$UserDir);
-
-  logEntry('Initiating directory writer in library \''.$Library.'\'.');
-
-}
+  global $UserID;
+  $UserDirPath = $FolderIsDefined = FALSE;
+  $dirToCheck = $Library[3].DIRECTORY_SEPARATOR.$UserID.DIRECTORY_SEPARATOR.$UserDir);
+  if (is_dir($dirToCheck)) { 
+    $FolderIsDefined = TRUE;
+    $UserDirPath = $dirToCheck; } 
+  $dirToCheck = NULL;
+  unset($dirToCheck);
+  return(array($UserDir, $UserDirPath, $FolderIsDefined)); }
 
 // / A function for making simple files in the users Cloud.
 function makeFile($library, $path, $fileType) { 
@@ -62,9 +71,7 @@ function makeFolders($Library, $Paths) {
     if (is_dir($Library[3]) && is_writable($Library[3])) { 
       foreach ($Paths as $path) { 
         if (!is_dir($dirToMake = $Library[3].DIRECTORY_SEPARATOR.$path)) mkdir($dirToMake);
-        if (!is_dir($dirToMake)) { 
-      	  $pathCheck = FALSE;
-      	  logEntry('Could not create folder \''.$path.'\' in library \''.$Library[0].'\'.'); } }
+        if (!is_dir($dirToMake)) $pathCheck = FALSE; }
     if ($pathCheck && $secCheck) $FoldersExist = TRUE; } }
   $dirToMake = $path = $secCheck = $pathCheck = NULL;
   unset($dirToMake, $path, $secCheck, $pathCheck);
@@ -144,4 +151,39 @@ function clipboardPaste($library, $path, $newPath) {
 function deleteFiles($library, $path, $confirmToken) { 
 
 }
+// / ----------------------------------------------------------------------------------
+
+// / ----------------------------------------------------------------------------------
+// / The following code specifies the logic flow for the session.
+
+// / Sanitize LibrarySelected POST input.
+list ($LibrarySelected, $VariableIsSanitized) = sanitize($_POST['LibrarySelected'], TRUE); 
+if (!$VariableIsSanitized) dieGracefully(100, 'Could not sanitize library input!');
+else if ($Verbose) logEntry('Sanitized library input.');
+
+// / Sanitize UserDir POST input.
+list ($UserDir, $VariableIsSanitized) = sanitize($_POST['UserDir'], TRUE); 
+if (!$VariableIsSanitized) dieGracefully(101, 'Could not sanitize selected directory input!');
+else if ($Verbose) logEntry('Sanitized selected directory input.')
+
+// / Define the selected library to use for the session.
+list ($LibrarySelected, $LibraryIsDefined) = defineLibrary($LibrarySelected);
+if (!$LibraryIsDefined) dieGracefully(102, 'Could not define library!');
+else if ($Verbose) logEntry('Defined library.');
+
+// / Define the selected folder to use for the session.
+list ($UserDir, $UserDirPath, $UserDirIsDefined) = defineFolder($LibrarySelected, $UserDir);
+if (!$FolderIsDefined) dieGracefully(103, 'Could not define user directory!');
+else if ($Verbose) logEntry('Defined user directory.');
+
+// / Create a folder when the MakeFolder POST input is defined.
+if (isset($_POST['MakeFolder'])) { 
+  // / Sanitize folder POST input first.
+  list ($NewFolderPaths, $VariableIsSanitized) = sanitize($_POST['MakeFolder'], TRUE); 
+  if (!$VariableIsSanitized) dieGracefully(104, 'Could not sanitize folder inputs!');
+  else if ($Verbose) logEntry('Sanitized folder inputs.');
+  // / Create the folder.
+  list ($NewFolderPaths, $FolderExists) makeFolders($LibrarySelected, $NewFolderPaths);
+  if (!$FolderExists) logEntry('Could not create all desired folders.'); 
+  else if ($Verbose) logEntry('Folders created successfully.'); }
 // / ----------------------------------------------------------------------------------
