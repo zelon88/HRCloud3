@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/17/2019
+Date: 4/18/2019
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -40,8 +40,7 @@ if (session_status() == PHP_SESSION_NONE) session_start();
 if (!file_exists('config.php')) $ConfigIsLoaded = FALSE; 
 else require_once ('config.php'); 
 $ConfigIsLoaded = TRUE; 
-if ($MaintenanceMode === TRUE) die('ERROR!!! core: The requested application is currently unavailable due to maintenance.'.PHP_EOL); 
-if ($Libraries[0][2] === TRUE or $Libraries[0 !== 'DATA') die('ERROR!!! core: The application cannot continue because the \'DATA\' library is disabled in "config.php".'.PHP_EOL); 
+if ($MaintenanceMode === TRUE) die('The requested application is currently unavailable due to maintenance.'.PHP_EOL); 
 // / ----------------------------------------------------------------------------------
 
 // / ----------------------------------------------------------------------------------
@@ -247,9 +246,9 @@ function loadUserCache() {
 // / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded 
 // / by the loadUserCache() function.
 function generateUserCache() {
-  global $Salts, $UserID, $Libraries;
+  global $Salts, $UserID;
   $UserCacheExists = $UserCache = FALSE;
-  $UserCache = $Libraries[0][3].$UserID.'/UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php');
+  $UserCache = 'Data/'.$UserID.'/UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php');
   $arrayData = '\'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\',';
   $userCacheData = '<?php'.PHP_EOL.'$userCacheData = array('.$arrayData.');'.PHP_EOL; 
   $UserCacheExists = file_put_contents($UserCacheFile, $userCacheData);

@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/17/2019
+Date: 4/18/2019
 <3 Open-Source
 
 The Configuration File contains all of the critical settings required for Diablo to run on the server.
@@ -28,6 +28,24 @@ $Verbose = TRUE;
 // / A Git repo URL or .zip file URL containing a valid Diablo branch or codebase.
 $UpdateSources = array('https://github.com/zelon88/Diablo-Engine/');
 
+// / User Data Compression.
+// / Set $DataCompression to TRUE if you want to compress all user files with the xPress compression algorithm by zelon88.
+// / For more information about xPress Compression by zelon88 visit https://www.github.com/zelon88/xPress
+// / If enabled you must also specify and enable a DATA library in the $Libraries section of this config file.
+// / Expect the DATA library to potentially make up 75% of user space requirements (many terabytes).
+$DataCompression = TRUE;
+
+// / User Data Encryption.
+// / Set $DataEncryption to TRUE if you want to encrypt all user files with user-held and controlled keys.
+// / If enabled you must also specify and enable a DATA library in the $Libraries section of this config file.
+// / The keys are stored in the users DATA library and can be used to decrypt the files for automated scans.
+// / Do not market this to people under the guise that it keeps employees from viewing uploaded data. 
+// / It cannot stop that, but it does make it inconvinient or impossible to do manually depending on local permissions. 
+// / The keys are stored in whatever directory is set as the DATA $Library. Anyone with read access to this directory
+// / will be able to read the keys. Keep in mind that the $Libraries can also be located on remote network shares,
+// / storage devices, or removable devices like USB sticks.
+$DataEncryption = TRUE;
+
 // / Security Salts.
 // / Set AT LEAST 4 array elements to use for authenticating operations that require additional security. 
 // / Add additional array elenents will be used where possible, but the first 4 are required. 
@@ -38,7 +56,9 @@ $Salts = array('fgdsfg!sdhafbde3i85_+#$@%<G345234381234120', '2lw12564165fgdasfs
 // / Libraries are treated as objects. They are defined in the following arrays.
 // / Arrays are formatted as  $Libraries['LIBRARY_NAME', "ENABLED/DISABLED(bool)", '/path/to/library/directory']
 // / Admins can add their own custom libraries by simply copy/pasting an existing entry and being cautious of the ending '('.
-// / The "DATA" library MUST be the first array item and MUST be enabled for the core to execute. All other libraries are optional.
+// / The "DATA" library is used for xPress compression dictionaries and user-supplied encryption keys.
+// / It is reccomended that you limit the permissions on the DATA $Library directory so that nobody but the Apache/Nginx user
+// / has read access.
 $Libraries = array(
  array('DATA', "TRUE", '/mnt/abcdefgh-1234-1234-1234-32abwewdawdasdsdfsadfsda56511651/CloudTestDATA'),
  array('MOVIES', "TRUE", '/mnt/abcdefgh-1234-1234-1234-32abwewdawdasdsdfsadfsda56511651/CloudTestDATA'),

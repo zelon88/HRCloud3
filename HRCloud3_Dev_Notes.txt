@@ -1,0 +1,12 @@
+HRCLOUD3 DEV NOTES
+
+----------
+v0.5.6
+
+-I have a bunch of notes and thoughts floating around about how to structure things that I need a consolidated place for it all.
+-I wasted some time yesterday re-writing code that looked wrong, but turned out to be completely fine all along.
+-The 'DATA' library will be for user-specific xPress dictionaries.
+-Separate dictionaries per user are the best way to ensure privacy/security at the expense of compression performance.
+-Encryption should utilize user-controlled keys.
+-Special functions will need to be developed in dataCore for re-encrypting and verifying files when users change their encryption keys.
+-Put some kind of limit on the mechanism for re-encrypting storage, as this poses a huge DDOS risk.
