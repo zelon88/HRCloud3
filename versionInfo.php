@@ -16,5 +16,5 @@ The Version Info file is for validating engine version during update & security 
 
 // / ----------------------------------------------------------------------------------
 // / Specify the engine version.
-$engineVersion = 'v0.5.6';
+$engineVersion = 'v0.5.7';
 // / ----------------------------------------------------------------------------------

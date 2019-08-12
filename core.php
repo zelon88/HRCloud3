@@ -68,15 +68,20 @@ function verifyInstallation() {
     if (!file_exists($requiredDir.DIRECTORY_SEPARATOR.'index.html')) $indexExists = copy('index.html', $requiredDir.DIRECTORY_SEPARATOR.'index.html');
     if (!$indexExists) $indexCheck = FALSE; }
   $logHash = substr(hash('sha256', $Salts[0].hash('sha256', $Date.$Salts[1].$Salts[2].$Salts[3])), 0, 7);
+
   $LogFile = 'Logs'.DIRECTORY_SEPARATOR.$Date.'_'.$logHash.'.log';
   if (!file_exists($LogFile)) $logCheck = file_put_contents($LogFile, 'OP-Act: '.$Time.' Created a log file, "'.$LogFile.'".');
+  
+
   $CacheFile = 'Cache'.DIRECTORY_SEPARATOR.'Cache-'.hash('sha256',$Salts[0].'CACHE').'.php';
   if (!file_exists($CacheFile)) $cacheCheck = file_put_contents($CacheFile, '<?php'.PHP_EOL.'$PostConfigUsers = array();');
-  $logCheck = file_put_contents($LogFile, 'OP-Act: '.$Time.' Created a cache file, "'.$CacheFile.'".');
+  
+
+  
   if ($dirCheck && $indexCheck && $logCheck && $cacheCheck) $InstallationIsVerified = TRUE;
   $dirCheck = $indexCheck = $logCheck = $cacheCheck = $requiredDirs = $requiredDir = $dirExists = $indexExists = $logHash = NULL;
   unset($dirCheck, $indexCheck, $logCheck, $cacheCheck, $requiredDirs, $requiredDir, $dirExists, $indexExists, $logHash);
-  return(array($LogFile, $CacheFile, $InstallationIsVerified)); }
+  return(array($LogFile, $CacheFile, $NotificationsFile, $InstallationIsVerified)); }
 
 // / A function to generate useful, consistent, and easily repeatable error messages.
 function dieGracefully($ErrorNumber, $ErrorMessage) { 
@@ -203,8 +208,23 @@ function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) {
   unset($UserInput, $PasswordInput, $User, $Users); 
   return(array($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete)); }
 
+// / A function to generate a missing user cache file. Useful when new users log in for the first time.
+// / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded 
+// / by the loadUserCache() function.
+function generateUserCache() {
+  global $Salts, $UserID;
+  $UserCacheExists = $UserCache = $UserDataDir = FALSE;
+  $UserDataDir = 'Data'.DIRECTORY_SEPARATOR.$UserID.DIRECTORY_SEPARATOR;
+  $UserCache = $UserDataDir.'UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php');
+  $arrayData = '\'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\',';
+  $userCacheData = '<?php'.PHP_EOL.'$userCacheData = array('.$arrayData.');'.PHP_EOL; 
+  $UserCacheExists = file_put_contents($UserCacheFile, $userCacheData);
+  $userCacheData = $arrayData = NULL;
+  unset($userCacheData, $arrayData); 
+  return($UserCacheExists, $UserCache, $UserDataDir); } 
+
 // / A function to load the user cache, which contains an individual users option settings.
-// / Cache files are stored as .php files and cache data is stores as an array. This ensures the files
+// / Cache files are stored as .php files and cache data is stored as an array. This ensures the files
 // / cannot simply be viewed with a browser to reveal sensitive content. The data must be programatically
 // / displayed or opened locally in a text editor.
 function loadUserCache() {
@@ -215,7 +235,7 @@ function loadUserCache() {
     $UserOptions = array();
     $UserCacheIsLoaded = FALSE;
     // / If the user cache exists, load it.
-    if (file_exists($userCache)) {
+    if (file_exists($UserCache)) {
       require ($UserCache);
       // / If the cache data variable is not set in the cache return an error and stop.
       if (!isset($userCacheData)) { 
@@ -241,20 +261,6 @@ function loadUserCache() {
   $requiredOptions = $option = $value = NULL;
   unset($requiredOptions, $option, $value);
   return(array($UserOptions, $UserCacheIsLoaded)); }
-
-// / A function to generate a missing user cache file. Useful when new users log in for the first time.
-// / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded 
-// / by the loadUserCache() function.
-function generateUserCache() {
-  global $Salts, $UserID;
-  $UserCacheExists = $UserCache = FALSE;
-  $UserCache = 'Data/'.$UserID.'/UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php');
-  $arrayData = '\'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\',';
-  $userCacheData = '<?php'.PHP_EOL.'$userCacheData = array('.$arrayData.');'.PHP_EOL; 
-  $UserCacheExists = file_put_contents($UserCacheFile, $userCacheData);
-  $userCacheData = $arrayData = NULL;
-  unset($userCacheData, $arrayData); 
-  return($UserCacheExists, $UserCache); } 
 
 // / A function to initialize the libraries into categories based on their status.
 function loadLibraries() { 
@@ -292,8 +298,20 @@ function loadLibraryData($LibrariesActive) {
     if (!$LibraryDataIsLoaded) break; }
   return(array($LibrariesActive, $LibraryError, $LibraryDataIsLoaded)); } 
 
+// / A function to determine if a notifications file exists for the current user and generate one if missing.
+function generateNotificationsFile() {
+  global $Salts, $UserID, $UserDataDir;
+  $notificationsCheck = FALSE;
+  $NotificationsFile = $UserDataDir.'UserNotifications-'.hash('sha256',$Salts[1].'NOTIFICATIONS'.$UserID).'.php');
+  if (!file_exists($NotificationsFile)) $notificationsCheck = file_put_contents($NotificationsFile, ''); 
+  else $notificationsCheck = TRUE;
+  if (!$notificationsCheck) $NotificationsFileExists = $NotificationsFile = FALSE;
+  $notificationsCheck = NULL;
+  unset($notificationsCheck);
+  return($NotificationsFileExists, $NotificationsFile); } 
+
 // / A function for loading notifications.
-function loadNotifications () { 
+function loadNotifications($NotificationsFile) { 
 
 }
 
@@ -330,7 +348,7 @@ else if ($Verbose) logEntry('Verified time & configuration.');
 
 // / This code verifies the integrity of the application.
 // / Also generates required directories in case they are missing & creates required log & cache files.
-list ($LogFile, $CacheFile, $InstallationIsVerified) = verifyInstallation();
+list ($LogFile, $CacheFile, $NotificationsFile, $InstallationIsVerified) = verifyInstallation();
 if (!$InstallationIsVerified) dieGracefully(1, 'Could not verify installation!');
 else if ($Verbose) logEntry('Verified installation.');
 
@@ -374,7 +392,12 @@ if (!$LibraryDataIsLoaded) dieGracefully(7, 'Could not load library data from '.
 else if ($Verbose) logEntry('Loaded library data.');
 
 // / This code generates a user cache file if none exists. Useful for initializing new users logging-in for the first time.
-list ($UserCacheExists, $UserCache) = generateUserCache();
-if (!$UserCacheExists) dieGracefully(8, 'Could not generate a user cache file!');
-else if ($Verbose) logEntry('Loaded library data');
+list ($UserCacheExists, $UserCache, $UserDataDir) = generateUserCache();
+if (!$UserCacheExists or !$UserDataDir) dieGracefully(8, 'Could not generate a user cache file!');
+else if ($Verbose) logEntry('Created user cache.');
+
+// / This code generates a user notifications file if none exists. Useful for initializing new users logging-in for the first time.
+list ($NotificationsFileExists, $NotificationsFile) = generateNotificationsFile();
+if (!$NotificationsFileExists or !$NotificationsFile) dieGracefully(8, 'Could not generate a user notifications file!');
+else if ($Verbose) logEntry('Created user notifications.');
 // / -----------------------------------------------------------------------------------
