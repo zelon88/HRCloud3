@@ -32,10 +32,30 @@ General Code Conventions Utilized:
  -No frameworks.
 */
 
+set_time_limit(0);
+
+// / ----------------------------------------------------------------------------------
+// / Perform sanity checks to verify the environment is suitable for running.
+
+// / Detemine the version of PHP in use to run the application.
+// / Any PHP version earlier than 7.0 IS STRICTLY NOT SUPPORTED!!!
+// / Specifically, PHP versions earlier than 7.0 require the list() functions used to be unserialized. 
+// / If you run this application on a PHP version earlier than 7.0 you may experience extremely bizarre or even dangerous behavior.
+// / PLEASE DO NOT RUN THIS APPLICATION ON ANYTHING EARLIER THAN PHP 7.0!!! 
+// / HONESTREPAIR ASSUMES NO LIABILITY FOR USING THIS SOFTWARE!!!
+if (version_compare(PHP_VERSION, '7.0.0') <= 0) die('<a class="errorMessage">ERROR!!! 0, This application is NOT compatible with PHP versions earlier than 7.0. Running this application on unsupported PHP versions WILL cause unexpected behavior!</a>'.PHP_EOL); 
+
+// / Determine the operating system in use to run the application.
+// / Any version of Windows IS STRICTLY NOT SUPPORTED!!!
+// / Specifically, only Debian-based Linux distros.
+// / PLEASE DO NOT RUN THIS APPLICATION ON A WINDOWS OPERATING SYSTEM!!! 
+// / HONESTREPAIR ASSUMES NO LIABILITY FOR USING THIS SOFTWARE!!!
+if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') die('<a class="errorMessage">ERROR!!! 1, This application is NOT compatible with the Windows Operating System. Running this application on unsupported operating systems WILL cause unexpected behavior!</a>'.PHP_EOL); 
+// / ----------------------------------------------------------------------------------
+
 // / ----------------------------------------------------------------------------------
 // / Make sure there is a session started and load the configuration file.
 // / Also kill the application if $MaintenanceMode is set to  TRUE.
-set_time_limit(0);
 if (session_status() == PHP_SESSION_NONE) session_start();
 if (!file_exists('config.php')) $ConfigIsLoaded = FALSE; 
 else require_once ('config.php'); 
@@ -46,76 +66,110 @@ if ($MaintenanceMode === TRUE) die('The requested application is currently unava
 // / ----------------------------------------------------------------------------------
 // / The following code sets the functions for the session.
 
+// / A function for sanitizing input strings with varying degrees of tolerance.
+// / Filters a given string of | \ ~ # [ ] ( ) { } ; : $ ! # ^ & % @ > * < " / '
+// / This function will replace any of the above specified charcters with NOTHING. No character at all. An empty string.
+// / Set $strict to TRUE to also filter out backslash characters as well. Example:  /
+function sanitize($Variable, $strict) { 
+  if (!is_bool($strict)) $strict = TRUE; 
+  // / Note that when $strict is TRUE we also filter out backslashes. Not good if you're filtering a URL or path.
+  if ($strict === TRUE) $Variable = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"/\''), '', $Variable);
+  if ($strict === FALSE) $Variable = str_replace(str_split('|\\~#[](){};$!#^&%@>*<"\''), '', $Variable);
+  return ($Variable); }
+
 // / A function to set the date and time for internal logic like file cleanup.
-function verifyDate() {
+// / Set variables. 
+function verifyDate() { 
+  // / Set variables. Create an accurate human-readable date from the servers timezone.
   $Date = date("m-d-y");
   $Time = date("F j, Y, g:i a"); 
   $Minute = int(date('i'));
   $LastMinute = $Minute - 1;
+  // / We need to accomodate the off-chance that execution spans multiple days. 
+  // / In other words, the application starts at 11:59am and ends at 12:00am.
+  // / I tried to think what would happen if we spanned multiple months or years but I threw up in my mouth. >D
   if ($LastMinute === 0) $LastMinute = 59;
   return(array($Date, $Time, $Minute, $LastMinute)); }
 
 // / A function to generate and validate the operational environment for the Diablo Engine.
-function verifyInstallation() {
+function verifyInstallation() { 
+  // / Set variables. 
   global $Date, $Time, $Salts;
   $dirCheck = $indexCheck = $dirExists = $indexExists = $logCheck = $cacheCheck = TRUE;
   $requiredDirs = array('Logs', 'Data', 'Cache', 'Cache'.DIRECTORY_SEPARATOR.'Data');
   $InstallationIsVerified = FALSE;
+  // / For servers with unprotected directory roots, we must verify (at minimum) that a local index file exists to catch unwanted traversal.
   if (!file_exists('index.html')) $indexCheck = FALSE;
+  // / Iterate through the $requiredDirs hard-coded (in this function, under "Set variables" section above).
   foreach ($requiredDirs as $requiredDir) {
+    // / If a $requiredDir doesn't exist, we create it.
     if (!is_dir($requiredDir)) $dirExists = mkdir($requiredDir, 0755);
+    // / A sanity check to ensure the directory was actually created.
     if (!$dirExists) $dirCheck = FALSE;
+    // / Copy an index file into the newly created directory to enable directory root protection the old fashioned way.
     if (!file_exists($requiredDir.DIRECTORY_SEPARATOR.'index.html')) $indexExists = copy('index.html', $requiredDir.DIRECTORY_SEPARATOR.'index.html');
+    // / A sanity check to ensure that an index file was created in the newly created directory.
     if (!$indexExists) $indexCheck = FALSE; }
+  // / Create a unique identifier for today's $LogFile.
   $logHash = substr(hash('sha256', $Salts[0].hash('sha256', $Date.$Salts[1].$Salts[2].$Salts[3])), 0, 7);
-
+  // / Define today's $LogFile.
   $LogFile = 'Logs'.DIRECTORY_SEPARATOR.$Date.'_'.$logHash.'.log';
+  // / Create today's $LogFile if it doesn't exist yet.
   if (!file_exists($LogFile)) $logCheck = file_put_contents($LogFile, 'OP-Act: '.$Time.' Created a log file, "'.$LogFile.'".');
-  
-
+  // / Create a unique identifier for the cache file.
   $CacheFile = 'Cache'.DIRECTORY_SEPARATOR.'Cache-'.hash('sha256',$Salts[0].'CACHE').'.php';
+  // / If no cache file exists yet (first run) we create one and write the $PostConfigUsers to it. 
   if (!file_exists($CacheFile)) $cacheCheck = file_put_contents($CacheFile, '<?php'.PHP_EOL.'$PostConfigUsers = array();');
-  
-
-  
+  // / Make sure all sanity checks passed.
   if ($dirCheck && $indexCheck && $logCheck && $cacheCheck) $InstallationIsVerified = TRUE;
+  // / Clean up unneeded memory.
   $dirCheck = $indexCheck = $logCheck = $cacheCheck = $requiredDirs = $requiredDir = $dirExists = $indexExists = $logHash = NULL;
   unset($dirCheck, $indexCheck, $logCheck, $cacheCheck, $requiredDirs, $requiredDir, $dirExists, $indexExists, $logHash);
   return(array($LogFile, $CacheFile, $NotificationsFile, $InstallationIsVerified)); }
 
 // / A function to generate useful, consistent, and easily repeatable error messages.
 function dieGracefully($ErrorNumber, $ErrorMessage) { 
+  // / Set variables. 
   global $LogFile, $Time;
+  // / Perform a sanity check on the $ErrorNumber. Hackers are creative and this is a sensitive operation
+  // / that could be the target of XSS attacks.
   if (!is_numeric($ErrorNumber)) $ErrorNumber = 0;
   $ErrorOutput = 'ERROR!!! '.$ErrorNumber.', '.$Time.', '.$ErrorMessage.PHP_EOL;
+  // / Write the log file. Note that we don't care about success or failure because we're about to kill the script regardless.
   file_put_contents($LogFile, $ErrorOutput, FILE_APPEND);
-  die('<a class="errorMessage">'.$ErrorOutput'</a>'); } 
+  die('<a class="errorMessage">'.$ErrorOutput.'</a>'); } 
 
 // / A function to generate useful, consistent, and easily repeatable log messages.
 function logEntry($EntryText) { 
+  // / Set variables. 
   global $LogFile, $Time;
-  $EntryOutput = 'OP-Act: '.$Time.', '.$EntryText.PHP_EOL;
+  // / Format the actual log message.
+  $EntryOutput = sanitize('OP-Act: '.$Time.', '.$EntryText.PHP_EOL, TRUE);
+  // / Write the actual log file.
   $LogWritten = file_put_contents($LogFile, $EntryOutput, FILE_APPEND);
   return($LogWritten); } 
 
 // / A function to load the system cache, which contains the master user list.
-// / Cache files are stored as .php files and cache data is stores as an array. This ensures the files
+// / Cache files are stored as .php files and cache data is stored as an array. This ensures the files
 // / cannot simply be viewed with a browser to reveal sensitive content. The data must be programatically
 // / displayed or opened locally in a text editor.
 function loadCache() { 
+  // / Set variables. 
   global $Users, $CacheFile, $HashConfigUserinfo;
   foreach ($Users as $User) { 
     if ($HashConfigUserinfo) $User[3] = hash('sha256', $Salts[0].$User[3].$Salts[0].$Salts[1].$Salts[2].$Salts[3]); } 
   require ($CacheFile);
   if (!isset($PostConfigUsers)) $PostConfigUsers = array();
   $Users = array_merge($PostConfigUsers, $Users);
+  // / Clean up unneeded memory.
   $CacheIsLoaded = TRUE;
   return(array($Users, $CacheIsLoaded)); }
 
 // / A function to load core files.
 // / Accepts either an array of cores or a single string.
 // / If input is an array, CoresLoaded output is an array. If input is a string, CoresLoaded output is a string.
-function loadCores($coresToLoad) {
+function loadCores($coresToLoad) { 
+  // / Set variables. 
   global $AvailableCores; 
   $CoresLoaded = $error = FALSE;
   if (is_array($coresToLoad)) { 
@@ -131,13 +185,14 @@ function loadCores($coresToLoad) {
     if (file_exists($coreFile) && in_array(strtoupper($coresToLoad), $AvailableCores)) { 
       require($coreFile);
       $CoresLoaded = strtoupper($coresToLoad); } }
+  // / Clean up unneeded memory.
   $coresToLoad  = $coreFile = $coreToLoad = NULL;
   unset($coresToLoad, $coreFile, $coreToLoad);
   return ($CoresLoaded, $error); }
 
 // / A function to validate and sanitize requried session and POST variables.
 function verifyGlobals() { 
-  // / Define required variables.
+  // / Set variables. 
   global $Salts, $Data;
   $SessionID = $GlobalsAreVerified = FALSE;
   // / Set authentication credentials from supplied inputs when inputs are supplied.
@@ -164,7 +219,10 @@ function requireLogin() {
 
 // / A function to generate new user tokens and validate supplied ones.
 // / This is the secret sauce behind fully password encryption in-transit.
+// / Please excuse the lack of comments. Security through obscurity is a bad practice.
+// / But no lock is pick proof, especially ones that come with instructions for picking them.
 function generateTokens($ClientTokenInput, $PasswordInput) { 
+  // / Set variables. 
   global $Minute, $LastMinute;
   $ServerToken = $ClientToken = NULL;
   $TokensAreValid = FALSE;
@@ -176,12 +234,14 @@ function generateTokens($ClientTokenInput, $PasswordInput) {
     $ClientToken = $oldClientToken;
     $ServerToken = $oldServerToken; }
   if ($ServerToken !== NULL && $ClientToken !== NULL) $TokensAreValid = TRUE;
+  // / Clean up unneeded memory.
   $oldClientToken = $oldServerToken = NULL;
   unset($oldClientToken, $oldServerToken); 
   return(array($ClientToken, $ServerToken, $TokensAreValid); }
 
 // / A function to sanitize an input string. Useful for preparing URL's or filepaths.
 function sanitize($Variable, $Strict) { 
+  // / Set variables.  
   $VariableIsSanitized = TRUE;
   if (!is_bool($Strict)) $Strict = TRUE; 
   if (!is_string($Variable)) $VariableIsSanitized = FALSE;
@@ -192,18 +252,26 @@ function sanitize($Variable, $Strict) {
 
 // / A function to authenticate a user and verify an encrypted input password with supplied tokens.
 function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) { 
+  // / Set variables. Note that we try not to include anything here we don't have to because
+  // / It's going to be hammered by someone, somewhere, eventually. Less is more in terms of code & security.
   global $Users;
   $UserID = $UserName = $PasswordIsCorrect = $UserIsAdmin = $AuthIsComplete = FALSE;
+  // / Iterate through each defined user.
   foreach ($Users as $User) { 
     $UserID = $User[0];
+    // / Continue ONLY if the $UserInput matches the a valid $UserName.
     if ($User[1] === $UserInput) { 
       $UserName = $User[1];
+      // / Continue ONLY if all tokens match and the password hash is correct.
       if (hash('sha256', $ServerToken.hash('sha256', $ClientToken.$User[3])) === hash('sh256', $ServerToken.hash('sha256', $Salts[0].$PasswordInput.$Salts[0].$Salts[1].$Salts[2].$Salts[3]))) { 
         $PasswordIsCorrect = TRUE; 
+        // / Here we grant the user their designated permissions and only then decide $AuthIsComplete.
         if (is_bool($User[4])) {
           $UserIsAdmin = $User[4]; 
           $AuthIsComplete = TRUE; 
+          // / Once we authenticate a user we no longer need to continue iterating through the userlist, so we stop.
           break; } } } }
+  // / Clean up unneeded memory.
   $UserInput = $PasswordInput = $User = $Users = NULL;
   unset($UserInput, $PasswordInput, $User, $Users); 
   return(array($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete)); }
@@ -270,6 +338,7 @@ function loadLibraries() {
   $LibrariesActive = array();
   $LibrariesInactive = array();
   $LibrariesCustom = array();
+  // / Iterate through each library specified in config.php.
   foreach ($Libraries as $Library) { 
     // / If the array is not part of the default libraries it is assumed to be a custom library.
     if (!in_array($Library[0], $LibrariesDefault) && $Library[1] == TRUE) array_push($LibrariesCustom, $Library); 
@@ -299,43 +368,95 @@ function loadLibraryData($LibrariesActive) {
   return(array($LibrariesActive, $LibraryError, $LibraryDataIsLoaded)); } 
 
 // / A function to determine if a notifications file exists for the current user and generate one if missing.
-function generateNotificationsFile() {
+// / A notification is considered a single line of the notifications file.
+function generateNotificationsFile() { 
+  // / Set variables. Note that we assume the $notificationsCheck is true until we verify that a $NotificationsFile exists.
   global $Salts, $UserID, $UserDataDir;
-  $notificationsCheck = FALSE;
+  $notificationsCheck = TRUE;
   $NotificationsFile = $UserDataDir.'UserNotifications-'.hash('sha256',$Salts[1].'NOTIFICATIONS'.$UserID).'.php');
+  // / Detect if no file exists and try to create one.
   if (!file_exists($NotificationsFile)) $notificationsCheck = file_put_contents($NotificationsFile, ''); 
-  else $notificationsCheck = TRUE;
   if (!$notificationsCheck) $NotificationsFileExists = $NotificationsFile = FALSE;
+  // / Clean up unneeded memory.
   $notificationsCheck = NULL;
   unset($notificationsCheck);
   return($NotificationsFileExists, $NotificationsFile); } 
 
 // / A function for loading notifications.
+// / A notification is considered a single line of the notifications file.
 function loadNotifications($NotificationsFile) { 
+  $Notifications = file($NotificationsFile);
+  // / Check that $Notifications is actually an array.
+  if (!is_array($Notifications) or $Notifications === FALSE) $Notifications = array(); 
+  return($Notifications); }
 
-}
+// / A function to prepare a single notification for the UI.
+// / Notifications are comprised of the date they were created and the content of the notification.
+// / These two parts of a notification are separated by a "tab" character.
+// / NOTE: If a notification entry begins with a single character of whitespace, the notification is "unread." 
+// / Example:     [date]["TAB"][notification]
+function decodeNotification($Notification) { 
+  $NotificationDate = $NotificationContent = FALSE;
+  // / Please note that the whitespace in the "explode" below is actually a TAB character!
+  list ($NotificationDate, $NotificationContent) = explode("  ", $Notification);
+  return($NotificationDate, $NotificationContent); }
 
 // / A function for marking notifications as read.
+// / A notification is considered a single line of the notifications file.
+// / Lines that begin with a single charactere of whitespace are "unread."
+// / To mark an item as "read" we simply remove the leading whitespace from unread notifications. 
 function readNotification() { 
-
-}
+  // / Set variables.
+  global $Notifications;
+  // / Iterate through the notifications and detect the first character. 
+  foreach ($Notifications as $key=>$notification) { 
+    $firstChar = substr($notification, 0, 1);
+    // / If the first character of the notification is not currently a space we assume it us currently "unread."
+    if ($firstChar !== ' ') { 
+      $notification = ltrim($notification); 
+      // / We've just detected the removed the space in front of an unread notification and now we're saving it back to the array. 
+      $Notifications[$key] = $notification; } }
+  // / Write the new array back to the notifications file. 
+  // / Note we don't need to reload the $NotificationsFile because we also modifed the copy already in memory.
+  $NotificationsFileUpdated = file_put_contents($NotificationsFile, $Notifications);]
+  // / Clean up unneeded memory.
+  $key = $notification = $firstChar = NULL;
+  unset($key, $notification, $firstChar);
+  return($NotificationsFileUpdated, $Notifications); }
 
 // / A function for purging notifications.
-function purgeNotifications() { 
+// / A notification is considered a single line of the notifications file.
+// / Notifications are not stored with any corresponding serialization or indexing data.
+// / The date-time of the notifications combined with its content determines unique identity.
+function purgeNotifications($NotificationToPurge) { 
+  // / Set variables. Note that we assume the $NotificationsFileWritten and $NotificationsPurged are false until the notification
+  // / is deleted and a file is created. If either of those fail we assume that the operation failed.
+  global $NotificationFile, $Notifications;
+  $notificationFileWritten = $NotificationPurged = FALSE;
+  // / Iterate through the notifications looking for ones that match the specified notification.
+  foreach ($Notifications as $key=>$notificationToCheck) { 
+    // / If we find a matching notification we remove it from the array that is in memory.
+    if ($NotificationToPurge === $notificationToCheck) !== FALSE) unset($Notifications[$key]);
+    // / With a new $Notifications array saved to memory, we can dump the modified data back into the $NotificationsFile.
+    $notificationFileWritten = file_put_contents($NotificationFile, $Notifications);
+    // / Note that below we only mark the check a success once we've verified that we both detected a match and re-wrote the file.
+    // / Note that continuing to run after a failure of this operation could result in different states between $Notifications in memory
+    // / and the data contained in the $NotificationsFile. 
+    if ($notificationFileWritten === TRUE) $NotificationPurged = TRUE; }
+  // / Clean up unneeded memory.
+  $notificationFileWritten = $key = $notificationsCheck = NULL;
+  unset($notificationFileWritten, $key, $notificationsToCheck);
+  return($NotificationPurged, $Notifications); }
 
-}
+// / A function to push a notification to a user.
+function pushNotification($NotificationToPush, $UserID) { 
+  
+  return($NotificationSent); }
 
 // / A function to send an email.
 function sendEmail($address, $content, $template) { 
 
 }
-
-// / A function for sanitizing input strings with varying degrees of tolerance.
-function sanitize($Variable, $strict) { 
-  if (!is_bool($Strict)) $Strict = TRUE; 
-  if ($Strict === TRUE) $Variable = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"/\''), '', $Variable);
-  if ($Strict === FALSE) $Variable = str_replace(str_split('|\\~#[](){};$!#^&%@>*<"\''), '', $Variable);
-  return ($Variable); }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -343,42 +464,42 @@ function sanitize($Variable, $strict) {
 
 // / This code verifies the date & time for file & log operations.
 list ($Date, $Time, $Minute, $LastMinute) = verifyDate();
-if (!$ConfigIsLoaded) die('ERROR!!! 0, '.$Time.', Could not process the Configuration file (config.php)!'.PHP_EOL); 
+if (!$ConfigIsLoaded) die('ERROR!!! 2, '.$Time.', Could not process the Configuration file (config.php)!'.PHP_EOL); 
 else if ($Verbose) logEntry('Verified time & configuration.');
 
 // / This code verifies the integrity of the application.
 // / Also generates required directories in case they are missing & creates required log & cache files.
 list ($LogFile, $CacheFile, $NotificationsFile, $InstallationIsVerified) = verifyInstallation();
-if (!$InstallationIsVerified) dieGracefully(1, 'Could not verify installation!');
+if (!$InstallationIsVerified) dieGracefully(3, 'Could not verify installation!');
 else if ($Verbose) logEntry('Verified installation.');
 
 // / This code loads & sanitizes the global cache & prepares the user list.
 list ($Users, $CacheIsLoaded) = loadCache();
-if (!$CacheIsLoaded) dieGracefully(2, 'Could not load cache file!');
+if (!$CacheIsLoaded) dieGracefully(4, 'Could not load cache file!');
 else if ($Verbose) logEntry('Loaded cache file.');
 
 // / This code takes in all required inputs to build a session and ensures they exist & are a valid type.
 list ($UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $GlobalsAreVerified) = verifyGlobals();
-if (!$GlobalsAreVerified) requireLogin(); dieGracefully(3, 'User is not logged in!');
+if (!$GlobalsAreVerified) requireLogin(); dieGracefully(5, 'User is not logged in!');
 else if ($Verbose) logEntry('Verified global variables.');
 
 // / This code ensures that a same-origin UI element generated the login request.
 // / Also protects against packet replay attacks by ensuring that the request was generated recently and by making each request unique. 
 list ($ClientToken, $ServerToken, $TokensAreVerified) = generateTokens($ClientTokenInput, $PasswordInput);
-if (!$TokensAreValid) dieGracefully(4, 'Invalid tokens!');
+if (!$TokensAreValid) dieGracefully(6, 'Invalid tokens!');
 else if ($Verbose) logEntry('Generated tokens.');
 
 // / This code validates credentials supplied by the user against the hashed ones stored on the server.
 // / Also removes the $Users user list from memory so it can not be leaked.
 // / Displays a login screen when authentication fails and kills the application. 
 list ($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete) = authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken);
-if (!$PasswordIsCorrect or !$AuthIsComplete) dieGracefully(5, 'Invalid username or password!'); 
+if (!$PasswordIsCorrect or !$AuthIsComplete) dieGracefully(7, 'Invalid username or password!'); 
 else if ($Verbose) logEntry('Authenticated '.$UserName.', '.$UserID.'.');
 
 // / This code builds arrays of good & bad libraries.
 // / Libraries are directory for storing specific types of information. 
 list ($LibrariesActive, $LibrariesInactive, $LibrariesCustom, $LibrariesDefault, $LibrariesAreLoaded) = loadLibraries();
-if (!$LibrariesAreLoaded) dieGracefully(6, 'Could not load libraries!');
+if (!$LibrariesAreLoaded) dieGracefully(8, 'Could not load libraries!');
 else if ($Verbose) logEntry('Loaded libraries.');
 
 // / This code verifies each active library directory exists.
@@ -388,16 +509,16 @@ else if ($Verbose) logEntry('Loaded libraries.');
 // / $LibrariesActive[2] contains a file path to the user-specific library 
 // / $LibrariesActive[3] contains an array containing library contents.
 list ($LibrariesActive, $LibraryError, $LibraryDataIsLoaded) = loadLibraryData($LibrariesActive);
-if (!$LibraryDataIsLoaded) dieGracefully(7, 'Could not load library data from '.$LibraryError.'!');
+if (!$LibraryDataIsLoaded) dieGracefully(9, 'Could not load library data from '.$LibraryError.'!');
 else if ($Verbose) logEntry('Loaded library data.');
 
 // / This code generates a user cache file if none exists. Useful for initializing new users logging-in for the first time.
 list ($UserCacheExists, $UserCache, $UserDataDir) = generateUserCache();
-if (!$UserCacheExists or !$UserDataDir) dieGracefully(8, 'Could not generate a user cache file!');
+if (!$UserCacheExists or !$UserDataDir) dieGracefully(10, 'Could not generate a user cache file!');
 else if ($Verbose) logEntry('Created user cache.');
 
 // / This code generates a user notifications file if none exists. Useful for initializing new users logging-in for the first time.
 list ($NotificationsFileExists, $NotificationsFile) = generateNotificationsFile();
-if (!$NotificationsFileExists or !$NotificationsFile) dieGracefully(8, 'Could not generate a user notifications file!');
+if (!$NotificationsFileExists or !$NotificationsFile) dieGracefully(11, 'Could not generate a user notifications file!');
 else if ($Verbose) logEntry('Created user notifications.');
 // / -----------------------------------------------------------------------------------

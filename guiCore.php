@@ -15,43 +15,6 @@ The GUI Core provides resources for the user interfaces & decides which interfac
 */
 
 // / -----------------------------------------------------------------------------------
-// / The following code detects if the core is in memory and loads it if neccesary. 
-if (!isset($UserID)) {
-  if (!file_exists(realpath(dirname(__FILE__)).'/core.php')) {
-    echo nl2br('ERROR!!! HRCloud3, Cannot process the Friends Core file (core.php).'."\n"); 
-    die (); }
-  else {
-    require_once(realpath(dirname(__FILE__)).'/core.php'); } }
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / The following code sets the variables for the session.
-$PLMediaArr =  array('mp2', 'mp3', 'wma', 'wav', 'aac', 'flac', 'ogg', 'avi', 'mov', 'mkv', 'flv', 'ogv', 'wmv', 'mpg', 'mpeg', 'm4v', '3gp', 'mp4');
-$ArchiveArray = array('zip', 'rar', 'tar', 'bz', 'gz', 'bz2', '7z', 'iso', 'vhd', 'vdi');
-$DearchiveArray = array('zip', 'rar', 'tar', 'bz', 'gz', 'bz2', '7z', 'iso', 'vhd');
-$DocumentArray = array('txt', 'doc', 'docx', 'rtf', 'xls', 'xlsx', 'odf', 'ods', 'pptx', 'ppt', 'xps', 'potx', 'potm', 'pot', 'ppa', 'odp');
-$ImageArray = array('jpeg', 'jpg', 'png', 'bmp', 'gif', 'pdf');
-$MediaArray = array('mp3', 'mp4', 'mov', 'aac', 'oog', 'wma', 'mp2', 'flac');
-$VideoArray = array('3gp', 'mkv', 'avi', 'mp4', 'flv', 'mpeg', 'wmv');
-$DrawingArray = array('svg', 'dxf', 'vdx', 'fig');
-$archArr = array('rar', 'tar', 'tar.bz', '7z', 'zip', 'tar.gz', 'tar.bz2', 'tgz');
-$convertArr = array('pdf', 'doc', 'docx', 'txt', 'rtf', 'odf', 'pages', 'jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp2', 'mp3', 'wma', 'wav', 'aac', 'flac', 
-  'ogg', 'avi', 'mov', 'mkv', 'flv', 'ogv', 'wmv', 'mpg', 'mpeg', 'm4v', '3gp', 'mp4', 'pptx', 'ppt', 'xps');
-$pdfWorkArr = array('pdf', 'jpg', 'jpeg', 'png', 'bmp', 'gif');
-$imgArr = array('jpg', 'jpeg', 'png', 'bmp', 'gif');
-$modelarray = array('3ds', 'obj', 'collada', 'off', 'ply', 'stl', 'ptx', 'dxf', 'u3d', 'vrml');
-$fileArray1 = array();
-$tableCount = 0;
-$ArchInc = 0;
-$ConvertInc = 0;
-$RenameInc = 0;
-$ConvertInc = 0;
-$EditInc = 0;
-if (!isset($Udir)) $Udir = '';
-$Udir = str_replace('//', '/', str_replace('//', '/', $Udir));
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
 // / The following code sets GUI specific resources.
 function getCurrentURL() {
   if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
@@ -79,17 +42,6 @@ function getFilesize($File) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / The following code sets the $CD variable used to craft responsive absolute paths.
-$CurrentDir = $_SERVER['REQUEST_URI'];
-$CD = '';
-if (strpos($CurrentDir, 'Applications') ==  TRUE) $CD = '../../';
-if (strpos($_SERVER["SCRIPT_FILENAME"], 'HRAIMiniGui') == TRUE) $CD = '../';
-if (strpos($CurrentDir, '.AppData/') == TRUE) $CD = '../../../../';
-if (strpos($CurrentDir, '.AppData/.index.php') == TRUE) $CD = '../../../';
-if (strpos($CurrentDir, 'Shared') == TRUE) $CD = '../../../../';
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
 // / Color scheme handler.
 if ($ColorScheme == '0' or $ColorScheme == '' or !isset($ColorScheme)) {
   $ColorScheme = '1'; }
@@ -103,16 +55,4 @@ if ($ColorScheme == '4') {
   echo ('<link rel="stylesheet" type="text/css" href="'.$CD.'Styles/iframeStyleGREY.css">'); }
 if ($ColorScheme == '5') {
   echo ('<link rel="stylesheet" type="text/css" href="'.$CD.'Styles/iframeStyleBLACK.css">'); } 
-
 // / -----------------------------------------------------------------------------------
-// Checks to see if veiwing hidden files is enabled
-if ($_SERVER['QUERY_STRING'] == "hidden") { 
-  $hide = "";
-  $ahref = "./";
-  $atext = "Hide"; }
-else { 
-  $hide = ".";
-  $ahref = "./?hidden";
-  $atext = "Show"; }
-// / -----------------------------------------------------------------------------------
-?>
