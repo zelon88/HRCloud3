@@ -77,7 +77,7 @@ function sanitize($Variable, $Strict) {
   if (!is_string($Variable)) $VariableIsSanitized = FALSE;
   else { 
     // / Note that when $strict is TRUE we also filter out backslashes. Not good if you're filtering a URL or path.
-    if ($Strict === TRUE) $Variable = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"/\''), '', $Variable);
+    if ($Strict === TRUE) $Variable = str_replace(str_split('|\\~#[](){};$!#^&%@>*<"\'/'), '', $Variable);
     if ($Strict === FALSE) $Variable = str_replace(str_split('|\\~#[](){};$!#^&%@>*<"\''), '', $Variable); }
   return (array($Variable, $VariableIsSanitized)); }
 
@@ -353,8 +353,10 @@ function loadLibraries() {
   return(array($LibrariesActive, $LibrariesInactive, $LibrariesCustom, $LibrariesDefault, $LibrariesAreLoaded)); } 
 
 // / A function to read the data from the supplied array of libraries and load their contents.
-function loadLibraryData($LibrariesActive) {
+// / Note that $LibrariesActive is re-defined after this function runs. So it is specified as an argument to the function and a return value.
+function loadLibraryData() {
   // / Set variables. Note that we assume the function is a sucess unless an iteration of the loop changes $LibraryDataIsLoaded to false.
+  global $LibrariesActive;
   $LibraryDataIsLoaded = TRUE;
   $LibraryError = FALSE;
   // / Validate the library location for each library.
@@ -366,7 +368,7 @@ function loadLibraryData($LibrariesActive) {
       $LibraryError = $LibrariesActive[2];
     // / Stop validating as soon as an error is thrown.
     if (!$LibraryDataIsLoaded) break; }
-  return(array($LibrariesActive, $LibraryError, $LibraryDataIsLoaded)); } 
+  return(array($LibraryError, $LibraryDataIsLoaded)); } 
 
 // / A function to determine if a notifications file exists for the current user and generate one if missing.
 // / A notification is considered a single line of the notifications file.
@@ -399,7 +401,8 @@ function loadNotifications($NotificationsFile) {
 function decodeNotification($Notification) { 
   $NotificationDate = $NotificationContent = FALSE;
   // / Please note that the whitespace in the "explode" below is actually a TAB character!
-  list ($NotificationDate, $NotificationContent) = explode("  ", $Notification);
+  // / Also sanitize the $Notification before loading it.
+  list ($NotificationDate, $NotificationContent) = explode("  ", sanitize($Notification, TRUE));
   return(array($NotificationDate, $NotificationContent)); }
 
 // / A function for marking notifications as read.
@@ -423,7 +426,7 @@ function readNotification() {
   // / Clean up unneeded memory.
   $key = $notification = $firstChar = NULL;
   unset($key, $notification, $firstChar);
-  return(array($NotificationsFileUpdated, $Notifications)); }
+  return(array($NotificationsFileUpdated)); }
 
 // / A function for purging notifications.
 // / A notification is considered a single line of the notifications file.
@@ -443,6 +446,7 @@ function purgeNotifications($NotificationToPurge) {
     // / Note that below we only mark the check a success once we've verified that we both detected a match and re-wrote the file.
     // / Note that continuing to run after a failure of this operation could result in different states between $Notifications in memory
     // / and the data contained in the $NotificationsFile. 
+    // / Note that we DON'T STOP the iteration EVEN IF we find our result. This enables automatic duplicate cleanup.
     if ($notificationFileWritten === TRUE) $NotificationPurged = TRUE; }
   // / Clean up unneeded memory.
   $NotificationToPurge = $notificationFileWritten = $key = $notificationsCheck = NULL;
@@ -450,7 +454,10 @@ function purgeNotifications($NotificationToPurge) {
   return(array($NotificationPurged, $Notifications)); }
 
 // / A function to push a notification to a user.
-function pushNotification($NotificationToPush, $UserID) { 
+function pushNotification($NotificationToPush, $TargetUserID) { 
+  // / Sanitize the notification with strict character enforcement.
+  $NotificationToPush = sanitize($NotificationToPush, TRUE);
+
 
   return($NotificationSent); }
 
@@ -511,7 +518,8 @@ else if ($Verbose) logEntry('Loaded libraries.');
 // / $LibrariesActive[1] contains a boolean value. TRUE enables the library & FALSE disables the library.
 // / $LibrariesActive[2] contains a file path to the user-specific library 
 // / $LibrariesActive[3] contains an array containing library contents.
-list ($LibrariesActive, $LibraryError, $LibraryDataIsLoaded) = loadLibraryData($LibrariesActive);
+// / Instead of accepting $LibrariesActive as an argument and re-specifying it as a return value, we represent it in global scope in the loadLibraryData function.
+list ($LibraryError, $LibraryDataIsLoaded) = loadLibraryData();
 if (!$LibraryDataIsLoaded) dieGracefully(9, 'Could not load library data from '.$LibraryError.'!');
 else if ($Verbose) logEntry('Loaded library data.');
 
