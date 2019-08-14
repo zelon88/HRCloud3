@@ -70,12 +70,16 @@ if ($MaintenanceMode === TRUE) die('The requested application is currently unava
 // / Filters a given string of | \ ~ # [ ] ( ) { } ; : $ ! # ^ & % @ > * < " / '
 // / This function will replace any of the above specified charcters with NOTHING. No character at all. An empty string.
 // / Set $strict to TRUE to also filter out backslash characters as well. Example:  /
-function sanitize($Variable, $strict) { 
-  if (!is_bool($strict)) $strict = TRUE; 
-  // / Note that when $strict is TRUE we also filter out backslashes. Not good if you're filtering a URL or path.
-  if ($strict === TRUE) $Variable = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"/\''), '', $Variable);
-  if ($strict === FALSE) $Variable = str_replace(str_split('|\\~#[](){};$!#^&%@>*<"\''), '', $Variable);
-  return ($Variable); }
+function sanitize($Variable, $Strict) { 
+  // / Set variables.  
+  $VariableIsSanitized = TRUE;
+  if (!is_bool($Strict)) $Strict = TRUE; 
+  if (!is_string($Variable)) $VariableIsSanitized = FALSE;
+  else { 
+    // / Note that when $strict is TRUE we also filter out backslashes. Not good if you're filtering a URL or path.
+    if ($Strict === TRUE) $Variable = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"/\''), '', $Variable);
+    if ($Strict === FALSE) $Variable = str_replace(str_split('|\\~#[](){};$!#^&%@>*<"\''), '', $Variable); }
+  return (array($Variable, $VariableIsSanitized)); }
 
 // / A function to set the date and time for internal logic like file cleanup.
 // / Set variables. 
@@ -218,7 +222,7 @@ function requireLogin() {
  return(array()); }
 
 // / A function to generate new user tokens and validate supplied ones.
-// / This is the secret sauce behind fully password encryption in-transit.
+// / This is the secret sauce behind full password encryption in-transit.
 // / Please excuse the lack of comments. Security through obscurity is a bad practice.
 // / But no lock is pick proof, especially ones that come with instructions for picking them.
 function generateTokens($ClientTokenInput, $PasswordInput) { 
@@ -237,18 +241,7 @@ function generateTokens($ClientTokenInput, $PasswordInput) {
   // / Clean up unneeded memory.
   $oldClientToken = $oldServerToken = NULL;
   unset($oldClientToken, $oldServerToken); 
-  return(array($ClientToken, $ServerToken, $TokensAreValid); }
-
-// / A function to sanitize an input string. Useful for preparing URL's or filepaths.
-function sanitize($Variable, $Strict) { 
-  // / Set variables.  
-  $VariableIsSanitized = TRUE;
-  if (!is_bool($Strict)) $Strict = TRUE; 
-  if (!is_string($Variable)) $VariableIsSanitized = FALSE;
-  else { 
-    if ($Strict === TRUE) $Variable = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"/\''), '', $Variable);
-    if ($Strict === FALSE) $Variable = str_replace(str_split('|\\~#[](){};$!#^&%@>*<"\''), '', $Variable); }
-  return (array($Variable, $VariableIsSanitized)); }
+  return(array($ClientToken, $ServerToken, $TokensAreValid)); } 
 
 // / A function to authenticate a user and verify an encrypted input password with supplied tokens.
 function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) { 
@@ -279,17 +272,25 @@ function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) {
 // / A function to generate a missing user cache file. Useful when new users log in for the first time.
 // / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded 
 // / by the loadUserCache() function.
-function generateUserCache() {
+function generateUserCache() { 
+  // / Set variables. Note the $UserCacheExists, $UserCache and $UserDataDir are all assumed to be false unless they are changed to something valid.
+  // / If $UserCacheExists, $UserCache or $UserDataDir return FALSE, the calling code should assume this function failed.
   global $Salts, $UserID;
   $UserCacheExists = $UserCache = $UserDataDir = FALSE;
   $UserDataDir = 'Data'.DIRECTORY_SEPARATOR.$UserID.DIRECTORY_SEPARATOR;
-  $UserCache = $UserDataDir.'UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php');
+  // / Define the $UserCacheFile.
+  $UserCacheFile = $UserDataDir.'UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php');
+  // / Define the default data for a fresh installation of the $UserCacheFile.
+  // / This is specially encoded to be written in a machine-readable .php file that will be included by this application later.
   $arrayData = '\'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\',';
-  $userCacheData = '<?php'.PHP_EOL.'$userCacheData = array('.$arrayData.');'.PHP_EOL; 
+  // / Wrap the data above in the proper PHP array syntax so it can be included later.
+  $userCacheData = '<?php'.PHP_EOL.'$userCacheData = array('.$arrayData.');'.PHP_EOL;
+  // / Write default cache data to the $UserCacheFile. 
   $UserCacheExists = file_put_contents($UserCacheFile, $userCacheData);
+  // / Clean up unneeded memory.
   $userCacheData = $arrayData = NULL;
   unset($userCacheData, $arrayData); 
-  return($UserCacheExists, $UserCache, $UserDataDir); } 
+  return(array($UserCacheExists, $UserCache, $UserDataDir)); } 
 
 // / A function to load the user cache, which contains an individual users option settings.
 // / Cache files are stored as .php files and cache data is stored as an array. This ensures the files
@@ -380,7 +381,7 @@ function generateNotificationsFile() {
   // / Clean up unneeded memory.
   $notificationsCheck = NULL;
   unset($notificationsCheck);
-  return($NotificationsFileExists, $NotificationsFile); } 
+  return(array($NotificationsFileExists, $NotificationsFile)); } 
 
 // / A function for loading notifications.
 // / A notification is considered a single line of the notifications file.
@@ -399,7 +400,7 @@ function decodeNotification($Notification) {
   $NotificationDate = $NotificationContent = FALSE;
   // / Please note that the whitespace in the "explode" below is actually a TAB character!
   list ($NotificationDate, $NotificationContent) = explode("  ", $Notification);
-  return($NotificationDate, $NotificationContent); }
+  return(array($NotificationDate, $NotificationContent)); }
 
 // / A function for marking notifications as read.
 // / A notification is considered a single line of the notifications file.
@@ -422,7 +423,7 @@ function readNotification() {
   // / Clean up unneeded memory.
   $key = $notification = $firstChar = NULL;
   unset($key, $notification, $firstChar);
-  return($NotificationsFileUpdated, $Notifications); }
+  return(array($NotificationsFileUpdated, $Notifications)); }
 
 // / A function for purging notifications.
 // / A notification is considered a single line of the notifications file.
@@ -444,19 +445,21 @@ function purgeNotifications($NotificationToPurge) {
     // / and the data contained in the $NotificationsFile. 
     if ($notificationFileWritten === TRUE) $NotificationPurged = TRUE; }
   // / Clean up unneeded memory.
-  $notificationFileWritten = $key = $notificationsCheck = NULL;
-  unset($notificationFileWritten, $key, $notificationsToCheck);
-  return($NotificationPurged, $Notifications); }
+  $NotificationToPurge = $notificationFileWritten = $key = $notificationsCheck = NULL;
+  unset($NotificationToPurge, $notificationFileWritten, $key, $notificationsToCheck);
+  return(array($NotificationPurged, $Notifications)); }
 
 // / A function to push a notification to a user.
 function pushNotification($NotificationToPush, $UserID) { 
-  
+
   return($NotificationSent); }
 
-// / A function to send an email.
+// / A function for the user to send an email.
 function sendEmail($address, $content, $template) { 
 
 }
+
+
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
