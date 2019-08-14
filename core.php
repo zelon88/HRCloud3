@@ -269,28 +269,72 @@ function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) {
   unset($UserInput, $PasswordInput, $User, $Users); 
   return(array($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete)); }
 
+// / A function to define the default $UserCacheData used as $arrayData in generateUserCache and loadUserCache. 
+// / Without this function this data would need to be hard-coded, making my job harder! We don't want that.
+function generateDefaultUserCacheData() { 
+  global $UserCacheRequiredOptions, $UserCacheArrayData;
+  // / Define the default data for a fresh installation of the $UserCacheFile.
+  // / This is specially encoded to be written in a machine-readable .php file that will be included in generateUserCache().
+  $UserCacheArrayData = '\'FRIENDS\'=>\'\', \'BLOCKED\'=>\'\', \'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\',';
+  // / Define an array of default cache elements that every user cache file must contain.
+  // / Note that the values in this array MUST match the $UserCacheArrayData above which containing the valid defaults for each element of $UserOptions[].
+  $UserCacheRequiredOptions = array('FRIENDS', 'BLOCKED', 'COLOR', 'FONT', 'TIMEZONE', 'DISPLAYNAME', 'TIPS', 'THEME', 'HRAI', 'HRAIAUDIO', 'LANDINGPAGE'); }
+
 // / A function to generate a missing user cache file. Useful when new users log in for the first time.
 // / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded 
 // / by the loadUserCache() function.
 function generateUserCache() { 
   // / Set variables. Note the $UserCacheExists, $UserCache and $UserDataDir are all assumed to be false unless they are changed to something valid.
   // / If $UserCacheExists, $UserCache or $UserDataDir return FALSE, the calling code should assume this function failed.
-  global $Salts, $UserID;
+  global $Salts, $UserID, $UserCacheArrayData;
   $UserCacheExists = $UserCache = $UserDataDir = FALSE;
   $UserDataDir = 'Data'.DIRECTORY_SEPARATOR.$UserID.DIRECTORY_SEPARATOR;
   // / Define the $UserCacheFile.
   $UserCacheFile = $UserDataDir.'UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php');
-  // / Define the default data for a fresh installation of the $UserCacheFile.
-  // / This is specially encoded to be written in a machine-readable .php file that will be included by this application later.
-  $arrayData = '\'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\',';
-  // / Wrap the data above in the proper PHP array syntax so it can be included later.
-  $userCacheData = '<?php'.PHP_EOL.'$userCacheData = array('.$arrayData.');'.PHP_EOL;
+  // / Wrap the data above in the proper PHP array syntax so it can be included later in the function.
+  $userCacheData = '<?php'.PHP_EOL.'$userCacheData = array('.$UserCacheArrayData.');'.PHP_EOL;
   // / Write default cache data to the $UserCacheFile. 
   $UserCacheExists = file_put_contents($UserCacheFile, $userCacheData);
   // / Clean up unneeded memory.
   $userCacheData = $arrayData = NULL;
   unset($userCacheData, $arrayData); 
   return(array($UserCacheExists, $UserCache, $UserDataDir)); } 
+
+// / A function to save entries to the user cache.
+// / If prepend is set to TRUE, this function will PREPEND the entry to the cache file.
+// / By default this function will APPEND the entry to the cache file.
+// / For security, this function does not accept input from arguments. 
+// / Instead it saves the existing $UserOptions from memory to the $UserCache. 
+// / Prepended entries are over-rided by newer entries. This is useful when new entries are added for new functionality 
+// / without destroying existing configuration data.
+function saveUserCache($Prepend) { 
+  // / Set variables.
+  global $UserCache, $UserOptions;
+  // / Note that this particular variable we declare as a blank string by default. Usually we would use FALSE, but here if we do that
+  // / we could corrupt a valid $UserCache. So we use a blank string which won't add anything to our PHP syntax'd cache file.
+  $key = $uOpt = $newEntry = '';
+  foreach ($UserOptions as $key=>$uOpt) { 
+    $key = '\''.$key.'\'';
+    $uOpt = '\''.$uOpt.'\'';
+    $newEntry = $key.'=>'.$uOpt.';'; }
+  if ($Prepend) { 
+    $handle = fopen($UserCache, "r+");
+    $len = strlen($newEntry);
+    $final_len = filesize($UserCache) + $len;
+    $cache_old = fread($handle, $len);
+    rewind($handle);
+    $i = 1;
+    while (ftell($handle) < $final_len) {
+      fwrite($handle, $newEntry);
+      $newEntry = $cache_old;
+      $cache_old = fread($handle, $len);
+      fseek($handle, $i * $len);
+      $i++; } }
+  else $UserCacheWritten = file_put_contents($UserCache, $newEntry, FILE_APPEND);
+  // / Clean up unneeded memory.
+  $newUserCacheData = $handle = $len = $final_len = $cache_old = $i = $newEntry = $key = $uOpt = $Prepend = NULL;
+  unset($newUserCacheData, $handle, $len, $final_len, $cache_old, $i, $newEntry, $key, $uOpt, $Prepend);
+  return($UserCacheWritten); }
 
 // / A function to load the user cache, which contains an individual users option settings.
 // / Cache files are stored as .php files and cache data is stored as an array. This ensures the files
@@ -299,8 +343,7 @@ function generateUserCache() {
 function loadUserCache() {
   // / Set variables. Note the default options that are used as filters for validating the $UserOptions later.
   // / Also note the user cache is hashed with salts.
-  global $Salts, $UserID, $UserCache;
-    $requiredOptions = array('COLOR', 'FONT', 'TIMEZONE', 'DISPLAYNAME', 'TIPS', 'THEME', 'HRAI', 'HRAIAUDIO', 'LANDINGPAGE');
+  global $Salts, $UserID, $UserCache, $UserCacheRequiredOptions;
     $UserOptions = array();
     $UserCacheIsLoaded = FALSE;
     // / If the user cache exists, load it.
@@ -308,27 +351,40 @@ function loadUserCache() {
       require ($UserCache);
       // / If the cache data variable is not set in the cache return an error and stop.
       if (!isset($userCacheData)) { 
-        $requiredOptions = $userCache = NULL; 
-        unset($requiredOptions, $userCache); 
+        $userCache = NULL; 
+        unset($userCache); 
         return($UserOptions, $UserCacheIsLoaded); }
       // / If the cache data isn't an array we return an error and stop.
       if (!is_array($userCacheData)) { 
-        $requiredOptions = $userCache = $userCacheData = NULL; 
-        unset($requiredOptions, $userCache, $userCacheData); 
+        $userCache = $userCacheData = NULL; 
+        unset($userCache, $userCacheData); 
         return($UserOptions, $UserCacheIsLoaded); }
       // / If the user cache is valid we delete the temporary data and validate each option.
       $UserOptions = $userCacheData;
       $userCacheData = NULL;
       unset($userCacheData);
-      foreach ($UserOptions as $option => $value) {
+      // / Iterate through each option specified in the user cache and verify that is it valid.
+      foreach ($UserOptions as $option=>$value) {
         // / If an option is not valid it is removed from memory.
-        if (!in_array($option, $requiredOptions)) { 
+        if (!in_array($option, $UserCacheRequiredOptions)) { 
           $UserOptions[$option] = NULL;
           unset($UserOptions[$option]); } 
       $UserCacheIsLoaded = TRUE; }
+      // / Iterate through the default UserCache items and look for new array elements that should exist.
+      foreach ($UserCacheRequiredOptions as $key=>$ucaElement) { 
+        // / If a new array element is found which needs to be created we add it to the start of the $UserCache.
+        // / This way new entries with default values run a lower risk of compromising existing settings.
+        if (!in_array($ucaElement, $UserCacheArrayData)) { 
+          $UserOptions[$key] = $ucaElement;
+          $ucaElementWritten = saveUserCache('TRUE'); }
+        // / If the above code successfully wrote data to the beginning of the $UserCache we must re-run this function to load new data into memory.
+        // / We could skip this by using a simple require, but we just wrote new data to the cache and we want to run it by all the sanity-check code above
+        // / before we let our PHP interpreter see it.
+        if ($ucaElementWritten) loadUserCache();
+        break; }
   // / Clean up unneeded memory.
-  $requiredOptions = $option = $value = NULL;
-  unset($requiredOptions, $option, $value);
+  $option = $value = $key = $ucaElement = $ucaElementWritten = NULL;
+  unset($UserCacheRequiredOptions, $option, $value, $key, $ucaElement, $ucaElementWritten);
   return(array($UserOptions, $UserCacheIsLoaded)); }
 
 // / A function to initialize the libraries into categories based on their status.
@@ -387,7 +443,9 @@ function generateNotificationsFile() {
 
 // / A function for loading notifications.
 // / A notification is considered a single line of the notifications file.
-function loadNotifications($NotificationsFile) { 
+function loadNotifications() {
+  // / Set variables. 
+  global $NotificationsFile;
   $Notifications = file($NotificationsFile);
   // / Check that $Notifications is actually an array.
   if (!is_array($Notifications) or $Notifications === FALSE) $Notifications = array(); 
@@ -409,7 +467,7 @@ function decodeNotification($Notification) {
 // / A notification is considered a single line of the notifications file.
 // / Lines that begin with a single charactere of whitespace are "unread."
 // / To mark an item as "read" we simply remove the leading whitespace from unread notifications. 
-function readNotification() { 
+function readNotifications() { 
   // / Set variables.
   global $Notifications;
   // / Iterate through the notifications and detect the first character. 
@@ -432,7 +490,7 @@ function readNotification() {
 // / A notification is considered a single line of the notifications file.
 // / Notifications are not stored with any corresponding serialization or indexing data.
 // / The date-time of the notifications combined with its content determines unique identity.
-function purgeNotifications($NotificationToPurge) { 
+function purgeNotification($NotificationToPurge) { 
   // / Set variables. Note that we assume the $NotificationsFileWritten and $NotificationsPurged are false until the notification
   // / is deleted and a file is created. If either of those fail we assume that the operation failed.
   global $NotificationFile, $Notifications;

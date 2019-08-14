@@ -1,4 +1,5 @@
 <?php 
+
 // / A function to send a friend request.
 function requestFriend($ReuestingUserID, $TargerUserID) { 
 
@@ -18,5 +19,11 @@ function purgeFriend($FriendToPurge) {
 // / A function to block a friend completely. 
 // / Note that this works even if a user isn't on the running users friend list.
 function blockFriend($FriendToBlock) { 
+
+}
+
+// / A function to unblock a frient.
+// / Note that this works even if a user isn't on the running users friend list.
+function unblockFriend($FriendToUnlblock) {
 
 }
