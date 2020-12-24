@@ -1,3 +1,18 @@
+ /* 
+HonestRepair Diablo Engine  -  loginModalStyles
+https://www.HonestRepair.net
+https://github.com/zelon88
+
+Licensed Under GNU GPLv3
+https://www.gnu.org/licenses/gpl-3.0.html
+
+Author: Justin Grimes
+Date: 8/13/2019
+<3 Open-Source
+
+This CSS file determines the stylesheet for the login modal.
+*/
+
  /* The Modal (background) */
 .modal {
   display: none; /* Hidden by default */
