@@ -1,8 +1,17 @@
 HRCLOUD3 DEV NOTES
 
 ----------
+v0.6.1 - 12/24/2020
+Merry Almost Xmas! More core work.
+
+-Getting closer and closer to testing authentication.
+-Implementing features revealed some missing components (like handing users prior to a login attempt).
+-Improve code comment consistency.
+-Found a couple typos.
+
+----------
 v0.6 - 12/23/2020
-v0.6 - Fixed a lot of Syntax errors, working on UI
+Fixed a lot of Syntax errors, working on UI
 
 -Fixed a lot of syntax errors. 
 -Working on testing authentication. 

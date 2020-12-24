@@ -1,10 +1,26 @@
 <?php
 
+/* 
+HonestRepair Diablo Engine  -  Header
+https://www.HonestRepair.net
+https://github.com/zelon88
+
+Licensed Under GNU GPLv3
+https://www.gnu.org/licenses/gpl-3.0.html
+
+Author: Justin Grimes
+Date: 8/13/2019
+<3 Open-Source
+
+The Header file is for preparing an HTML document to contain the output of Diablo Engine.
+*/
+
 // / The following code sets the name of the application to a default value in the event that the core has not run yet.
 
 $ApplicationNameString = 'HRCloud3 Diablo Engine';
 if (!isset($ConfigIsLoaded) and file_exists('config.php')) include('config.php');
 $ApplicationNameString = $ApplicationName;
+
 ?> 
 
 <!DOCTYPE html>
