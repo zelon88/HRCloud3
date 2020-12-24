@@ -1,0 +1,36 @@
+ /* 
+HonestRepair Diablo Engine  -  centerAnything
+https://www.HonestRepair.net
+https://github.com/zelon88
+
+Licensed Under GNU GPLv3
+https://www.gnu.org/licenses/gpl-3.0.html
+
+Author: Justin Grimes
+Date: 12/24/2020
+<3 Open-Source/
+
+This CSS file is used to center any element vertically or horizontally on the screen.
+*/
+
+.horizontal-center {
+  margin: 0;
+  position: absolute;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%); }
+
+.vertical-center {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%); }
+
+.center {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%); }
