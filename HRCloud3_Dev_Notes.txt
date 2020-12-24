@@ -1,5 +1,21 @@
 HRCLOUD3 DEV NOTES
 
+v0.6.2 - 12/24/2020
+Working on authentication procedure.
+
+-Moved some stuff between files. 
+-Had to figure out a mechanism for not throwing the login screen before a user has requested it.
+-Had to figure out a file structure that would result in proper HTML syntax for UI elements but proper value-only returns for ajax calls.
+-Added a conditional statement to skip a large section of the core when not enough information is supplied to authenticate a user. 
+-Cleaned up stylesheets. 
+-Renamed a few files.
+-Put in some work on header.html file. HTML syntax is looking good. Login screens are looking good. 
+-The main login.html page now functions to the extent that it generates a clienttoken for the specified user. Need to implement on login popup modal also.
+-Need to implement async calls for retrieving the clienttoken from core when userinput and requesttokens post inputs are supplied. This way the clienttoken can be hashed client-side with the password input for stage 2 of the login procedure.
+-Login procedure will be 2 stages. Username entry, Password entry.
+-In the future it would make things more scalable if there were a dropdown for region/continent/country on the username entry field. That way we don't have to iterate through a massive worldwide user list for each login attempt. We could localize this to make things more secure and faster.
+-Added version checking. The core will now verify that the compatibilityCore is enabled. If it is, the version from it will be checked against the version contained in versionInfo.php. If discrepancies are found execution will be halted and a descriptive error will be raied. If the versions match the engine will continue as normal. If for any reason the compatibilityCore is disabled, the check will be skipped completely.
+
 ----------
 v0.6.1 - 12/24/2020
 Merry Almost Xmas! More core work.

@@ -32,106 +32,90 @@ $ApplicationNameString = $ApplicationName;
     <link rel="stylesheet" href="Resources/meyers-reset.css">
     <link rel="stylesheet" href="Resources/Styles/navigationStyles.css">
     <link rel="stylesheet" href="Resources/Styles/loginModalStyles.css">
+    <link rel="stylesheet" href="Resources/Styles/centerAnything.css">    
+    <script src='Resources/jquery-3.1.0.min.js'></script>
   </head>
   <body translate="no">
 
   <!-- Top navigation bar. -->
   <ul class='top-level'>
-  <li>
-    <a href='javascript:;'>Home</a>
-  </li>
-  <li>
-    <a href='javascript:;'>About</a>
-    <ul class='second-level'>
-      <li>
-        <a href='javascript:;'>Test</a>
-      </li>
-      <li>
-        <ul class='third-level'>
-          <li>
-            <a href='javascript:;'>One</a>
-          </li>
-          <li>
-            <a href='javascript:;'>Two</a>
-          </li>
-          <li>
-            <a href='javascript:;'>Three</a>
-          </li>
-        </ul>
-        <a href='javascript:;'>Test</a>
-      </li>
-      <li>
-        <a href='javascript:;'>The Team</a>
-        <ul class='third-level'>
-          <li>
-            <a href='javascript:;'>One</a>
-          </li>
-          <li>
-            <a href='javascript:;'>Two</a>
-          </li>
-          <li>
-            <a href='javascript:;'>Three</a>
-          </li>
-        </ul>
-      </li>
-    </ul>
-  </li>
-  <li>
-    <a href='javascript:;'>Test</a>
-    <ul class='second-level'>
-      <li>
-        <a href='javascript:;'>Test</a>
-      </li>
-      <li>
-        <a href='javascript:;'>Test</a>
-      </li>
-      <li>
-        <a href='javascript:;'>Test</a>
-      </li>
-    </ul>
-  </li>
-  <li>
-    <a href='javascript:;'>Forums</a>
-  </li>
-  <li>
-    <a href='javascript:;'>Contact</a>
-  </li>
-  <li>
-    <a> 
+    <li>
+      <a href='Home.php'>Home</a>
+    </li>
 
-  <!-- Button to open the modal login form. -->
-  <button onclick="document.getElementById('id01').style.display='block'">Login</button>
-  <!-- The Modal -->
-  <div id="id01" class="modal">
-    <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">&times;</span>
-    <!-- Modal Content. -->
-    <form class="modal-content animate" action="/action_page.php">
-      <div class="imgcontainer">
-        <img src="Resources/placeholderAvatar.png" alt="Avatar" class="avatar">
+    <li>
+      <a href='javascript:;'>About</a>   
+      <ul class='second-level'>
+        <li>
+          <a href='javascript:;'>Contact</a>
+        </li>
+       <li>
+          <a href='javascript:;'>Privacy Policy</a>
+        </li>
+       <li>
+          <a href='javascript:;'>Terms Of Service</a>
+        </li>
+      </ul>
+    </li>
+
+    <li>
+      <a href='CloudHome.php'>Cloud</a>   
+      <ul class='second-level'>
+        <li>
+          <a href='javascript:;'>Apps</a>
+        </li>
+       <li>
+          <a href='javascript:;'>Drive</a>
+        </li>
+       <li>
+          <a href='javascript:;'>Settings</a>
+        </li>
+      </ul>
+    </li>
+
+<?php /* 
+    <li>
+      <a href='javascript:;'>Test</a>
+      <ul class='second-level'>
+        <li>
+          <a href='javascript:;'>Test</a>
+        </li>
+        <li>
+          <a href='javascript:;'>Test</a>
+        </li>
+        <li>
+          <a href='javascript:;'>Test</a>
+        </li>
+      </ul>
+    </li>
+ */ ?>
+
+    <li>
+      <!-- Button to open the modal login form. -->
+      <a onclick="document.getElementById('loginModal').style.display='block'">Login</a>
+      <!-- The Modal -->
+      <div id="loginModal" class="modal">
+        <!-- Modal Content. -->
+        <form class="modal-content animate" action="/action_page.php">
+          <div class="imgcontainer">
+            <img src="Resources/placeholderAvatar.png" alt="Avatar" class="avatar">
+          </div>
+
+          <div class="container" style="background-color:#f1f1f1; text-align:center;">
+
+            <input type="text" placeholder="Enter Username" name="uname" required>
+            <button type="submit">Continue</button>
+
+            <span class="psw"><a href="#">Forgot Usernamea</a></span>
+            <span class="psw"><a href="#">Create New Account</a></span>
+            <button type="button" onclick="document.getElementById('loginModal').style.display='none'" class="cancelbtn">Cancel</button>
+          </div>
+        </form>
       </div>
-
-      <div class="container" style="background-color:#f1f1f1; text-align:center;">
-        <label for="uname"><b>Username</b></label>
-        <input type="text" placeholder="Enter Username" name="uname" required>
-
-        <label for="psw"><b>Password</b></label>
-        <input type="password" placeholder="Enter Password" name="psw" required>
-
-        <button type="submit">Login</button>
-        <label><input type="checkbox" checked="checked" name="remember"> Remember Me</label>
-
-        <span class="psw"><a href="#">Forgot Password?</a></span>
-        <button type="button" onclick="document.getElementById('id01').style.display='none'" class="cancelbtn">Cancel</button>
-      </div>
-    </form>
-  </div></a>
     </li>
 
   </ul>
 
 
-  <script src='Resources/jquery-3.1.0.min.js'></script>
-</body>
-
-</html>
+  
  

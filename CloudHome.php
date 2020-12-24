@@ -27,7 +27,5 @@ else require_once ('header.html');
 // / Load the header file and prepare valid HTML syntax for the session.
 if (!file_exists('core.php')) die('ERROR!!! 1B, Could not process the Core Diablo Engine file (core.php)!'.PHP_EOL); 
 else require_once ('core.php');
-// / -----------------------------------------------------------------------------------
-?>
 
-<div><h1>Under Construction.</h1></div>
+if (!$GlobalsAreVerified) if (!$RequestTokens) requireLogin(); 

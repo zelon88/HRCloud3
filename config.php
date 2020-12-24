@@ -89,12 +89,6 @@ $Users = array(
  array('5', 'Mikey', 'test@gmail.com', 'password', "FALSE", ""), 
  array('6', 'Donny', 'test@gmail.com', 'these-are-all-fake-passwords', "FALSE", "") );
 
-// / Hash Config User Info.
-// / If the passwords for the config.php users listed above are in plain-speech they will need to be hashed and stored in the cache
-// / before they are valid. Set the  $HashConfigPasswords  to  TRUE  if the passwords above are plainspeech. Set to  FALSE  if they
-// / are already hashed with SHA256.
-$HashConfigUserinfo = TRUE;
-
 // / Available Cores.
 // / The following array specifies which corefiles are permitted to load within the platform. 
 // / Cores not specified here will not be allowed to run using the loadCores() function.
