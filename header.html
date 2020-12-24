@@ -1,0 +1,121 @@
+<?php
+
+// / The following code sets the name of the application to a default value in the event that the core has not run yet.
+
+$ApplicationNameString = 'HRCloud3 Diablo Engine';
+if (!isset($ConfigIsLoaded) and file_exists('config.php')) include('config.php');
+$ApplicationNameString = $ApplicationName;
+?> 
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <!-- Populate the title field with the ApplicationName from the config.php file. -->
+    <title><?php echo $ApplicationNameString; ?></title>
+    <link rel="stylesheet" href="Resources/meyers-reset.css">
+    <link rel="stylesheet" href="Resources/Styles/navigationStyles.css">
+    <link rel="stylesheet" href="Resources/Styles/loginModalStyles.css">
+  </head>
+  <body translate="no">
+
+  <!-- Top navigation bar. -->
+  <ul class='top-level'>
+  <li>
+    <a href='javascript:;'>Home</a>
+  </li>
+  <li>
+    <a href='javascript:;'>About</a>
+    <ul class='second-level'>
+      <li>
+        <a href='javascript:;'>Test</a>
+      </li>
+      <li>
+        <ul class='third-level'>
+          <li>
+            <a href='javascript:;'>One</a>
+          </li>
+          <li>
+            <a href='javascript:;'>Two</a>
+          </li>
+          <li>
+            <a href='javascript:;'>Three</a>
+          </li>
+        </ul>
+        <a href='javascript:;'>Test</a>
+      </li>
+      <li>
+        <a href='javascript:;'>The Team</a>
+        <ul class='third-level'>
+          <li>
+            <a href='javascript:;'>One</a>
+          </li>
+          <li>
+            <a href='javascript:;'>Two</a>
+          </li>
+          <li>
+            <a href='javascript:;'>Three</a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <a href='javascript:;'>Test</a>
+    <ul class='second-level'>
+      <li>
+        <a href='javascript:;'>Test</a>
+      </li>
+      <li>
+        <a href='javascript:;'>Test</a>
+      </li>
+      <li>
+        <a href='javascript:;'>Test</a>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <a href='javascript:;'>Forums</a>
+  </li>
+  <li>
+    <a href='javascript:;'>Contact</a>
+  </li>
+  <li>
+    <a> 
+
+  <!-- Button to open the modal login form. -->
+  <button onclick="document.getElementById('id01').style.display='block'">Login</button>
+  <!-- The Modal -->
+  <div id="id01" class="modal">
+    <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">&times;</span>
+    <!-- Modal Content. -->
+    <form class="modal-content animate" action="/action_page.php">
+      <div class="imgcontainer">
+        <img src="Resources/placeholderAvatar.png" alt="Avatar" class="avatar">
+      </div>
+
+      <div class="container" style="background-color:#f1f1f1; text-align:center;">
+        <label for="uname"><b>Username</b></label>
+        <input type="text" placeholder="Enter Username" name="uname" required>
+
+        <label for="psw"><b>Password</b></label>
+        <input type="password" placeholder="Enter Password" name="psw" required>
+
+        <button type="submit">Login</button>
+        <label><input type="checkbox" checked="checked" name="remember"> Remember Me</label>
+
+        <span class="psw"><a href="#">Forgot Password?</a></span>
+        <button type="button" onclick="document.getElementById('id01').style.display='none'" class="cancelbtn">Cancel</button>
+      </div>
+    </form>
+  </div></a>
+    </li>
+
+  </ul>
+
+
+  <script src='Resources/jquery-3.1.0.min.js'></script>
+</body>
+
+</html>
+ 

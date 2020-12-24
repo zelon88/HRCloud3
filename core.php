@@ -35,7 +35,21 @@ General Code Conventions Utilized:
 set_time_limit(0);
 
 // / ----------------------------------------------------------------------------------
+// / Make sure there is a session started and load the configuration file.
+// / Also kill the application if $MaintenanceMode is set to  TRUE.
+if (session_status() == PHP_SESSION_NONE) session_start();
+if (!file_exists('config.php')) die('ERROR!!! 0, Could not process the Configuration file (config.php)!'.PHP_EOL); 
+else require_once ('config.php');
+$ConfigIsLoaded = TRUE; 
+if ($MaintenanceMode === TRUE) die('The requested application is currently unavailable due to maintenance.'.PHP_EOL); 
+// / ----------------------------------------------------------------------------------
+
+// / ----------------------------------------------------------------------------------
 // / Perform sanity checks to verify the environment is suitable for running.
+
+// / Load the header file and prepare valid HTML syntax for the session.
+if (!file_exists('header.html')) die('ERROR!!! 1, Could not process the Header file (header.html)!'.PHP_EOL); 
+else require_once ('header.html');
 
 // / Detemine the version of PHP in use to run the application.
 // / Any PHP version earlier than 7.0 IS STRICTLY NOT SUPPORTED!!!
@@ -43,24 +57,14 @@ set_time_limit(0);
 // / If you run this application on a PHP version earlier than 7.0 you may experience extremely bizarre or even dangerous behavior.
 // / PLEASE DO NOT RUN THIS APPLICATION ON ANYTHING EARLIER THAN PHP 7.0!!! 
 // / HONESTREPAIR ASSUMES NO LIABILITY FOR USING THIS SOFTWARE!!!
-if (version_compare(PHP_VERSION, '7.0.0') <= 0) die('<a class="errorMessage">ERROR!!! 0, This application is NOT compatible with PHP versions earlier than 7.0. Running this application on unsupported PHP versions WILL cause unexpected behavior!</a>'.PHP_EOL); 
+if (version_compare(PHP_VERSION, '7.0.0') <= 0) die('<a class="errorMessage">ERROR!!! 2A, This application is NOT compatible with PHP versions earlier than 7.0. Running this application on unsupported PHP versions WILL cause unexpected behavior!</a>'.PHP_EOL); 
 
 // / Determine the operating system in use to run the application.
 // / Any version of Windows IS STRICTLY NOT SUPPORTED!!!
 // / Specifically, only Debian-based Linux distros.
 // / PLEASE DO NOT RUN THIS APPLICATION ON A WINDOWS OPERATING SYSTEM!!! 
 // / HONESTREPAIR ASSUMES NO LIABILITY FOR USING THIS SOFTWARE!!!
-if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') die('<a class="errorMessage">ERROR!!! 1, This application is NOT compatible with the Windows Operating System. Running this application on unsupported operating systems WILL cause unexpected behavior!</a>'.PHP_EOL); 
-// / ----------------------------------------------------------------------------------
-
-// / ----------------------------------------------------------------------------------
-// / Make sure there is a session started and load the configuration file.
-// / Also kill the application if $MaintenanceMode is set to  TRUE.
-if (session_status() == PHP_SESSION_NONE) session_start();
-if (!file_exists('config.php')) $ConfigIsLoaded = FALSE; 
-else require_once ('config.php'); 
-$ConfigIsLoaded = TRUE; 
-if ($MaintenanceMode === TRUE) die('The requested application is currently unavailable due to maintenance.'.PHP_EOL); 
+if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') die('<a class="errorMessage">ERROR!!! 2B, This application is NOT compatible with the Windows Operating System. Running this application on unsupported operating systems WILL cause unexpected behavior!</a>'.PHP_EOL); 
 // / ----------------------------------------------------------------------------------
 
 // / ----------------------------------------------------------------------------------
@@ -87,7 +91,7 @@ function verifyDate() {
   // / Set variables. Create an accurate human-readable date from the servers timezone.
   $Date = date("m-d-y");
   $Time = date("F j, Y, g:i a"); 
-  $Minute = int(date('i'));
+  $Minute = intval(date('i'));
   $LastMinute = $Minute - 1;
   // / We need to accomodate the off-chance that execution spans multiple days. 
   // / In other words, the application starts at 11:59am and ends at 12:00am.
@@ -129,7 +133,7 @@ function verifyInstallation() {
   // / Clean up unneeded memory.
   $dirCheck = $indexCheck = $logCheck = $cacheCheck = $requiredDirs = $requiredDir = $dirExists = $indexExists = $logHash = NULL;
   unset($dirCheck, $indexCheck, $logCheck, $cacheCheck, $requiredDirs, $requiredDir, $dirExists, $indexExists, $logHash);
-  return(array($LogFile, $CacheFile, $NotificationsFile, $InstallationIsVerified)); }
+  return(array($LogFile, $CacheFile, $InstallationIsVerified)); }
 
 // / A function to generate useful, consistent, and easily repeatable error messages.
 function dieGracefully($ErrorNumber, $ErrorMessage) { 
@@ -159,7 +163,7 @@ function logEntry($EntryText) {
 // / displayed or opened locally in a text editor.
 function loadCache() { 
   // / Set variables. 
-  global $Users, $CacheFile, $HashConfigUserinfo;
+  global $Users, $CacheFile, $HashConfigUserinfo, $Salts;
   foreach ($Users as $User) { 
     if ($HashConfigUserinfo) $User[3] = hash('sha256', $Salts[0].$User[3].$Salts[0].$Salts[1].$Salts[2].$Salts[3]); } 
   require ($CacheFile);
@@ -184,7 +188,7 @@ function loadCores($coresToLoad) {
         require($coreFile);
         $CoresLoaded = array_push($CoresLoaded, strtoupper($coreToLoad)); }
       else $error = TRUE; } }
-  if is_string($coresToLoad) { 
+  if (is_string($coresToLoad)) { 
     $coreFile = strtolower($coresToLoad).'Core.php';
     if (file_exists($coreFile) && in_array(strtoupper($coresToLoad), $AvailableCores)) { 
       require($coreFile);
@@ -192,7 +196,7 @@ function loadCores($coresToLoad) {
   // / Clean up unneeded memory.
   $coresToLoad  = $coreFile = $coreToLoad = NULL;
   unset($coresToLoad, $coreFile, $coreToLoad);
-  return ($CoresLoaded, $error); }
+  return(array($CoresLoaded, $error)); }
 
 // / A function to validate and sanitize requried session and POST variables.
 function verifyGlobals() { 
@@ -201,24 +205,27 @@ function verifyGlobals() {
   $SessionID = $GlobalsAreVerified = FALSE;
   // / Set authentication credentials from supplied inputs when inputs are supplied.
   if (isset($_POST['UserInput']) && isset($_POST['PasswordInput']) && isset($_POST['ClientTokenInput'])) { 
-    $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserInput']), ENT_QUOTES, 'UTF-8');
-    $_SESSION['PasswordInput'] = $PasswordInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['PasswordInput']), ENT_QUOTES, 'UTF-8');  
-    $_SESSION['ClientTokenInput'] = $ClientTokenInput = hash('sha256', $_POST['ClientTokenInput']), ENT_QUOTES, 'UTF-8');  
+    $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserInput']);
+    $_SESSION['PasswordInput'] = $PasswordInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['PasswordInput']);  
+    $_SESSION['ClientTokenInput'] = $ClientTokenInput = hash('sha256', $_POST['ClientTokenInput']);  
     $SessionID = $Salts[3].$Date.$Salts[0].$PasswordInput.$UserInput; }
+  else $UserInput = $PasswordInput = $ClientTokenInput = NULL;
   // / Verify the session ID or set a new one.
-  if (isset($_SESSION['SessionID'])) if ($_SESSION['SessionID'] === $Salts[3].$Date.$Salts[0].$PasswordInput.$UserInput) $SessionID = $_SESSION['SessionID']; 
+  if (isset($_SESSION['SessionID'])) 
+    if ($_SESSION['SessionID'] === $Salts[3].$Date.$Salts[0].$PasswordInput.$UserInput) $SessionID = $_SESSION['SessionID']; 
   // / Set the UserDir based on user input or most recently used.
-  if (isset($_POST['UserDir'])) $_SESSION['UserDir'] = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserDir']), ENT_QUOTES, 'UTF-8');
+  if (isset($_POST['UserDir'])) $_SESSION['UserDir'] = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserDir']);
   if (!isset($_SESSION['UserDir']) or $_SESSION['UserDir'] == '') $_SESSION['UserDir'] = DIRECTORY_SEPARATOR;
   $UserDir = $_SESSION['UserDir'];
   // / Detect if required variables are set.
   if ($SessionID !== FALSE) $GlobalsAreVerified = TRUE;
-  return($UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $GlobalsAreVerified); }
+  return(array($UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $GlobalsAreVerified)); }
 
 // / A function to throw the login page when needed.
 function requireLogin() { 
  if (file_exists('login.php'))
- require ('login.php');
+   require ('login.php');
+   dieGracefully(5, 'User is not logged in!');
  return(array()); }
 
 // / A function to generate new user tokens and validate supplied ones.
@@ -245,6 +252,7 @@ function generateTokens($ClientTokenInput, $PasswordInput) {
 
 // / A function to authenticate a user and verify an encrypted input password with supplied tokens.
 function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) { 
+  echo 'AUTHENTICATING'.PHP_EOL;
   // / Set variables. Note that we try not to include anything here we don't have to because
   // / It's going to be hammered by someone, somewhere, eventually. Less is more in terms of code & security.
   global $Users;
@@ -290,7 +298,7 @@ function generateUserCache() {
   $UserCacheExists = $UserCache = $UserDataDir = FALSE;
   $UserDataDir = 'Data'.DIRECTORY_SEPARATOR.$UserID.DIRECTORY_SEPARATOR;
   // / Define the $UserCacheFile.
-  $UserCacheFile = $UserDataDir.'UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php');
+  $UserCacheFile = $UserDataDir.'UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php';
   // / Wrap the data above in the proper PHP array syntax so it can be included later in the function.
   $userCacheData = '<?php'.PHP_EOL.'$userCacheData = array('.$UserCacheArrayData.');'.PHP_EOL;
   // / Write default cache data to the $UserCacheFile. 
@@ -353,12 +361,12 @@ function loadUserCache() {
       if (!isset($userCacheData)) { 
         $userCache = NULL; 
         unset($userCache); 
-        return($UserOptions, $UserCacheIsLoaded); }
+        return(array($UserOptions, $UserCacheIsLoaded)); }
       // / If the cache data isn't an array we return an error and stop.
       if (!is_array($userCacheData)) { 
         $userCache = $userCacheData = NULL; 
         unset($userCache, $userCacheData); 
-        return($UserOptions, $UserCacheIsLoaded); }
+        return(array($UserOptions, $UserCacheIsLoaded)); }
       // / If the user cache is valid we delete the temporary data and validate each option.
       $UserOptions = $userCacheData;
       $userCacheData = NULL;
@@ -381,7 +389,7 @@ function loadUserCache() {
         // / We could skip this by using a simple require, but we just wrote new data to the cache and we want to run it by all the sanity-check code above
         // / before we let our PHP interpreter see it.
         if ($ucaElementWritten) loadUserCache();
-        break; }
+        break; } }
   // / Clean up unneeded memory.
   $option = $value = $key = $ucaElement = $ucaElementWritten = NULL;
   unset($UserCacheRequiredOptions, $option, $value, $key, $ucaElement, $ucaElementWritten);
@@ -424,7 +432,7 @@ function loadLibraryData() {
       $LibraryError = $LibrariesActive[2];
     // / Stop validating as soon as an error is thrown.
     if (!$LibraryDataIsLoaded) break; }
-  return(array($LibraryError, $LibraryDataIsLoaded)); } 
+  return(array($LibraryError, $LibraryDataIsLoaded)); } } 
 
 // / A function to determine if a notifications file exists for the current user and generate one if missing.
 // / A notification is considered a single line of the notifications file.
@@ -432,7 +440,7 @@ function generateNotificationsFile() {
   // / Set variables. Note that we assume the $notificationsCheck is true until we verify that a $NotificationsFile exists.
   global $Salts, $UserID, $UserDataDir;
   $notificationsCheck = TRUE;
-  $NotificationsFile = $UserDataDir.'UserNotifications-'.hash('sha256',$Salts[1].'NOTIFICATIONS'.$UserID).'.php');
+  $NotificationsFile = $UserDataDir.'UserNotifications-'.hash('sha256',$Salts[1].'NOTIFICATIONS'.$UserID).'.php';
   // / Detect if no file exists and try to create one.
   if (!file_exists($NotificationsFile)) $notificationsCheck = file_put_contents($NotificationsFile, ''); 
   if (!$notificationsCheck) $NotificationsFileExists = $NotificationsFile = FALSE;
@@ -480,7 +488,7 @@ function readNotifications() {
       $Notifications[$key] = $notification; } }
   // / Write the new array back to the notifications file. 
   // / Note we don't need to reload the $NotificationsFile because we also modifed the copy already in memory.
-  $NotificationsFileUpdated = file_put_contents($NotificationsFile, $Notifications);]
+  $NotificationsFileUpdated = file_put_contents($NotificationsFile, $Notifications);
   // / Clean up unneeded memory.
   $key = $notification = $firstChar = NULL;
   unset($key, $notification, $firstChar);
@@ -498,7 +506,7 @@ function purgeNotification($NotificationToPurge) {
   // / Iterate through the notifications looking for ones that match the specified notification.
   foreach ($Notifications as $key=>$notificationToCheck) { 
     // / If we find a matching notification we remove it from the array that is in memory.
-    if ($NotificationToPurge === $notificationToCheck) !== FALSE) unset($Notifications[$key]);
+    if ($NotificationToPurge === $notificationToCheck) unset($Notifications[$key]);
     // / With a new $Notifications array saved to memory, we can dump the modified data back into the $NotificationsFile.
     $notificationFileWritten = file_put_contents($NotificationFile, $Notifications);
     // / Note that below we only mark the check a success once we've verified that we both detected a match and re-wrote the file.
@@ -522,22 +530,21 @@ function pushNotification($NotificationToPush, $TargetUserID) {
 // / A function for the user to send an email.
 function sendEmail($address, $content, $template) { 
 
-}
-
-
+} 
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
 // / The following code specifies the logic flow for the session.
 
+// / Reset the time limit for script execution.
+set_time_limit(0);
+
 // / This code verifies the date & time for file & log operations.
 list ($Date, $Time, $Minute, $LastMinute) = verifyDate();
-if (!$ConfigIsLoaded) die('ERROR!!! 2, '.$Time.', Could not process the Configuration file (config.php)!'.PHP_EOL); 
-else if ($Verbose) logEntry('Verified time & configuration.');
 
 // / This code verifies the integrity of the application.
 // / Also generates required directories in case they are missing & creates required log & cache files.
-list ($LogFile, $CacheFile, $NotificationsFile, $InstallationIsVerified) = verifyInstallation();
+list ($LogFile, $CacheFile, $InstallationIsVerified) = verifyInstallation();
 if (!$InstallationIsVerified) dieGracefully(3, 'Could not verify installation!');
 else if ($Verbose) logEntry('Verified installation.');
 
@@ -548,7 +555,7 @@ else if ($Verbose) logEntry('Loaded cache file.');
 
 // / This code takes in all required inputs to build a session and ensures they exist & are a valid type.
 list ($UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $GlobalsAreVerified) = verifyGlobals();
-if (!$GlobalsAreVerified) requireLogin(); dieGracefully(5, 'User is not logged in!');
+if (!$GlobalsAreVerified) requireLogin(); 
 else if ($Verbose) logEntry('Verified global variables.');
 
 // / This code ensures that a same-origin UI element generated the login request.
@@ -589,5 +596,5 @@ else if ($Verbose) logEntry('Created user cache.');
 // / This code generates a user notifications file if none exists. Useful for initializing new users logging-in for the first time.
 list ($NotificationsFileExists, $NotificationsFile) = generateNotificationsFile();
 if (!$NotificationsFileExists or !$NotificationsFile) dieGracefully(11, 'Could not generate a user notifications file!');
-else if ($Verbose) logEntry('Created user notifications.');
+else if ($Verbose) logEntry('Created user notifications.'); 
 // / -----------------------------------------------------------------------------------

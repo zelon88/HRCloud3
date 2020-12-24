@@ -16,6 +16,10 @@ The Configuration File contains all of the critical settings required for Diablo
 
 // / ----------------------------------------------------------------------------------
 
+// / Application Name
+// / Set  $ApplicationName  to a string that represents the name of this application.
+$ApplicationName = 'HRCloud3';
+
 // / Maintenance Mode
 // / Set  $MaintenanceMode  to  TRUE  if you want to prevent execution of the Diablo engine.
 $MaintenanceMode = FALSE;
@@ -79,10 +83,10 @@ $Libraries = array(
 // / Arrays are formatted as  $Users['USER_ID', 'USER_NAME', 'USER_EMAIL', 'SHA-256_HASHED_PASSWORD', "ADMIN_YES/NO(bool)", "LAST_SESION_ID"]
 $Users = array(
  array('1', 'zelon88', 'test@gmail.com', 'testpassword', "TRUE", ""),
- array('2', 'Nikki', 'test@gmail.com', 'password', "FALSE", "") 
- array('3', 'Leo', 'test@gmail.com', 'password', "FALSE", "") 
- array('4', 'Raph', 'test@gmail.com', 'password', "FALSE", "") 
- array('5', 'Mikey', 'test@gmail.com', 'password', "FALSE", "") 
+ array('2', 'Nikki', 'test@gmail.com', 'password', "FALSE", ""), 
+ array('3', 'Leo', 'test@gmail.com', 'password', "FALSE", ""), 
+ array('4', 'Raph', 'test@gmail.com', 'password', "FALSE", ""), 
+ array('5', 'Mikey', 'test@gmail.com', 'password', "FALSE", ""), 
  array('6', 'Donny', 'test@gmail.com', 'these-are-all-fake-passwords', "FALSE", "") );
 
 // / Hash Config User Info.

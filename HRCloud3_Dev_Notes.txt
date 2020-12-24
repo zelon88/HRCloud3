@@ -1,6 +1,15 @@
 HRCLOUD3 DEV NOTES
 
 ----------
+v0.6 - 12/23/2020
+v0.6 - Fixed a lot of Syntax errors, working on UI
+
+-Fixed a lot of syntax errors. 
+-Working on testing authentication. 
+-Working on UI.
+-Create a "Console" element in the header UI to organize core.php output prior to displaying more UI elements.
+
+----------
 v0.5.6
 
 -I have a bunch of notes and thoughts floating around about how to structure things that I need a consolidated place for it all.
