@@ -1,0 +1,77 @@
+@charset "UTF-8";
+html {
+  font-size: 62.5%; }
+
+body {
+  background: url("../debut_dark.webp"); }
+
+ul {
+  font: 1.5rem/1.7rem Helvetica, Arial, sans-serif;
+  background-color: #025;
+  box-shadow: 0 0.5rem 0.5rem rgba(0, 0, 0, 0.3); }
+
+li {
+  position: relative;
+  display: inline-block;
+  list-style: none; }
+
+li a {
+  display: block;
+  padding: 1rem 1.5rem;
+  color: #ccc;
+  text-decoration: none;
+  transition: background 0.2s; }
+
+li a:hover {
+  color: white;
+  background: #57a; }
+
+.top-level {
+  border-bottom: 1px solid #57a; }
+
+.second-level,
+.third-level {
+  min-width: 20rem;
+  border: 1px solid #57a;
+  border-radius: 0.3rem; }
+
+.top-level li:hover .second-level {
+  left: 0; }
+
+.second-level:before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 2rem;
+  border-bottom: 0.8rem solid #57a;
+  border-left: 0.8rem solid transparent;
+  border-right: 0.8rem solid transparent; }
+
+.second-level {
+  position: absolute;
+  top: 100%;
+  left: -999rem; }
+
+.second-level li {
+  position: relative;
+  display: block; }
+
+.second-level li a {
+  margin: 0; }
+
+.second-level li:hover .third-level {
+  left: 100%; }
+
+.third-level:before {
+  content: "";
+  position: absolute;
+  top: 1rem;
+  left: -0.8rem;
+  border-bottom: 0.8rem solid transparent;
+  border-top: 0.8rem solid transparent;
+  border-right: 0.8rem solid #57a; }
+
+.third-level {
+  position: absolute;
+  left: -999rem;
+  top: 0; }
