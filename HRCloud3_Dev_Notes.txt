@@ -1,5 +1,35 @@
 HRCLOUD3 DEV NOTES
 
+----------
+v0.6.3 - 1/15/2021
+More authentication work.
+
+-Working on the UI elements responsible for logging in.
+-Using jQuery & Ajax for asynchronous callback.
+-So far the username portion is all done. 
+  -The user clicks Login and the modal appears. 
+  -They are prompted for their username. 
+  -The username modal has a hidden field to request a token.
+  -They submit their username. The token request is also sent.
+  -The username is set and a token is generated.
+  -The token must be used within 1-2 minutes or it will expire.
+-More work needs to be done.
+  -The token can now be passed back with a password and username for authentication.
+-Improve comments.
+-Fix several bugs.
+  -Return for checkVersions & loadCores functions were incorrect.
+  -loadCores had bugs in the error checking procedure. It returned the wrong boolean and halted the core in all cases.
+-Update jQuery from v3.1.0 to v3.5.1.
+-Fix 404 errors
+  -meyers-reset.css
+  -favicon.ico
+-Update HRC2-Lib.js.
+  -Improve comments.
+  -Improve code readability via segmentation.
+  -Add GPL header text.
+  -Rename to HRC3-Lib.js.
+
+----------
 v0.6.2 - 12/24/2020
 Working on authentication procedure.
 

@@ -8,11 +8,13 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 8/13/2019
+Date: 1/15/2021
 <3 Open-Source
 
 The Compatibility Core handles engine maintanence, updates & compatibility-related modifications.
 */
+
+global $ConfigIsLoaded, $EngineVersion;
 
 // / ----------------------------------------------------------------------------------
 // / Make sure the core is loaded.
@@ -21,7 +23,7 @@ if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! compatibi
 
 // / ----------------------------------------------------------------------------------
 // / Specify the engine version.
-$EngineVersion = 'v0.6.2';
+$EngineVersion = 'v0.6.3';
 // / ----------------------------------------------------------------------------------
 
 // / ----------------------------------------------------------------------------------

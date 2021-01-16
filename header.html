@@ -29,11 +29,14 @@ $ApplicationNameString = $ApplicationName;
     <meta charset="UTF-8">
     <!-- Populate the title field with the ApplicationName from the config.php file. -->
     <title><?php echo $ApplicationNameString; ?></title>
-    <link rel="stylesheet" href="Resources/meyers-reset.css">
-    <link rel="stylesheet" href="Resources/Styles/navigationStyles.css">
-    <link rel="stylesheet" href="Resources/Styles/loginModalStyles.css">
-    <link rel="stylesheet" href="Resources/Styles/centerAnything.css">    
-    <script src='Resources/jquery-3.1.0.min.js'></script>
+    <link rel="shortcut icon" href="Resources/favicon.ico"/>
+    <link rel="stylesheet" href="Resources/Styles/navigationStyles.css"/>
+    <link rel="stylesheet" href="Resources/Styles/loginModalStyles.css"/>
+    <link rel="stylesheet" href="Resources/Styles/centerAnything.css"/>  
+    <link rel="stylesheet" href="Resources/Styles/meyers-reset.css">
+    <script src='Resources/jquery-3.5.1.min.js'></script>
+    <script src='Resources/Login-Caller.js'></script>
+    <script src='Resources/HRC3-Lib.js'></script>
   </head>
   <body translate="no">
 
@@ -96,19 +99,23 @@ $ApplicationNameString = $ApplicationName;
       <!-- The Modal -->
       <div id="loginModal" class="modal">
         <!-- Modal Content. -->
-        <form class="modal-content animate" action="/action_page.php">
+        <form class="modal-content animate" id="loginFormNav" name="loginFormNav" method='POST'>
           <div class="imgcontainer">
             <img src="Resources/placeholderAvatar.png" alt="Avatar" class="avatar">
           </div>
 
           <div class="container" style="background-color:#f1f1f1; text-align:center;">
 
-            <input type="text" placeholder="Enter Username" name="uname" required>
-            <button type="submit">Continue</button>
+            <input type="text" placeholder="Enter Username" id="userInput" name="UserInput" required>
+            <input type="hidden" id="requestTokens" id="RequestTokens" name="RequestTokens" required>
 
-            <span class="psw"><a href="#">Forgot Usernamea</a></span>
+            <p><button type="submit" id="submitButton">Continue</button></p>
+
+            <span class="psw"><a href="#">Forgot Username</a></span>
             <span class="psw"><a href="#">Create New Account</a></span>
+
             <button type="button" onclick="document.getElementById('loginModal').style.display='none'" class="cancelbtn">Cancel</button>
+
           </div>
         </form>
       </div>

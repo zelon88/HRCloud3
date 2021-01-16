@@ -172,6 +172,7 @@ function loadCache() {
   // / Combine the hard coded users from the config file with the rest of the users from the cache file.
   $Users = array_merge($PostConfigUsers, $Users);
   $CacheIsLoaded = TRUE;
+  // / Return an array of all users as well as a boolean to tell us if the function succeeded.
   return(array($Users, $CacheIsLoaded)); }
 
 // / A function to load core files.
@@ -179,9 +180,10 @@ function loadCache() {
 // / If input is an array, CoresLoaded output is an array. If input is a string, CoresLoaded output is a string.
 function loadCores($coresToLoad) { 
   // / Set variables. 
-  global $AvailableCores, $ConfigIsLoaded, $EngineVersion; 
+  global $AvailableCores, $ConfigIsLoaded; 
   $error = FALSE;
   $CoresLoaded = array();
+  $CoresAreLoaded = TRUE;
   // / Check if $coresToLoad is an array.
   if (is_array($coresToLoad)) { 
     // / Loop through each core in the array element.
@@ -204,24 +206,33 @@ function loadCores($coresToLoad) {
       // / Load the actual core file.
       require($coreFile);
       // / Add the recently loaded core to the $CoresLoaded array.
-      $CoresLoaded[$coresToLoad] = $coresToLoad; } }
+      $CoresLoaded[$coresToLoad] = $coresToLoad; }
+    else $error = TRUE; }
+  // / If the function encountered errors we throw the '$CoresAreLoaded' variable to FALSE.
+  if ($error == TRUE) $CoresAreLoaded = FALSE;
   // / Clean up unneeded memory.
-  $coresToLoad  = $coreFile = $coreToLoad = NULL;
-  unset($coresToLoad, $coreFile, $coreToLoad);
-  return(array($CoresLoaded, $error)); }
+  $coresToLoad  = $coreFile = $coreToLoad = $error = NULL;
+  unset($coresToLoad, $coreFile, $coreToLoad, $error);
+  // / Return an array of the cores that are currently loaded as well as a boolean to tell us if the function succeeded.
+  return(array($CoresLoaded, $CoresAreLoaded)); }
 
 // / A function to check that the platform is running a consistent version.
-// / Checks that the $engineVersion variable in 'versionInfo.php' matches the $EngineVersion variable in 'compatibilityCore.php'.
+// / Checks that the $EngineVersionInfo variable in 'versionInfo.php' matches the $EngineVersion variable in 'compatibilityCore.php'.
 function checkVersionInfo() {
   // / Set variables.
   global $CoresLoaded, $EngineVersion;
   $VersionsMatch = FALSE;
+  // / Check that the Compatibility Core is loaded.
   if (in_array('COMPATIBILITY', $CoresLoaded));
+  // / If for any reason the Compatibility Core is not loaded we will skip this entire version check.
   else {
     logEntry('Compatibility Core disabled. Skipping version check.'); 
     $VersionMatch = TRUE; }
-  if (file_exists('versionInfo.php')) require_once('versionInfo.php');
-  if (isset($EngineVersion) and isset($engineVersion)) if ($EngineVersion === $engineVersion) $VersionsMatch = TRUE; 
+  // / If the Compatibility Core is enabled we will also retrieve the '$EngineVersionInfo' variable from versionInfo.php to compare against.
+  if (file_exists('versionInfo.php')) require('versionInfo.php');
+  // / Now that we've gathered version information from two sources within the engine, we compare them.
+  if (isset($EngineVersion) and isset($EngineVersionInfo)) if ($EngineVersion === $EngineVersionInfo) $VersionsMatch = TRUE; 
+  // / Return TRUE if the both version strings match. Return FALSE if the two versions strings do not match.
   return($VersionsMatch); }
 
 // / A function to validate and sanitize requried session and POST variables.
@@ -234,21 +245,22 @@ function verifyGlobals() {
     $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserInput']);
     $_SESSION['PasswordInput'] = $PasswordInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['PasswordInput']);  
     $_SESSION['ClientTokenInput'] = $ClientTokenInput = hash('sha256', $_POST['ClientTokenInput']);  
-    $SessionID = $Salts[3].$Date.$Salts[0].$PasswordInput.$UserInput; }
+    $SessionID = $Salts[3].$Date.$Salts[0].$PasswordInput.$UserInput; 
+    $GlobalsAreVerified = TRUE; }
   else $UserInput = $PasswordInput = $ClientTokenInput = NULL;
   // / Verify the session ID or set a new one.
-  if (isset($_SESSION['SessionID'])) 
+  if (isset($_SESSION['SessionID'])) {
     if ($_SESSION['SessionID'] === $Salts[3].$Date.$Salts[0].$PasswordInput.$UserInput) $SessionID = $_SESSION['SessionID']; 
-  // / Set the UserDir based on user input or most recently used.
-  if (isset($_POST['UserDir'])) $_SESSION['UserDir'] = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserDir']);
-  if (!isset($_SESSION['UserDir']) or $_SESSION['UserDir'] == '') $_SESSION['UserDir'] = DIRECTORY_SEPARATOR;
+    $GlobalsAreVerified = TRUE; }
+  if (!$SessionID) { 
+    // / Set the UserDir based on user input or most recently used.
+    if (isset($_POST['UserDir'])) $_SESSION['UserDir'] = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserDir']);
+    if (!isset($_SESSION['UserDir']) or $_SESSION['UserDir'] == '') $_SESSION['UserDir'] = DIRECTORY_SEPARATOR; 
+    $UserDir = $_SESSION['UserDir']; }
   // / Check if the user is attempting to login & prepare variables required to generate ClientTokens.
   if (isset($_POST['RequestTokens']) and isset($_POST['UserInput'])) {
     $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserInput']);
     $RequestTokens = TRUE; }
-  $UserDir = $_SESSION['UserDir'];
-  // / Detect if required variables are set.
-  if ($SessionID !== FALSE) $GlobalsAreVerified = TRUE;
   return(array($UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified)); }
 
 // / A function to throw the login page when needed.
@@ -608,7 +620,7 @@ else if ($Verbose) logEntry('Verified installation.');
 // / Load the compatibility core to make sanity checks possible.
 list ($CoresLoaded, $CoreLoadedSuccessfully) = loadCores('COMPATIBILITY');
 $VersionsMatch = checkVersionInfo();
-if (!$VersionsMatch) dieGracefully(3, 'Application Version discrepancy detected! The version reported by the Compatibility Core (compatibilityCore.php) does not match the version reported by the Version Info file (versionInfo.php). This may be due to file corruption, incompatible file modifications, or incomplete update/upgrade procedures. Please back up your Configuration Files (config.php) before redownloading and reinstalling this application.');
+if (!$VersionsMatch or !$CoreLoadedSuccessfully) dieGracefully(3, 'Application Version discrepancy detected! The version reported by the Compatibility Core (compatibilityCore.php) does not match the version reported by the Version Info file (versionInfo.php). This may be due to file corruption, incompatible file modifications, or incomplete update/upgrade procedures. Please back up your Configuration Files (config.php) before redownloading and reinstalling this application.');
 else if ($Verbose) logEntry('Verified version information.');
 
 // / This code loads & sanitizes the global cache & prepares the user list.
@@ -675,5 +687,5 @@ else if ($Verbose) logEntry('Deferring execution to allow user login.');
 // / This is usually performed when an unauthenticated user is trying to log in. 
 // / If a user has supplied a user name to the core along with a request for user tokens, the user tokens for the specified user name will be returned to the user.
 // / User tokens are used to secure the session from delayed eavesdropping attempts or replay attacks, and also serve to invalidate the session after 2 minutes.
-if ($RequestTokens) echo(getClientTokens($UserInput));
+if ($RequestTokens) echo(getClientTokens('request '.$RequestTokens.' tokens '.$UserInput));
 // / -----------------------------------------------------------------------------------

@@ -35,7 +35,7 @@ The Login file provides UI elements enabling users to gain access to their accou
 // / The core will validate the inputs and either allow or deny the login request.
 ?> 
   <div id="wholePageLogin1" class="modal2">
-    <div id="wholePageLogin2" class="center" style="width:75%; height:50%;">
+    <div id="wholePageLogin1" class="center" style="width:75%; height:50%;">
       <form class="modal-content animate" action="core.php" method="POST">
         <div class="imgcontainer">
           <img src="Resources/placeholderAvatar.png" alt="Avatar" class="avatar">
@@ -46,13 +46,16 @@ The Login file provides UI elements enabling users to gain access to their accou
             <h1>Please login or create a new account below.</h1>
           </div>
 
-          <input type="text" placeholder="Enter Username" name="UserInput" required>
-          <input type="hidden" id="RequestTokens" name="RequestTokens" required>
+          <input type="text" placeholder="Enter Username" id="userInput" name="UserInput" required>
+          <input type="hidden" id="requestTokens" id="RequestTokens" name="RequestTokens" required>
 
-          <p><button type="submit">Continue</button></p>
+          <p><button type="submit" id="submitButton">Continue</button></p>
 
         <p><span class="psw"><a href="#">Forgot Username</a></span></p>
         <p><span class="psw"><a href="#">Create New Account</a></span></p>
+
+        <button type="button" onclick="document.getElementById('wholePageLogin1').style.display='none'" class="cancelbtn">Cancel</button>
+        
         </div>
       </form>
     </div>
