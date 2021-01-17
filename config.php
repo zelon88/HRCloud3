@@ -82,12 +82,13 @@ $Libraries = array(
 // / Users added through the GUI after initial setup are contained in the cache.
 // / Arrays are formatted as  $Users['USER_ID', 'USER_NAME', 'USER_EMAIL', 'SHA-256_HASHED_PASSWORD', "ADMIN_YES/NO(bool)", "LAST_SESION_ID"]
 $Users = array(
- array('1', 'zelon88', 'test@gmail.com', 'testpassword', "TRUE", ""),
- array('2', 'Nikki', 'test@gmail.com', 'password', "FALSE", ""), 
- array('3', 'Leo', 'test@gmail.com', 'password', "FALSE", ""), 
- array('4', 'Raph', 'test@gmail.com', 'password', "FALSE", ""), 
- array('5', 'Mikey', 'test@gmail.com', 'password', "FALSE", ""), 
- array('6', 'Donny', 'test@gmail.com', 'these-are-all-fake-passwords', "FALSE", "") );
+ array('1', 'zelon88', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "TRUE", ""), // Default Passwords are all 'password'
+ array('2', 'Nikki', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "FALSE", ""), 
+ array('3', 'Leo', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "FALSE", ""), 
+ array('4', 'Raph', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "FALSE", ""), 
+ array('5', 'Mikey', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "FALSE", ""), 
+ array('6', 'Donny', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "FALSE", ""),
+ array('7', 'test', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "FALSE", "") );
 
 // / Available Cores.
 // / The following array specifies which corefiles are permitted to load within the platform. 

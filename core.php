@@ -119,7 +119,7 @@ function verifyInstallation() {
   // / Define today's $LogFile.
   $LogFile = 'Logs'.DIRECTORY_SEPARATOR.$Date.'_'.$logHash.'.log';
   // / Create today's $LogFile if it doesn't exist yet.
-  if (!file_exists($LogFile)) $logCheck = file_put_contents($LogFile, 'OP-Act: '.$Time.' Created a log file, "'.$LogFile.'".');
+  if (!file_exists($LogFile)) $logCheck = file_put_contents($LogFile, 'OP-Act: '.$Time.' Created a log file, "'.$LogFile.'".'.PHP_EOL);
   // / Create a unique identifier for the cache file.
   $CacheFile = 'Cache'.DIRECTORY_SEPARATOR.'Cache-'.hash('sha256',$Salts[0].'CACHE').'.php';
   // / If no cache file exists yet (first run) we create one and write the $PostConfigUsers to it. 
@@ -279,16 +279,18 @@ function requireLogin() {
 // / The server will generate user tokens for the specified username and provide them to the current user.
 // / The current user now has up to 2 minutes to enter the token with the correct password.
 // / Requiring a valid token & invalidating issued tokens often prevents replay attacks & complicates eavesdropping for credentials.
-function getClientTokens($UserInput) {
+// / If the "$Old" variable is set to TRUE, tokens for the previous minute will be generated instead.
+function getClientTokens($UserInput, $Old) {
   // / Set variables.
   global $Date, $Users, $Minute, $LastMinute, $Salts;
+  if ($Old === TRUE) $Minute = $LastMinute;
   // / Loop through all users to check for the supplied username.
   foreach ($Users as $user) { 
     $UserID = $user[0];
     // / Continue ONLY if the $UserInput matches a valid $UserName.
     if ($user[1] === $UserInput) { 
       $UserName = $user[1];
-      $ClientToken = hash('sha256', $Minute.$Salts[0].$User[3].$Salts[0].$Salts[1].$Salts[2].$Salts[3]); }
+      $ClientToken = hash('sha256', $Minute.$Salts[0].$user[3].$Salts[0].$Salts[1].$Salts[2].$Salts[3]); }
     // / If the specified user does not exist, provide the user with a fake & invalid client token.
     else {
       $UserName = $UserInput;
@@ -304,17 +306,18 @@ function getClientTokens($UserInput) {
 // / But no lock is pick proof, especially ones that come with instructions for picking them.
 function generateTokens($ClientTokenInput, $PasswordInput) { 
   // / Set variables. 
-  global $Minute, $LastMinute;
+  global $Minute, $LastMinute, $Salts;
   $ServerToken = $ClientToken = NULL;
   $TokensAreValid = FALSE;
   $ServerToken = hash('sha256', $Minute.$Salts[1].$Salts[3]);
   $ClientToken = hash('sha256', $Minute.$Salts[0].$PasswordInput.$Salts[0].$Salts[1].$Salts[2].$Salts[3]);
   $oldServerToken = hash('sha256', $LastMinute.$Salts[1].$Salts[3]);
   $oldClientToken = hash('sha256', $LastMinute.$Salts[0].$PasswordInput.$Salts[0].$Salts[1].$Salts[2].$Salts[3]);
+  if ($ClientTokenInput === $ClientToken) $TokensAreValid = TRUE;
   if ($ClientTokenInput === $oldClientToken) {
     $ClientToken = $oldClientToken;
-    $ServerToken = $oldServerToken; }
-  if ($ServerToken !== NULL && $ClientToken !== NULL) $TokensAreValid = TRUE;
+    $ServerToken = $oldServerToken; 
+    $TokensAreValid = TRUE; }
   // / Clean up unneeded memory.
   $oldClientToken = $oldServerToken = NULL;
   unset($oldClientToken, $oldServerToken); 
@@ -322,18 +325,17 @@ function generateTokens($ClientTokenInput, $PasswordInput) {
 
 // / A function to authenticate a user and verify an encrypted input password with supplied tokens.
 function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) { 
-  // / Set variables. Note that we try not to include anything here we don't have to because
-  // / It's going to be hammered by someone, somewhere, eventually. Less is more in terms of code & security.
+  // / Set variables. 
   global $Users;
   $UserID = $UserName = $PasswordIsCorrect = $UserIsAdmin = $AuthIsComplete = FALSE;
   // / Iterate through each defined user.
   foreach ($Users as $user) { 
-    $UserID = $User[0];
+    $UserID = $user[0];
     // / Continue ONLY if the $UserInput matches a valid $UserName.
-    if ($User[1] === $UserInput) { 
+    if ($user[1] === $UserInput) { 
       $UserName = $user[1];
       // / Continue ONLY if all tokens match and the password hash is correct.
-      if ($ServerToken.$realClientToken.$realPassword === $ServerToken.$ClientToken.$PasswordInput) { 
+      if ($ServerToken.$ClientToken.hash('sha256', $user[3].$ClientToken) === $ServerToken.$ClientToken.$PasswordInput) { 
         $PasswordIsCorrect = TRUE; 
         // / Here we grant the user their designated permissions and only then decide $AuthIsComplete.
         if (is_bool($user[4])) {
@@ -687,5 +689,5 @@ else if ($Verbose) logEntry('Deferring execution to allow user login.');
 // / This is usually performed when an unauthenticated user is trying to log in. 
 // / If a user has supplied a user name to the core along with a request for user tokens, the user tokens for the specified user name will be returned to the user.
 // / User tokens are used to secure the session from delayed eavesdropping attempts or replay attacks, and also serve to invalidate the session after 2 minutes.
-if ($RequestTokens) echo(getClientTokens('request '.$RequestTokens.' tokens '.$UserInput));
+if ($RequestTokens) echo(getClientTokens($UserInput, FALSE));
 // / -----------------------------------------------------------------------------------

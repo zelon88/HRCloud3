@@ -1,6 +1,22 @@
 HRCLOUD3 DEV NOTES
 
 ----------
+v0.6.4 - 1/16/2021
+Username modal & token generation complete. Password modal just about done.
+
+-Implemented client-side SHA256 hashing of the supplied password before sending anything over the wire.
+-Figured out AJAX issues, JQuery not loading properly.
+-Reorganized scripts.
+-Labelled some DOM elements, structuring the UI.
+-Improved comments, especially in Javascript & HTML files.
+-Fixed bugs / naming convention issues in HRC3-Lib.js.
+-Need to do...
+ -Work out bugs in authentication routine.
+ -Complete Password modal & UI sequence.
+ -Polish stylesheets.
+ -Draw an outline of what the UI & landing pages should look like.
+
+----------
 v0.6.3 - 1/15/2021
 More authentication work.
 

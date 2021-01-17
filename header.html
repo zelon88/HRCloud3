@@ -9,7 +9,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 8/13/2019
+Date: 1/16/2021
 <3 Open-Source
 
 The Header file is for preparing an HTML document to contain the output of Diablo Engine.
@@ -22,24 +22,24 @@ if (!isset($ConfigIsLoaded) and file_exists('config.php')) include('config.php')
 $ApplicationNameString = $ApplicationName;
 
 ?> 
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang='en'>
   <head>
-    <meta charset="UTF-8">
+    <meta charset='UTF-8'>
     <!-- Populate the title field with the ApplicationName from the config.php file. -->
     <title><?php echo $ApplicationNameString; ?></title>
-    <link rel="shortcut icon" href="Resources/favicon.ico"/>
-    <link rel="stylesheet" href="Resources/Styles/navigationStyles.css"/>
-    <link rel="stylesheet" href="Resources/Styles/loginModalStyles.css"/>
-    <link rel="stylesheet" href="Resources/Styles/centerAnything.css"/>  
-    <link rel="stylesheet" href="Resources/Styles/meyers-reset.css">
-    <script src='Resources/jquery-3.5.1.min.js'></script>
-    <script src='Resources/Login-Caller.js'></script>
-    <script src='Resources/HRC3-Lib.js'></script>
+    <!-- Load JQuery. This should be pointed to a local source. Keep it up-to-date. Do not place other scripts above this one. -->
+    <script type='text/javascript' src='Resources/jquery-3.5.1.min.js'></script>
+    <link rel='shortcut icon' href='Resources/favicon.ico'/>
+    <!-- Load stylesheets -->
+    <link rel='stylesheet' href='Resources/Styles/navigationStyles.css'/>
+    <link rel='stylesheet' href='Resources/Styles/loginModalStyles.css'/>
+    <link rel='stylesheet' href='Resources/Styles/centerAnything.css'/>  
+    <link rel='stylesheet' href='Resources/Styles/meyers-reset.css'>
   </head>
-  <body translate="no">
-
+  <body>
+  <!-- An invisible iframe to use as a target to prevent forms from reloading the page. -->
+  <iframe style='width:0; height:0; border:0; border:none; position:absolute; visibility:hidden; display:none;' id='noredirect' name='noredirect'></iframe>
   <!-- Top navigation bar. -->
   <ul class='top-level'>
     <li>
@@ -92,37 +92,68 @@ $ApplicationNameString = $ApplicationName;
       </ul>
     </li>
  */ ?>
-
     <li>
       <!-- Button to open the modal login form. -->
-      <a onclick="document.getElementById('loginModal').style.display='block'">Login</a>
-      <!-- The Modal -->
-      <div id="loginModal" class="modal">
-        <!-- Modal Content. -->
-        <form class="modal-content animate" id="loginFormNav" name="loginFormNav" method='POST'>
-          <div class="imgcontainer">
-            <img src="Resources/placeholderAvatar.png" alt="Avatar" class="avatar">
+      <a onclick='document.getElementById("loginModal").style.display="block"'>Login</a>
+
+      <!-- The Login Modal -->
+      <div id='loginModal' class='modal'>
+        <!-- Login Modal Content. -->
+        <form class='modal-content animate' id='loginFormNav' name='loginFormNav' method='POST' target='noredirect'>
+          <div class='imgcontainer'>
+            <img src='Resources/placeholderAvatar.png' alt='Avatar' class='avatar'>
           </div>
 
-          <div class="container" style="background-color:#f1f1f1; text-align:center;">
+          <div class='container' style='background-color:#f1f1f1; text-align:center;'>
 
-            <input type="text" placeholder="Enter Username" id="userInput" name="UserInput" required>
-            <input type="hidden" id="requestTokens" id="RequestTokens" name="RequestTokens" required>
+            <input type='text' placeholder='Enter Username' id='UserInput' name='UserInput' required>
+            <input type='hidden' id='requestTokens' name='RequestTokens' required>
 
-            <p><button type="submit" id="submitButton">Continue</button></p>
+            <p><button id='submitButton'>Continue</button></p>
 
-            <span class="psw"><a href="#">Forgot Username</a></span>
-            <span class="psw"><a href="#">Create New Account</a></span>
+            <span class='psw'><a href='#'>Forgot Username</a></span>
+            <span class='psw'><a href='#'>Create New Account</a></span>
 
-            <button type="button" onclick="document.getElementById('loginModal').style.display='none'" class="cancelbtn">Cancel</button>
+            <button type='button' onclick='document.getElementById("loginModal").style.display="none"' class='cancelbtn'>Cancel</button>
+
+          </div>
+        </form>
+      </div>
+
+      <!-- The Password Modal -->
+      <div id='passwordModal' class='modal'>
+        <!-- Password Modal Content. -->
+        <form class='modal-content animate' id='passwordFormNav' name='passwordFormNav' method='POST' target='noredirect'>
+          <div class='imgcontainer'>
+            <img src='Resources/placeholderAvatar.png' alt='Avatar' class='avatar'>
+          </div>
+
+          <div class='container' style='background-color:#f1f1f1; text-align:center;'>
+
+            <input type='text' placeholder='Enter Password' id='RawPassword' name='RawPassword' required>
+            <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' required>
+            <input type='hidden' id='PasswordInput' name='PasswordInput' required>
+            <input type='hidden' id='UserInput' name='UserInput' required>
+
+            <p><button id='submitButton' onclick='secureLogin(document.getElementById("RawPassword").value);'>Continue</button></p>
+
+            <span class='psw'><a href='#'>Forgot Password</a></span>
+            <span class='psw'><a href='#'>Create New Account</a></span>
+
+            <button type='button' onclick='document.getElementById("loginModal").style.display="none"' class='cancelbtn'>Cancel</button>
 
           </div>
         </form>
       </div>
     </li>
-
   </ul>
 
-
-  
- 
+<!--This div and the commented code in Login-Caller.js make up a test to ensure JQuery is functioning properly. 
+<div id='test' name='test'>
+<a>Test JQuery</a>
+</div> -->
+<!-- These scripts are loaded at the end of the page to allow the rest of the page to load before introducing additional functionality. -->
+<!-- Expect problems if you move these. -->
+<script type='text/javascript' src='Resources/sjcl.js'></script>
+<script type='text/javascript' src='Resources/Login-Caller.js'></script>
+<script type='text/javascript' src='Resources/HRC3-Lib.js'></script>
