@@ -17,11 +17,17 @@ There may be additional specialized functionality contained in separate Javascri
 
 // / -----------------------------------------------------------------------------------
 
+// / -----------------------------------------------------------------------------------
+// / A function to change the value of an element.
+// / Useful for building dynamic forms.
+function changeValue(id, newValue) {
+  document.getElementById(id).value = newValue; }
+// / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
 // / A function to toggle the visibility of an HTML element. 
 // / Switches the 'Visibility' property between 'block' & 'none'.
-function toggle_visibility(id) {
+function toggleVisibility(id) {
   var e = document.getElementById(id);
   if(e.style.display == 'block')
      e.style.display = 'none';
@@ -38,8 +44,8 @@ function goBack() {
 
 // / -----------------------------------------------------------------------------------
 // / A function to clear a text box.
-function Clear() {    
-  document.getElementById("input").value= ""; }
+function clearInput(id) {    
+  document.getElementById(id).value= ""; }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -47,4 +53,11 @@ function Clear() {
 function refreshIframe(iframeDiv) {
   var ifr = document.getElementsByName(iframeDiv)[0];
   ifr.src = ifr.src; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to replace the inner HTML of an element with data from another div element.
+// / This DOES NOT change the ID of either div. It just replaces the contents of the div.
+function replaceDiv(originalDivID, newDivID) {
+  document.getElementById(originalDivID).innerHTML = document.getElementById(newDivID).innerHTML; }
 // / -----------------------------------------------------------------------------------
