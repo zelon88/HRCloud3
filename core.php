@@ -231,37 +231,85 @@ function checkVersionInfo() {
   // / If the Compatibility Core is enabled we will also retrieve the '$EngineVersionInfo' variable from versionInfo.php to compare against.
   if (file_exists('versionInfo.php')) require('versionInfo.php');
   // / Now that we've gathered version information from two sources within the engine, we compare them.
-  if (isset($EngineVersion) and isset($EngineVersionInfo)) if ($EngineVersion === $EngineVersionInfo) $VersionsMatch = TRUE; 
+  if (isset($EngineVersion) && isset($EngineVersionInfo)) if ($EngineVersion === $EngineVersionInfo) $VersionsMatch = TRUE; 
   // / Return TRUE if the both version strings match. Return FALSE if the two versions strings do not match.
   return($VersionsMatch); }
+
+function verifySession($SessionIDInput, $UserInput, $ClientTokenInput) {
+  global $Users, $Salts, $Minute, $LastMinute, $ServerToken;
+  // / Set variables.
+  $SessionIsVerified = $ClientLoggedIn = $sessionID = $user = $userFound = FALSE;
+  if ($SessionIDInput !== FALSE && $UserInput !== FALSE && $ClientTokenInput !== FALSE) {
+    // / Loop through the userlist and look for the specified username.
+    foreach ($Users as $user) { 
+      // / If the username is found we set a flag and stop iterating through the list.
+      if ($UserInput === $user[1]) { 
+        $userFound = TRUE;
+        break; } }
+      // / Create a temporary session ID to see if it matches the one supplied by the user.
+      $sessionID = hash('sha256', $Minute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$ServerToken.$Salts[4].$user[1]);   
+      // / Perform the check to see if the session ID is current.
+      if ($sessionID === $SessionIDInput) $SessionIsVerified = TRUE;
+      // / If the session ID is not current generate an older one that is still valid.
+      else $sessionID = hash('sha256', $LastMinute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$ServerToken.$Salts[4].$user[1]);
+      // / Perform another check to see if the session ID provided is valid.
+      if ($sessionID === $SessionIDInput) $SessionIsVerified = TRUE;
+  // / Clean up unneeded memory.
+  $sessionID = $user = $userFound = NULL;
+  unset($sessionID, $user, $userFound);
+  return ($SessionIsVerified); } }
 
 // / A function to validate and sanitize requried session and POST variables.
 function verifyGlobals() { 
   // / Set variables. 
-  global $Salts, $Data;
-  $SessionID = $GlobalsAreVerified = $RequestTokens = FALSE;
+  $SessionID = $GlobalsAreVerified = $RequestTokens = $ClientLoggedIn = $SessionType = $SessionIsVerified = FALSE;
   // / Set authentication credentials from supplied inputs when inputs are supplied.
+  // / This code is performed when a user submits enough credentials & tokens to start a new session.
+  // / There is a structure to how inputs are processed.
+  // / Inputs come from the user as POST requests.
+  // / POSTS should NEVER be used directly as program output or in any assignment or statement outside of the verifyGlobals() function.
+  // / POSTS that have been processed for proper syntax are allowed to become SESSION variables. This happens in the verifyGlobals() function.
+  // / SESSION variables should NEVER be used directly as program output or in any assignment or statement outside of the verifySessions() function.
+  // / SESSION variables that have been processed for authenticity are allowed to become PHP variables. This happens in the verifyGlobals() function.
+  // / PHP variables use regular $VARIABLE syntax. Per Diablo engine conventions, these are expected to be global in scope & have an uppercase first letter.
+  // / If you find yourself using native functionality via POSTs or SESSION variables; STOP and evaluate the reasoning for processing unauthenticated data.
   if (isset($_POST['UserInput']) && isset($_POST['PasswordInput']) && isset($_POST['ClientTokenInput'])) { 
     $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserInput']);
     $_SESSION['PasswordInput'] = $PasswordInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['PasswordInput']);  
-    $_SESSION['ClientTokenInput'] = $ClientTokenInput = $_POST['ClientTokenInput'];  
-    $SessionID = $Salts[3].$Date.$Salts[0].$PasswordInput.$UserInput; 
+    $_SESSION['ClientTokenInput'] = $ClientTokenInput = $_POST['ClientTokenInput']; 
     $GlobalsAreVerified = TRUE; }
+  // / When no authentication credentials were supplied we initialize all variables to NULL.
   else $UserInput = $PasswordInput = $ClientTokenInput = NULL;
   // / Verify the session ID or set a new one.
-  if (isset($_SESSION['SessionID'])) {
-    if ($_SESSION['SessionID'] === $Salts[3].$Date.$Salts[0].$PasswordInput.$UserInput) $SessionID = $_SESSION['SessionID']; 
-    $GlobalsAreVerified = TRUE; }
-  if (!$SessionID) { 
+  // / This code is performed when a user submits tokens and a session ID via SESSION request to continue an existing session.
+  if (isset($_POST['UserID']) && isset($_POST['SessionID']) && isset($_POST['ClientTokenInput'])) {
+    $_SESSION['UserID'] = $UserID = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_SESSION['UserID']);  
+    $_SESSION['SessionIDInput'] = $SessionIDInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_SESSION['SessionID']);  
+    $_SESSION['ClientTokenInput'] = $ClientTokenInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_SESSION['ClientTokenInput']);  
+    $SessionIsVerified = verifySession($SessionIDInput, $UserInput, $ClientTokenInput);
+    if ($SessionIsVerified) $_SESSION['SessionID'] = $SessionID = $SessionIDInput;
+    else $_POST['SessionID'] = $_SESSION['SessionID'] = $SessionID = $SessionIDInput = NULL; 
+    $SessionType = 'SESSION';
+    if ($SessionIsVerified) $GlobalsAreVerified = TRUE; }
+  // / This code is performed when a user submits tokens and a session ID via POST request to continue an existing session.
+  if (isset($_SESSION) && isset($_SESSION['SessionID']) && isset($_SESSION['ClientTokenInput'])) {
+    $_SESSION['SessionIDInput'] = $SessionIDInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['SessionID']);  
+    $SessionIsVerified = verifySession($SessionIDInput, $UserInput, $ClientTokenInput);
+    if ($SessionIsVerified) $_SESSION['SessionID'] = $SessionID = $SessionIDInput;
+    else $_POST['SessionID'] = $_SESSION['SessionID'] = $SessionID = $SessionIDInput = NULL; 
+    $SessionType = 'POST';
+    if ($SessionIsVerified) $GlobalsAreVerified = TRUE; }
+  // / Check if the user is attempting to login & prepare variables required to generate ClientTokens.
+  // / This code is performed when a user requests tokens to begin the login process.
+  if (isset($_POST['RequestTokens']) && isset($_POST['UserInput'])) {
+    $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserInput']);
+    $RequestTokens = TRUE; }
+  if (!$SessionType) { 
     // / Set the UserDir based on user input or most recently used.
     if (isset($_POST['UserDir'])) $_SESSION['UserDir'] = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserDir']);
     if (!isset($_SESSION['UserDir']) or $_SESSION['UserDir'] == '') $_SESSION['UserDir'] = DIRECTORY_SEPARATOR; 
     $UserDir = $_SESSION['UserDir']; }
-  // / Check if the user is attempting to login & prepare variables required to generate ClientTokens.
-  if (isset($_POST['RequestTokens']) and isset($_POST['UserInput'])) {
-    $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserInput']);
-    $RequestTokens = TRUE; }
-  return(array($UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified)); }
+  return(array($UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $ClientLoggedIn)); }
 
 // / A function to throw the login page when needed.
 function requireLogin() { 
@@ -326,7 +374,7 @@ function generateTokens($ClientTokenInput, $PasswordInput) {
 // / A function to authenticate a user and verify an encrypted input password with supplied tokens.
 function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $ClientTokenInput) { 
   // / Set variables. 
-  global $Users;
+  global $Users, $Minute;
   $UserID = $UserName = $PasswordIsCorrect = $UserIsAdmin = $AuthIsComplete = FALSE;
   // / Iterate through each defined user.
   foreach ($Users as $user) { 
@@ -338,15 +386,16 @@ function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $C
       if ($ServerToken.$ClientToken.$user[3] === $ServerToken.$ClientTokenInput.$PasswordInput) {
         $PasswordIsCorrect = TRUE; 
         $AuthIsComplete = TRUE; 
+        $SessionID = hash('sha256', $Minute.$Salts[0].$ClientToken.$user[3].$Salts[1].$ServerToken.$Salts[4].$user[1]);
         // / Here we grant the user their designated permissions.
         if (is_bool($user[4])) { 
           $UserIsAdmin = $User[4]; 
           // / Once we authenticate a user we no longer need to continue iterating through the userlist, so we stop.
           break; } } } }
   // / Clean up unneeded memory.
-  $UserInput = $PasswordInput = $user = $Users = NULL;
-  unset($UserInput, $PasswordInput, $user, $Users); 
-  return(array($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete)); }
+  $UserInput = $PasswordInput = $user = $Users = $PasswordInput = NULL;
+  unset($UserInput, $PasswordInput, $user, $Users, $PasswordInput); 
+  return(array($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $SessionID, $AuthIsComplete)); }
 
 // / A function to define the default $UserCacheData used as $arrayData in generateUserCache and loadUserCache. 
 // / Without this function this data would need to be hard-coded, making my job harder! We don't want that.
@@ -641,8 +690,8 @@ else if ($Verbose) logEntry('Loaded cache file.');
 
 // / This code takes in all required inputs to build a session and ensures they exist & are a valid type.
 // / If the globals cannot be verified, but the user is trying to login we will show them a login form.
-list ($UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified) = verifyGlobals();
-if (!$GlobalsAreVerified) if ($RequestTokens and $UserInput === NULL) requireLogin(); 
+list ($UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $ClientLoggedIn) = verifyGlobals();
+if (!$GlobalsAreVerified) if ($RequestTokens && $UserInput === NULL) requireLogin(); 
 else if ($Verbose) logEntry('Verified global variables.');
 
 // / If the globals have been verified, there is enough user supplied information to continue authenticating the user, so the script will continue.
@@ -653,13 +702,16 @@ if ($GlobalsAreVerified) {
   list ($ClientToken, $ServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $PasswordInput);
   if (!$TokensAreValid) dieGracefully(6, 'Invalid tokens!');
   else if ($Verbose) logEntry('Generated tokens.');
-
-  // / This code validates credentials supplied by the user against the hashed ones stored on the server.
-  // / Also removes the $Users user list from memory so it can not be leaked.
-  // / Displays a login screen when authentication fails and kills the application. 
-  list ($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete) = authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $ClientTokenInput);
-  if (!$PasswordIsCorrect or !$AuthIsComplete) dieGracefully(7, 'Invalid username or password!'); 
-  else if ($Verbose) logEntry('Authenticated UserName '.$UserName.', UserID '.$UserID.'.');
+  
+  // / Do not require authentication if the user has proven they are in the middle of a valid session.
+  if ($SessionType === 'POST' or $SessionType === 'SESSION') if ($SessionIsVerified && $ClientLoggedIn) { 
+    // / This code validates credentials supplied by the user against the hashed ones stored on the server.
+    // / Also removes the $Users user list from memory so it can not be leaked.
+    // / Displays a login screen when authentication fails and kills the application. 
+    list ($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $SessionID, $AuthIsComplete) = authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $ClientTokenInput);
+    if (!$PasswordIsCorrect or !$AuthIsComplete) dieGracefully(7, 'Invalid username or password!'); 
+    else if ($Verbose) logEntry('Authenticated UserName '.$UserName.', UserID '.$UserID.'.'); }
+  else if ($Verbose) logEntry('Verified existing session.');
 
   // / This code builds arrays of good & bad libraries.
   // / Libraries are directory for storing specific types of information. 
@@ -698,5 +750,5 @@ else if ($Verbose) logEntry('Deferring execution to allow user login.');
 // / This is usually performed when an unauthenticated user is trying to log in. 
 // / If a user has supplied a user name to the core along with a request for user tokens, the user tokens for the specified user name will be returned to the user.
 // / User tokens are used to secure the session from delayed eavesdropping attempts or replay attacks, and also serve to invalidate the session after 2 minutes.
-if ($RequestTokens) echo(getClientTokens($UserInput, FALSE));
+if ($RequestTokens) echo(getClientTokens($UserInput, FALSE)); 
 // / -----------------------------------------------------------------------------------
