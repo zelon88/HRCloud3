@@ -1,0 +1,133 @@
+HRCLOUD3 DEV NOTES
+
+----------
+v0.6.7 - 1/18/2021
+Working on session creation & control.
+
+-Now that the login procedure is done we need a way to hold onto a session without resending credentials every time.
+-The verifyGlobals() function has changed a lot to accomodate this.
+-There is not a verifySession() function which will take in a SessionID either from POST request or from SESSION variable and validate it.
+-Sessions work like this...
+ -A user submits a correct username / password combination and is given a SessionID.
+ -The user navigates the application. Every time they load a page the SESSION ID and clienttoken is either posted in with their request or it is held in PHPs global SESSION variable.
+ -The SessionID is validated against the users credentials and if it is authentic and not expired it is treated like a password.
+ -Every time the user submits a request they are given another client token and sessionID.
+ -Unique per-user Client tokens and SessionIDs are generated every 60 seconds.
+ -Tokens are valid for a dynamic duration between 60 and 120 seconds, depending on when they submitted their last token.
+ -If a user submits a valid ClientToken and SessionID they will not have to enter a password. 
+-I have a thought about how to enable variable exiration durations on SessionIDs and ClientTokens but I want to get the core functionalit down first.
+-The SessionID is a hash of the salts, userID, password, server token, and client token, and time. It is unique to every user.
+-Moved the Dev_Notes text file to the new Documentation directory.
+
+----------
+v0.6.6 - 1/18/2021
+Fixing bugs, adding documentation.
+
+-Pruned authenticate() function. 
+-Changed from implied token input to ClientTokenInput in authenticate() function.
+-Add Documentation folder with Error_Descriptions.txt file declaring the errors HRCloud3 makes and what they mean.
+-Not done adding errors, but the ones with well defined functinoality are present.
+-Add more as error handling functionality is tested and becomes solidified.
+-Added the first screenshot and Screenshots folder.
+
+----------
+v0.6.5 - 1/18/2021
+Authentication is functional & encrypted!
+
+-Authentication works now. It is fully encrypted.
+-Worked out lots of bugs in the server-side authentication routine.
+-Worked out bugs in token generation.
+-Worked out bugs in library filtering, library data loading.
+-Currently need to review user cache generation routine.
+-Still wondering why borders disappeared in stylesheets.
+
+----------
+v0.6.4 - 1/16/2021
+Username modal & token generation complete. Password modal just about done.
+
+-Implemented client-side SHA256 hashing of the supplied password before sending anything over the wire.
+-Figured out AJAX issues, JQuery not loading properly.
+-Reorganized scripts.
+-Labelled some DOM elements, structuring the UI.
+-Improved comments, especially in Javascript & HTML files.
+-Fixed bugs / naming convention issues in HRC3-Lib.js.
+-Need to do...
+ -Work out bugs in authentication routine.
+ -Complete Password modal & UI sequence.
+ -Polish stylesheets.
+ -Draw an outline of what the UI & landing pages should look like.
+
+----------
+v0.6.3 - 1/15/2021
+More authentication work.
+
+-Working on the UI elements responsible for logging in.
+-Using jQuery & Ajax for asynchronous callback.
+-So far the username portion is all done. 
+  -The user clicks Login and the modal appears. 
+  -They are prompted for their username. 
+  -The username modal has a hidden field to request a token.
+  -They submit their username. The token request is also sent.
+  -The username is set and a token is generated.
+  -The token must be used within 1-2 minutes or it will expire.
+-More work needs to be done.
+  -The token can now be passed back with a password and username for authentication.
+-Improve comments.
+-Fix several bugs.
+  -Return for checkVersions & loadCores functions were incorrect.
+  -loadCores had bugs in the error checking procedure. It returned the wrong boolean and halted the core in all cases.
+-Update jQuery from v3.1.0 to v3.5.1.
+-Fix 404 errors
+  -meyers-reset.css
+  -favicon.ico
+-Update HRC2-Lib.js.
+  -Improve comments.
+  -Improve code readability via segmentation.
+  -Add GPL header text.
+  -Rename to HRC3-Lib.js.
+
+----------
+v0.6.2 - 12/24/2020
+Working on authentication procedure.
+
+-Moved some stuff between files. 
+-Had to figure out a mechanism for not throwing the login screen before a user has requested it.
+-Had to figure out a file structure that would result in proper HTML syntax for UI elements but proper value-only returns for ajax calls.
+-Added a conditional statement to skip a large section of the core when not enough information is supplied to authenticate a user. 
+-Cleaned up stylesheets. 
+-Renamed a few files.
+-Put in some work on header.html file. HTML syntax is looking good. Login screens are looking good. 
+-The main login.html page now functions to the extent that it generates a clienttoken for the specified user. Need to implement on login popup modal also.
+-Need to implement async calls for retrieving the clienttoken from core when userinput and requesttokens post inputs are supplied. This way the clienttoken can be hashed client-side with the password input for stage 2 of the login procedure.
+-Login procedure will be 2 stages. Username entry, Password entry.
+-In the future it would make things more scalable if there were a dropdown for region/continent/country on the username entry field. That way we don't have to iterate through a massive worldwide user list for each login attempt. We could localize this to make things more secure and faster.
+-Added version checking. The core will now verify that the compatibilityCore is enabled. If it is, the version from it will be checked against the version contained in versionInfo.php. If discrepancies are found execution will be halted and a descriptive error will be raied. If the versions match the engine will continue as normal. If for any reason the compatibilityCore is disabled, the check will be skipped completely.
+
+----------
+v0.6.1 - 12/24/2020
+Merry Almost Xmas! More core work.
+
+-Getting closer and closer to testing authentication.
+-Implementing features revealed some missing components (like handing users prior to a login attempt).
+-Improve code comment consistency.
+-Found a couple typos.
+
+----------
+v0.6 - 12/23/2020
+Fixed a lot of Syntax errors, working on UI
+
+-Fixed a lot of syntax errors. 
+-Working on testing authentication. 
+-Working on UI.
+-Create a "Console" element in the header UI to organize core.php output prior to displaying more UI elements.
+
+----------
+v0.5.6
+
+-I have a bunch of notes and thoughts floating around about how to structure things that I need a consolidated place for it all.
+-I wasted some time yesterday re-writing code that looked wrong, but turned out to be completely fine all along.
+-The 'DATA' library will be for user-specific xPress dictionaries.
+-Separate dictionaries per user are the best way to ensure privacy/security at the expense of compression performance.
+-Encryption should utilize user-controlled keys.
+-Special functions will need to be developed in dataCore for re-encrypting and verifying files when users change their encryption keys.
+-Put some kind of limit on the mechanism for re-encrypting storage, as this poses a huge DDOS risk.
