@@ -1,6 +1,17 @@
 HRCLOUD3 DEV NOTES
 
 ----------
+v0.6.6 - 1/18/2021
+Fixing bugs, adding documentation.
+
+-Pruned authenticate() function. 
+-Changed from implied token input to ClientTokenInput in authenticate() function.
+-Add Documentation folder with Error_Descriptions.txt file declaring the errors HRCloud3 makes and what they mean.
+-Not done adding errors, but the ones with well defined functinoality are present.
+-Add more as error handling functionality is tested and becomes solidified.
+-Added the first screenshot and Screenshots folder.
+
+----------
 v0.6.5 - 1/18/2021
 Authentication is functional & encrypted!
 

@@ -324,7 +324,7 @@ function generateTokens($ClientTokenInput, $PasswordInput) {
   return(array($ClientToken, $ServerToken, $TokensAreValid)); } 
 
 // / A function to authenticate a user and verify an encrypted input password with supplied tokens.
-function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) { 
+function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $ClientTokenInput) { 
   // / Set variables. 
   global $Users;
   $UserID = $UserName = $PasswordIsCorrect = $UserIsAdmin = $AuthIsComplete = FALSE;
@@ -335,10 +335,10 @@ function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) {
     if ($user[1] === $UserInput) { 
       $UserName = $user[1];
       // / Continue ONLY if all tokens match and the password hash is correct.
-      if ($ServerToken.$ClientToken.$user[3] === $ServerToken.$ClientToken.$PasswordInput) {
+      if ($ServerToken.$ClientToken.$user[3] === $ServerToken.$ClientTokenInput.$PasswordInput) {
         $PasswordIsCorrect = TRUE; 
         $AuthIsComplete = TRUE; 
-        // / Here we grant the user their designated permissions and only then decide $AuthIsComplete.
+        // / Here we grant the user their designated permissions.
         if (is_bool($user[4])) { 
           $UserIsAdmin = $User[4]; 
           // / Once we authenticate a user we no longer need to continue iterating through the userlist, so we stop.
@@ -625,13 +625,13 @@ list ($Date, $Time, $Minute, $LastMinute) = verifyDate();
 // / This code verifies the integrity of the application.
 // / Also generates required directories in case they are missing & creates required log & cache files.
 list ($LogFile, $CacheFile, $InstallationIsVerified) = verifyInstallation();
-if (!$InstallationIsVerified) dieGracefully(4, 'Could not verify installation!');
+if (!$InstallationIsVerified) dieGracefully(3, 'Could not verify installation!');
 else if ($Verbose) logEntry('Verified installation.');
 
 // / Load the compatibility core to make sanity checks possible.
 list ($CoresLoaded, $CoreLoadedSuccessfully) = loadCores('COMPATIBILITY');
 $VersionsMatch = checkVersionInfo();
-if (!$VersionsMatch or !$CoreLoadedSuccessfully) dieGracefully(3, 'Application Version discrepancy detected! The version reported by the Compatibility Core (compatibilityCore.php) does not match the version reported by the Version Info file (versionInfo.php). This may be due to file corruption, incompatible file modifications, or incomplete update/upgrade procedures. Please back up your Configuration Files (config.php) before redownloading and reinstalling this application.');
+if (!$VersionsMatch or !$CoreLoadedSuccessfully) dieGracefully(4, 'Application Version discrepancy detected!');
 else if ($Verbose) logEntry('Verified version information.');
 
 // / This code loads & sanitizes the global cache & prepares the user list.
@@ -657,7 +657,7 @@ if ($GlobalsAreVerified) {
   // / This code validates credentials supplied by the user against the hashed ones stored on the server.
   // / Also removes the $Users user list from memory so it can not be leaked.
   // / Displays a login screen when authentication fails and kills the application. 
-  list ($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete) = authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken);
+  list ($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete) = authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $ClientTokenInput);
   if (!$PasswordIsCorrect or !$AuthIsComplete) dieGracefully(7, 'Invalid username or password!'); 
   else if ($Verbose) logEntry('Authenticated UserName '.$UserName.', UserID '.$UserID.'.');
 
