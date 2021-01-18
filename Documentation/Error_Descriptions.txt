@@ -1,7 +1,22 @@
-ERROR DESCRIPTIONS
+HonestRepair Diablo Engine  -  Error Descriptions
+https://www.HonestRepair.net
+https://github.com/zelon88
 
+Licensed Under GNU GPLv3
+https://www.gnu.org/licenses/gpl-3.0.html
 
+Author: Justin Grimes
+Date: 1/18/2021
+<3 Open-Source
 
+This plain text file contains descriptions of all the native error messages contained in or produced by the HRCloud3 Diablo engine. These descriptions should 
+give administrators a starting point for debugging problems with HRCloud3 installations. 
+
+If you have a knowledgebase system for your organization it is recommended that you upload this file or copy/paste it's contents into your knowledgebase for 
+future reference. You are also encouraged to add your own notes to this file as you encounter problems. If you decide to add your own notes to this file 
+please consider uploading it to a public Github repo so that other HRCloud3 administrators can benefit from the knowledge you've acquired. 
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
