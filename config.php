@@ -58,37 +58,38 @@ $Salts = array('fgdsfg!sdhafbde3i85_+#$@%<G345234381234120', '2lw12564165fgdasfs
 
 // / Library Definitions.
 // / Libraries are treated as objects. They are defined in the following arrays.
-// / Arrays are formatted as  $Libraries['LIBRARY_NAME', "ENABLED/DISABLED(bool)", '/path/to/library/directory']
+// / Arrays are formatted as  $Libraries['LIBRARY_NAME', ENABLED/DISABLED(bool), '/path/to/library/directory/']
+// / Do not forget to add the trailing slash. Trailing slash is required.
 // / Admins can add their own custom libraries by simply copy/pasting an existing entry and being cautious of the ending '('.
 // / The "DATA" library is used for xPress compression dictionaries and user-supplied encryption keys.
 // / It is reccomended that you limit the permissions on the DATA $Library directory so that nobody but the Apache/Nginx user
 // / has read access.
 $Libraries = array(
- array('DATA', "TRUE", '/mnt/abcdefgh-1234-1234-1234-32abwewdawdasdsdfsadfsda56511651/CloudTestDATA'),
- array('MOVIES', "TRUE", '/mnt/abcdefgh-1234-1234-1234-32abwewdawdasdsdfsadfsda56511651/CloudTestDATA'),
- array('MUSIC', "TRUE", '/mnt/abcdefgh-1234-1234-8360-32abwewdawdasdsdfsadfsda56511651/CloudTestDATA'),
- array('SHOWS', "TRUE", '/mnt/abcdefgh-1234-1234-8360-32abwewdawdasdsdfsadfsda56511651/CloudTestDATA'),
- array('CHANNELS', "FALSE", '/mnt/abcdefgh-1234-1234-1234-32abwewdawdasdsdfsadfsda56511651/CloudTestDATA'),
- array('DRIVE', "TRUE", ''),
- array('STREAMS', "FALSE", ''),
- array('IMAGES', "FALSE", ''),
- array('DOCUMENTS', "FALSE", ''),
- array('CUSTOM-1', "FALSE", ''),
- array('CUSTOM-2', "FALSE", ''),
- array('CUSTOM-3', "FALSE", '') );
+ array('DATA', TRUE, '/home/justin/Desktop/Projects/DATA/DATA/'),
+ array('MOVIES', TRUE, '/home/justin/Desktop/Projects/DATA/MOVIES/'),
+ array('MUSIC', TRUE, '/home/justin/Desktop/Projects/DATA/MUSIC/'),
+ array('SHOWS', TRUE, '/home/justin/Desktop/Projects/DATA/SHOWS/'),
+ array('CHANNELS', FALSE, '/home/justin/Desktop/Projects/DATA/CHANNELS/'),
+ array('DRIVE', TRUE, '/home/justin/Desktop/Projects/DATA/DRIVE/'),
+ array('STREAMS', FALSE, ''),
+ array('IMAGES', FALSE, ''),
+ array('DOCUMENTS', FALSE, ''),
+ array('CUSTOM-1', FALSE, ''),
+ array('CUSTOM-2', FALSE, ''),
+ array('CUSTOM-3', FALSE, '') );
 
 // / Super Admin Users.
 // / Users are treated as objects. Users added here have global admin powers that cannot be changed via the GUI.
 // / Users added through the GUI after initial setup are contained in the cache.
 // / Arrays are formatted as  $Users['USER_ID', 'USER_NAME', 'USER_EMAIL', 'SHA-256_HASHED_PASSWORD', "ADMIN_YES/NO(bool)", "LAST_SESION_ID"]
 $Users = array(
- array('1', 'zelon88', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "TRUE", ""), // Default Passwords are all 'password'
- array('2', 'Nikki', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "FALSE", ""), 
- array('3', 'Leo', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "FALSE", ""), 
- array('4', 'Raph', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "FALSE", ""), 
- array('5', 'Mikey', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "FALSE", ""), 
- array('6', 'Donny', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "FALSE", ""),
- array('7', 'test', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', "FALSE", "") );
+ array('1', 'zelon88', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'TRUE', ""), // Default Passwords are all 'password'
+ array('2', 'Nikki', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ""), 
+ array('3', 'Leo', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ""), 
+ array('4', 'Raph', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ""), 
+ array('5', 'Mikey', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ""), 
+ array('6', 'Donny', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ""),
+ array('7', 'test', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', "") );
 
 // / Available Cores.
 // / The following array specifies which corefiles are permitted to load within the platform. 

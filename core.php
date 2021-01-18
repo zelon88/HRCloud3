@@ -148,7 +148,7 @@ function logEntry($EntryText) {
   // / Set variables. 
   global $LogFile, $Time;
   // / Format the actual log message.
-  $EntryOutput = sanitize('OP-Act: '.$Time.', '.$EntryText.PHP_EOL, TRUE);
+  $EntryOutput = sanitize('OP-Act: '.$Time.', '.$EntryText.PHP_EOL, FALSE);
   // / Write the actual log file.
   $LogWritten = file_put_contents($LogFile, $EntryOutput, FILE_APPEND);
   return($LogWritten); } 
@@ -244,7 +244,7 @@ function verifyGlobals() {
   if (isset($_POST['UserInput']) && isset($_POST['PasswordInput']) && isset($_POST['ClientTokenInput'])) { 
     $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserInput']);
     $_SESSION['PasswordInput'] = $PasswordInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['PasswordInput']);  
-    $_SESSION['ClientTokenInput'] = $ClientTokenInput = hash('sha256', $_POST['ClientTokenInput']);  
+    $_SESSION['ClientTokenInput'] = $ClientTokenInput = $_POST['ClientTokenInput'];  
     $SessionID = $Salts[3].$Date.$Salts[0].$PasswordInput.$UserInput; 
     $GlobalsAreVerified = TRUE; }
   else $UserInput = $PasswordInput = $ClientTokenInput = NULL;
@@ -335,12 +335,12 @@ function authenticate($UserInput, $PasswordInput, $ServerToken, $ClientToken) {
     if ($user[1] === $UserInput) { 
       $UserName = $user[1];
       // / Continue ONLY if all tokens match and the password hash is correct.
-      if ($ServerToken.$ClientToken.hash('sha256', $user[3].$ClientToken) === $ServerToken.$ClientToken.$PasswordInput) { 
+      if ($ServerToken.$ClientToken.$user[3] === $ServerToken.$ClientToken.$PasswordInput) {
         $PasswordIsCorrect = TRUE; 
+        $AuthIsComplete = TRUE; 
         // / Here we grant the user their designated permissions and only then decide $AuthIsComplete.
-        if (is_bool($user[4])) {
+        if (is_bool($user[4])) { 
           $UserIsAdmin = $User[4]; 
-          $AuthIsComplete = TRUE; 
           // / Once we authenticate a user we no longer need to continue iterating through the userlist, so we stop.
           break; } } } }
   // / Clean up unneeded memory.
@@ -477,13 +477,11 @@ function loadLibraries() {
   // / Iterate through each library specified in config.php.
   foreach ($Libraries as $Library) { 
     // / If the array is not part of the default libraries it is assumed to be a custom library.
-    if (!in_array($Library[0], $LibrariesDefault) && $Library[1] == TRUE) array_push($LibrariesCustom, $Library); 
+    if (!in_array($Library[0], $LibrariesDefault) && $Library[1]) array_push($LibrariesCustom, $Library); 
+    // / If a libary is enabled it is marked as active and can be used as a filter later or to display as active in a GUI.
+    if ($Library[1]) array_push($LibrariesActive, $Library);
     // / If a libary is disabled it is marked as inactive and can be used as a filter later or to display as inactive in a GUI.
-    if ($Library[1] == FALSE) { 
-      array_push($LibrariesInactive, $Library);
-      continue; }
-    // / Any libraries that haven't been filtered on already are assumed to be active and ready for use.
-    array_push($LibrariesActive, $Library); }
+    else array_push($LibrariesInactive, $Library); }
   $LibrariesAreLoaded = TRUE;
   return(array($LibrariesActive, $LibrariesInactive, $LibrariesCustom, $LibrariesDefault, $LibrariesAreLoaded)); } 
 
@@ -496,14 +494,25 @@ function loadLibraryData() {
   $LibraryError = FALSE;
   // / Validate the library location for each library.
   foreach ($LibrariesActive as $LibraryActive) {
-    if (file_exists($LibraryActive[2])) $LibraryActive[3] = scandir($LibraryActive[2]);
-    // / Throw an error and set the problematic directory as a the $LibraryError.
-    if (!file_exists($LibraryActive[2])) { 
+    logEntry('Starting a loop.');
+    // / Check that the selected library is actually supposed to be activated.
+    if ($LibraryActive[1]) { 
+      logEntry('Library is active!');
+      // / Check that the libraray data directory exists. 
+      // / If the libraray data directory exists we scan its contents to an array at $LibraryActive[3]. 
+      if (file_exists($LibraryActive[2])) $LibraryActive[3] = scandir($LibraryActive[2]); 
+      // / If the library data directory does not exist, we set the error to $LibraryActive[2] and $LibraryDataIsLoaded to FALSE.
+      else { 
+        $LibraryDataIsLoaded = FALSE;
+        $LibraryError = $LibraryActive[2]; } }
+    // / If the selected library is not supposed to be activated, we set the $LibraryError to $LibraryActive[1] & $LibraryDataIsLoaded to FALSE.
+    else { 
       $LibraryDataIsLoaded = FALSE;
-      $LibraryError = $LibrariesActive[2];
+      $LibraryError = $LibraryActive[0]; }
     // / Stop validating as soon as an error is thrown.
     if (!$LibraryDataIsLoaded) break; }
-  return(array($LibraryError, $LibraryDataIsLoaded)); } } 
+    logEntry('LibraryDataIsLoaded is: '.$LibraryDataIsLoaded);
+  return(array($LibraryError, $LibraryDataIsLoaded)); }  
 
 // / A function to determine if a notifications file exists for the current user and generate one if missing.
 // / A notification is considered a single line of the notifications file.
@@ -641,7 +650,7 @@ else if ($Verbose) logEntry('Verified global variables.');
 if ($GlobalsAreVerified) {
   // / This code ensures that a same-origin UI element generated the login request.
   // / Also protects against packet replay attacks by ensuring that the request was generated recently and by making each request unique. 
-  list ($ClientToken, $ServerToken, $TokensAreVerified) = generateTokens($ClientTokenInput, $PasswordInput);
+  list ($ClientToken, $ServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $PasswordInput);
   if (!$TokensAreValid) dieGracefully(6, 'Invalid tokens!');
   else if ($Verbose) logEntry('Generated tokens.');
 
@@ -650,7 +659,7 @@ if ($GlobalsAreVerified) {
   // / Displays a login screen when authentication fails and kills the application. 
   list ($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete) = authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken);
   if (!$PasswordIsCorrect or !$AuthIsComplete) dieGracefully(7, 'Invalid username or password!'); 
-  else if ($Verbose) logEntry('Authenticated '.$UserName.', '.$UserID.'.');
+  else if ($Verbose) logEntry('Authenticated UserName '.$UserName.', UserID '.$UserID.'.');
 
   // / This code builds arrays of good & bad libraries.
   // / Libraries are directory for storing specific types of information. 

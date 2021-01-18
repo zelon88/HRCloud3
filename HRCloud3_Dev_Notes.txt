@@ -1,6 +1,17 @@
 HRCLOUD3 DEV NOTES
 
 ----------
+v0.6.5 - 1/18/2021
+Authentication is functional & encrypted!
+
+-Authentication works now. It is fully encrypted.
+-Worked out lots of bugs in the server-side authentication routine.
+-Worked out bugs in token generation.
+-Worked out bugs in library filtering, library data loading.
+-Currently need to review user cache generation routine.
+-Still wondering why borders disappeared in stylesheets.
+
+----------
 v0.6.4 - 1/16/2021
 Username modal & token generation complete. Password modal just about done.
 
