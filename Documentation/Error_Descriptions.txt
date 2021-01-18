@@ -1,0 +1,115 @@
+ERROR DESCRIPTIONS
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 0, Could not process the Configuration file (config.php)!
+
+ERROR DESCRIPTION
+  The config.php file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
+  This may be the result of incorrect file permission levels on the installation directory or config.php file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 2A, This application is NOT compatible with PHP versions earlier than 7.0. Running this application on unsupported PHP versions 
+  WILL cause unexpected behavior!
+
+ERROR DESCRIPTION
+  The version of PHP that is running on the server is lower than version 7.0.0, which is unsupported.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 2B, This application is NOT compatible with the Windows Operating System. Running this application on unsupported operating systems 
+  WILL cause unexpected behavior!
+
+ERROR DESCRIPTION
+  HRCloud3 is being run on a server that is running a Windows based Operating System, which is unsupported.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 3, <TIMESTAMP>, Could not verify installation!
+
+ERROR DESCRIPTION
+  One of the files or directories required for HRCloud3 to run is missing or unreachable.
+  This may be the result of incorrect file permission levels on the installation directory or required subdirectories.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because folders that should exist were deleted or moved.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+  Required directories that must be located in the installation directory include; 'Logs', 'Data', 'Cache', 'Cache/Data'.
+  One of the required directories is missing an index.html file or one could not be created.
+  A cache file does not exist or could not be created.
+  A log file does not exist or could not be created.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 4, <TIMESTAMP>, Application Version discrepancy detected!
+
+ERROR DESCRIPTION
+  The version reported by the Compatibility Core (compatibilityCore.php) does not match the version reported by the Version Info file (versionInfo.php). 
+  This may be due to file corruption, incompatible file modifications, or incomplete update/upgrade procedures. 
+  Please back up your Configuration Files (config.php) before redownloading and reinstalling this application.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 5, <TIMESTAMP>, Could not load cache file!
+
+ERROR DESCRIPTION
+  The cache file located at 'Cache/DATA' does not exist or is not reachable.
+  The verifyInstallation() function located in core.php has failed to create a cache file.
+  Execution has been tampered with.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 6, <TIMESTAMP>, Invalid tokens!
+
+ERROR DESCRIPTION
+  The client supplied an invalid token.
+  The client supplied a malformed token.
+  The client supplied a token that is not yet valid.
+  The client supplied an expired token that is older than 120 seconds.
+  The token supplied by the user did not match the token the server was expecting.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 7, <TIMESTAMP>, Invalid username or password!
+
+ERROR DESCRIPTION
+  The client supplied login credentials that were invalid.
+  The client supplied login credentials that were incorrect.
+  The client supplied login credentials that were malformed.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 8, <TIMESTAMP>, Could not load libraries!
+
+ERROR DESCRIPTION
+  Execution has been tampered with.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 9, <TIMESTAMP>, Could not load library data from <LIBRARY NAME OR DIRECTORY>!
+
+ERROR DESCRIPTION
+  If the "...data from <LIBRARY NAME OR DIRECTORY>" is set to a Library Name, this is likely because of a malformed array in config.php.
+  If the "...data from <LIBRARY NAME OR DIRECTORY>" is set to a directory, this is likely because th directory does not exist or is not reachable.
+  If the "...data from <LIBRARY NAME OR DIRECTORY>" is set to a directory, this may be because the permissions for the directory are incorrect.
+  If the "...data from <LIBRARY NAME OR DIRECTORY>" is set to a directory, this may be because the permissions for the www-data user or group are incorrect.
+  The libraries specified in the config.php file were invalid.
+  The config.php file has syntax errors within the libraries section.
+  The config.php file has syntax errors somewhere above the libraries section.
+  The structure of the library arrays have become corrupt and indecies no longer align as expected. 
+  Execution has been tampered with.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
