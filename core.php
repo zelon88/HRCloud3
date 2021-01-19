@@ -89,6 +89,7 @@ function verifyDate() {
   $Time = date("F j, Y, g:i a"); 
   $Minute = intval(date('i'));
   $LastMinute = $Minute - 1;
+  $NextMinute = $Minute + 1;
   // / We need to accomodate the off-chance that execution spans multiple days. 
   // / In other words, the application starts at 11:59am and ends at 12:00am.
   // / I tried to think what would happen if we spanned multiple months or years but I threw up in my mouth. >D
@@ -131,26 +132,77 @@ function verifyInstallation() {
   unset($dirCheck, $indexCheck, $logCheck, $cacheCheck, $requiredDirs, $requiredDir, $dirExists, $indexExists, $logHash);
   return(array($LogFile, $CacheFile, $InstallationIsVerified)); }
 
-// / A function to generate useful, consistent, and easily repeatable error messages.
-function dieGracefully($ErrorNumber, $ErrorMessage) { 
+// / A function to quickly check if a desired library is active.
+// / $LibCheck returns the array key of the desired library if the input library is active.
+// / $LibCheck returns FALSE if the input library is not active.
+// / $DesiredLibrary returns the array index of the desired library if it is active.
+// / $DesiredLibrary returns FALSE if the desired library is not active.
+function libCheck($library) { 
   // / Set variables. 
-  global $LogFile, $Time;
-  // / Perform a sanity check on the $ErrorNumber. Hackers are creative and this is a sensitive operation
-  // / that could be the target of XSS attacks.
+  global $LibrariesActive;
+  $lib = $key = $LibCheck = $DesiredLibrary = FALSE;
+  // / Check that the $LibrariesActive variable has been defined, that it is the proper type, & that the desired library is present in the array.
+  if (isset($LibrariesActive)) if (is_array($LibrariesActive)) foreach ($LibrariesActive as $key => $lib) if ($lib[0] === 'DATA') { 
+      $LibCheck = TRUE; 
+      $DesiredLibrary = $key; 
+      break; } 
+  // / Clean up unneeded memory.
+  $lib = $key = NULL;
+  unset($lib, $key);
+  return (array($LibCheck, $DesiredLibrary)); }
+
+function generateUserLogs() { 
+  // / Set variables. 
+  $UserLogsExist = FALSE;
+  global $Salts, $SessionIsVerified, $UserLogDir, $LibrariesActive, $UserID;
+  list ($DataLibCheck, $DataLibrary) = libCheck('DATA');
+  if (isset($SessionIsVerified)) if ($SessionIsVerified) if (isset($UserID)) if ($UserID !== 'DEFAULT') if ($DataLibCheck) {
+    $UserLogDir = $LibrariesActive[$DataLibrary].DIRECTORY_SEPARATOR.$UserID.'Logs'.DIRECTORY_SEPARATOR;
+    $UserLogFile = $UserLogDir.'Log-'.$Date.'-'.hash('sha256', $Salts[5].$UserID.$Salts[3].$Date.$Salts[1]); 
+    if (!file_exists($UserLogDir)) mkdir($UserLogDir); 
+    if (file_exists($UserLogDir)) file_put_contents($LogFile, 'OP-Act: '.$Time.' Created a user log file, "'.$LogFile.'".'.PHP_EOL);
+    if (file_exists($UserLogDir) && file_exists($UserLogFile)) $UserLogsExist = TRUE; }
+  return (array($UserLogsExist, $UserLogDir, $UserLogFile)); }
+
+// / A function to generate useful, consistent, and easily repeatable error messages.
+// / The $ErrorNumber should be an integer representing the unique error identifier.
+// / If the $ErrorNumber is not an integer, it will be replaced with '0'.
+// / The $ErrorMessage should be a string containing a brief description of the error.
+// / Set $LogToUser to TRUE to submit the entry to the users logfile in addition to the default system logfile.
+// / Set $LogToUser to FALSE to prevent the entry from being entered into the users logfile.
+// / If $LogToUser is set to FALSE, the entry will still be logged in the default system logfile specified in config.php.
+function dieGracefully($ErrorNumber, $ErrorMessage, $LogToUser) { 
+  // / Set variables. 
+  global $LogFile, $UserLogFile, $Time, $UserLogsExist;
+  // / Perform a sanity check on the $ErrorNumber. 
   if (!is_numeric($ErrorNumber)) $ErrorNumber = 0;
   $ErrorOutput = 'ERROR!!! '.$ErrorNumber.', '.$Time.', '.$ErrorMessage.PHP_EOL;
-  // / Write the log file. Note that we don't care about success or failure because we're about to kill the script regardless.
+  // / Write the primary log file. Note that we don't care about success or failure because we're about to kill the script regardless.
   file_put_contents($LogFile, $ErrorOutput, FILE_APPEND);
+  if ($LogToUser && $UserLogsExist) file_put_contents($UserLogFile, $ErrorOutput, FILE_APPEND);
   die('<a class="errorMessage">'.$ErrorOutput.'</a>'); } 
 
 // / A function to generate useful, consistent, and easily repeatable log messages.
-function logEntry($EntryText) { 
+// / The $EntryText should be a string containing a brief description of the log entry.
+// / Set $LogToUser to TRUE to submit the entry to the users logfile in addition to the default system logfile.
+// / Set $LogToUser to FALSE to prevent the entry from being entered into the users logfile.
+// / If $LogToUser is set to FALSE, the entry will still be logged in the default system logfile specified in config.php.
+// / Returns TRUE if all write operations succeeded.
+// / Returns FALSE if any required write operations failed.
+function logEntry($EntryText, $LogToUser) { 
   // / Set variables. 
-  global $LogFile, $Time;
+  global $LogFile, $UserLogFile, $Time, $UserLogsExists;
+  $logWrittenA = $logWrittenB = FALSE;
   // / Format the actual log message.
   $EntryOutput = sanitize('OP-Act: '.$Time.', '.$EntryText.PHP_EOL, FALSE);
   // / Write the actual log file.
-  $LogWritten = file_put_contents($LogFile, $EntryOutput, FILE_APPEND);
+  $logWrittenA = file_put_contents($LogFile, $EntryOutput, FILE_APPEND);
+  if ($LogToUser && $UserLogsExist) $logWrittenB = file_put_contents($UserLogFile, $EntryOutput, FILE_APPEND);
+  // / Check if either operation failed.
+  if (!$logWrittenA or !$logWrittenB) $LogWritten = FALSE;
+  // / Clean up unneeded memory.
+  $logWrittenA = $logWrittenB = NULL;
+  unset ($logWrittenA, $logWrittenB);
   return($LogWritten); } 
 
 // / A function to load the system cache, which contains the master user list.
@@ -226,7 +278,7 @@ function checkVersionInfo() {
   if (in_array('COMPATIBILITY', $CoresLoaded));
   // / If for any reason the Compatibility Core is not loaded we will skip this entire version check.
   else {
-    logEntry('Compatibility Core disabled. Skipping version check.'); 
+    logEntry('Compatibility Core disabled. Skipping version check.', FALSE); 
     $VersionMatch = TRUE; }
   // / If the Compatibility Core is enabled we will also retrieve the '$EngineVersionInfo' variable from versionInfo.php to compare against.
   if (file_exists('versionInfo.php')) require('versionInfo.php');
@@ -238,7 +290,7 @@ function checkVersionInfo() {
 function verifySession($SessionIDInput, $UserInput, $ClientTokenInput) {
   global $Users, $Salts, $Minute, $LastMinute, $ServerToken;
   // / Set variables.
-  $SessionIsVerified = $ClientLoggedIn = $sessionID = $user = $userFound = FALSE;
+  $SessionIsVerified == $sessionID = $user = $userFound = FALSE;
   if ($SessionIDInput !== FALSE && $UserInput !== FALSE && $ClientTokenInput !== FALSE) {
     // / Loop through the userlist and look for the specified username.
     foreach ($Users as $user) { 
@@ -262,7 +314,7 @@ function verifySession($SessionIDInput, $UserInput, $ClientTokenInput) {
 // / A function to validate and sanitize requried session and POST variables.
 function verifyGlobals() { 
   // / Set variables. 
-  $SessionID = $GlobalsAreVerified = $RequestTokens = $ClientLoggedIn = $SessionType = $SessionIsVerified = FALSE;
+  $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = FALSE;
   // / Set authentication credentials from supplied inputs when inputs are supplied.
   // / This code is performed when a user submits enough credentials & tokens to start a new session.
   // / There is a structure to how inputs are processed.
@@ -277,13 +329,15 @@ function verifyGlobals() {
     $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserInput']);
     $_SESSION['PasswordInput'] = $PasswordInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['PasswordInput']);  
     $_SESSION['ClientTokenInput'] = $ClientTokenInput = $_POST['ClientTokenInput']; 
+    $SessionType = 'LOGIN';
+    $UserID = 'DEFAULT';
     $GlobalsAreVerified = TRUE; }
   // / When no authentication credentials were supplied we initialize all variables to NULL.
   else $UserInput = $PasswordInput = $ClientTokenInput = NULL;
   // / Verify the session ID or set a new one.
   // / This code is performed when a user submits tokens and a session ID via SESSION request to continue an existing session.
-  if (isset($_POST['UserID']) && isset($_POST['SessionID']) && isset($_POST['ClientTokenInput'])) {
-    $_SESSION['UserID'] = $UserID = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_SESSION['UserID']);  
+  if (isset($_SESSION['UserInput']) && isset($_SESSION['SessionID']) && isset($_SESSION['ClientTokenInput'])) {
+    $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_SESSION['UserInput']);  
     $_SESSION['SessionIDInput'] = $SessionIDInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_SESSION['SessionID']);  
     $_SESSION['ClientTokenInput'] = $ClientTokenInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_SESSION['ClientTokenInput']);  
     $SessionIsVerified = verifySession($SessionIDInput, $UserInput, $ClientTokenInput);
@@ -292,8 +346,10 @@ function verifyGlobals() {
     $SessionType = 'SESSION';
     if ($SessionIsVerified) $GlobalsAreVerified = TRUE; }
   // / This code is performed when a user submits tokens and a session ID via POST request to continue an existing session.
-  if (isset($_SESSION) && isset($_SESSION['SessionID']) && isset($_SESSION['ClientTokenInput'])) {
-    $_SESSION['SessionIDInput'] = $SessionIDInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['SessionID']);  
+  if (isset($POST['UserInput']) && isset($POST['SessionID']) && isset($POST['ClientTokenInput'])) { 
+    $_SESSION['UseUserInputrName'] = $UseriNPUT = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $POST['UserInput']);
+    $_SESSION['SessionIDInput'] = $SessionIDInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['SessionID']);
+    $_SESSION['ClientTokenInput'] = $ClientTokenInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $POST['ClientTokenInput']);  
     $SessionIsVerified = verifySession($SessionIDInput, $UserInput, $ClientTokenInput);
     if ($SessionIsVerified) $_SESSION['SessionID'] = $SessionID = $SessionIDInput;
     else $_POST['SessionID'] = $_SESSION['SessionID'] = $SessionID = $SessionIDInput = NULL; 
@@ -309,7 +365,7 @@ function verifyGlobals() {
     if (isset($_POST['UserDir'])) $_SESSION['UserDir'] = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"\''), ' ', $_POST['UserDir']);
     if (!isset($_SESSION['UserDir']) or $_SESSION['UserDir'] == '') $_SESSION['UserDir'] = DIRECTORY_SEPARATOR; 
     $UserDir = $_SESSION['UserDir']; }
-  return(array($UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $ClientLoggedIn)); }
+  return(array($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified)); }
 
 // / A function to throw the login page when needed.
 function requireLogin() { 
@@ -318,7 +374,7 @@ function requireLogin() {
     // / Load the login page.
     include('login.php');
     // / Kill the script to give the user a chance to use the login page.
-    logEntry('User is not logged in.');
+    logEntry('User is not logged in.', FALSE);
     die();
   return(array()); }
 
@@ -371,30 +427,42 @@ function generateTokens($ClientTokenInput, $PasswordInput) {
   unset($oldClientToken, $oldServerToken); 
   return(array($ClientToken, $ServerToken, $TokensAreValid)); } 
 
+function cleanupSensitiveMemory() {
+  global $UserInput, $PasswordInput, $Users, $ClientTokenInput;
+  $UserInput = $PasswordInput = $Users = $ClientTokenInput = NULL;
+  unset($UserInput, $PasswordInput, $Users, $ClientTokenInput); }
+
 // / A function to authenticate a user and verify an encrypted input password with supplied tokens.
 function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $ClientTokenInput) { 
   // / Set variables. 
   global $Users, $Minute;
   $UserID = $UserName = $PasswordIsCorrect = $UserIsAdmin = $AuthIsComplete = FALSE;
   // / Iterate through each defined user.
+  logEntry($ClientToken.'     '.$ClientTokenInput, FALSE);
   foreach ($Users as $user) { 
     $UserID = $user[0];
     // / Continue ONLY if the $UserInput matches a valid $UserName.
     if ($user[1] === $UserInput) { 
-      $UserName = $user[1];
+      $_SESSION['UserInput'] = $UserName = $user[1];
       // / Continue ONLY if all tokens match and the password hash is correct.
       if ($ServerToken.$ClientToken.$user[3] === $ServerToken.$ClientTokenInput.$PasswordInput) {
-        $PasswordIsCorrect = TRUE; 
-        $AuthIsComplete = TRUE; 
-        $SessionID = hash('sha256', $Minute.$Salts[0].$ClientToken.$user[3].$Salts[1].$ServerToken.$Salts[4].$user[1]);
+        // / Define variables for a new session.
+        $_SESSION['SessionID'] = $SessionID = hash('sha256', $Minute.$Salts[0].$ClientToken.$user[3].$Salts[1].$ServerToken.$Salts[4].$user[1]);
+        $_SESSION['ClientTokenInput'] = $ClientToken;
+        // / Call verifyGlobals() again to start the newly defined session.
+        list ($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified) = verifyGlobals();
+        $PasswordIsCorrect = $AuthIsComplete = TRUE; 
         // / Here we grant the user their designated permissions.
         if (is_bool($user[4])) { 
           $UserIsAdmin = $User[4]; 
           // / Once we authenticate a user we no longer need to continue iterating through the userlist, so we stop.
           break; } } } }
   // / Clean up unneeded memory.
-  $UserInput = $PasswordInput = $user = $Users = $PasswordInput = NULL;
-  unset($UserInput, $PasswordInput, $user, $Users, $PasswordInput); 
+  $user = NULL;
+  unset($user);
+  // / Cleanup sensitive memory only if is it not required to complete authentication.
+  // / This code should only fire if the user login credentials were incorrect.
+  if ($PasswordIsCorrect && $SessionIsVerified) cleanupSensitiveMemory();
   return(array($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $SessionID, $AuthIsComplete)); }
 
 // / A function to define the default $UserCacheData used as $arrayData in generateUserCache and loadUserCache. 
@@ -403,20 +471,23 @@ function generateDefaultUserCacheData() {
   global $UserCacheRequiredOptions, $UserCacheArrayData;
   // / Define the default data for a fresh installation of the $UserCacheFile.
   // / This is specially encoded to be written in a machine-readable .php file that will be included in generateUserCache().
-  $UserCacheArrayData = '\'FRIENDS\'=>\'\', \'BLOCKED\'=>\'\', \'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\',';
+  $UserCacheArrayData = '\'FRIENDS\'=>\'\', \'BLOCKED\'=>\'\', \'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\'';
   // / Define an array of default cache elements that every user cache file must contain.
   // / Note that the values in this array MUST match the $UserCacheArrayData above which containing the valid defaults for each element of $UserOptions[].
-  $UserCacheRequiredOptions = array('FRIENDS', 'BLOCKED', 'COLOR', 'FONT', 'TIMEZONE', 'DISPLAYNAME', 'TIPS', 'THEME', 'HRAI', 'HRAIAUDIO', 'LANDINGPAGE'); }
+  $UserCacheRequiredOptions = array('FRIENDS', 'BLOCKED', 'COLOR', 'FONT', 'TIMEZONE', 'DISPLAYNAME', 'TIPS', 'THEME', 'HRAI', 'HRAIAUDIO', 'LANDINGPAGE'); 
+  return (array($UserCacheArrayData, $UserCacheRequiredOptions)); }
 
 // / A function to generate a missing user cache file. Useful when new users log in for the first time.
 // / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded 
 // / by the loadUserCache() function.
-function generateUserCache() { 
+function generateUserCache($UserID) { 
   // / Set variables. Note the $UserCacheExists, $UserCache and $UserDataDir are all assumed to be false unless they are changed to something valid.
   // / If $UserCacheExists, $UserCache or $UserDataDir return FALSE, the calling code should assume this function failed.
-  global $Salts, $UserID, $UserCacheArrayData;
+  global $Salts;
   $UserCacheExists = $UserCache = $UserDataDir = FALSE;
-  $UserDataDir = 'Data'.DIRECTORY_SEPARATOR.$UserID.DIRECTORY_SEPARATOR;
+  $UserDataDir = 'Cache'.DIRECTORY_SEPARATOR.'Data'.DIRECTORY_SEPARATOR.$UserID.DIRECTORY_SEPARATOR;
+  list ($UserCacheArrayData, $UserCacheRequiredOptions) = generateDefaultUserCacheData();
+  if (!file_exists($UserDataDir)) $dirExists = mkdir($UserDataDir);
   // / Define the $UserCacheFile.
   $UserCacheFile = $UserDataDir.'UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php';
   // / Wrap the data above in the proper PHP array syntax so it can be included later in the function.
@@ -424,8 +495,8 @@ function generateUserCache() {
   // / Write default cache data to the $UserCacheFile. 
   $UserCacheExists = file_put_contents($UserCacheFile, $userCacheData);
   // / Clean up unneeded memory.
-  $userCacheData = $arrayData = NULL;
-  unset($userCacheData, $arrayData); 
+  $userCacheData = $arrayData = $dirExists = NULL;
+  unset($userCacheData, $arrayData, $dirExists); 
   return(array($UserCacheExists, $UserCache, $UserDataDir)); } 
 
 // / A function to save entries to the user cache.
@@ -518,8 +589,7 @@ function loadUserCache() {
 // / A function to initialize the libraries into categories based on their status.
 function loadLibraries() { 
   // / Set variables. Note the default libraries that can be used as filters later in the application.
-  global $Libraries;
-  $LibrariesDefault = array('DATA', 'MOVIES', 'MUSIC', 'SHOWS', 'CHANNELS', 'DRIVE', 'STREAMS', 'IMAGES', 'DOCUMENTS'); 
+  global $Libraries, $LibrariesDefault;
   $LibrariesActive = array();
   $LibrariesInactive = array();
   $LibrariesCustom = array();
@@ -543,10 +613,8 @@ function loadLibraryData() {
   $LibraryError = FALSE;
   // / Validate the library location for each library.
   foreach ($LibrariesActive as $LibraryActive) {
-    logEntry('Starting a loop.');
     // / Check that the selected library is actually supposed to be activated.
     if ($LibraryActive[1]) { 
-      logEntry('Library is active!');
       // / Check that the libraray data directory exists. 
       // / If the libraray data directory exists we scan its contents to an array at $LibraryActive[3]. 
       if (file_exists($LibraryActive[2])) $LibraryActive[3] = scandir($LibraryActive[2]); 
@@ -560,22 +628,19 @@ function loadLibraryData() {
       $LibraryError = $LibraryActive[0]; }
     // / Stop validating as soon as an error is thrown.
     if (!$LibraryDataIsLoaded) break; }
-    logEntry('LibraryDataIsLoaded is: '.$LibraryDataIsLoaded);
   return(array($LibraryError, $LibraryDataIsLoaded)); }  
 
 // / A function to determine if a notifications file exists for the current user and generate one if missing.
 // / A notification is considered a single line of the notifications file.
-function generateNotificationsFile() { 
+function generateNotificationsFile($UserID, $UserDataDir) { 
   // / Set variables. Note that we assume the $notificationsCheck is true until we verify that a $NotificationsFile exists.
-  global $Salts, $UserID, $UserDataDir;
-  $notificationsCheck = TRUE;
+  global $Salts;
   $NotificationsFile = $UserDataDir.'UserNotifications-'.hash('sha256',$Salts[1].'NOTIFICATIONS'.$UserID).'.php';
+  $NotificationsFileExists = FALSE;
   // / Detect if no file exists and try to create one.
-  if (!file_exists($NotificationsFile)) $notificationsCheck = file_put_contents($NotificationsFile, ''); 
-  if (!$notificationsCheck) $NotificationsFileExists = $NotificationsFile = FALSE;
-  // / Clean up unneeded memory.
-  $notificationsCheck = NULL;
-  unset($notificationsCheck);
+  if (!file_exists($NotificationsFile)) file_put_contents($NotificationsFile, ''); 
+  // / If the file operation operation returns false, check again.
+  if (file_exists($NotificationsFile)) $NotificationsFileExists = TRUE;
   return(array($NotificationsFileExists, $NotificationsFile)); } 
 
 // / A function for loading notifications.
@@ -674,25 +739,25 @@ list ($Date, $Time, $Minute, $LastMinute) = verifyDate();
 // / This code verifies the integrity of the application.
 // / Also generates required directories in case they are missing & creates required log & cache files.
 list ($LogFile, $CacheFile, $InstallationIsVerified) = verifyInstallation();
-if (!$InstallationIsVerified) dieGracefully(3, 'Could not verify installation!');
-else if ($Verbose) logEntry('Verified installation.');
+if (!$InstallationIsVerified) dieGracefully(3, 'Could not verify installation!', FALSE);
+else if ($Verbose) logEntry('Verified installation.', FALSE);
 
 // / Load the compatibility core to make sanity checks possible.
 list ($CoresLoaded, $CoreLoadedSuccessfully) = loadCores('COMPATIBILITY');
 $VersionsMatch = checkVersionInfo();
-if (!$VersionsMatch or !$CoreLoadedSuccessfully) dieGracefully(4, 'Application Version discrepancy detected!');
-else if ($Verbose) logEntry('Verified version information.');
+if (!$VersionsMatch or !$CoreLoadedSuccessfully) dieGracefully(4, 'Application Version discrepancy detected!', FALSE);
+else if ($Verbose) logEntry('Verified version information.', FALSE);
 
 // / This code loads & sanitizes the global cache & prepares the user list.
 list ($Users, $CacheIsLoaded) = loadCache();
-if (!$CacheIsLoaded) dieGracefully(5, 'Could not load cache file!');
-else if ($Verbose) logEntry('Loaded cache file.');
+if (!$CacheIsLoaded) dieGracefully(5, 'Could not load cache file!', FALSE);
+else if ($Verbose) logEntry('Loaded cache file.', FALSE);
 
 // / This code takes in all required inputs to build a session and ensures they exist & are a valid type.
 // / If the globals cannot be verified, but the user is trying to login we will show them a login form.
-list ($UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $ClientLoggedIn) = verifyGlobals();
+list ($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified) = verifyGlobals();
 if (!$GlobalsAreVerified) if ($RequestTokens && $UserInput === NULL) requireLogin(); 
-else if ($Verbose) logEntry('Verified global variables.');
+else if ($Verbose) logEntry('Verified global variables.', FALSE);
 
 // / If the globals have been verified, there is enough user supplied information to continue authenticating the user, so the script will continue.
 // / If the globals have not been verified, there is not enough user supplied information to continue. The code in the following 'if' statement will be skipped.
@@ -700,24 +765,24 @@ if ($GlobalsAreVerified) {
   // / This code ensures that a same-origin UI element generated the login request.
   // / Also protects against packet replay attacks by ensuring that the request was generated recently and by making each request unique. 
   list ($ClientToken, $ServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $PasswordInput);
-  if (!$TokensAreValid) dieGracefully(6, 'Invalid tokens!');
-  else if ($Verbose) logEntry('Generated tokens.');
+  if (!$TokensAreValid) dieGracefully(6, 'Invalid tokens!', FALSE);
+  else if ($Verbose) logEntry('Generated tokens.', FALSE);
   
   // / Do not require authentication if the user has proven they are in the middle of a valid session.
-  if ($SessionType === 'POST' or $SessionType === 'SESSION') if ($SessionIsVerified && $ClientLoggedIn) { 
+  if ($SessionType === 'POST' or $SessionType === 'SESSION') if (!$SessionIsVerified) { 
     // / This code validates credentials supplied by the user against the hashed ones stored on the server.
     // / Also removes the $Users user list from memory so it can not be leaked.
     // / Displays a login screen when authentication fails and kills the application. 
     list ($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $SessionID, $AuthIsComplete) = authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $ClientTokenInput);
-    if (!$PasswordIsCorrect or !$AuthIsComplete) dieGracefully(7, 'Invalid username or password!'); 
-    else if ($Verbose) logEntry('Authenticated UserName '.$UserName.', UserID '.$UserID.'.'); }
-  else if ($Verbose) logEntry('Verified existing session.');
+    if (!$PasswordIsCorrect or !$AuthIsComplete) dieGracefully(7, 'Invalid username or password!', TRUE); 
+    else if ($Verbose) logEntry('Authenticated UserName '.$UserName.', UserID '.$UserID.', SessionID '.$SessionID.'.', TRUE); }
+  else if ($Verbose) logEntry('Verified existing session.', TRUE);
 
   // / This code builds arrays of good & bad libraries.
   // / Libraries are directory for storing specific types of information. 
   list ($LibrariesActive, $LibrariesInactive, $LibrariesCustom, $LibrariesDefault, $LibrariesAreLoaded) = loadLibraries();
-  if (!$LibrariesAreLoaded) dieGracefully(8, 'Could not load libraries!');
-  else if ($Verbose) logEntry('Loaded libraries.');
+  if (!$LibrariesAreLoaded) dieGracefully(8, 'Could not load libraries!', TRUE);
+  else if ($Verbose) logEntry('Loaded libraries.', TRUE);
 
   // / This code verifies each active library directory exists.
   // / Verified libraries receive the $LibrariesActive[3] element & become fully activated. 
@@ -727,20 +792,25 @@ if ($GlobalsAreVerified) {
   // / $LibrariesActive[3] contains an array containing library contents.
   // / Instead of accepting $LibrariesActive as an argument and re-specifying it as a return value, we represent it in global scope in the loadLibraryData function.
   list ($LibraryError, $LibraryDataIsLoaded) = loadLibraryData();
-  if (!$LibraryDataIsLoaded) dieGracefully(9, 'Could not load library data from '.$LibraryError.'!');
-  else if ($Verbose) logEntry('Loaded library data.');
+  if (!$LibraryDataIsLoaded) dieGracefully(9, 'Could not load library data from '.$LibraryError.'!', TRUE);
+  else if ($Verbose) logEntry('Loaded library data.', TRUE);
+
+  // / This code generates a user log file if none exists. Useful for initializing new users logging-in for the first time.
+  list ($UserLogsExists, $UserLogDir, $UserLogDir) = generateUserLogs($UserID);
+  if (!$UserCacheExists or !$UserDataDir) dieGracefully(10, 'Could not generate a user log file!', TRUE);
+  else if ($Verbose) logEntry('Created user logs.', TRUE);
 
   // / This code generates a user cache file if none exists. Useful for initializing new users logging-in for the first time.
-  list ($UserCacheExists, $UserCache, $UserDataDir) = generateUserCache();
-  if (!$UserCacheExists or !$UserDataDir) dieGracefully(10, 'Could not generate a user cache file!');
-  else if ($Verbose) logEntry('Created user cache.');
+  list ($UserCacheExists, $UserCache, $UserDataDir) = generateUserCache($UserID);
+  if (!$UserCacheExists or !$UserDataDir) dieGracefully(11, 'Could not generate a user cache file!', TRUE);
+  else if ($Verbose) logEntry('Created user cache.', TRUE);
 
   // / This code generates a user notifications file if none exists. Useful for initializing new users logging-in for the first time.
-  list ($NotificationsFileExists, $NotificationsFile) = generateNotificationsFile();
-  if (!$NotificationsFileExists or !$NotificationsFile) dieGracefully(11, 'Could not generate a user notifications file!');
-  else if ($Verbose) logEntry('Created user notifications.'); }
+  list ($NotificationsFileExists, $NotificationsFile) = generateNotificationsFile($UserID, $UserDataDir);
+  if (!$NotificationsFileExists) dieGracefully(11, 'Could not generate a user notifications file!', TRUE);
+  else if ($Verbose) logEntry('Created user notifications.', TRUE); }
 // / The code in this 'else if' statement is triggered when there was not enough information to authenticate the user.
-else if ($Verbose) logEntry('Deferring execution to allow user login.');
+else if ($Verbose) logEntry('Deferring execution to allow user login.', FALSE);
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -750,5 +820,7 @@ else if ($Verbose) logEntry('Deferring execution to allow user login.');
 // / This is usually performed when an unauthenticated user is trying to log in. 
 // / If a user has supplied a user name to the core along with a request for user tokens, the user tokens for the specified user name will be returned to the user.
 // / User tokens are used to secure the session from delayed eavesdropping attempts or replay attacks, and also serve to invalidate the session after 2 minutes.
-if ($RequestTokens) echo(getClientTokens($UserInput, FALSE)); 
+if ($RequestTokens && !$SessionIsVerified) echo(getClientTokens($UserInput, FALSE).PHP_EOL);
+if ($SessionIsVerified) echo($SessionID.PHP_EOL); 
+logEntry($SessionID, FALSE);
 // / -----------------------------------------------------------------------------------
