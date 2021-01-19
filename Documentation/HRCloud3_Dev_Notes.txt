@@ -1,6 +1,18 @@
 HRCLOUD3 DEV NOTES
 
 ----------
+1/19/2021
+v0.6.8 - Working on session control. Added user logging capability.
+
+-The programmer now has the choice of adding logs and errors to a user directory of the Data library.
+-Added a function for checking that a library is active.
+-Added a function for securing sensitive memory after authentication.
+-Roughed out a routine to pass authentication straight into session creation to remove the need for refresh.
+ -Has bugs, blocks authentication now.
+-Put our first piece of data into a library programmatically! 
+-The user logs process should be a good rough draft for accessing & manipulating data within a library.
+
+----------
 v0.6.7 - 1/18/2021
 Working on session creation & control.
 
