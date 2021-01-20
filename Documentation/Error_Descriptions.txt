@@ -6,7 +6,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 1/18/2021
+Date: 1/20/2021
 <3 Open-Source
 
 This plain text file contains descriptions of all the native error messages contained in or produced by the HRCloud3 Diablo engine. These descriptions should 
@@ -16,11 +16,25 @@ If you have a knowledgebase system for your organization it is recommended that 
 future reference. You are also encouraged to add your own notes to this file as you encounter problems. If you decide to add your own notes to this file 
 please consider uploading it to a public Github repo so that other HRCloud3 administrators can benefit from the knowledge you've acquired. 
 
+
+Each section in this file contains information about a different error message. Each section has the following subsections
+
+ERROR MESSAGE: The exact error response produced by the application. Text wrapped in angle brackets < > denote encoded information. For example, "<DATETIME>"
+would actually be replaced with an abbreviated date.
+
+LOG LEVEL: Denotes where the log entry is written to. Possible levels include "SYSTEM" or "USER" or both. "SYSTEM" logs get entered into the primary system 
+logfile located in the /Logs directory where HRCloud3 was installed. "USER" logs get written to a user specific subdirectory of the "DATA" library. If a "USER"
+log entry is triggered and there is no logged in user the entry will only be written to the "SYSTEM" logfile.
+
+ERROR DESCRIPTION: A brief and concise description of the error message as well as possible causes & solutions.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 0, Could not process the Configuration file (config.php)!
+
+LOG LEVEL
+  SYSTEM
 
 ERROR DESCRIPTION
   The config.php file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
@@ -34,6 +48,9 @@ ERROR MESSAGE
   ERROR!!! 2A, This application is NOT compatible with PHP versions earlier than 7.0. Running this application on unsupported PHP versions 
   WILL cause unexpected behavior!
 
+LOG LEVEL
+  SYSTEM
+
 ERROR DESCRIPTION
   The version of PHP that is running on the server is lower than version 7.0.0, which is unsupported.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -43,6 +60,9 @@ ERROR MESSAGE
   ERROR!!! 2B, This application is NOT compatible with the Windows Operating System. Running this application on unsupported operating systems 
   WILL cause unexpected behavior!
 
+LOG LEVEL
+  SYSTEM
+
 ERROR DESCRIPTION
   HRCloud3 is being run on a server that is running a Windows based Operating System, which is unsupported.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -50,6 +70,9 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 3, <TIMESTAMP>, Could not verify installation!
+
+LOG LEVEL
+  SYSTEM
 
 ERROR DESCRIPTION
   One of the files or directories required for HRCloud3 to run is missing or unreachable.
@@ -67,6 +90,9 @@ ERROR DESCRIPTION
 ERROR MESSAGE
   ERROR!!! 4, <TIMESTAMP>, Application Version discrepancy detected!
 
+LOG LEVEL
+  SYSTEM
+
 ERROR DESCRIPTION
   The version reported by the Compatibility Core (compatibilityCore.php) does not match the version reported by the Version Info file (versionInfo.php). 
   This may be due to file corruption, incompatible file modifications, or incomplete update/upgrade procedures. 
@@ -76,6 +102,9 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 5, <TIMESTAMP>, Could not load cache file!
+ 
+LOG LEVEL
+  SYSTEM
 
 ERROR DESCRIPTION
   The cache file located at 'Cache/DATA' does not exist or is not reachable.
@@ -86,6 +115,9 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 6, <TIMESTAMP>, Invalid tokens!
+
+LOG LEVEL
+  SYSTEM
 
 ERROR DESCRIPTION
   The client supplied an invalid token.
@@ -98,6 +130,9 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 7, <TIMESTAMP>, Invalid username or password!
+ 
+LOG LEVEL
+  SYSTEM
 
 ERROR DESCRIPTION
   The client supplied login credentials that were invalid.
@@ -108,6 +143,9 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 8, <TIMESTAMP>, Could not load libraries!
+ 
+LOG LEVEL
+  SYSTEM
 
 ERROR DESCRIPTION
   Execution has been tampered with.
@@ -116,6 +154,9 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 9, <TIMESTAMP>, Could not load library data from <LIBRARY NAME OR DIRECTORY>!
+ 
+LOG LEVEL
+  SYSTEM
 
 ERROR DESCRIPTION
   If the "...data from <LIBRARY NAME OR DIRECTORY>" is set to a Library Name, this is likely because of a malformed array in config.php.
@@ -127,4 +168,54 @@ ERROR DESCRIPTION
   The config.php file has syntax errors somewhere above the libraries section.
   The structure of the library arrays have become corrupt and indecies no longer align as expected. 
   Execution has been tampered with.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 10, <TIMESTAMP>, Could not generate a user log file!
+ 
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The "DATA" library directory specified in the config.php file has no trailing slash.
+  The "DATA" library directory specified in the config.php file has incorrect permissions.
+  The "DATA" library directory points to a destination where the www-data user or group cannot access.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 11, <TIMESTAMP>, Could not generate a user cache file!
+ 
+LOG LEVEL
+  SYSTEM, USER
+
+ERROR DESCRIPTION
+  The "DATA" library directory specified in the config.php file has no trailing slash.
+  The "DATA" library directory specified in the config.php file has incorrect permissions.
+  The "DATA" library directory points to a destination where the www-data user or group cannot access.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 11, <TIMESTAMP>, Could not generate a user cache file!
+ 
+LOG LEVEL
+  SYSTEM, USER
+
+ERROR DESCRIPTION
+  The www-data user or group cannot access the servers web root directory.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 12, <TIMESTAMP>, Could not generate a user notifications file!
+ 
+LOG LEVEL
+  SYSTEM, USER
+
+ERROR DESCRIPTION
+  The "DATA" library directory specified in the config.php file has no trailing slash.
+  The "DATA" library directory specified in the config.php file has incorrect permissions.
+  The "DATA" library directory points to a destination where the www-data user or group cannot access.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------

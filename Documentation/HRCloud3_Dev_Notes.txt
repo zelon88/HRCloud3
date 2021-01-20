@@ -1,5 +1,21 @@
 HRCLOUD3 DEV NOTES
 
+1/20/2021
+v0.6.9 - Session generation is complete! 
+
+-Sessions are now created and can be held by the core once a user has authenticated.
+-Authentication works. If a user enters an incorrect password the core does not authenticate them.
+-If a user enters the correct password they are logged in and a sessionID is returned by the core.
+-Need the UI to capture and reimplement the tokens that the core generates.
+-Need to better define user cache behaviour. 
+ -I want it to stay in /var/www/html as a PHP file because it will be guaranteed to be on the local server.
+ -In a multi-server installation it would make it a lot easier to control throughput geographically. 
+ -We need a way to divide the userlist by geographic location and then sync user cache files between the DATA library and the local server serving the request.
+ -I don't think it will be a problem to implement, so we can continue testing with the current cache environment for now.
+ -Keep in mind if complexity gets too high that we still need to add more features.
+-User log generation works.
+-Added more Errors descriptions to Documentation\Error_Descriptions.txt.
+
 ----------
 1/19/2021
 v0.6.8 - Working on session control. Added user logging capability.
