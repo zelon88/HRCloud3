@@ -58,12 +58,13 @@ $Salts = array('fgdsfg!sdhafbde3i85_+#$@%<G345234381234120', '2lw12564165fgdasfs
 
 // / Library Definitions.
 // / Libraries are treated as objects. They are defined in the following arrays.
-// / Arrays are formatted as  $Libraries['LIBRARY_NAME', ENABLED/DISABLED(bool), '/path/to/library/directory/']
 // / Do not forget to add the trailing slash. Trailing slash is required.
 // / Admins can add their own custom libraries by simply copy/pasting an existing entry and being cautious of the ending '('.
-// / The "DATA" library is used for xPress compression dictionaries and user-supplied encryption keys.
-// / It is reccomended that you limit the permissions on the DATA $Library directory so that nobody but the Apache/Nginx user
-// / has read access.
+// / The "DATA" library is used for storing private account related user data & metadata
+// / Set $LibrariesDefault to an array containing all of the default libraries included with this version of HRCloud3.
+$LibrariesDefault = array('DATA', 'MOVIES', 'MUSIC', 'SHOWS', 'CHANNELS', 'DRIVE', 'STREAMS', 'IMAGES', 'DOCUMENTS'); 
+// / Set $Libraries to an array of arrays.
+// / Arrays are formatted as  $Libraries['LIBRARY_NAME', ENABLED/DISABLED(bool), '/path/to/library/directory/']
 $Libraries = array(
  array('DATA', TRUE, '/home/justin/Desktop/Projects/DATA/DATA/'),
  array('MOVIES', TRUE, '/home/justin/Desktop/Projects/DATA/MOVIES/'),
