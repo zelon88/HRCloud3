@@ -19,7 +19,7 @@ please consider uploading it to a public Github repo so that other HRCloud3 admi
 
 Each section in this file contains information about a different error message. Each section has the following subsections
 
-ERROR MESSAGE: The exact error response produced by the application. Text wrapped in angle brackets < > denote encoded information. For example, "<DATETIME>"
+ERROR MESSAGE: The exact error response produced by the application. Text wrapped in angle brackets < > denote encoded information. For example, "<TIMESTAMP>"
 would actually be replaced with an abbreviated date.
 
 LOG LEVEL: Denotes where the log entry is written to. Possible levels include "SYSTEM" or "USER" or both. "SYSTEM" logs get entered into the primary system 
