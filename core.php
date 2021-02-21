@@ -465,7 +465,6 @@ function generateUserLogs($UserID) {
   list ($DataLibCheck, $DataLibrary) = libCheck('DATA');
   // / Check that the session is verified, the UserID is set, and the data library passed all checks.
   if (isset($SessionIsVerified)) if ($SessionIsVerified) if (isset($UserID)) if ($UserID !== 'DEFAULT') if ($DataLibCheck) {
-    logEntry('oofodsafsdafsda', FALSE);
     // / Define the directory structure for the logs.
     // / The $LibrariesActive[] array is defined in config.php where the user was instructed specifically to include trailing slashes on all directories.
     $UserDataDir = $LibrariesActive[$DataLibrary][2].$UserID.DIRECTORY_SEPARATOR;

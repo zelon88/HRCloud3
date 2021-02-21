@@ -34,8 +34,8 @@ $ApplicationNameString = $ApplicationName;
     <!-- Load stylesheets -->
     <link rel='stylesheet' href='Resources/Styles/navigationStyles.css'/>
     <link rel='stylesheet' href='Resources/Styles/loginModalStyles.css'/>
-    <link rel='stylesheet' href='Resources/Styles/centerAnything.css'/>  
-    <link rel='stylesheet' href='Resources/Styles/meyers-reset.css'>
+    <link rel='stylesheet' href='Resources/Styles/centerAnything.css'/>
+    <link rel='stylesheet' href='Resources/Styles/meyers-reset.css'> 
   </head>
   <body>
   <!-- An invisible iframe to use as a target to prevent forms from reloading the page. -->
@@ -130,7 +130,7 @@ $ApplicationNameString = $ApplicationName;
 
           <div class='container' style='background-color:#f1f1f1; text-align:center;'>
 
-            <input type='password' placeholder='Enter Password' id='RawPassword' name='RawPassword'>
+            <input type='password' placeholder='Enter Password' id='RawPassword' name='RawPassword' required>
             <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' required>
             <input type='hidden' id='PasswordInput' name='PasswordInput' required>
             <input type='hidden' id='UserInput' name='UserInput' required>
@@ -155,5 +155,5 @@ $ApplicationNameString = $ApplicationName;
 <!-- These scripts are loaded at the end of the page to allow the rest of the page to load before introducing additional functionality. -->
 <!-- Expect problems if you move these. -->
 <script type='text/javascript' src='Resources/sjcl.js'></script>
-<script type='text/javascript' src='Resources/Login-Caller.js'></script>
 <script type='text/javascript' src='Resources/HRC3-Lib.js'></script>
+<script type='text/javascript' src='Resources/Login-Caller.js'></script>

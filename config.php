@@ -66,12 +66,12 @@ $LibrariesDefault = array('DATA', 'MOVIES', 'MUSIC', 'SHOWS', 'CHANNELS', 'DRIVE
 // / Set $Libraries to an array of arrays.
 // / Arrays are formatted as  $Libraries['LIBRARY_NAME', ENABLED/DISABLED(bool), '/path/to/library/directory/']
 $Libraries = array(
- array('DATA', TRUE, '/home/justin/Desktop/Projects/DATA/DATA/'),
- array('MOVIES', TRUE, '/home/justin/Desktop/Projects/DATA/MOVIES/'),
- array('MUSIC', TRUE, '/home/justin/Desktop/Projects/DATA/MUSIC/'),
- array('SHOWS', TRUE, '/home/justin/Desktop/Projects/DATA/SHOWS/'),
- array('CHANNELS', FALSE, '/home/justin/Desktop/Projects/DATA/CHANNELS/'),
- array('DRIVE', TRUE, '/home/justin/Desktop/Projects/DATA/DRIVE/'),
+ array('DATA', TRUE, '/home/justin/Documents/Projects/DATA/DATA/'),
+ array('MOVIES', TRUE, '/home/justin/Documents/Projects/DATA/MOVIES/'),
+ array('MUSIC', TRUE, '/home/justin/Documents/Projects/DATA/MUSIC/'),
+ array('SHOWS', TRUE, '/home/justin/Documents/Projects/DATA/SHOWS/'),
+ array('CHANNELS', FALSE, '/home/justin/Documents/Projects/DATA/CHANNELS/'),
+ array('DRIVE', TRUE, '/home/justin/Documents/Projects/DATA/DRIVE/'),
  array('STREAMS', FALSE, ''),
  array('IMAGES', FALSE, ''),
  array('DOCUMENTS', FALSE, ''),
