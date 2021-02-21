@@ -1,5 +1,12 @@
 HRCLOUD3 DEV NOTES
 
+2/20/2021
+v0.7 - Working on JS/Ajax.
+
+-There is some bug in the Ajax that I am trying to track down.
+-The bug prevents the success code from running in the Ajax that is intended to submit the password data.
+
+----------
 1/20/2021
 v0.6.9 - Session generation is complete! 
 
