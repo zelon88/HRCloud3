@@ -29,40 +29,51 @@ function hashCreds(RawPassword) {
 // / A function to perform the client-side encryption of the users password before they send it to the server.
 function secureLogin(RawPassword) {
   var PasswordInput = hashCreds(RawPassword);
-  changeValue('PasswordInput', PasswordInput); 
+  changeValue('PasswordInput', PasswordInput);  
+  document.getElementById("RawPassword").required = false;
   clearInput('RawPassword');
   return(PasswordInput); }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A funciton function to submit the Navigation Bar login form & with AJAX & update the UI elements.
+// / A funciton function to submit the Navigation Bar login form with AJAX & update the UI elements.
 // / Also replaces the User input modal with the Password input modal after a Username has been sent.
-$('#loginFormNav').on('submit', function (e) {
-    e.preventDefault();
+$('#loginFormNav').on('submit', function (loginAjax) {
+    loginAjax.preventDefault();
     $.ajax({
       type: 'POST',
       url: 'core.php',
       data: $(this).serialize(),
-      success: function(response) {
+      success: function(loginReponse) {
         var UserInput = document.getElementById('UserInput').value;
-        var ClientTokenInput = response;
+        var ClientTokenInput = loginReponse;
         replaceDiv('loginModal', 'passwordModal');
         changeValue('ClientTokenInput', ClientTokenInput);
-        changeValue('UserInput', UserInput); } }) });
+        changeValue('UserInput', UserInput); } }); });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A funciton function to submit the Navigation Bar login form & with AJAX & update the UI elements.
-// / Also replaces the User input modal with the Password input modal after a Username has been sent.
-$('#passwordFormNav').on('submit', function (e) { 
-    e.preventDefault();
+// / A funciton function to submit the Navigation Bar login form with AJAX & update the UI elements.
+$('#passwordFormNav').on('submit', function (passwordAjax) { 
+    passwordAjax.preventDefault();
     $.ajax({
       type: 'POST',
       url: 'core.php',
       data: $(this).serialize(),
-      success: function(response) {
-        toggleVisibility('loginModal');
-        } }) });
+      success: function(passwordResponse) {
+        var responseArray = passwordResponse.split('\n');
+        var UserInput = responseArray[0];
+        var SessionID = responseArray[1];
+        var ClientToken = responseArray[2]
+        toggleVisibility('passwordModal');
+        alert('test0')
+        },
+      error: function(passwordResponse) {
+        alert('test1');
+        }, 
+      complete: function(passwordResponse) { 
+        alert('test2');
+      } }); });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
