@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 2/20/2021
+Date: 2/22/2021
 <3 Open-Source
 
 The Version Info file is for validating engine version during update & security related operations.
@@ -16,5 +16,5 @@ The Version Info file is for validating engine version during update & security 
 
 // / ----------------------------------------------------------------------------------
 // / Specify the engine version.
-$EngineVersionInfo = 'v0.7';
+$EngineVersionInfo = 'v0.7.1';
 // / ----------------------------------------------------------------------------------

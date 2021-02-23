@@ -35,7 +35,7 @@ $ApplicationNameString = $ApplicationName;
     <link rel='stylesheet' href='Resources/Styles/navigationStyles.css'/>
     <link rel='stylesheet' href='Resources/Styles/loginModalStyles.css'/>
     <link rel='stylesheet' href='Resources/Styles/centerAnything.css'/>
-    <link rel='stylesheet' href='Resources/Styles/meyers-reset.css'> 
+    <link rel='stylesheet' href='Resources/Styles/meyers-reset.css'>
   </head>
   <body>
   <!-- An invisible iframe to use as a target to prevent forms from reloading the page. -->
@@ -104,16 +104,20 @@ $ApplicationNameString = $ApplicationName;
             <img src='Resources/placeholderAvatar.png' alt='Avatar' class='avatar'>
           </div>
 
-          <div class='container' style='background-color:#f1f1f1; text-align:center;'>
+          <div class='container' id='loginContainer' name='loginContainer' style='background-color:#f1f1f1; text-align:center;'>
 
+            <br />
             <input type='text' placeholder='Enter Username' id='UserInput' name='UserInput' required>
             <input type='hidden' id='requestTokens' name='RequestTokens' required>
 
+            <br />
             <p><button id='submitButton'>Continue</button></p>
 
+            <br />
             <span class='psw'><a href='#'>Forgot Username</a></span>
             <span class='psw'><a href='#'>Create New Account</a></span>
 
+            <br />
             <button type='button' onclick='document.getElementById("loginModal").style.display="none"' class='cancelbtn'>Cancel</button>
 
           </div>
@@ -128,21 +132,32 @@ $ApplicationNameString = $ApplicationName;
             <img src='Resources/placeholderAvatar.png' alt='Avatar' class='avatar'>
           </div>
 
-          <div class='container' style='background-color:#f1f1f1; text-align:center;'>
+          <div class='container' id='passwordContainer' name='passwordContainer' style='background-color:#f1f1f1; text-align:center; display:block;'>
 
+            <br />
             <input type='password' placeholder='Enter Password' id='RawPassword' name='RawPassword' required>
             <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' required>
             <input type='hidden' id='PasswordInput' name='PasswordInput' required>
             <input type='hidden' id='UserInput' name='UserInput' required>
 
+            <br />
             <p><button id='submitButton' onclick='secureLogin(document.getElementById("RawPassword").value);'>Continue</button></p>
-
+            
+            <br />
             <span class='psw'><a href='#'>Forgot Password</a></span>
             <span class='psw'><a href='#'>Create New Account</a></span>
 
-            <button type='button' onclick='document.getElementById("loginModal").style.display="none"' class='cancelbtn'>Cancel</button>
+            <br />
+            <button type='button' onclick='document.getElementById("passwordModal").style.display="none"' class='cancelbtn'>Cancel</button>
 
           </div>
+
+          <div class='container animate' id='successMessage' class='modal' style='text-align:center; display:none;'>
+            <br />
+            <p>Success! Please wait.</p>
+            <br />
+          </div>
+
         </form>
       </div>
     </li>
