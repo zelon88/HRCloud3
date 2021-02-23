@@ -47,8 +47,8 @@ This CSS file determines the stylesheet for the login modal.
 .modal-content {
   background-color: #fefefe;
   margin: 5px auto; /* 15% from the top and centered */
-  border: 1px solid #888;
-  width: 80%; /* Could be more or less, depending on screen size */
+  border: 3px solid #888;
+  width: 60%; /* Could be more or less, depending on screen size */
 }
 
 /* Add Zoom Animation */
