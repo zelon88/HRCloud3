@@ -47,15 +47,16 @@ $('#loginFormNav').on('submit', function (loginAjax) {
       success: function(loginReponse) {
         var UserInput = document.getElementById('UserInput').value;
         var ClientTokenInput = loginReponse;
-        replaceDiv('loginModal', 'passwordModal');
+        toggleVisibility('loginModal');
+        toggleVisibility('passwordModal');
         changeValue('ClientTokenInput', ClientTokenInput);
         changeValue('UserInput', UserInput); } }); });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
 // / A funciton function to submit the Navigation Bar login form with AJAX & update the UI elements.
-$('#passwordFormNav').on('submit', function (passwordAjax) { 
-    passwordAjax.preventDefault();
+$('#passwordFormNav').on('submit', function (loginAjax) { 
+    loginAjax.preventDefault();
     $.ajax({
       type: 'POST',
       url: 'core.php',
@@ -64,15 +65,16 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
         var responseArray = passwordResponse.split('\n');
         var UserInput = responseArray[0];
         var SessionID = responseArray[1];
-        var ClientToken = responseArray[2]
-        toggleVisibility('passwordModal');
-        alert('test0')
-        },
+        var ClientToken = responseArray[2];
+        toggleVisibility('passwordContainer');
+        toggleVisibility('successMessage');
+        sleep(1000).then(() => {
+          toggleVisibility('passwordModal'); }) },
       error: function(passwordResponse) {
-        alert('test1');
+
         }, 
       complete: function(passwordResponse) { 
-        alert('test2');
+
       } }); });
 // / -----------------------------------------------------------------------------------
 

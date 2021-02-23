@@ -61,3 +61,9 @@ function refreshIframe(iframeDiv) {
 function replaceDiv(originalDivID, newDivID) {
   document.getElementById(originalDivID).innerHTML = document.getElementById(newDivID).innerHTML; }
 // / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A funtion to pause Javascript execution for a specific number of miliseconds.
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms)); }
+// / -----------------------------------------------------------------------------------
