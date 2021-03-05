@@ -38,7 +38,7 @@ $ApplicationNameString = $ApplicationName;
     <link rel='stylesheet' href='Resources/Styles/meyers-reset.css'>
   </head>
   <body>
-  <!-- An invisible iframe to use as a target to prevent forms from reloading the page. -->
+  <!-- An invisible iframe to use as a target to prevent form POSTS from reloading the page. -->
   <iframe style='width:0; height:0; border:0; border:none; position:absolute; visibility:hidden; display:none;' id='noredirect' name='noredirect'></iframe>
   <!-- Top navigation bar. -->
   <ul class='top-level'>
@@ -162,11 +162,19 @@ $ApplicationNameString = $ApplicationName;
       </div>
     </li>
   </ul>
+  <form id='tokens' name='tokens' method='post' target='noredirect'>
+    <input type='hidden' id='UserInputTokens' name='UserInput' value='' required>
+    <input type='hidden' id='SessionID' name='SessionID' value='' required>
+    <input type='hidden' id='ClientToken' name='ClientToken' value='' required>
+    <input type='hidden' id='ActiveSLI' name='ActiveSLI' value='DISABLED' required>
+    <input type='hidden' id='StayLoggedIn' name='StayLoggedIn' value='DISABLED' required>
+  </form>
 
 <!--This div and the commented code in Login-Caller.js make up a test to ensure JQuery is functioning properly. 
 <div id='test' name='test'>
 <a>Test JQuery</a>
 </div> -->
+
 <!-- These scripts are loaded at the end of the page to allow the rest of the page to load before introducing additional functionality. -->
 <!-- Expect problems if you move these. -->
 <script type='text/javascript' src='Resources/sjcl.js'></script>

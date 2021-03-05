@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 12/24/2020
+Date: 3/4/2021
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -131,6 +131,23 @@ function verifyInstallation() {
   $dirCheck = $indexCheck = $logCheck = $cacheCheck = $requiredDirs = $requiredDir = $dirExists = $indexExists = $logHash = NULL;
   unset($dirCheck, $indexCheck, $logCheck, $cacheCheck, $requiredDirs, $requiredDir, $dirExists, $indexExists, $logHash);
   return(array($LogFile, $CacheFile, $InstallationIsVerified)); }
+
+// / A function to initialize global variables to default values.
+function initializeVariables() {
+  $UserOptionCount = 0;
+  global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions;
+  // / Initialize all required sanity checks to FALSE.
+  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = FALSE;
+  // / Initialize all required user options to NULL.
+  list ($UserCacheArrayData, $UserCacheRequiredOptions) = generateDefaultUserCacheData();
+  foreach ($UserCacheRequiredOptions as $ucItem) { 
+    $UserOptionCount++;
+    $UserOptions[$ucItem] = ' '; }
+  $InitializationComplete = TRUE; 
+  // / Clean up unneeded memory.
+  $ucItem = NULL;
+  unset($ucItem);
+  return (array($InitializationComplete, $UserOptionCount)); }
 
 // / A function to quickly check if a desired library is active.
 // / $LibCheck returns the array key of the desired library if the input library is active.
@@ -485,11 +502,13 @@ function generateDefaultUserCacheData() {
   global $UserCacheRequiredOptions, $UserCacheArrayData;
   // / Define the default data for a fresh installation of the $UserCacheFile.
   // / This is specially encoded to be written in a machine-readable .php file that will be included in generateUserCache().
-  $UserCacheArrayData = '\'FRIENDS\'=>\'\', \'BLOCKED\'=>\'\', \'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\'';
+  $UserCacheArrayData = '\'FRIENDS\'=>\'\', \'BLOCKED\'=>\'\', \'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\', \'STAYLOGGEDIN\'=>\'ENABLED\'';
   // / Define an array of default cache elements that every user cache file must contain.
   // / Note that the values in this array MUST match the $UserCacheArrayData above which containing the valid defaults for each element of $UserOptions[].
-  $UserCacheRequiredOptions = array('FRIENDS', 'BLOCKED', 'COLOR', 'FONT', 'TIMEZONE', 'DISPLAYNAME', 'TIPS', 'THEME', 'HRAI', 'HRAIAUDIO', 'LANDINGPAGE'); 
+  $UserCacheRequiredOptions = array('FRIENDS', 'BLOCKED', 'COLOR', 'FONT', 'TIMEZONE', 'DISPLAYNAME', 'TIPS', 'THEME', 'HRAI', 'HRAIAUDIO', 'LANDINGPAGE', 'STAYLOGGEDIN'); 
   return (array($UserCacheArrayData, $UserCacheRequiredOptions)); }
+
+
 
 // / A function to generate a missing user cache file. Useful when new users log in for the first time.
 // / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded 
@@ -750,24 +769,25 @@ set_time_limit(0);
 // / This code verifies the date & time for file & log operations.
 list ($Date, $Time, $Minute, $LastMinute) = verifyDate();
 
-// / Initialize all required sanity checks to FALSE.
-$InstallationIsVerified = $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = FALSE;
-
 // / This code verifies the integrity of the application.
 // / Also generates required directories in case they are missing & creates required log & cache files.
 list ($LogFile, $CacheFile, $InstallationIsVerified) = verifyInstallation();
 if (!$InstallationIsVerified) dieGracefully(3, 'Could not verify installation!', FALSE);
 else if ($Verbose) logEntry('Verified installation.', FALSE);
 
+list ($InitializationComplete, $UserOptionCount) = initializeVariables();
+if (!$InitializationComplete) dieGracefully(4, 'Could not initialize variables to default values!', FALSE);
+else if ($Verbose) logEntry('Initialized variables to default values.', FALSE);
+
 // / Load the compatibility core to make sanity checks possible.
 list ($CoresLoaded, $CoreLoadedSuccessfully) = loadCores('COMPATIBILITY');
 $VersionsMatch = checkVersionInfo();
-if (!$VersionsMatch or !$CoreLoadedSuccessfully) dieGracefully(4, 'Application Version discrepancy detected!', FALSE);
+if (!$VersionsMatch or !$CoreLoadedSuccessfully) dieGracefully(5, 'Application Version discrepancy detected!', FALSE);
 else if ($Verbose) logEntry('Verified version information.', FALSE);
 
 // / This code loads & sanitizes the global cache & prepares the user list.
 list ($Users, $CacheIsLoaded) = loadCache();
-if (!$CacheIsLoaded) dieGracefully(5, 'Could not load cache file!', FALSE);
+if (!$CacheIsLoaded) dieGracefully(6, 'Could not load cache file!', FALSE);
 else if ($Verbose) logEntry('Loaded cache file.', FALSE);
 
 // / This code takes in all required inputs to build a session and ensures they exist & are a valid type.
@@ -782,7 +802,7 @@ if ($GlobalsAreVerified) {
   // / This code ensures that a same-origin UI element generated the login request.
   // / Also protects against packet replay attacks by ensuring that the request was generated recently and by making each request unique. 
   list ($ClientToken, $ServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $PasswordInput);
-  if (!$TokensAreValid) dieGracefully(6, 'Invalid tokens!', FALSE);
+  if (!$TokensAreValid) dieGracefully(7, 'Invalid tokens!', FALSE);
   else if ($Verbose) logEntry('Generated tokens.', FALSE);
   
   // / Do not require authentication if the user has proven they are in the middle of a valid session.
@@ -791,14 +811,14 @@ if ($GlobalsAreVerified) {
     // / Also removes the $Users user list from memory so it can not be leaked.
     // / Displays a login screen when authentication fails and kills the application. 
     list ($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $SessionID, $AuthIsComplete, $SessionID, $SessionIsVerified) = authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $ClientTokenInput);
-    if (!$PasswordIsCorrect or !$AuthIsComplete) dieGracefully(7, 'Invalid username or password!', FALSE); 
+    if (!$PasswordIsCorrect or !$AuthIsComplete) dieGracefully(8, 'Invalid username or password!', FALSE); 
     else if ($Verbose) logEntry('Authenticated UserName '.$UserName.', UserID '.$UserID.', SessionID '.$SessionID.'.', FALSE); }
   else if ($Verbose) logEntry('Verified existing session.', FALSE);
 
   // / This code builds arrays of good & bad libraries.
   // / Libraries are directory for storing specific types of information. 
   list ($LibrariesActive, $LibrariesInactive, $LibrariesCustom, $LibrariesDefault, $LibrariesAreLoaded) = loadLibraries();
-  if (!$LibrariesAreLoaded) dieGracefully(8, 'Could not load libraries!', FALSE);
+  if (!$LibrariesAreLoaded) dieGracefully(9, 'Could not load libraries!', FALSE);
   else if ($Verbose) logEntry('Loaded libraries.', FALSE);
 
   // / This code verifies each active library directory exists.
@@ -809,23 +829,28 @@ if ($GlobalsAreVerified) {
   // / $LibrariesActive[3] contains an array containing library contents.
   // / Instead of accepting $LibrariesActive as an argument and re-specifying it as a return value, we represent it in global scope in the loadLibraryData function.
   list ($LibraryError, $LibraryDataIsLoaded) = loadLibraryData();
-  if (!$LibraryDataIsLoaded) dieGracefully(9, 'Could not load library data from '.$LibraryError.'!', FALSE);
+  if (!$LibraryDataIsLoaded) dieGracefully(10, 'Could not load library data from '.$LibraryError.'!', FALSE);
   else if ($Verbose) logEntry('Loaded library data.', FALSE);
 
   // / This code generates a user log file if none exists. Useful for initializing new users logging-in for the first time.
   // / This code also specifies the $UserDataDir which is a direct handle to the users subdirectory within the DATA library.
   list ($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir) = generateUserLogs($UserID);
-  if (!$UserLogsExists) dieGracefully(10, 'Could not generate a user log file!', FALSE);
+  if (!$UserLogsExists) dieGracefully(11, 'Could not generate a user log file!', FALSE);
   else if ($Verbose) logEntry('Created user logs.', FALSE);
 
   // / This code generates a user cache file if none exists. Useful for initializing new users logging-in for the first time.
   list ($UserCacheExists, $UserCache, $UserCacheDir) = generateUserCache($UserID);
-  if (!$UserCacheExists) dieGracefully(11, 'Could not generate a user cache file!', TRUE);
+  if (!$UserCacheExists) dieGracefully(12, 'Could not generate a user cache file!', TRUE);
   else if ($Verbose) logEntry('Created user cache.', TRUE);
+  
+  // / This code loads the user file containing the user specific settings configuration into memory.
+  list ($UserOptions, $UserCacheExists) = loadUserCache($UserID);
+  if (!$UserCacheExists) dieGracefully(13, 'Could not load the user cache file!', TRUE);
+  else if ($Verbose) logEntry('Loaded user cache.', TRUE);
 
   // / This code generates a user notifications file if none exists. Useful for initializing new users logging-in for the first time.
   list ($NotificationsFileExists, $NotificationsFile) = generateNotificationsFile($UserID, $UserDataDir);
-  if (!$NotificationsFileExists) dieGracefully(12, 'Could not generate a user notifications file!', TRUE);
+  if (!$NotificationsFileExists) dieGracefully(14, 'Could not generate a user notifications file!', TRUE);
   else if ($Verbose) logEntry('Created user notifications.', TRUE); }
 // / The code in this 'else if' statement is triggered when there was not enough information to authenticate the user.
 else if ($Verbose) logEntry('Deferring execution to allow user login.', FALSE);
@@ -842,5 +867,5 @@ if ($RequestTokens && !$SessionIsVerified) echo(getClientTokens($UserInput, FALS
 
 // / Return user name, sessionID, and client token when requested.
 // / Used to continue an automatically expiring session.
-if ($SessionIsVerified) echo($SessionID.','.$ClientToken);
+if ($SessionIsVerified) echo($UserInput.','.$SessionID.','.$ClientToken.','.$UserOptions['STAYLOGGEDIN']);
 // / -----------------------------------------------------------------------------------
