@@ -1,5 +1,18 @@
 HRCLOUD3 DEV NOTES
 
+3/4/2021
+v0.7.2 - Implement "StayLoggedIn" feature. 
+
+-Implement "StayLoggedIn" function.
+-StayLoggedIn works by caching a user token on the current page in hidden input fields. 
+-When "StayLoggedIn" is enabled in the user cache file ($UserOptions array), these hidden fields are POSTed to the server every 30 seconds and a new token is cached.
+-"StayLoggedIn" feature is disabled by default.
+-Added initializeVariables() function for doing just that. It initialized required variables early in the core.php startup process so that undefined errors do not occur when UI elements send funky requests.
+-Change error numbers, modify documentation to in Error_Descriptions.txt to reflect changes.
+-The "StayLoggedIn" hidden form field located on header.html also doubles as the cache for non-automated requests. 
+-Once a user is logged in the token is stored in the "tokens" form in header.html so it can be resent with manual client requests.
+
+----------
 2/22/2021
 v0.7.1 - Working on maintaining sessions.
 

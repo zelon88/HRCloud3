@@ -6,7 +6,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 1/20/2021
+Date: 3/4/2021
 <3 Open-Source
 
 This plain text file contains descriptions of all the native error messages contained in or produced by the HRCloud3 Diablo engine. These descriptions should 
@@ -88,7 +88,18 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 4, <TIMESTAMP>, Application Version discrepancy detected!
+  ERROR!!! 4, <TIMESTAMP>, Could not initialize variables to default values!
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  There are internal PHP errors. Hardware damage, compromise or software corruption are preventing execution.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 5, <TIMESTAMP>, Application Version discrepancy detected!
 
 LOG LEVEL
   SYSTEM
@@ -101,7 +112,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 5, <TIMESTAMP>, Could not load cache file!
+  ERROR!!! 6, <TIMESTAMP>, Could not load cache file!
  
 LOG LEVEL
   SYSTEM
@@ -114,7 +125,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 6, <TIMESTAMP>, Invalid tokens!
+  ERROR!!! 7, <TIMESTAMP>, Invalid tokens!
 
 LOG LEVEL
   SYSTEM
@@ -129,7 +140,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 7, <TIMESTAMP>, Invalid username or password!
+  ERROR!!! 8, <TIMESTAMP>, Invalid username or password!
  
 LOG LEVEL
   SYSTEM
@@ -142,7 +153,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 8, <TIMESTAMP>, Could not load libraries!
+  ERROR!!! 9, <TIMESTAMP>, Could not load libraries!
  
 LOG LEVEL
   SYSTEM
@@ -153,7 +164,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 9, <TIMESTAMP>, Could not load library data from <LIBRARY NAME OR DIRECTORY>!
+  ERROR!!! 10, <TIMESTAMP>, Could not load library data from <LIBRARY NAME OR DIRECTORY>!
  
 LOG LEVEL
   SYSTEM
@@ -172,7 +183,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 10, <TIMESTAMP>, Could not generate a user log file!
+  ERROR!!! 11, <TIMESTAMP>, Could not generate a user log file!
  
 LOG LEVEL
   SYSTEM
@@ -185,7 +196,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 11, <TIMESTAMP>, Could not generate a user cache file!
+  ERROR!!! 12, <TIMESTAMP>, Could not generate a user cache file!
  
 LOG LEVEL
   SYSTEM, USER
@@ -198,7 +209,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 11, <TIMESTAMP>, Could not generate a user cache file!
+  ERROR!!! 13, <TIMESTAMP>, Could not load the user cache file!
  
 LOG LEVEL
   SYSTEM, USER
@@ -209,7 +220,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 12, <TIMESTAMP>, Could not generate a user notifications file!
+  ERROR!!! 14, <TIMESTAMP>, Could not generate a user notifications file!
  
 LOG LEVEL
   SYSTEM, USER
