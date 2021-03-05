@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 1/15/2021
+Date: 3/4/2021
 <3 Open-Source
 
 This file is for negotiating login requests & processing the response from the server.
@@ -33,6 +33,14 @@ function secureLogin(RawPassword) {
   document.getElementById("RawPassword").required = false;
   clearInput('RawPassword');
   return(PasswordInput); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to detect if "STAYLOGGEDIN" is enabled for the user.
+// / Calls "StayLoggedInSender()" to request new user tokens every 30 seconds when enabled.
+function StayLoggedInCaller() {
+  if (document.getElementById(StayLoggedIn).value == 'ENABLED') { 
+    setInterval(StayLoggedInSender, 30000); } }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -62,20 +70,59 @@ $('#passwordFormNav').on('submit', function (loginAjax) {
       url: 'core.php',
       data: $(this).serialize(),
       success: function(passwordResponse) {
-        var responseArray = passwordResponse.split('\n');
+        var responseArray = passwordResponse.split(',');
         var UserInput = responseArray[0];
         var SessionID = responseArray[1];
         var ClientToken = responseArray[2];
+        var StayLoggedIn = responseArray[3];
         toggleVisibility('passwordContainer');
         toggleVisibility('successMessage');
-        sleep(1000).then(() => {
-          toggleVisibility('passwordModal'); }) },
+        sleep(2000).then(() => {
+          toggleVisibility('passwordModal'); 
+          changeValue('UserInputTokens', UserInput);
+          changeValue('SessionID', SessionID);
+          changeValue('ClientToken', ClientToken);
+          changeValue('ActiveSLI', 'ENABLED');
+          changeValue('StayLoggedIn', StayLoggedIn);
+          StayLoggedInCaller();
+           }) },
       error: function(passwordResponse) {
 
         }, 
       complete: function(passwordResponse) { 
 
       } }); });
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to keep the user logged in by sending a request for new tokens.
+// / This function will only run if "STAYLOGGEDIN" is set to "ENABLED" in a users cache file.
+// / This function is activated after successful login.
+// / This code is meant to be run on a schedule when a user is using the application.
+function StayLoggedInSender() {
+  $(function(SLIAjax) {
+    loginAjax.preventDefault();
+    $.ajax({
+      type: 'POST',
+      url: 'core.php',
+      data: {
+        UserInput: document.getElementById(UserInputTokens).value,
+        SessionID: document.getElementById(SessionID).value,
+        ClientToken: document.getElementById(ClientToken).value,
+        ActiveSLI: document.getElementById(ActiveSLI).value,
+        StayLoggedIn: document.getElementById(StayLoggedIn).value },
+      success: function(SLIAjax) {
+        var responseArraySLI = SLIAjax.split(',');
+        var UserInput = responseArraySLI[0];
+        var SessionID = responseArraySLI[1];
+        var ClientToken = responseArraySLI[2]; 
+        var StayLoggedIn = responseArraySLI[3];
+        changeValue('UserInputTokens', UserInput);
+        changeValue('SessionID', SessionID);
+        changeValue('ClientToken', ClientToken);
+        changeValue('ActiveSLI', 'ENABLED');
+        changeValue('StayLoggedIn', StayLoggedIn);
+        StayLoggedInCaller(); } }); }); }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
