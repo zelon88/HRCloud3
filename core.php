@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/4/2021
+Date: 3/5/2021
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -436,17 +436,17 @@ function generateTokens($ClientTokenInput, $PasswordInput) {
 // / A function to cleanup personally identifiable sensitive information left in memory during authentication operations. 
 function cleanupSensitiveMemory() {
   // / Set variables in a global scope.
-  global $UserInput, $PasswordInput, $Users, $ClientTokenInput;
+  global $PasswordInput, $Users, $ClientTokenInput;
   // / Set all personally identifiable variables to NULL.
-  $UserInput = $PasswordInput = $Users = $ClientTokenInput = NULL;
+  $PasswordInput = $Users = $ClientTokenInput = NULL;
   // / Remove the variables reference from memory.
-  unset($UserInput, $PasswordInput, $Users, $ClientTokenInput); }
+  unset($PasswordInput, $Users, $ClientTokenInput); }
 
 // / A function to authenticate a user and verify an encrypted input password with supplied tokens.
 function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $ClientTokenInput) { 
   // / Set variables. 
   global $Users, $Minute, $Salts;
-  $sessionIsVerified = $sessionID = $userID = $UserID = $UserName = $PasswordIsCorrect = $UserIsAdmin = $AuthIsComplete = FALSE;
+  $sessionIsVerified = $sessionID = $userID = $UserID = $UserName = $PasswordIsCorrect = $UserIsAdmin = $AuthIsComplete = $UserEmail = $SessionID = $SessionIsVerified = FALSE;
   // / Iterate through each defined user.
   foreach ($Users as $user) { 
     $UserID = $user[0];
@@ -508,18 +508,15 @@ function generateDefaultUserCacheData() {
   $UserCacheRequiredOptions = array('FRIENDS', 'BLOCKED', 'COLOR', 'FONT', 'TIMEZONE', 'DISPLAYNAME', 'TIPS', 'THEME', 'HRAI', 'HRAIAUDIO', 'LANDINGPAGE', 'STAYLOGGEDIN'); 
   return (array($UserCacheArrayData, $UserCacheRequiredOptions)); }
 
-
-
 // / A function to generate a missing user cache file. Useful when new users log in for the first time.
 // / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded 
 // / by the loadUserCache() function.
 function generateUserCache($UserID) { 
   // / Set variables. Note the $UserCacheExists, $UserCache and $UserCacheDir are all assumed to be false unless they are changed to something valid.
   // / If $UserCacheExists, $UserCache or $UserCacheDir return FALSE, the calling code should assume this function failed.
-  global $Salts;
+  global $Salts, $UserCacheRequiredOptions, $UserCacheArrayData;
   $UserCacheExists = $UserCache = $UserCacheDir = FALSE;
   $UserCacheDir = 'Cache'.DIRECTORY_SEPARATOR.'Data'.DIRECTORY_SEPARATOR.$UserID.DIRECTORY_SEPARATOR;
-  list ($UserCacheArrayData, $UserCacheRequiredOptions) = generateDefaultUserCacheData();
   if (!file_exists($UserCacheDir)) $dirExists = mkdir($UserCacheDir);
   // / Define the $UserCacheFile.
   $UserCacheFile = $UserCacheDir.'UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php';
@@ -530,7 +527,7 @@ function generateUserCache($UserID) {
   // / Clean up unneeded memory.
   $userCacheData = $arrayData = $dirExists = NULL;
   unset($userCacheData, $arrayData, $dirExists); 
-  return(array($UserCacheExists, $UserCache, $UserCacheDir)); } 
+  return(array($UserCacheExists, $UserCacheFile, $UserCacheDir)); } 
 
 // / A function to save entries to the user cache.
 // / If prepend is set to TRUE, this function will PREPEND the entry to the cache file.
@@ -545,7 +542,7 @@ function saveUserCache($Prepend) {
   // / Note that this particular variable we declare as a blank string by default. Usually we would use FALSE, but here if we do that
   // / we could corrupt a valid $UserCache. So we use a blank string which won't add anything to our PHP syntax'd cache file.
   $key = $uOpt = $newEntry = '';
-  foreach ($UserOptions as $key=>$uOpt) { 
+  foreach ($UserOptions as $key => $uOpt) { 
     $key = '\''.$key.'\'';
     $uOpt = '\''.$uOpt.'\'';
     $newEntry = $key.'=>'.$uOpt.';'; }
@@ -577,7 +574,7 @@ function loadUserCache() {
   // / Also note the user cache is hashed with salts.
   global $Salts, $UserID, $UserCache, $UserCacheRequiredOptions;
     $UserOptions = array();
-    $UserCacheIsLoaded = FALSE;
+    $UserCacheIsLoaded = $ucaElementWritten = FALSE;
     // / If the user cache exists, load it.
     if (file_exists($UserCache)) {
       require ($UserCache);
@@ -596,17 +593,17 @@ function loadUserCache() {
       $userCacheData = NULL;
       unset($userCacheData);
       // / Iterate through each option specified in the user cache and verify that is it valid.
-      foreach ($UserOptions as $option=>$value) {
+      foreach ($UserOptions as $option => $value) {
         // / If an option is not valid it is removed from memory.
         if (!in_array($option, $UserCacheRequiredOptions)) { 
           $UserOptions[$option] = NULL;
-          unset($UserOptions[$option]); } 
-      $UserCacheIsLoaded = TRUE; }
+          unset($UserOptions[$option]); } }
+      $UserCacheIsLoaded = TRUE; 
       // / Iterate through the default UserCache items and look for new array elements that should exist.
-      foreach ($UserCacheRequiredOptions as $key=>$ucaElement) { 
+      foreach ($UserCacheRequiredOptions as $key => $ucaElement) { 
         // / If a new array element is found which needs to be created we add it to the start of the $UserCache.
         // / This way new entries with default values run a lower risk of compromising existing settings.
-        if (!in_array($ucaElement, $UserCacheArrayData)) { 
+        if (!in_array($ucaElement, $UserCacheRequiredOptions)) { 
           $UserOptions[$key] = $ucaElement;
           $ucaElementWritten = saveUserCache('TRUE'); }
         // / If the above code successfully wrote data to the beginning of the $UserCache we must re-run this function to load new data into memory.
@@ -706,7 +703,7 @@ function readNotifications() {
   // / Set variables.
   global $Notifications;
   // / Iterate through the notifications and detect the first character. 
-  foreach ($Notifications as $key=>$notification) { 
+  foreach ($Notifications as $key => $notification) { 
     $firstChar = substr($notification, 0, 1);
     // / If the first character of the notification is not currently a space we assume it us currently "unread."
     if ($firstChar !== ' ') { 
@@ -731,7 +728,7 @@ function purgeNotification($NotificationToPurge) {
   global $NotificationFile, $Notifications;
   $notificationFileWritten = $NotificationPurged = FALSE;
   // / Iterate through the notifications looking for ones that match the specified notification.
-  foreach ($Notifications as $key=>$notificationToCheck) { 
+  foreach ($Notifications as $key => $notificationToCheck) { 
     // / If we find a matching notification we remove it from the array that is in memory.
     if ($NotificationToPurge === $notificationToCheck) unset($Notifications[$key]);
     // / With a new $Notifications array saved to memory, we can dump the modified data back into the $NotificationsFile.
@@ -863,7 +860,7 @@ else if ($Verbose) logEntry('Deferring execution to allow user login.', FALSE);
 // / This is usually performed when an unauthenticated user is trying to log in. 
 // / If a user has supplied a user name to the core along with a request for user tokens, the user tokens for the specified user name will be returned to the user.
 // / User tokens are used to secure the session from delayed eavesdropping attempts or replay attacks, and also serve to invalidate the session after 2 minutes.
-if ($RequestTokens && !$SessionIsVerified) echo(getClientTokens($UserInput, FALSE));
+if ($RequestTokens && !$SessionIsVerified) echo($UserInput.','.getClientTokens($UserInput, FALSE));
 
 // / Return user name, sessionID, and client token when requested.
 // / Used to continue an automatically expiring session.

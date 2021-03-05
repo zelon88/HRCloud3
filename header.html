@@ -107,8 +107,8 @@ $ApplicationNameString = $ApplicationName;
           <div class='container' id='loginContainer' name='loginContainer' style='background-color:#f1f1f1; text-align:center;'>
 
             <br />
-            <input type='text' placeholder='Enter Username' id='UserInput' name='UserInput' required>
-            <input type='hidden' id='requestTokens' name='RequestTokens' required>
+            <input type='text' placeholder='Enter Username' id='UserInput' value='' name='UserInput' required>
+            <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
 
             <br />
             <p><button id='submitButton'>Continue</button></p>
@@ -136,9 +136,9 @@ $ApplicationNameString = $ApplicationName;
 
             <br />
             <input type='password' placeholder='Enter Password' id='RawPassword' name='RawPassword' required>
-            <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' required>
-            <input type='hidden' id='PasswordInput' name='PasswordInput' required>
-            <input type='hidden' id='UserInput' name='UserInput' required>
+            <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' value='' required>
+            <input type='hidden' id='PasswordInput' name='PasswordInput' value='' required>
+            <input type='hidden' id='UserInputPassword' name='UserInput' value='' required>
 
             <br />
             <p><button id='submitButton' onclick='secureLogin(document.getElementById("RawPassword").value);'>Continue</button></p>
