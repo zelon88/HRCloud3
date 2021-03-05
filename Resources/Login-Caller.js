@@ -30,7 +30,7 @@ function hashCreds(RawPassword) {
 function secureLogin(RawPassword) {
   var PasswordInput = hashCreds(RawPassword);
   changeValue('PasswordInput', PasswordInput);  
-  document.getElementById("RawPassword").required = false;
+  document.getElementById('RawPassword').required = false;
   clearInput('RawPassword');
   return(PasswordInput); }
 // / -----------------------------------------------------------------------------------
@@ -39,32 +39,34 @@ function secureLogin(RawPassword) {
 // / A function to detect if "STAYLOGGEDIN" is enabled for the user.
 // / Calls "StayLoggedInSender()" to request new user tokens every 30 seconds when enabled.
 function StayLoggedInCaller() {
-  if (document.getElementById(StayLoggedIn).value == 'ENABLED') { 
-    setInterval(StayLoggedInSender, 30000); } }
+  if (document.getElementById('StayLoggedIn').value == 'ENABLED') { 
+    sleep(30000); } }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
 // / A funciton function to submit the Navigation Bar login form with AJAX & update the UI elements.
 // / Also replaces the User input modal with the Password input modal after a Username has been sent.
 $('#loginFormNav').on('submit', function (loginAjax) {
+    var UserInput = document.getElementById('UserInput').value;
     loginAjax.preventDefault();
     $.ajax({
       type: 'POST',
       url: 'core.php',
       data: $(this).serialize(),
       success: function(loginReponse) {
-        var UserInput = document.getElementById('UserInput').value;
-        var ClientTokenInput = loginReponse;
+        var responseArray = loginReponse.split(',');
+        var UserInput = responseArray[0];
+        var ClientTokenInput = responseArray[1];
         toggleVisibility('loginModal');
         toggleVisibility('passwordModal');
-        changeValue('ClientTokenInput', ClientTokenInput);
-        changeValue('UserInput', UserInput); } }); });
+        changeValue('ClientTokenInput', ClientTokenInput); 
+        changeValue('UserInputPassword', UserInput); } }); });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
 // / A funciton function to submit the Navigation Bar login form with AJAX & update the UI elements.
-$('#passwordFormNav').on('submit', function (loginAjax) { 
-    loginAjax.preventDefault();
+$('#passwordFormNav').on('submit', function (passwordAjax) { 
+    passwordAjax.preventDefault();
     $.ajax({
       type: 'POST',
       url: 'core.php',
@@ -77,15 +79,15 @@ $('#passwordFormNav').on('submit', function (loginAjax) {
         var StayLoggedIn = responseArray[3];
         toggleVisibility('passwordContainer');
         toggleVisibility('successMessage');
-        sleep(2000).then(() => {
-          toggleVisibility('passwordModal'); 
-          changeValue('UserInputTokens', UserInput);
-          changeValue('SessionID', SessionID);
-          changeValue('ClientToken', ClientToken);
-          changeValue('ActiveSLI', 'ENABLED');
-          changeValue('StayLoggedIn', StayLoggedIn);
-          StayLoggedInCaller();
-           }) },
+        sleep(2000);
+        toggleVisibility('passwordModal'); 
+        changeValue('UserInputTokens', UserInput);
+        changeValue('SessionID', SessionID);
+        changeValue('ClientToken', ClientToken);
+        changeValue('ActiveSLI', 'ENABLED');
+        changeValue('StayLoggedIn', StayLoggedIn);
+        //StayLoggedInCaller(); 
+      },
       error: function(passwordResponse) {
 
         }, 
@@ -101,7 +103,7 @@ $('#passwordFormNav').on('submit', function (loginAjax) {
 // / This code is meant to be run on a schedule when a user is using the application.
 function StayLoggedInSender() {
   $(function(SLIAjax) {
-    loginAjax.preventDefault();
+    SLIAjax.preventDefault();
     $.ajax({
       type: 'POST',
       url: 'core.php',

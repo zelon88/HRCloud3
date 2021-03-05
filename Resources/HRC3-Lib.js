@@ -67,6 +67,3 @@ function replaceDiv(originalDivID, newDivID) {
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms)); }
 // / -----------------------------------------------------------------------------------
-
-if ('<?php echo $')
-setInterval( LoadFinance, 30000 );
