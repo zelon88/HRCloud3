@@ -1,5 +1,14 @@
 HRCLOUD3 DEV NOTES
+----------
 
+3/5/2021
+v0.7.3 - Fix user cache creation / loading, fix client-side token caching.
+
+-Client side token caching was broken.
+-Redesigned the way user input and tokens are passed between login modals.
+-Added $UserEmail & $SessionID default values initialized to FALSE in authenticate() function.
+
+----------
 3/4/2021
 v0.7.2 - Implement "StayLoggedIn" feature. 
 

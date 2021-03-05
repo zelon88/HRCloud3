@@ -94,7 +94,7 @@ LOG LEVEL
   SYSTEM
 
 ERROR DESCRIPTION
-  There are internal PHP errors. Hardware damage, compromise or software corruption are preventing execution.
+  There are internal PHP errors. Hardware damage, compromise or software corruption that are preventing execution.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
