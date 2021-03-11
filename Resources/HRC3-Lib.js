@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/4/2021
+Date: 3/10/2021
 <3 Open-Source
 
 The Home Page provides common functionality for many of the UI elements in HRCloud3.
@@ -29,10 +29,8 @@ function changeValue(id, newValue) {
 // / Switches the 'Visibility' property between 'block' & 'none'.
 function toggleVisibility(id) {
   var e = document.getElementById(id);
-  if(e.style.display == 'block')
-     e.style.display = 'none';
-  else
-     e.style.display = 'block'; }
+  if(e.style.display == 'block') e.style.display = 'none';
+  else e.style.display = 'block'; }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -64,6 +62,8 @@ function replaceDiv(originalDivID, newDivID) {
 
 // / -----------------------------------------------------------------------------------
 // / A funtion to pause Javascript execution for a specific number of miliseconds.
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms)); }
+// / For use in async functions.
+// / Must use with await. Example: await sleep(500);
+function sleep(ms) { 
+  new Promise(ms => setTimeout(ms, 2000)); }
 // / -----------------------------------------------------------------------------------
