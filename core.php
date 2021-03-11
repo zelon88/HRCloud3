@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/5/2021
+Date: 3/10/2021
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -134,19 +134,23 @@ function verifyInstallation() {
 
 // / A function to initialize global variables to default values.
 function initializeVariables() {
-  $UserOptionCount = 0;
-  global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions;
+  $UserOptionCount = $ucCount = 0;
+  global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions, $ServerToken, $OldServerToken;
   // / Initialize all required sanity checks to FALSE.
-  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = FALSE;
+  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = FALSE;
   // / Initialize all required user options to NULL.
   list ($UserCacheArrayData, $UserCacheRequiredOptions) = generateDefaultUserCacheData();
+  $ucCount = count($UserCacheRequiredOptions);
   foreach ($UserCacheRequiredOptions as $ucItem) { 
     $UserOptionCount++;
     $UserOptions[$ucItem] = ' '; }
-  $InitializationComplete = TRUE; 
+  // / Initialize ServerTokens.
+  list ($ServerToken, $OldServerToken, $TokenIsValid) = generateServerToken();
+  // / Ensure sanity checks passed.
+  if (intval($ucCount) === intval($UserOptionCount) && $TokenIsValid) $InitializationComplete = TRUE; 
   // / Clean up unneeded memory.
-  $ucItem = NULL;
-  unset($ucItem);
+  $ucItem = $ucCount = NULL;
+  unset($ucItem, $ucCount);
   return (array($InitializationComplete, $UserOptionCount)); }
 
 // / A function to quickly check if a desired library is active.
@@ -293,7 +297,7 @@ function checkVersionInfo() {
 
 // / A function to determine if the supplied session is valid.
 function verifySession($SessionIDInput, $UserInput, $ClientTokenInput) {
-  global $Users, $Salts, $Minute, $LastMinute, $ServerToken;
+  global $Users, $Salts, $Minute, $LastMinute, $ServerToken, $OldServerToken;
   // / Set variables.
   $SessionIsVerified = $sessionID = $user = $userFound = FALSE;
   if ($SessionIDInput !== FALSE && $UserInput !== FALSE && $ClientTokenInput !== FALSE) {
@@ -304,11 +308,11 @@ function verifySession($SessionIDInput, $UserInput, $ClientTokenInput) {
         $userFound = TRUE;
         break; } }
       // / Create a temporary session ID to see if it matches the one supplied by the user.
-      $sessionID = hash('sha256', $Minute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);   
+      $sessionID = hash('sha256', $Minute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
       // / Perform the check to see if the session ID is current.
       if ($sessionID === $SessionIDInput) $SessionIsVerified = TRUE;
       // / If the session ID is not current generate an older one that is still valid.
-      else $sessionID = hash('sha256', $LastMinute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
+      else $sessionID = hash('sha256', $LastMinute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$OldServerToken.$Salts[2].$user[1]);
       // / Perform another check to see if the session ID provided is valid.
       if ($sessionID === $SessionIDInput) $SessionIsVerified = TRUE;
   // / Clean up unneeded memory.
@@ -410,27 +414,41 @@ function getClientTokens($UserInput, $Old) {
   unset($user);
   return($ClientToken); } 
 
+// / A function to generate new server tokens.
+function generateServerToken() {
+  global $Minute, $LastMinute, $Salts, $ServerToken, $OldServerToken;
+  $ServerToken = NULL;
+  $TokenIsValid = FALSE;
+  $ServerToken = hash('sha256', $Minute.$Salts[1].$Salts[3]);
+  $OldServerToken = hash('sha256', $LastMinute.$Salts[1].$Salts[3]);
+  $TokenIsValid = TRUE;
+  return(array($ServerToken, $OldServerToken, $TokenIsValid)); }
+
 // / A function to generate new user tokens and validate supplied ones.
 // / This is the secret sauce behind full password encryption in-transit.
-// / Please excuse the lack of comments. Security through obscurity is a bad practice.
-// / But no lock is pick proof, especially ones that come with instructions for picking them.
-function generateTokens($ClientTokenInput, $PasswordInput) { 
+function generateTokens($ClientTokenInput, $UserInput) { 
   // / Set variables. 
-  global $Minute, $LastMinute, $Salts;
-  $ServerToken = $ClientToken = NULL;
+  global $Users, $Minute, $LastMinute, $Salts, $ServerToken, $OldServerToken;
+  $ClientToken = $oldClientToken = $user = NULL;
   $TokensAreValid = FALSE;
-  $ServerToken = hash('sha256', $Minute.$Salts[1].$Salts[3]);
-  $ClientToken = hash('sha256', $Minute.$Salts[0].$PasswordInput.$Salts[0].$Salts[1].$Salts[2].$Salts[3]);
-  $oldServerToken = hash('sha256', $LastMinute.$Salts[1].$Salts[3]);
-  $oldClientToken = hash('sha256', $LastMinute.$Salts[0].$PasswordInput.$Salts[0].$Salts[1].$Salts[2].$Salts[3]);
-  if ($ClientTokenInput === $ClientToken) $TokensAreValid = TRUE; 
-  if ($ClientTokenInput === $oldClientToken) {
-    $ClientToken = $oldClientToken;
-    $ServerToken = $oldServerToken; 
-    $TokensAreValid = TRUE; }
+  // / Iterate through each defined user.
+  foreach ($Users as $user) { 
+    // / Continue ONLY if the $UserInput matches a valid $UserName.
+    if ($user[1] === $UserInput) { 
+      $ClientToken = hash('sha256', $Minute.$Salts[0].$user[3].$Salts[0].$Salts[1].$Salts[2].$Salts[3]);
+      $oldClientToken = hash('sha256', $LastMinute.$Salts[0].$user[3].$Salts[0].$Salts[1].$Salts[2].$Salts[3]);
+      if ($ClientTokenInput === $ClientToken) $TokensAreValid = TRUE; 
+      if ($ClientTokenInput === $oldClientToken) {
+        $ClientToken = $OldClientToken;
+        $ServerToken = $OldServerToken; 
+        $TokensAreValid = TRUE; } } }
+  // / If the specified user does not exist, provide the user with fake & invalid tokens.
+  if (!$TokensAreValid) { 
+    $ClientToken = hash('sha256', $Minute.$Date.$Salts[2].$Salts[3].$LastMinute);
+    $ServerToken = hash('sha256', $LastMinute.$Date.$Salts[0].$Salts[1].$Minute); }
   // / Clean up unneeded memory.
-  $oldClientToken = $oldServerToken = NULL;
-  unset($oldClientToken, $oldServerToken); 
+  $oldClientToken = $user = NULL;
+  unset($oldServerToken, $user); 
   return(array($ClientToken, $ServerToken, $TokensAreValid)); } 
 
 // / A function to cleanup personally identifiable sensitive information left in memory during authentication operations. 
@@ -798,7 +816,7 @@ else if ($Verbose) logEntry('Verified global variables.', FALSE);
 if ($GlobalsAreVerified) {
   // / This code ensures that a same-origin UI element generated the login request.
   // / Also protects against packet replay attacks by ensuring that the request was generated recently and by making each request unique. 
-  list ($ClientToken, $ServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $PasswordInput);
+  list ($ClientToken, $ServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $UserInput);
   if (!$TokensAreValid) dieGracefully(7, 'Invalid tokens!', FALSE);
   else if ($Verbose) logEntry('Generated tokens.', FALSE);
   

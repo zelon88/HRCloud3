@@ -9,7 +9,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 1/16/2021
+Date: 3/10/2021
 <3 Open-Source
 
 The Header file is for preparing an HTML document to contain the output of Diablo Engine.
@@ -94,7 +94,7 @@ $ApplicationNameString = $ApplicationName;
  */ ?>
     <li>
       <!-- Button to open the modal login form. -->
-      <a onclick='document.getElementById("loginModal").style.display="block"'>Login</a>
+      <a onclick='toggleVisibility("loginModal");'>Login</a>
 
       <!-- The Login Modal -->
       <div id='loginModal' class='modal'>
@@ -118,7 +118,7 @@ $ApplicationNameString = $ApplicationName;
             <span class='psw'><a href='#'>Create New Account</a></span>
 
             <br />
-            <button type='button' onclick='document.getElementById("loginModal").style.display="none"' class='cancelbtn'>Cancel</button>
+            <button type='button' onclick='toggleVisibility("loginModal");' class='cancelbtn'>Cancel</button>
 
           </div>
         </form>
@@ -148,18 +148,55 @@ $ApplicationNameString = $ApplicationName;
             <span class='psw'><a href='#'>Create New Account</a></span>
 
             <br />
-            <button type='button' onclick='document.getElementById("passwordModal").style.display="none"' class='cancelbtn'>Cancel</button>
+            <button type='button' onclick='toggleVisibility("passwordModal");' class='cancelbtn'>Cancel</button> 
 
           </div>
+        </form>
+      </div>
 
-          <div class='container animate' id='successMessage' class='modal' style='text-align:center; display:none;'>
+
+      <div id='successModal' class='modal'>
+        <!-- Password Modal Content. -->
+        <div class='modal-content animate'>  
+          <div class='imgcontainer'>
+            <img src='Resources/placeholderAvatar.png' alt='Avatar' class='avatar'>
+          </div>
+          <div class='container' id='successContainer' name='successContainer' style='background-color:#f1f1f1; text-align:center; display:block;'>
             <br />
             <p>Success! Please wait.</p>
             <br />
-          </div>
-
-        </form>
+          </div> 
+        </div>
       </div>
+
+      <div id='errorModal' class='modal'>
+        <!-- Password Modal Content. -->
+        <div class='modal-content animate'>  
+          <div class='imgcontainer'>
+            <img src='Resources/placeholderAvatar.png' alt='Avatar' class='avatar'>
+          </div>
+          <div class='container' id='errorContainer' name='errorModal' style='background-color:#f1f1f1; text-align:center; display:block;'>
+            <br />
+            <p>Login failed! Please try again.</p>
+            <br />
+          </div> 
+        </div>
+      </div>
+
+      <div id='criticalModal' class='modal'>
+        <!-- Password Modal Content. -->
+        <div class='modal-content animate'>  
+          <div class='imgcontainer'>
+            <img src='Resources/placeholderAvatar.png' alt='Avatar' class='avatar'>
+          </div>
+          <div class='container' id='criticalContainer' name='criticalModal' style='background-color:#f1f1f1; text-align:center; display:block;'>
+            <br />
+            <p>There was a critical error during login. Please contact support and try again later.</p>
+            <br />
+          </div> 
+        </div>
+      </div>
+
     </li>
   </ul>
   <form id='tokens' name='tokens' method='post' target='noredirect'>
