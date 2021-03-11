@@ -1,12 +1,37 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+3/10/2021
+v0.7.4 - Finish automated token submission, fix login UI elements.
+
+-Sessions are now 100% self-sustaining once the user logs in, if StayLoggedIn is enabled.
+-Redesigned success/failure modals and how they are displayed.
+-Sleep function can only be used within async functions. 
+-There are several loops during the login process.
+  -The first one happens in getClientTokens() when a user requests to login by sending a Username to the core.
+    -This loop is required to obtain the password for the user attempting to login so it can be used to calculate tokens.
+    -If the Username supplied to the core is invalid, a fake ClientToken is returned that will not work for any user.
+    -If the Username supplied to the core is valid, the ClientToken for that user is returned.
+    -The user takes ClientToken and ServerToken and sends it back to core with their password.
+  -Once tokens AND credentials have been supplied to core, generateTokens() loops through all users and validates supplied tokens.
+    -If supplied tokens are valid; execution continues.
+    -If supplied tokens are not valid; execution is deferred and tokens are replaced with garbage.
+  -Once tokens have been validated authenticate() loops through all users and validates the supplied password.
+    -If supplied credentials are valid; execution continues and the users UI is populated with a hidden form containing login data.
+    -If supplied credentials are not valid; execution is deferred and sensitive memory is null'ed and unset.
+    -Now that the user has logged in they submit their hidden login data with every request.
+  -Continued requests trigger a loop in verifySession() which is called by verifyGlobals() to iterates through the userlist to calculate the SessionID for the supplied user.
+    -If the SessionID supplied is valid, further authentication is deferred.
+-Moved a lot of stuff around in header.html and Login-Caller.js.
+
+----------
 3/5/2021
 v0.7.3 - Fix user cache creation / loading, fix client-side token caching.
 
 -Client side token caching was broken.
 -Redesigned the way user input and tokens are passed between login modals.
 -Added $UserEmail & $SessionID default values initialized to FALSE in authenticate() function.
+-Temporarily disable javascript for StayLoggedIn until I can work out the async/await.
 
 ----------
 3/4/2021
