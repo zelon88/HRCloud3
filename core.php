@@ -32,15 +32,27 @@ General Code Conventions Utilized:
  -No frameworks.
 */
 
+// / ----------------------------------------------------------------------------------
+// / Prepare the execution environment.
+
+// / Reset PHP's time limit for execution.
 set_time_limit(0);
 
-// / ----------------------------------------------------------------------------------
-// / Make sure there is a session started and load the configuration file.
-// / Also kill the application if $MaintenanceMode is set to  TRUE.
+// / Make sure there is a session started.
 if (session_status() == PHP_SESSION_NONE) session_start();
-if (!file_exists('config.php')) die('ERROR!!! 0, Could not process the Configuration file (config.php)!'.PHP_EOL); 
-else require_once ('config.php');
+
+// / Determine the root path where the application is installed and where it is running from.
+$RootPath = '';
+if (!file_exists('config.php')) { 
+  // / If we can't use relative paths, check the server document root directory instead.
+  $RootPath = $_SERVER['DOCUMENT_ROOT'];
+  if (!file_exists($RootPath.DIRECTORY_SEPARATOR.'config.php')) die('ERROR!!! 0, Could not process the Configuration file (config.php)!'.PHP_EOL); }
+
+// / Load the config.php file.
+require_once ($RootPath.DIRECTORY_SEPARATOR.'config.php');
 $ConfigIsLoaded = TRUE; 
+
+// / Stop the application if $MaintenanceMode is enabled.
 if ($MaintenanceMode) die('The requested application is currently unavailable due to maintenance.'.PHP_EOL); 
 // / ----------------------------------------------------------------------------------
 
@@ -99,14 +111,15 @@ function verifyDate() {
 // / A function to generate and validate the operational environment for the Diablo Engine.
 function verifyInstallation() { 
   // / Set variables. 
-  global $Date, $Time, $Salts;
+  global $Date, $Time, $Salts, $RootPath;
   $dirCheck = $indexCheck = $dirExists = $indexExists = $logCheck = $cacheCheck = TRUE;
   $requiredDirs = array('Logs', 'Data', 'Cache', 'Cache'.DIRECTORY_SEPARATOR.'Data');
   $InstallationIsVerified = FALSE;
   // / For servers with unprotected directory roots, we must verify (at minimum) that a local index file exists to catch unwanted traversal.
   if (!file_exists('index.html')) $indexCheck = FALSE;
   // / Iterate through the $requiredDirs hard-coded (in this function, under "Set variables" section above).
-  foreach ($requiredDirs as $requiredDir) {
+  foreach ($requiredDirs as $requiredDir) { 
+    $requiredDir = $RootPath.DIRECTORY_SEPARATOR.$requiredDir;
     // / If a $requiredDir doesn't exist, we create it.
     if (!is_dir($requiredDir)) $dirExists = mkdir($requiredDir, 0755);
     // / A sanity check to ensure the directory was actually created.
@@ -118,11 +131,11 @@ function verifyInstallation() {
   // / Create a unique identifier for today's $LogFile.
   $logHash = substr(hash('sha256', $Salts[0].hash('sha256', $Date.$Salts[1].$Salts[2].$Salts[3])), 0, 7);
   // / Define today's $LogFile.
-  $LogFile = 'Logs'.DIRECTORY_SEPARATOR.$Date.'_'.$logHash.'.log';
+  $LogFile = $RootPath.DIRECTORY_SEPARATOR.'Logs'.DIRECTORY_SEPARATOR.$Date.'_'.$logHash.'.log';
   // / Create today's $LogFile if it doesn't exist yet.
   if (!file_exists($LogFile)) $logCheck = file_put_contents($LogFile, 'OP-Act: '.$Time.' Created a log file, "'.$LogFile.'".'.PHP_EOL);
   // / Create a unique identifier for the cache file.
-  $CacheFile = 'Cache'.DIRECTORY_SEPARATOR.'Cache-'.hash('sha256',$Salts[0].'CACHE').'.php';
+  $CacheFile = $RootPath.DIRECTORY_SEPARATOR.'Cache'.DIRECTORY_SEPARATOR.'Cache-'.hash('sha256',$Salts[0].'CACHE').'.php';
   // / If no cache file exists yet (first run) we create one and write the $PostConfigUsers to it. 
   if (!file_exists($CacheFile)) $cacheCheck = file_put_contents($CacheFile, '<?php'.PHP_EOL.'$PostConfigUsers = array();');
   // / Make sure all sanity checks passed.
@@ -137,20 +150,20 @@ function initializeVariables() {
   $UserOptionCount = $ucCount = 0;
   global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions, $ServerToken, $OldServerToken;
   // / Initialize all required sanity checks to FALSE.
-  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = FALSE;
+  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = $key = FALSE;
   // / Initialize all required user options to NULL.
   list ($UserCacheArrayData, $UserCacheRequiredOptions) = generateDefaultUserCacheData();
   $ucCount = count($UserCacheRequiredOptions);
-  foreach ($UserCacheRequiredOptions as $ucItem) { 
+  foreach ($UserCacheRequiredOptions as $key => $ucItem ) { 
     $UserOptionCount++;
-    $UserOptions[$ucItem] = ' '; }
+    $UserOptions[$key] = $ucItem; }
   // / Initialize ServerTokens.
   list ($ServerToken, $OldServerToken, $TokenIsValid) = generateServerToken();
   // / Ensure sanity checks passed.
   if (intval($ucCount) === intval($UserOptionCount) && $TokenIsValid) $InitializationComplete = TRUE; 
   // / Clean up unneeded memory.
-  $ucItem = $ucCount = NULL;
-  unset($ucItem, $ucCount);
+  $ucItem = $ucCount = $key = NULL;
+  unset($ucItem, $ucCount, $key);
   return (array($InitializationComplete, $UserOptionCount)); }
 
 // / A function to quickly check if a desired library is active.
@@ -240,7 +253,7 @@ function loadCache() {
 // / If input is an array, CoresLoaded output is an array. If input is a string, CoresLoaded output is a string.
 function loadCores($coresToLoad) { 
   // / Set variables. 
-  global $AvailableCores, $ConfigIsLoaded; 
+  global $AvailableCores, $ConfigIsLoaded, $RootPath; 
   $error = FALSE;
   $CoresLoaded = array();
   $CoresAreLoaded = TRUE;
@@ -249,7 +262,7 @@ function loadCores($coresToLoad) {
     // / Loop through each core in the array element.
     foreach ($coresToLoad as $coreToLoad) { 
       // / Determine what the name of the specified core should be.
-      $coreFile = strtolower($coreToLoad).'Core.php';
+      $coreFile = $RootPath.DIRECTORY_SEPARATOR.strtolower($coreToLoad).'Core.php';
       // / Check that the specified core is available to load.
       if (file_exists($coreFile) && in_array(strtoupper($coreToLoad), $AvailableCores)) { 
         // / Load the actual core file.
@@ -260,7 +273,7 @@ function loadCores($coresToLoad) {
   // / Check if $coresToLoad is a string.
   if (is_string($coresToLoad)) {
     // / Determine what the name of the specified core should be. 
-    $coreFile = strtolower($coresToLoad).'Core.php';
+    $coreFile = $RootPath.DIRECTORY_SEPARATOR.strtolower($coresToLoad).'Core.php';
     // / Check that the specified core is available to load.
     if (file_exists($coreFile) && in_array(strtoupper($coresToLoad), $AvailableCores)) { 
       // / Load the actual core file.
@@ -280,7 +293,7 @@ function loadCores($coresToLoad) {
 // / Checks that the $EngineVersionInfo variable in 'versionInfo.php' matches the $EngineVersion variable in 'compatibilityCore.php'.
 function checkVersionInfo() {
   // / Set variables.
-  global $CoresLoaded, $EngineVersion;
+  global $CoresLoaded, $EngineVersion, $RootPath;
   $VersionsMatch = FALSE;
   // / Check that the Compatibility Core is loaded.
   if (in_array('COMPATIBILITY', $CoresLoaded));
@@ -289,7 +302,7 @@ function checkVersionInfo() {
     logEntry('Compatibility Core disabled. Skipping version check.', FALSE); 
     $VersionMatch = TRUE; }
   // / If the Compatibility Core is enabled we will also retrieve the '$EngineVersionInfo' variable from versionInfo.php to compare against.
-  if (file_exists('versionInfo.php')) require('versionInfo.php');
+  if (file_exists($RootPath.DIRECTORY_SEPARATOR.'versionInfo.php')) require($RootPath.DIRECTORY_SEPARATOR.'versionInfo.php');
   // / Now that we've gathered version information from two sources within the engine, we compare them.
   if (isset($EngineVersion) && isset($EngineVersionInfo)) if ($EngineVersion === $EngineVersionInfo) $VersionsMatch = TRUE; 
   // / Return TRUE if the both version strings match. Return FALSE if the two versions strings do not match.
@@ -437,11 +450,7 @@ function generateTokens($ClientTokenInput, $UserInput) {
     if ($user[1] === $UserInput) { 
       $ClientToken = hash('sha256', $Minute.$Salts[0].$user[3].$Salts[0].$Salts[1].$Salts[2].$Salts[3]);
       $oldClientToken = hash('sha256', $LastMinute.$Salts[0].$user[3].$Salts[0].$Salts[1].$Salts[2].$Salts[3]);
-      if ($ClientTokenInput === $ClientToken) $TokensAreValid = TRUE; 
-      if ($ClientTokenInput === $oldClientToken) {
-        $ClientToken = $OldClientToken;
-        $ServerToken = $OldServerToken; 
-        $TokensAreValid = TRUE; } } }
+      if ($ClientTokenInput === $ClientToken or $ClientTokenInput === $oldClientToken) $TokensAreValid = TRUE; } }
   // / If the specified user does not exist, provide the user with fake & invalid tokens.
   if (!$TokensAreValid) { 
     $ClientToken = hash('sha256', $Minute.$Date.$Salts[2].$Salts[3].$LastMinute);
@@ -517,13 +526,13 @@ function generateUserLogs($UserID) {
 // / A function to define the default $UserCacheData used as $arrayData in generateUserCache and loadUserCache. 
 // / Without this function this data would need to be hard-coded, making my job harder! We don't want that.
 function generateDefaultUserCacheData() { 
-  global $UserCacheRequiredOptions, $UserCacheArrayData;
+  global $UserCacheRequiredOptions, $UserCacheArrayData, $DefaultColorScheme, $DefaultFont, $DefaultTimezone, $DefaultDisplayName, $DefaultTips, $DefaultTheme, $DefaultHRAI, $DefaultHRAIAudio, $DefaultLandingPage, $DefaultStayLoggedIn;
   // / Define the default data for a fresh installation of the $UserCacheFile.
   // / This is specially encoded to be written in a machine-readable .php file that will be included in generateUserCache().
-  $UserCacheArrayData = '\'FRIENDS\'=>\'\', \'BLOCKED\'=>\'\', \'COLOR\'=>\'BLUE\', \'FONT\'=>\'ARIAL\', \'TIMEZONE\'=>\'America/New_York\', \'TIPS\'=>\'ENABLED\', \'THEME\'=>\'ENABLED\', \'HRAI\'=>\'ENABLED\', \'HRAIAUDIO\'=>\'HRAIAUDIO\', \'LANDINGPAGE\'=>\'DEFAULT\', \'STAYLOGGEDIN\'=>\'ENABLED\'';
+  $UserCacheArrayData = '\'FRIENDS\'=>\'\', \'BLOCKED\'=>\'\', \'COLOR\'=>\''.$DefaultColorScheme.'\', \'FONT\'=>\''.$DefaultFont.'\', \'TIMEZONE\'=>\''.$DefaultTimezone.'\', \'DISPLAYNAME\'=>\''.$DefaultDisplayName.'\', \'TIPS\'=>\''.$DefaultTips.'\', \'THEME\'=>\''.$DefaultTheme.'\', \'HRAI\'=>\''.$DefaultHRAI.'\', \'HRAIAUDIO\'=>\''.$DefaultHRAIAudio.'\', \'LANDINGPAGE\'=>\''.$DefaultLandingPage.'\', \'STAYLOGGEDIN\'=>\''.$DefaultStayLoggedIn.'\'';
   // / Define an array of default cache elements that every user cache file must contain.
   // / Note that the values in this array MUST match the $UserCacheArrayData above which containing the valid defaults for each element of $UserOptions[].
-  $UserCacheRequiredOptions = array('FRIENDS', 'BLOCKED', 'COLOR', 'FONT', 'TIMEZONE', 'DISPLAYNAME', 'TIPS', 'THEME', 'HRAI', 'HRAIAUDIO', 'LANDINGPAGE', 'STAYLOGGEDIN'); 
+  $UserCacheRequiredOptions = array('FRIENDS'=>array(), 'BLOCKED'=>array(), 'COLOR'=>$DefaultColorScheme, 'FONT'=>$DefaultFont, 'TIMEZONE'=>$DefaultTimezone, 'DISPLAYNAME'=>$DefaultDisplayName, 'TIPS'=>$DefaultTips, 'THEME'=>$DefaultTheme, 'HRAI'=>$DefaultHRAI, 'HRAIAUDIO'=>$DefaultHRAIAudio, 'LANDINGPAGE'=>$DefaultLandingPage, 'STAYLOGGEDIN'=>$DefaultStayLoggedIn); 
   return (array($UserCacheArrayData, $UserCacheRequiredOptions)); }
 
 // / A function to generate a missing user cache file. Useful when new users log in for the first time.
