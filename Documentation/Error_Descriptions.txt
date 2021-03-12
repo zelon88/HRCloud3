@@ -16,25 +16,39 @@ If you have a knowledgebase system for your organization it is recommended that 
 future reference. You are also encouraged to add your own notes to this file as you encounter problems. If you decide to add your own notes to this file 
 please consider uploading it to a public Github repo so that other HRCloud3 administrators can benefit from the knowledge you've acquired. 
 
-
 Each section in this file contains information about a different error message. Each section has the following subsections
 
-ERROR MESSAGE: The exact error response produced by the application. Text wrapped in angle brackets < > denote encoded information. For example, "<TIMESTAMP>"
-would actually be replaced with an abbreviated date.
-
-LOG LEVEL: Denotes where the log entry is written to. Possible levels include "SYSTEM" or "USER" or both. "SYSTEM" logs get entered into the primary system 
-logfile located in the /Logs directory where HRCloud3 was installed. "USER" logs get written to a user specific subdirectory of the "DATA" library. If a "USER"
-log entry is triggered and there is no logged in user the entry will only be written to the "SYSTEM" logfile.
-
-ERROR DESCRIPTION: A brief and concise description of the error message as well as possible causes & solutions.
+~~EXAMPLE~~
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  The exact error response produced by the application. Text wrapped in angle brackets < > denote encoded information. For example, "<TIMESTAMP>"
+  would actually be replaced with an abbreviated date.
+
+FILE
+  The file path pointing to the file which contains this error message. File is relative to the root HRCloud3 installation directory.
+
+LOG LEVEL
+  Denotes where the log entry is written to. 
+  Possible levels include "NONE", SYSTEM" or "USER" or a combination of these options separated by commas. 
+  "NONE" logs do not get logged. These logs usually appear in circumstances where logging functionality is uninitialized or impossible.
+  "SYSTEM" logs get entered into the primary system logfile located in the /Logs directory where HRCloud3 was installed. 
+  "USER" logs get written to a user specific subdirectory of the "DATA" library. 
+  If a "USER" log entry is triggered and there is no logged in user the entry will only be written to the "SYSTEM" logfile.
+
+ERROR DESCRIPTION
+  A brief and concise description of the error message as well as possible causes & solutions.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+~~EXAMPLE~~
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 0, Could not process the Configuration file (config.php)!
 
+FILE
+  /core.php
+
 LOG LEVEL
-  SYSTEM
+  NONE
 
 ERROR DESCRIPTION
   The config.php file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
@@ -45,11 +59,48 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
+  ERROR!!! 1A, Could not process the Header file (header.html)!
+
+FILE
+  /CloudHome.php
+
+LOG LEVEL
+  NONE
+
+ERROR DESCRIPTION
+  The header.html file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
+  This may be the result of incorrect file permission levels on the installation directory or header.html file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 1B, Could not process the Core Diablo Engine file (core.php)!
+
+FILE
+  /CloudHome.php
+
+LOG LEVEL
+  NONE
+
+ERROR DESCRIPTION
+  The core.php file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
+  This may be the result of incorrect file permission levels on the installation directory or core.php file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
   ERROR!!! 2A, This application is NOT compatible with PHP versions earlier than 7.0. Running this application on unsupported PHP versions 
   WILL cause unexpected behavior!
 
+FILE
+  /core.php
+
 LOG LEVEL
-  SYSTEM
+  NONE
 
 ERROR DESCRIPTION
   The version of PHP that is running on the server is lower than version 7.0.0, which is unsupported.
@@ -60,8 +111,11 @@ ERROR MESSAGE
   ERROR!!! 2B, This application is NOT compatible with the Windows Operating System. Running this application on unsupported operating systems 
   WILL cause unexpected behavior!
 
+FILE
+  /core.php
+
 LOG LEVEL
-  SYSTEM
+  NONE
 
 ERROR DESCRIPTION
   HRCloud3 is being run on a server that is running a Windows based Operating System, which is unsupported.
@@ -70,6 +124,9 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 3, <TIMESTAMP>, Could not verify installation!
+
+FILE
+  /core.php
 
 LOG LEVEL
   SYSTEM
@@ -82,6 +139,7 @@ ERROR DESCRIPTION
   This could be because HRCloud3 is running on an unsupported operating system or PHP version.
   Required directories that must be located in the installation directory include; 'Logs', 'Data', 'Cache', 'Cache/Data'.
   One of the required directories is missing an index.html file or one could not be created.
+  An index file does not exist or could not be created.
   A cache file does not exist or could not be created.
   A log file does not exist or could not be created.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -89,6 +147,9 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 4, <TIMESTAMP>, Could not initialize variables to default values!
+
+FILE
+  /core.php
 
 LOG LEVEL
   SYSTEM
@@ -100,6 +161,9 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 5, <TIMESTAMP>, Application Version discrepancy detected!
+
+FILE
+  /core.php
 
 LOG LEVEL
   SYSTEM
@@ -113,7 +177,10 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 6, <TIMESTAMP>, Could not load cache file!
- 
+
+FILE
+  /core.php
+
 LOG LEVEL
   SYSTEM
 
@@ -126,6 +193,9 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 7, <TIMESTAMP>, Invalid tokens!
+
+FILE
+  /core.php
 
 LOG LEVEL
   SYSTEM
@@ -141,7 +211,10 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 8, <TIMESTAMP>, Invalid username or password!
- 
+
+FILE
+  /core.php
+
 LOG LEVEL
   SYSTEM
 
@@ -154,7 +227,10 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 9, <TIMESTAMP>, Could not load libraries!
- 
+
+FILE
+  /core.php
+
 LOG LEVEL
   SYSTEM
 
@@ -165,7 +241,10 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 10, <TIMESTAMP>, Could not load library data from <LIBRARY NAME OR DIRECTORY>!
- 
+
+FILE
+  /core.php
+
 LOG LEVEL
   SYSTEM
 
@@ -184,7 +263,10 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 11, <TIMESTAMP>, Could not generate a user log file!
- 
+
+FILE
+  /core.php
+
 LOG LEVEL
   SYSTEM
 
@@ -197,7 +279,10 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 12, <TIMESTAMP>, Could not generate a user cache file!
- 
+
+FILE
+  /core.php
+
 LOG LEVEL
   SYSTEM, USER
 
@@ -210,7 +295,10 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 13, <TIMESTAMP>, Could not load the user cache file!
- 
+
+FILE
+  /core.php
+
 LOG LEVEL
   SYSTEM, USER
 
@@ -221,7 +309,10 @@ ERROR DESCRIPTION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   ERROR!!! 14, <TIMESTAMP>, Could not generate a user notifications file!
- 
+
+FILE
+  /core.php
+
 LOG LEVEL
   SYSTEM, USER
 
@@ -229,4 +320,54 @@ ERROR DESCRIPTION
   The "DATA" library directory specified in the config.php file has no trailing slash.
   The "DATA" library directory specified in the config.php file has incorrect permissions.
   The "DATA" library directory points to a destination where the www-data user or group cannot access.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 15, <TIMESTAMP>, Could not generate a user notifications file!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM, USER
+
+ERROR DESCRIPTION
+  The "DATA" library directory specified in the config.php file has no trailing slash.
+  The "DATA" library directory specified in the config.php file has incorrect permissions.
+  The "DATA" library directory points to a destination where the www-data user or group cannot access.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 16, Could not process the Core Diablo Engine file (core.php)!
+
+FILE
+  /guiCore.php
+
+LOG LEVEL
+  NONE
+
+ERROR DESCRIPTION
+  The core.php file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
+  This may be the result of incorrect file permission levels on the installation directory or core.php file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 17, Out of context execution of this file is forbidden!
+
+FILE
+  /guiCore.php
+
+LOG LEVEL
+  NONE
+
+ERROR DESCRIPTION
+  The user is attempting to execute a portion of the application without calling required core files first.
+  The user is sending requests to the wrong destination file on the server.
+  The core.php file is damaged or corrupt.
+  The server is being fuzzed, improperly sandboxed, or scanned for vulnerabilities.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------

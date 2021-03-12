@@ -1,6 +1,26 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+3/11/2021
+v0.7.5 - UI Playground time!
+
+-Fix bug on line 442 in core.php. By design the core was returning old server and client tokens when old ones were supplied. 
+  -This guaranteed that sessions would expire after a few minutes. Now when old input tokens are validated, new ones are returned.
+-Start shaping guiCore. Use core.php as a guideline.
+-Refactor some of the existing guiCore functions.
+-I think I want to have semi-static html files in a subfolder of /Resources.
+  -This way the UI will be completely modular.
+  -Each .html file in the /Resources/Themes folder can be wrapped in a PHP conditional that controls when and which html code actually gets displayed.
+-Add missing and new errors to Error_Descriptions.txt.
+-Fix bug in Login-Caller.js that would make logging in impossible if your username is "ERROR".
+-Add mechanism to set default values to generated user cache files before first logon. 
+  -Moved defaults from hardcoded array values in core.php to config.php where they belong.
+-Changed default value of StayLoggedIn to ENABLED since it is so pivotal to the whole entire authentication mechanism.
+-Fix bug in initializeVariables() causing "Warning: Illegal offset type" when it hit a multidimensional array in $UserCacheRequiredOptions.
+-Improve documentation included in config.php.
+-Refactor to make add-in Themes possible. Move all GUI elements to /Resources/Themes/DEFAULT
+
+----------
 3/10/2021
 v0.7.4 - Finish automated token submission, fix login UI elements.
 
