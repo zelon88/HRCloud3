@@ -56,10 +56,10 @@ $('#loginFormNav').on('submit', function (loginAjax) {
     loginAjax.preventDefault();
     $.ajax({
       type: 'POST',
-      url: 'core.php',
+      url: '/core.php',
       data: $(this).serialize(),
       success: function(loginReponse) {
-        if (!loginReponse.includes('ERROR')) { 
+        if (!loginReponse.includes('ERROR!!!')) { 
           var responseArray = loginReponse.split(',');
           var UserInput = responseArray[0];
           var ClientTokenInput = responseArray[1];
@@ -80,7 +80,7 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
     passwordAjax.preventDefault();
     $.ajax({
       type: 'POST',
-      url: 'core.php',
+      url: '/core.php',
       data: $(this).serialize(),
       success: function(passwordResponse) {
         var passwordCorrect = !passwordResponse.includes('ERROR!!!');
@@ -119,7 +119,7 @@ function StayLoggedInSender() {
   $(function () {
     $.ajax({
       type: 'POST',
-      url: 'core.php',
+      url: '/core.php',
       data: {
         UserInput: document.getElementById('UserInputTokens').value,
         SessionID: document.getElementById('SessionID').value,
