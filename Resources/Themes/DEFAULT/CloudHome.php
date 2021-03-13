@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 12/23/2020
+Date: 3/11/2021
 <3 Open-Source
 
 The Home Page provides an entry point to the UI elements available in the Diablo Engine.
@@ -24,8 +24,20 @@ set_time_limit(0);
 if (!file_exists('header.html')) die('ERROR!!! 1A, Could not process the Header file (header.html)!'.PHP_EOL); 
 else require_once ('header.html');
 
-// / Load the header file and prepare valid HTML syntax for the session.
-if (!file_exists('core.php')) die('ERROR!!! 1B, Could not process the Core Diablo Engine file (core.php)!'.PHP_EOL); 
-else require_once ('core.php');
+?><div id='coreOutput' name='coreOutput' style='display:"none";'><?php
 
-if (!$GlobalsAreVerified) if (!$RequestTokens) requireLogin(); 
+// / Load the header file and prepare valid HTML syntax for the session.
+if (!file_exists('../../../core.php')) die('ERROR!!! 1B, Could not process the Core Diablo Engine file (core.php)!'.PHP_EOL); 
+else require_once ('../../../core.php');
+
+// / Load the header file and prepare valid HTML syntax for the session.
+if (!file_exists('../../../guiCore.php')) die('ERROR!!! 1C, Could not process the Diablo Engine GUI Core file (guiCore.php)!'.PHP_EOL); 
+else require_once ('../../../guiCore.php');
+
+?></div><?php
+// / -----------------------------------------------------------------------------------
+?>
+
+<div id='HomeHead' name='HomeHead'><h1>HOME</h1></div>
+
+<div id='HomeBody' name='HomeBody'>You have no notifications</div>
