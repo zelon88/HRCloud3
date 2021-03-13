@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/10/2021
+Date: 3/12/2021
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -113,7 +113,7 @@ function verifyInstallation() {
   // / Set variables. 
   global $Date, $Time, $Salts, $RootPath;
   $dirCheck = $indexCheck = $dirExists = $indexExists = $logCheck = $cacheCheck = TRUE;
-  $requiredDirs = array('Logs', 'Data', 'Cache', 'Cache'.DIRECTORY_SEPARATOR.'Data');
+  $requiredDirs = array('Applications', 'Widgets', 'Logs', 'Data', 'Cache', 'Cache'.DIRECTORY_SEPARATOR.'Data');
   $InstallationIsVerified = FALSE;
   // / For servers with unprotected directory roots, we must verify (at minimum) that a local index file exists to catch unwanted traversal.
   if (!file_exists('index.html')) $indexCheck = FALSE;
