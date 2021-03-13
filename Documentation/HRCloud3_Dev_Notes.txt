@@ -1,6 +1,28 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+3/12/2021
+v0.7.6 - Working on guiCore, adding core functionality.
+
+-Adding & refining functions in guiCore.php.
+-I want to have widgets, apps, and files on the homepage similar to HRCloud2, but with seamless iframes that scroll to the side similar to Netflix.
+  -Maybe smaller than netflix. 
+  -Maybe put two side by side?
+  -User can re-arrange widgets and apps and anything else.
+  -Make a cache file to store the order in which items are displayed. 
+  -Update this cache file when the user changes their display options.
+  -Iframes sidescroll, only one object tall.
+  -Iframes should be outputted via PHP functions and contained in widgets.
+  -Authentication levels for widgets are coded into the widget themselves.
+  -That way widgets can be made for unauthenticated users for things that don't need auth. Like converting one-time files or outputting server analytics or marketing.
+-Refactored getFiles() in guiCore.php pretty heavily.
+-Add Applications and Widgets folders to verifyInstallation() in core.php.
+-Need to add code in core.php to create a cache file to store the order that guiElements are displayed in.
+  -This code should probably go in the same area as notifications file generation. 
+  -Maybe tuck it inside the generateUserCache() function?
+-Cleanup lingering files from last nights big GUI / HTML file move.
+
+----------
 3/11/2021
 v0.7.5 - UI Playground time!
 
