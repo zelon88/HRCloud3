@@ -27,9 +27,6 @@ This CSS file determines the stylesheet for the top navigation bar.
 html {
   font-size: 62.5%; }
 
-body {
-  background: url("../debut_dark.webp"); }
-
 ul {
   font: 1.5rem/1.7rem Helvetica, Arial, sans-serif;
   background-color: #025;
