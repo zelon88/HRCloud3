@@ -44,3 +44,9 @@ and.....
 
 EIT RawMaterials
 https://eitrawmaterials.eu
+
+and.....
+
+feathericons
+https://feathericons.com/
+https://github.com/feathericons/feather
