@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/12/2021
+Date: 2/16/2022
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -45,11 +45,11 @@ if (session_status() == PHP_SESSION_NONE) session_start();
 $RootPath = '';
 if (!file_exists('config.php')) { 
   // / If we can't use relative paths, check the server document root directory instead.
-  $RootPath = $_SERVER['DOCUMENT_ROOT'];
-  if (!file_exists($RootPath.DIRECTORY_SEPARATOR.'config.php')) die('ERROR!!! 0, Could not process the Configuration file (config.php)!'.PHP_EOL); }
+  $RootPath = $_SERVER['DOCUMENT_ROOT'].DIRECTORY_SEPARATOR;
+  if (!file_exists($RootPath.'config.php')) die('ERROR!!! 0, Could not process the Configuration file (config.php)!'.PHP_EOL); }
 
 // / Load the config.php file.
-require_once ($RootPath.DIRECTORY_SEPARATOR.'config.php');
+require_once ($RootPath.'config.php');
 $ConfigIsLoaded = TRUE; 
 
 // / Stop the application if $MaintenanceMode is enabled.
@@ -119,7 +119,7 @@ function verifyInstallation() {
   if (!file_exists('index.html')) $indexCheck = FALSE;
   // / Iterate through the $requiredDirs hard-coded (in this function, under "Set variables" section above).
   foreach ($requiredDirs as $requiredDir) { 
-    $requiredDir = $RootPath.DIRECTORY_SEPARATOR.$requiredDir;
+    $requiredDir = $RootPath.$requiredDir;
     // / If a $requiredDir doesn't exist, we create it.
     if (!is_dir($requiredDir)) $dirExists = mkdir($requiredDir, 0755);
     // / A sanity check to ensure the directory was actually created.
@@ -131,11 +131,11 @@ function verifyInstallation() {
   // / Create a unique identifier for today's $LogFile.
   $logHash = substr(hash('sha256', $Salts[0].hash('sha256', $Date.$Salts[1].$Salts[2].$Salts[3])), 0, 7);
   // / Define today's $LogFile.
-  $LogFile = $RootPath.DIRECTORY_SEPARATOR.'Logs'.DIRECTORY_SEPARATOR.$Date.'_'.$logHash.'.log';
+  $LogFile = $RootPath.'Logs'.DIRECTORY_SEPARATOR.$Date.'_'.$logHash.'.log';
   // / Create today's $LogFile if it doesn't exist yet.
   if (!file_exists($LogFile)) $logCheck = file_put_contents($LogFile, 'OP-Act: '.$Time.' Created a log file, "'.$LogFile.'".'.PHP_EOL);
   // / Create a unique identifier for the cache file.
-  $CacheFile = $RootPath.DIRECTORY_SEPARATOR.'Cache'.DIRECTORY_SEPARATOR.'Cache-'.hash('sha256',$Salts[0].'CACHE').'.php';
+  $CacheFile = $RootPath.'Cache'.DIRECTORY_SEPARATOR.'Cache-'.hash('sha256',$Salts[0].'CACHE').'.php';
   // / If no cache file exists yet (first run) we create one and write the $PostConfigUsers to it. 
   if (!file_exists($CacheFile)) $cacheCheck = file_put_contents($CacheFile, '<?php'.PHP_EOL.'$PostConfigUsers = array();');
   // / Make sure all sanity checks passed.
@@ -148,19 +148,17 @@ function verifyInstallation() {
 // / A function to initialize global variables to default values.
 function initializeVariables() {
   $UserOptionCount = $ucCount = 0;
-  global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions, $ServerToken, $OldServerToken;
+  global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $TokenIsValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions, $ServerToken, $OldServerToken;
   // / Initialize all required sanity checks to FALSE.
-  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = $key = FALSE;
+  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $TokenIsValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = $key = FALSE;
   // / Initialize all required user options to NULL.
   list ($UserCacheArrayData, $UserCacheRequiredOptions) = generateDefaultUserCacheData();
   $ucCount = count($UserCacheRequiredOptions);
   foreach ($UserCacheRequiredOptions as $key => $ucItem ) { 
     $UserOptionCount++;
     $UserOptions[$key] = $ucItem; }
-  // / Initialize ServerTokens.
-  list ($ServerToken, $OldServerToken, $TokenIsValid) = generateServerToken();
   // / Ensure sanity checks passed.
-  if (intval($ucCount) === intval($UserOptionCount) && $TokenIsValid) $InitializationComplete = TRUE; 
+  if (intval($ucCount) === intval($UserOptionCount)) $InitializationComplete = TRUE; 
   // / Clean up unneeded memory.
   $ucItem = $ucCount = $key = NULL;
   unset($ucItem, $ucCount, $key);
@@ -262,7 +260,7 @@ function loadCores($coresToLoad) {
     // / Loop through each core in the array element.
     foreach ($coresToLoad as $coreToLoad) { 
       // / Determine what the name of the specified core should be.
-      $coreFile = $RootPath.DIRECTORY_SEPARATOR.strtolower($coreToLoad).'Core.php';
+      $coreFile = $RootPath.strtolower($coreToLoad).'Core.php';
       // / Check that the specified core is available to load.
       if (file_exists($coreFile) && in_array(strtoupper($coreToLoad), $AvailableCores)) { 
         // / Load the actual core file.
@@ -273,7 +271,7 @@ function loadCores($coresToLoad) {
   // / Check if $coresToLoad is a string.
   if (is_string($coresToLoad)) {
     // / Determine what the name of the specified core should be. 
-    $coreFile = $RootPath.DIRECTORY_SEPARATOR.strtolower($coresToLoad).'Core.php';
+    $coreFile = $RootPath.strtolower($coresToLoad).'Core.php';
     // / Check that the specified core is available to load.
     if (file_exists($coreFile) && in_array(strtoupper($coresToLoad), $AvailableCores)) { 
       // / Load the actual core file.
@@ -302,7 +300,7 @@ function checkVersionInfo() {
     logEntry('Compatibility Core disabled. Skipping version check.', FALSE); 
     $VersionMatch = TRUE; }
   // / If the Compatibility Core is enabled we will also retrieve the '$EngineVersionInfo' variable from versionInfo.php to compare against.
-  if (file_exists($RootPath.DIRECTORY_SEPARATOR.'versionInfo.php')) require($RootPath.DIRECTORY_SEPARATOR.'versionInfo.php');
+  if (file_exists($RootPath.'versionInfo.php')) require($RootPath.'versionInfo.php');
   // / Now that we've gathered version information from two sources within the engine, we compare them.
   if (isset($EngineVersion) && isset($EngineVersionInfo)) if ($EngineVersion === $EngineVersionInfo) $VersionsMatch = TRUE; 
   // / Return TRUE if the both version strings match. Return FALSE if the two versions strings do not match.
@@ -312,25 +310,25 @@ function checkVersionInfo() {
 function verifySession($SessionIDInput, $UserInput, $ClientTokenInput) {
   global $Users, $Salts, $Minute, $LastMinute, $ServerToken, $OldServerToken;
   // / Set variables.
-  $SessionIsVerified = $sessionID = $user = $userFound = FALSE;
+  $SessionIsVerified = $sessionID = $user = FALSE;
   if ($SessionIDInput !== FALSE && $UserInput !== FALSE && $ClientTokenInput !== FALSE) {
     // / Loop through the userlist and look for the specified username.
     foreach ($Users as $user) { 
-      // / If the username is found we set a flag and stop iterating through the list.
-      if ($UserInput === $user[1]) { 
-        $userFound = TRUE;
-        break; } }
+      // / If the username is found we stop iterating through the list.
+      if ($UserInput === $user[1]) break; }
       // / Create a temporary session ID to see if it matches the one supplied by the user.
       $sessionID = hash('sha256', $Minute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
       // / Perform the check to see if the session ID is current.
       if ($sessionID === $SessionIDInput) $SessionIsVerified = TRUE;
       // / If the session ID is not current generate an older one that is still valid.
-      else $sessionID = hash('sha256', $LastMinute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$OldServerToken.$Salts[2].$user[1]);
-      // / Perform another check to see if the session ID provided is valid.
-      if ($sessionID === $SessionIDInput) $SessionIsVerified = TRUE;
+      else { 
+        $sessionID = hash('sha256', $LastMinute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$OldServerToken.$Salts[2].$user[1]);
+        // / Perform another check to see if the session ID provided is valid.
+        if ($sessionID === $SessionIDInput) $SessionIsVerified = TRUE; }
   // / Clean up unneeded memory.
-  $sessionID = $user = $userFound = NULL;
-  unset($sessionID, $user, $userFound);
+  $sessionID = $user = NULL;
+  unset($sessionID, $user);
+  if ($SessionIsVerified) echo 'VERIFIED';
   return ($SessionIsVerified); } }
 
 // / A function to validate and sanitize requried session and POST variables.
@@ -338,6 +336,18 @@ function verifyGlobals() {
   // / Set variables. 
   $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = FALSE;
   $UserDir = '';
+
+  // / This code is performed when a user submits tokens and a session ID via POST request to continue an existing session.
+  if (isset($_POST['UserInput']) && isset($_POST['SessionID']) && isset($_POST['ClientTokenInput'])) { 
+    $_SESSION['UserInputName'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['UserInput']));
+    $_SESSION['SessionIDInput'] = $SessionIDInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['SessionID']));
+    $_SESSION['ClientTokenInput'] = $ClientTokenInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['ClientTokenInput']));
+    $SessionIsVerified = verifySession($SessionIDInput, $UserInput, $ClientTokenInput);
+    if ($SessionIsVerified) $_SESSION['SessionID'] = $SessionID = $SessionIDInput;
+    else $_POST['SessionID'] = $_SESSION['SessionID'] = $SessionID = $SessionIDInput = NULL; 
+    $SessionType = 'POST';
+    if ($SessionIsVerified) $GlobalsAreVerified = TRUE; } 
+
   // / Set authentication credentials from supplied inputs when inputs are supplied.
   // / This code is performed when a user submits enough credentials & tokens to start a new session.
   // / There is a structure to how inputs are processed.
@@ -348,46 +358,29 @@ function verifyGlobals() {
   // / SESSION variables that have been processed for authenticity are allowed to become PHP variables. This happens in the verifyGlobals() function.
   // / PHP variables use regular $VARIABLE syntax. Per Diablo engine conventions, these are expected to be global in scope & have an uppercase first letter.
   // / If you find yourself using native functionality via POSTs or SESSION variables; STOP and evaluate the reasoning for processing unauthenticated data.
-  if (isset($_POST['UserInput']) && isset($_POST['PasswordInput']) && isset($_POST['ClientTokenInput'])) { 
+  if (isset($_POST['UserInput']) && isset($_POST['PasswordInput']) && isset($_POST['ClientTokenInput']) && !isset($_POST['SessionID'])) { 
     $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['UserInput']));
-    $_SESSION['PasswordInput'] = $PasswordInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['PasswordInput']));  
+    $_SESSION['PasswordInput'] = $PasswordInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['PasswordInput'])); 
     $_SESSION['ClientTokenInput'] = $ClientTokenInput = $_POST['ClientTokenInput']; 
     $SessionType = 'LOGIN';
     $UserID = 'DEFAULT';
     $GlobalsAreVerified = TRUE; }
+
   // / When no authentication credentials were supplied we initialize all variables to NULL.
   else $UserInput = $PasswordInput = $ClientTokenInput = NULL;
-  // / Verify the session ID or set a new one.
-  // / This code is performed when a user submits tokens and a session ID via SESSION request to continue an existing session.
-  if (isset($_SESSION['UserInput']) && isset($_SESSION['SessionID']) && isset($_SESSION['ClientTokenInput'])) {
-    $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_SESSION['UserInput']);  
-    $_SESSION['SessionIDInput'] = $SessionIDInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_SESSION['SessionID']);  
-    $_SESSION['ClientTokenInput'] = $ClientTokenInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', $_SESSION['ClientTokenInput']);  
-    $SessionIsVerified = verifySession($SessionIDInput, $UserInput, $ClientTokenInput);
-    if ($SessionIsVerified) $_SESSION['SessionID'] = $SessionID = $SessionIDInput;
-    else $_POST['SessionID'] = $_SESSION['SessionID'] = $SessionID = $SessionIDInput = NULL; 
-    $SessionType = 'SESSION';
-    if ($SessionIsVerified) $GlobalsAreVerified = TRUE; }
-  // / This code is performed when a user submits tokens and a session ID via POST request to continue an existing session.
-  if (isset($POST['UserInput']) && isset($POST['SessionID']) && isset($POST['ClientTokenInput'])) { 
-    $_SESSION['UseUserInputrName'] = $UseriNPUT = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($POST['UserInput']));
-    $_SESSION['SessionIDInput'] = $SessionIDInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['SessionID']));
-    $_SESSION['ClientTokenInput'] = $ClientTokenInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($POST['ClientTokenInput']));
-    $SessionIsVerified = verifySession($SessionIDInput, $UserInput, $ClientTokenInput);
-    if ($SessionIsVerified) $_SESSION['SessionID'] = $SessionID = $SessionIDInput;
-    else $_POST['SessionID'] = $_SESSION['SessionID'] = $SessionID = $SessionIDInput = NULL; 
-    $SessionType = 'POST';
-    if ($SessionIsVerified) $GlobalsAreVerified = TRUE; }
+
   // / Check if the user is attempting to login & prepare variables required to generate ClientTokens.
   // / This code is performed when a user requests tokens to begin the login process.
   if (isset($_POST['RequestTokens']) && isset($_POST['UserInput'])) {
     $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['UserInput']));
     $RequestTokens = TRUE; }
+
   if ($SessionType === 'POST' or $SessionID === 'SESSION') { 
     // / Set the UserDir based on user input or most recently used.
     if (isset($_POST['UserDir'])) $_SESSION['UserDir'] = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['UserDir']));
     if (!isset($_SESSION['UserDir']) or $_SESSION['UserDir'] == '') $_SESSION['UserDir'] = DIRECTORY_SEPARATOR; 
     $UserDir = $_SESSION['UserDir']; }
+
   return(array($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified)); }
 
 // / A function to throw the login page when needed.
@@ -441,17 +434,17 @@ function generateServerToken() {
 // / This is the secret sauce behind full password encryption in-transit.
 function generateTokens($ClientTokenInput, $UserInput) { 
   // / Set variables. 
-  global $Users, $Minute, $LastMinute, $Salts, $ServerToken, $OldServerToken;
+  global $Date, $Users, $Minute, $LastMinute, $Salts, $ServerToken, $OldServerToken;
   $ClientToken = $oldClientToken = $user = NULL;
   $TokensAreValid = FALSE;
-  // / Iterate through each defined user.
-  foreach ($Users as $user) { 
-    // / Continue ONLY if the $UserInput matches a valid $UserName.
-    if ($user[1] === $UserInput) { 
-      $ClientToken = hash('sha256', $Minute.$Salts[0].$user[3].$Salts[0].$Salts[1].$Salts[2].$Salts[3]);
-      $oldClientToken = hash('sha256', $LastMinute.$Salts[0].$user[3].$Salts[0].$Salts[1].$Salts[2].$Salts[3]);
-      if ($ClientTokenInput === $ClientToken or $ClientTokenInput === $oldClientToken) $TokensAreValid = TRUE; } }
-  // / If the specified user does not exist, provide the user with fake & invalid tokens.
+  // / Initialize ServerTokens.
+  list ($ServerToken, $OldServerToken, $TokenIsValid) = generateServerToken();
+  // / Generate client tokens to cross reference with the supplied ones.
+  $ClientToken = getClientTokens($UserInput, FALSE);
+  $oldClientToken = getClientTokens($UserInput, TRUE);
+  // / Compare the supplied tokens with the generated ones.
+  if ($ClientTokenInput === $ClientToken or $ClientTokenInput === $oldClientToken) $TokensAreValid = TRUE;
+  // / If the specified user does not exist, randomize the already fake & invalid tokens provided by the 'getClientTokens()'' function.
   if (!$TokensAreValid) { 
     $ClientToken = hash('sha256', $Minute.$Date.$Salts[2].$Salts[3].$LastMinute);
     $ServerToken = hash('sha256', $LastMinute.$Date.$Salts[0].$Salts[1].$Minute); }
@@ -473,7 +466,7 @@ function cleanupSensitiveMemory() {
 function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $ClientTokenInput) { 
   // / Set variables. 
   global $Users, $Minute, $Salts;
-  $sessionIsVerified = $sessionID = $userID = $UserID = $UserName = $PasswordIsCorrect = $UserIsAdmin = $AuthIsComplete = $UserEmail = $SessionID = $SessionIsVerified = FALSE;
+  $sessionIsVerified = $userID = $UserID = $UserName = $PasswordIsCorrect = $UserIsAdmin = $AuthIsComplete = $UserEmail = $SessionID = $SessionIsVerified = FALSE;
   // / Iterate through each defined user.
   foreach ($Users as $user) { 
     $UserID = $user[0];
@@ -495,8 +488,8 @@ function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $C
           // / Once we authenticate a user we no longer need to continue iterating through the userlist, so we stop.
           break; } } } }
   // / Clean up unneeded memory.
-  $sessionIsVerified = $user = $userID = $sessionID = NULL;
-  unset($sessionIsVerified, $user, $userID, $sessionID);
+  $sessionIsVerified = $user = $userID = NULL;
+  unset($sessionIsVerified, $user, $userID);
   // / Cleanup sensitive memory only if is it not required to complete authentication.
   // / This code should only fire if the user login credentials were incorrect.
   if ($PasswordIsCorrect && $SessionIsVerified) cleanupSensitiveMemory();
@@ -524,7 +517,7 @@ function generateUserLogs($UserID) {
   return (array($UserLogsExist, $UserLogDir, $UserLogFile, $UserDataDir)); }
 
 // / A function to define the default $UserCacheData used as $arrayData in generateUserCache and loadUserCache. 
-// / Without this function this data would need to be hard-coded, making my job harder! We don't want that.
+// / Without this function this data would need to be hard-coded.
 function generateDefaultUserCacheData() { 
   global $UserCacheRequiredOptions, $UserCacheArrayData, $DefaultColorScheme, $DefaultFont, $DefaultTimezone, $DefaultDisplayName, $DefaultTips, $DefaultTheme, $DefaultHRAI, $DefaultHRAIAudio, $DefaultLandingPage, $DefaultStayLoggedIn;
   // / Define the default data for a fresh installation of the $UserCacheFile.
@@ -556,37 +549,20 @@ function generateUserCache($UserID) {
   unset($userCacheData, $arrayData, $dirExists); 
   return(array($UserCacheExists, $UserCacheFile, $UserCacheDir)); } 
 
-// / A function to save entries to the user cache.
-// / If prepend is set to TRUE, this function will PREPEND the entry to the cache file.
-// / By default this function will APPEND the entry to the cache file.
-// / For security, this function does not accept input from arguments. 
-// / Instead it saves the existing $UserOptions from memory to the $UserCache. 
-// / Prepended entries are over-rided by newer entries. This is useful when new entries are added for new functionality 
-// / without destroying existing configuration data.
-function saveUserCache($Prepend) { 
+// / A function to format a modified user cache array so that it can be safely re-written to the user cache file without causing syntax errors.
+function updateUserCacheData() { 
+  global $UserOptions;
+  // / Define the default data for a fresh installation of the $UserCacheFile.
+  // / This is specially encoded to be written in a machine-readable .php file that will be included in generateUserCache().
+  $UserCacheArrayData = '$userCacheData = array(\'COLOR\'=>\''.$UserOptions['COLOR'].'\', \'FONT\'=>\''.$UserOptions['FONT'].'\', \'TIMEZONE\'=>\''.$UserOptions['TIMEZONE'].'\', \'DISPLAYNAME\'=>\''.$UserOptions['DISPLAYNAME'].'\', \'TIPS\'=>\''.$UserOptions['TIPS'].'\', \'THEME\'=>\''.$UserOptions['THEME'].'\', \'HRAI\'=>\''.$UserOptions['HRAI'].'\', \'HRAIAUDIO\'=>\''.$UserOptions['HRAIAUDIO'].'\', \'LANDINGPAGE\'=>\''.$UserOptions['LANDINGPAGE'].'\', \'STAYLOGGEDIN\'=>\''.$UserOptions['STAYLOGGEDIN'].'\');'.PHP_EOL;
+  return ($UserCacheArrayData); }
+
+// / A function to save modified settings to the user cache.
+function saveUserCache() { 
   // / Set variables.
   global $UserCache, $UserOptions;
-  // / Note that this particular variable we declare as a blank string by default. Usually we would use FALSE, but here if we do that
-  // / we could corrupt a valid $UserCache. So we use a blank string which won't add anything to our PHP syntax'd cache file.
-  $key = $uOpt = $newEntry = '';
-  foreach ($UserOptions as $key => $uOpt) { 
-    $key = '\''.$key.'\'';
-    $uOpt = '\''.$uOpt.'\'';
-    $newEntry = $key.'=>'.$uOpt.';'; }
-  if ($Prepend) { 
-    $handle = fopen($UserCache, "r+");
-    $len = strlen($newEntry);
-    $final_len = filesize($UserCache) + $len;
-    $cache_old = fread($handle, $len);
-    rewind($handle);
-    $i = 1;
-    while (ftell($handle) < $final_len) {
-      fwrite($handle, $newEntry);
-      $newEntry = $cache_old;
-      $cache_old = fread($handle, $len);
-      fseek($handle, $i * $len);
-      $i++; } }
-  else $UserCacheWritten = file_put_contents($UserCache, $newEntry, FILE_APPEND);
+  $UserCacheArrayData = updateUserCacheData();
+  $UserCacheWritten = file_put_contents($UserCache, $UserCacheArrayData, FILE_APPEND);
   // / Clean up unneeded memory.
   $newUserCacheData = $handle = $len = $final_len = $cache_old = $i = $newEntry = $key = $uOpt = $Prepend = NULL;
   unset($newUserCacheData, $handle, $len, $final_len, $cache_old, $i, $newEntry, $key, $uOpt, $Prepend);
@@ -615,16 +591,18 @@ function loadUserCache() {
         $userCache = $userCacheData = NULL; 
         unset($userCache, $userCacheData); 
         return(array($UserOptions, $UserCacheIsLoaded)); }
-      // / If the user cache is valid we delete the temporary data and validate each option.
-      $UserOptions = $userCacheData;
+      // / If the user cache is valid we copy it to the $UserOptions array & delete the temporary data.
+      $UserOptions = array_replace([], $userCacheData);
       $userCacheData = NULL;
       unset($userCacheData);
+      /*
       // / Iterate through each option specified in the user cache and verify that is it valid.
       foreach ($UserOptions as $option => $value) {
         // / If an option is not valid it is removed from memory.
         if (!in_array($option, $UserCacheRequiredOptions)) { 
           $UserOptions[$option] = NULL;
           unset($UserOptions[$option]); } }
+      */
       $UserCacheIsLoaded = TRUE; 
       // / Iterate through the default UserCache items and look for new array elements that should exist.
       foreach ($UserCacheRequiredOptions as $key => $ucaElement) { 
@@ -820,15 +798,15 @@ list ($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserD
 if (!$GlobalsAreVerified) if ($RequestTokens && $UserInput === NULL) requireLogin(); 
 else if ($Verbose) logEntry('Verified global variables.', FALSE);
 
-// / If the globals have been verified, there is enough user supplied information to continue authenticating the user, so the script will continue.
-// / If the globals have not been verified, there is not enough user supplied information to continue. The code in the following 'if' statement will be skipped.
+// / If the globals have been verified this code will start the authentication process.
+// / If the globals have not been verified this code will be skipped.
 if ($GlobalsAreVerified) {
   // / This code ensures that a same-origin UI element generated the login request.
   // / Also protects against packet replay attacks by ensuring that the request was generated recently and by making each request unique. 
   list ($ClientToken, $ServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $UserInput);
   if (!$TokensAreValid) dieGracefully(7, 'Invalid tokens!', FALSE);
   else if ($Verbose) logEntry('Generated tokens.', FALSE);
-  
+
   // / Do not require authentication if the user has proven they are in the middle of a valid session.
   if (!$SessionIsVerified) { 
     // / This code validates credentials supplied by the user against the hashed ones stored on the server.
@@ -866,30 +844,36 @@ if ($GlobalsAreVerified) {
   list ($UserCacheExists, $UserCache, $UserCacheDir) = generateUserCache($UserID);
   if (!$UserCacheExists) dieGracefully(12, 'Could not generate a user cache file!', TRUE);
   else if ($Verbose) logEntry('Created user cache.', TRUE);
-  
-  // / This code loads the user file containing the user specific settings configuration into memory.
-  list ($UserOptions, $UserCacheExists) = loadUserCache($UserID);
-  if (!$UserCacheExists) dieGracefully(13, 'Could not load the user cache file!', TRUE);
-  else if ($Verbose) logEntry('Loaded user cache.', TRUE);
 
   // / This code generates a user notifications file if none exists. Useful for initializing new users logging-in for the first time.
   list ($NotificationsFileExists, $NotificationsFile) = generateNotificationsFile($UserID, $UserDataDir);
-  if (!$NotificationsFileExists) dieGracefully(14, 'Could not generate a user notifications file!', TRUE);
-  else if ($Verbose) logEntry('Created user notifications.', TRUE); }
-// / The code in this 'else if' statement is triggered when there was not enough information to authenticate the user.
-else if ($Verbose) logEntry('Deferring execution to allow user login.', FALSE);
-// / -----------------------------------------------------------------------------------
+  if (!$NotificationsFileExists) dieGracefully(13, 'Could not generate a user notifications file!', TRUE);
+  else if ($Verbose) logEntry('Created user notifications.', TRUE); 
+  
+  // / This code updates the $UserOptions['STAYLOGGEDIN'] setting once a user has been authenticated.
+  $UserOptions['STAYLOGGEDIN'] = 'ENABLED';
+  $UserCacheWritten = saveUserCache(FALSE);
+  if (!$UserCacheWritten) dieGracefully(14, 'Could not save changes to the user cache file!', TRUE);
+  else if ($Verbose) logEntry('Saved changes to the user cache file.', TRUE); }
 
-// / -----------------------------------------------------------------------------------
-// / The following code triggers specific core functionality which is outputted for other components to use.
+// / This code in this 'else if' statement is triggered when there was not enough information to authenticate the user.
+else if ($Verbose) logEntry('Deferring execution to allow user login.', FALSE);
 
 // / Return user tokens when requested.
 // / This is usually performed when an unauthenticated user is trying to log in. 
 // / If a user has supplied a user name to the core along with a request for user tokens, the user tokens for the specified user name will be returned to the user.
 // / User tokens are used to secure the session from delayed eavesdropping attempts or replay attacks, and also serve to invalidate the session after 2 minutes.
-if ($RequestTokens && !$SessionIsVerified) echo($UserInput.','.getClientTokens($UserInput, FALSE));
+if ($RequestTokens && !$SessionIsVerified) echo($UserInput.','.getClientTokens($UserInput, FALSE)); 
 
-// / Return user name, sessionID, and client token when requested.
-// / Used to continue an automatically expiring session.
-if ($SessionIsVerified) echo($UserInput.','.$SessionID.','.$ClientToken.','.$UserOptions['STAYLOGGEDIN']);
+// / This code is performed once all authentication processes are complete a session has been created.
+if ($SessionIsVerified) { 
+  
+  // / This code loads the user cache file containing the user specific settings configuration into memory.
+  list ($UserOptions, $UserCacheExists) = loadUserCache();
+  if (!$UserCacheExists) dieGracefully(15, 'Could not load the user cache file!', TRUE);
+  else if ($Verbose) logEntry('Loaded user cache.', TRUE);
+
+  // / Return user name, sessionID, and client token when requested.
+  // / Used to continue an automatically expiring session.
+  echo($UserInput.','.$SessionID.','.$ClientToken.','.$UserOptions['STAYLOGGEDIN']); }
 // / -----------------------------------------------------------------------------------

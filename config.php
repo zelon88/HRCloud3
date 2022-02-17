@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/12/2021
+Date: 2/16/2022
 <3 Open-Source
 
 The Configuration File contains all of the critical settings required for Diablo to run on the server.
@@ -23,6 +23,17 @@ $ApplicationName = 'HRCloud3';
 // / Maintenance Mode
 // / Set  $MaintenanceMode  to  TRUE  if you want to prevent execution of the Diablo engine.
 $MaintenanceMode = FALSE;
+
+// / Stay Logged In Interval
+// / Set  $StayLoggedInInterval  to the number of milliseconds in between session keep-alive requests.
+// / Logged in users will send session keep-alive requests to the server at this interval for the life of the session.
+// / Must be an integer.
+// / If this is set too low; the server will be flooded with requests and user bandwith usage will increase.
+// / If this is set too high; user sessions will be destroyed too soon.
+// / The longer the interval the greater the exposure for session hijacking.
+// / Minimum reccomended is 20000. 
+// / Maximum reccomended is 130000.
+$StayLoggedInInterval = 3000;
 
 // / Log verbosity.
 // / Set  $Verbose  to  TRUE  if you want to log sucessful operations in addition to failed operations.
