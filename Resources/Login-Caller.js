@@ -37,12 +37,12 @@ function secureLogin(RawPassword) {
 
 // / -----------------------------------------------------------------------------------
 // / A function to detect if "STAYLOGGEDIN" is enabled for the user.
-// / Calls "StayLoggedInSender()" to request new user tokens every 30 seconds when enabled.
+// / Calls StayLoggedInSender() to request new user tokens when enabled.
 function StayLoggedInCaller() {
   if (document.getElementById('StayLoggedIn').value == 'ENABLED') { 
     setTimeout(function() { 
       StayLoggedInSender(); 
-      StayLoggedInCaller(); }, 30000); } }
+      StayLoggedInCaller(); }, StayLoggedInInterval); } }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -98,6 +98,8 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
           changeValue('ClientToken', ClientToken);
           changeValue('ActiveSLI', 'ENABLED');
           changeValue('StayLoggedIn', StayLoggedIn);
+          toggleVisibility('loginButton');
+          toggleVisibility('logoutButton');
           StayLoggedInCaller(); 
           }
         else { 
@@ -136,9 +138,7 @@ function StayLoggedInSender() {
         changeValue('SessionID', SessionID);
         changeValue('ClientToken', ClientToken);
         changeValue('ActiveSLI', 'ENABLED');
-        changeValue('StayLoggedIn', StayLoggedIn);
-        //StayLoggedInCaller(); 
-      } }); }); }
+        changeValue('StayLoggedIn', StayLoggedIn); } }); }); }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------

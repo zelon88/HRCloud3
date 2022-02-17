@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/10/2021
+Date: 2/16/2022
 <3 Open-Source
 
 The Home Page provides common functionality for many of the UI elements in HRCloud3.
@@ -22,6 +22,13 @@ There may be additional specialized functionality contained in separate Javascri
 // / Useful for building dynamic forms.
 function changeValue(id, newValue) {
   document.getElementById(id).value = newValue; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to change the inner HTML content of an element.
+// / Useful for building dynmic pages.
+function changeContent(id, newContent) { 
+  document.getElementById(id).innerHTML = newContent; }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
