@@ -294,21 +294,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 13, <TIMESTAMP>, Could not load the user cache file!
-
-FILE
-  /core.php
-
-LOG LEVEL
-  SYSTEM, USER
-
-ERROR DESCRIPTION
-  The www-data user or group cannot access the servers web root directory.
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-ERROR MESSAGE
-  ERROR!!! 14, <TIMESTAMP>, Could not generate a user notifications file!
+  ERROR!!! 13, <TIMESTAMP>, Could not generate a user notifications file!
 
 FILE
   /core.php
@@ -324,7 +310,23 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 15, <TIMESTAMP>, Could not generate a user notifications file!
+  ERROR!!! 14, <TIMESTAMP>, Could not save changes to the user cache file!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM, USER
+
+ERROR DESCRIPTION
+  The "DATA" library directory specified in the config.php file has no trailing slash.
+  The "DATA" library directory specified in the config.php file has incorrect permissions.
+  The "DATA" library directory points to a destination where the www-data user or group cannot access.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 15, <TIMESTAMP>, Could not load the user cache file!
 
 FILE
   /core.php

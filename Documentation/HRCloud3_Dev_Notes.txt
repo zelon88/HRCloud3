@@ -1,6 +1,13 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+
+2/16/2022
+v0.7.7 - Working on maintaining sessions.
+
+-Working on maintaining sessions with UI elements.
+
+----------
 3/12/2021
 v0.7.6 - Working on guiCore, adding core functionality.
 
