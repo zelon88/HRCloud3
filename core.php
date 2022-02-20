@@ -310,27 +310,33 @@ function checkVersionInfo() {
 function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken) {
   global $Users, $Salts, $Minute, $LastMinute;
   // / Set variables.
-  $SessionIsVerified = $sessionID = $oldSessionID = $oldSessionIDOld = $user = FALSE;
+  $SessionIsVerified = $SessionID = $oldSessionID = $oldSessionIDOld = $user = FALSE;
   // / Check that required inputs are valid.
-  if ($SessionIDInput !== FALSE && $UserInput !== FALSE && $ClientTokenInput !== FALSE) {
+  if ($SessionIDInput !== FALSE && $UserInput !== FALSE && $ClientTokenInput !== FALSE) { 
+    logEntry('SessionIDInput = '.$SessionIDInput, FALSE);
     // / Loop through the userlist and look for the specified username.
     foreach ($Users as $user) { 
       // / If the username is found we stop iterating through the user list.
       if ($UserInput === $user[1]) { 
         // / Create temporary session IDs to see if they matches the one supplied by the user.
-        $sessionID = hash('sha256', $Minute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
-        logEntry($Minute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1], TRUE);
+        $SessionID = hash('sha256', $Minute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
+        logEntry('sessionID = '.$SessionID, FALSE);
         $oldSessionIDOld = hash('sha256', $LastMinute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$OldServerToken.$Salts[2].$user[1]);
-        logEntry($LastMinute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$OldServerToken.$Salts[2].$user[1], TRUE);
-        break; } }
+        logEntry('oldSessionIDOld = '.$oldSessionIDOld, FALSE);
+        $oldSessionID = hash('sha256', $LastMinute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$OldServerToken.$Salts[2].$user[1]);
+        logEntry('oldSessionID = '.$oldSessionID, FALSE);
+        $oldSessionIDA = hash('sha256', $LastMinute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
+        logEntry('oldSessionIDA = '.$oldSessionIDA, FALSE);
+        $oldSessionIDB = hash('sha256', $Minute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
+        logEntry('oldSessionIDB = '.$oldSessionIDB, FALSE);
+        break; } } }
   // / Perform the check to see if the session ID is valid.
-  if ($SessionIDInput === $sessionID or $SessionIDInput === $oldSessionID) $SessionIsVerified = TRUE;
-  if ($SessionIDInput === $oldSessionIDOld) $SessionIsVerified = TRUE;
-  if ($SessionIsVerified) logEntry('VERIFIED', TRUE);
+  if ($SessionIDInput === $SessionID or $SessionIDInput === $oldSessionIDOld) $SessionIsVerified = TRUE;
+  if ($SessionIDInput === $oldSessionID or $SessionIDInput === $oldSessionIDA or $SessionIDInput === $oldSessionIDB) $SessionIsVerified = TRUE;
   // / Clean up unneeded memory.
-  $oldSessionID = $sessionID = $user = NULL;
-  unset($oldSessionID, $sessionID, $user);
-  return ($SessionIsVerified); } } 
+  $user = $oldSessionIDOld = NULL; 
+  unset($user, $oldSessionIDOld);
+  return (array($SessionID, $SessionIsVerified)); } 
 
 // / A function to validate and sanitize requried session and POST variables.
 function verifyGlobals() { 
@@ -365,8 +371,8 @@ function verifyGlobals() {
     $_SESSION['SessionIDInput'] = $SessionIDInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['SessionID']));
     $_SESSION['ClientTokenInput'] = $ClientTokenInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['ClientTokenInput']));
     list($ClientToken, $OldClientToken, $ServerToken, $OldServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $UserInput);
-    $SessionIsVerified = verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken);
-    if ($SessionIsVerified) $_SESSION['SessionID'] = $SessionID = $SessionIDInput;
+    list($SessionID, $SessionIsVerified) = verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken);
+    if ($SessionIsVerified) $_SESSION['SessionID'] = $SessionID;
     else $_POST['SessionID'] = $_SESSION['SessionID'] = $SessionID = $SessionIDInput = NULL; 
     $SessionType = 'POST';
     if ($SessionIsVerified) $GlobalsAreVerified = TRUE; }
@@ -492,7 +498,7 @@ function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $C
   // / Cleanup sensitive memory only if is it not required to complete authentication.
   // / This code should only fire if the user login credentials were incorrect.
   if (!$PasswordIsCorrect && !$SessionIsVerified) cleanupSensitiveMemory();
-  return(array($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $SessionID, $AuthIsComplete, $SessionID, $SessionIsVerified)); }
+  return(array($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete, $SessionID, $SessionIsVerified)); }
 
 // / A function to generate a user log file to the DATA library.
 function generateUserLogs($UserID) { 
@@ -836,7 +842,7 @@ if ($GlobalsAreVerified) {
     // / This code validates credentials supplied by the user against the hashed ones stored on the server.
     // / Also removes the $Users user list from memory so it can not be leaked.
     // / Displays a login screen when authentication fails and kills the application. 
-    list ($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $SessionID, $AuthIsComplete, $SessionID, $SessionIsVerified) = authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $ClientTokenInput);
+    list ($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete, $SessionID, $SessionIsVerified) = authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $ClientTokenInput);
     if (!$PasswordIsCorrect or !$AuthIsComplete) dieGracefully(8, 'Invalid username or password!', FALSE); 
     else if ($Verbose) logEntry('Authenticated UserName '.$UserName.', UserID '.$UserID.', SessionID '.$SessionID.'.', FALSE); }
   else if ($Verbose) logEntry('Verified existing session.', FALSE);
@@ -873,7 +879,7 @@ else if ($Verbose) logEntry('Deferred authentication procedure.', FALSE);
 if ($RequestTokens && !$SessionIsVerified) echo($UserInput.','.getClientTokens($UserInput, FALSE)); 
 
 //list ($ClientToken, $OldClientToken, $ServerToken, $OldServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $UserInput);
-logEntry('ServerToken At End = '.$ServerToken, TRUE);
+
 // / This code is performed once all authentication processes are complete and a session has been created.
 if ($SessionIsVerified) { 
 
