@@ -33,7 +33,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     <!-- Load JQuery. This should be pointed to a local source. Keep it up-to-date. Do not place other scripts above this one. -->
     <script type='text/javascript' src='/Resources/jquery-3.5.1.min.js'></script>
     <script type='text/javascript'>
-      // / Declare some global Javascript variables.
+      // / Declare PHP controlled global Javascript variables.
       let StayLoggedInInterval = '<?php echo $StayLoggedInInterval; ?>';
       let ApplicationName = '<?php echo $ApplicationName; ?>';
     </script>
@@ -43,6 +43,8 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     <link rel='stylesheet' href='/Resources/Styles/loginModalStyles.css'/>
     <link rel='stylesheet' href='/Resources/Styles/centerAnything.css'/>
     <link rel='stylesheet' href='/Resources/Styles/meyers-reset.css'>
+    <link rel='stylesheet' href='/Resources/Styles/style.css'>
+    <link rel='stylesheet' href='/Resources/Styles/buttons.css'>
   </head>
   <body style="background-image: url('debut_dark.webp');">
   <!-- An invisible iframe to use as a target to prevent form POSTS from reloading the page. -->
@@ -99,140 +101,128 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
       </ul>
     </li>
  */ ?>
+
     <li>
       <!-- Button to open the modal login form. -->
       <a id='loginButton' style='display:block;' onclick='toggleVisibility("loginModal");'>Login</a>
       <a id='logoutButton' style='display:none;' onclick='toggleVisibility("logoutModal");'>Logout</a>
+    </li>
 
-      <!-- The Login Modal -->
-      <div id='loginModal' class='modal'>
-        <!-- Login Modal Content. -->
-        <form class='modal-content animate' id='loginFormNav' name='loginFormNav' method='POST' target='noredirect'>
-          <div class='imgcontainer'>
-            <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
-          </div>
-
-          <div class='container' id='loginContainer' name='loginContainer' style='background-color:#f1f1f1; text-align:center;'>
-
-            <br />
-            <input type='text' placeholder='Enter Username' id='UserInput' value='' name='UserInput' required>
-            <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
-
-            <br />
-            <p><button id='submitButton'>Continue</button></p>
-
-            <br />
-            <span class='psw'><a href='#'>Forgot Username</a></span>
-            <span class='psw'><a href='#'>Create New Account</a></span>
-
-            <br />
-            <button type='button' onclick='toggleVisibility("loginModal");' class='cancelbtn'>Cancel</button>
-
-          </div>
-        </form>
-      </div>
-
-      <!-- The Password Modal -->
-      <div id='passwordModal' class='modal'>
-        <!-- Password Modal Content. -->
-        <form class='modal-content animate' id='passwordFormNav' name='passwordFormNav' method='POST' target='noredirect'>
-          <div class='imgcontainer'>
-            <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
-          </div>
-
-          <div class='container' id='passwordContainer' name='passwordContainer' style='background-color:#f1f1f1; text-align:center; display:block;'>
-
-            <br />
-            <input type='password' placeholder='Enter Password' id='RawPassword' name='RawPassword' required>
-            <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' value='' required>
-            <input type='hidden' id='PasswordInput' name='PasswordInput' value='' required>
-            <input type='hidden' id='UserInputPassword' name='UserInput' value='' required>
-
-            <br />
-            <p><button id='submitButton' onclick='secureLogin(document.getElementById("RawPassword").value);'>Continue</button></p>
-            
-            <br />
-            <span class='psw'><a href='#'>Forgot Password</a></span>
-            <span class='psw'><a href='#'>Create New Account</a></span>
-
-            <br />
-            <button type='button' onclick='toggleVisibility("passwordModal");' class='cancelbtn'>Cancel</button> 
-
-          </div>
-        </form>
-      </div>
-
-
-      <div id='successModal' class='modal'>
-        <!-- Password Modal Content. -->
-        <div class='modal-content animate'>  
-          <div class='imgcontainer'>
-            <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
-          </div>
-          <div class='container' id='successContainer' name='successContainer' style='background-color:#f1f1f1; text-align:center; display:block;'>
-            <br />
-            <p>Success! Please wait.</p>
-            <br />
-          </div> 
-        </div>
-      </div>
-
-      <div id='errorModal' class='modal'>
-        <!-- Password Modal Content. -->
-        <div class='modal-content animate'>  
-          <div class='imgcontainer'>
-            <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
-          </div>
-          <div class='container' id='errorContainer' name='errorModal' style='background-color:#f1f1f1; text-align:center; display:block;'>
-            <br />
-            <p>Login failed! Please try again.</p>
-            <br />
-          </div> 
-        </div>
-      </div>
-
-      <div id='criticalModal' class='modal'>
-        <!-- Password Modal Content. -->
-        <div class='modal-content animate'>  
-          <div class='imgcontainer'>
-            <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
-          </div>
-          <div class='container' id='criticalContainer' name='criticalModal' style='background-color:#f1f1f1; text-align:center; display:block;'>
-            <br />
-            <p>There was a critical error during login. Please contact support and try again later.</p>
-            <br />
-          </div> 
-        </div>
-      </div>
-
-      <!-- The Logout Modal -->
-      <div id='logoutModal' class='modal'>
-        <!-- Login Modal Content. -->
-        <form class='modal-content animate' id='logoutFormNav' name='logoutFormNav' method='POST' target='noredirect'>
-          <div class='imgcontainer'>
-            <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
-          </div>
-
-          <div class='container' id='logoutContainer' name='logoutContainer' style='background-color:#f1f1f1; text-align:center;'>
-
-            <br />
-            <p>Are you sure you want to log out?</p>
-            <input type='hidden' id='UserInput' name='UserInput' value='' required>
-            <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
-
-            <br />
-            <p><button id='logoutConfirmButton' onclick='toggleVisibility("logoutModal"); toggleVisibility("logoutButton"); toggleVisibility("loginButton"); toggleVisibility("successModal"); setTimeout(function() { toggleVisibility("successModal"); }, 3000);'>Confirm Logout</button></p>
-
-
-            <br />
-            <button type='button' onclick='toggleVisibility("logoutModal");' class='cancelbtn'>Cancel</button>
-
-          </div>
-        </form>
-      </div>
-
+    <li>
+      <a>☰</a>
     </li>
   </ul>
+
+  <div id='modals'>
+    <!-- The Login Modal -->
+    <div id='loginModal' class='modal'>
+      <!-- Login Modal Content. -->
+      <form id='loginFormNav' name='loginFormNav' method='POST' target='noredirect' class='modal-content animate'>
+        <div id='modalCornerAvatarContainer' class='imgcontainer'>
+          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
+        </div>
+        <div id='loginContainer' name='loginContainer' style='background-color:#f1f1f1; text-align:center;' class='container'>
+          <br />
+          <input type='text' placeholder='Enter Username' id='UserInput' value='' name='UserInput' required>
+          <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
+          <br />
+          <p><button id='submitButton' class='BUTTON_1'>Continue</button></p>
+          <br />
+          <span class='psw'><a href='#'>Forgot Username</a></span>
+          <span class='psw'><a href='#'>Create New Account</a></span>
+          <br />
+          <p><button type='button' onclick='toggleVisibility("loginModal");' class='BUTTON_1'>Cancel</button></p>
+        </div>
+      </form>
+    </div>
+
+    <!-- The Password Modal -->
+    <div id='passwordModal' class='modal'>
+      <!-- Password Modal Content. -->
+      <form id='passwordFormNav' name='passwordFormNav' method='POST' target='noredirect' class='modal-content animate'>
+        <div id='modalCornerAvatarContainer' class='imgcontainer'>
+          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
+        </div>
+        <div id='passwordContainer' name='passwordContainer' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
+          <br />
+          <input type='password' placeholder='Enter Password' id='RawPassword' name='RawPassword' required>
+          <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' value='' required>
+          <input type='hidden' id='PasswordInput' name='PasswordInput' value='' required>
+          <input type='hidden' id='UserInputPassword' name='UserInput' value='' required>
+          <br />
+          <p><button id='submitButton' onclick='secureLogin(document.getElementById("RawPassword").value);' class='btn from-left'>Continue</button></p>
+          <br />
+          <span class='psw'><a href='#'>Forgot Password</a></span>
+          <span class='psw'><a href='#'>Create New Account</a></span>
+          <br />
+          <p><button type='button' onclick='toggleVisibility("passwordModal");' class='BUTTON_1'>Cancel</button></p>
+        </div>
+      </form>
+    </div>
+
+    <div id='successModal' class='modal'>
+      <!-- Password Modal Content. -->
+      <div class='modal-content animate'>  
+        <div id='modalCornerAvatarContainer' class='imgcontainer'>
+          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
+        </div>
+        <div id='successContainer' name='successContainer' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
+          <br />
+          <p>Success! Please wait.</p>
+          <br />
+        </div> 
+      </div>
+    </div>
+
+    <div id='errorModal' class='modal'>
+      <!-- Password Modal Content. -->
+      <div class='modal-content animate'>  
+        <div id='modalCornerAvatarContainer' class='imgcontainer'>
+          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
+        </div>
+        <div id='errorContainer' name='errorModal' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
+          <br />
+          <p>Login failed! Please try again.</p>
+          <br />
+        </div> 
+      </div>
+    </div>
+
+    <div id='criticalModal' class='modal'>
+      <!-- Password Modal Content. -->
+      <div class='modal-content animate'>  
+        <div id='modalCornerAvatarContainer' class='imgcontainer'>
+          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
+        </div>
+        <div id='criticalContainer' name='criticalModal' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
+          <br />
+          <p>There was a critical error during login. Please contact support and try again later.</p>
+          <br />
+        </div> 
+      </div>
+    </div>
+
+    <!-- The Logout Modal -->
+    <div id='logoutModal' class='modal'>
+      <!-- Login Modal Content. -->
+      <form id='logoutFormNav' name='logoutFormNav' method='POST' target='noredirect' class='modal-content animate'>
+        <div id='modalCornerAvatarContainer' class='imgcontainer'>
+          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
+        </div>
+        <div id='logoutContainer' name='logoutContainer' style='background-color:#f1f1f1; text-align:center;' class='container'>
+          <br />
+          <p>Are you sure you want to log out?</p>
+          <input type='hidden' id='UserInput' name='UserInput' value='' required>
+          <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
+          <br />
+          <p><button id='logoutConfirmButton' onclick='toggleVisibility("logoutModal"); toggleVisibility("logoutButton"); toggleVisibility("loginButton"); toggleVisibility("successModal"); setTimeout(function() { toggleVisibility("successModal"); }, 3000);' class='BUTTON_1'>Confirm Logout</button></p>
+          <br />
+          <p><button type='button' onclick='toggleVisibility("logoutModal");' class='BUTTON_1'>Cancel</button></p>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <form id='tokens' name='tokens' method='post' target='noredirect'>
     <input type='hidden' id='UserInputTokens' name='UserInput' value='' required>
     <input type='hidden' id='SessionID' name='SessionID' value='' required>
