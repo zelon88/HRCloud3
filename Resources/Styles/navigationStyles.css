@@ -1,4 +1,4 @@
- /* 
+/* 
 HonestRepair Diablo Engine  -  navigationStyles
 https://www.HonestRepair.net
 https://github.com/zelon88
@@ -7,47 +7,34 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 8/13/2019
+Date: 2/20/2022
 <3 Open-Source
 
 This CSS file determines the stylesheet for the top navigation bar.
 */
 
+/* Global Settings */
 @charset "UTF-8";
 
-* {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  outline: 0;
-  font-size: 100%;
-  vertical-align: baseline;
-  background: transparent; }
-
-html {
-  font-size: 62.5%; }
-
 ul {
-  font: 1.5rem/1.7rem Helvetica, Arial, sans-serif;
+  font: 1.5rem/1.7rem Arial, sans-serif;
   background-color: #025;
   box-shadow: 0 0.5rem 0.5rem rgba(0, 0, 0, 0.3); }
-
 li {
   position: relative;
   display: inline-block;
   list-style: none; }
-
 li a {
   display: block;
   padding: 1rem 1.5rem;
   color: #ccc;
   text-decoration: none;
   transition: background 0.2s; }
-
 li a:hover {
   color: white;
   background: #57a; }
 
+/* Classes */
 .top-level {
   border-bottom: 1px solid #57a; }
 

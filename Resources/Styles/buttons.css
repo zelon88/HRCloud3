@@ -1,0 +1,55 @@
+/* 
+HonestRepair Diablo Engine  -  buttons
+https://www.HonestRepair.net
+https://github.com/zelon88
+
+Licensed Under GNU GPLv3
+https://www.gnu.org/licenses/gpl-3.0.html
+
+Author: Justin Grimes
+Date: 2/20/2022
+<3 Open-Source
+
+This CSS file determines the stylesheet for buttons.
+*/
+
+/* Classes */
+.BUTTON_1 {
+   background: #9E8362;
+   background-image: -webkit-linear-gradient(top, #9E8362, #9E8047);
+   background-image: -moz-linear-gradient(top, #9E8362, #9E8047);
+   background-image: -ms-linear-gradient(top, #9E8362, #9E8047);
+   background-image: -o-linear-gradient(top, #9E8362, #9E8047);
+   background-image: -webkit-gradient(to bottom, #9E8362, #9E8047);
+   -webkit-border-radius: 20px;
+   -moz-border-radius: 20px;
+   border-radius: 20px;
+   color: #FFFFFF;
+   font-family: Arial;
+   font-size: 16px;
+   font-weight: 100;
+   padding: 12px;
+   -webkit-box-shadow: 1px 1px 20px 0 #000000;
+   -moz-box-shadow: 1px 1px 20px 0 #000000;
+   box-shadow: 1px 1px 20px 0 #000000;
+   text-shadow: 1px 1px 20px #000000;
+   border: solid #C2A878 1px;
+   text-decoration: none;
+   display: inline-block;
+   cursor: pointer;
+   text-align: center;
+}
+
+.BUTTON_1:hover {
+   border: solid #C2A878 1px;
+   background: #B08F5E;
+   background-image: -webkit-linear-gradient(top, #B08F5E, #9E8047);
+   background-image: -moz-linear-gradient(top, #B08F5E, #9E8047);
+   background-image: -ms-linear-gradient(top, #B08F5E, #9E8047);
+   background-image: -o-linear-gradient(top, #B08F5E, #9E8047);
+   background-image: -webkit-gradient(to bottom, #B08F5E, #9E8047);
+   -webkit-border-radius: 20px;
+   -moz-border-radius: 20px;
+   border-radius: 20px;
+   text-decoration: none;
+}
