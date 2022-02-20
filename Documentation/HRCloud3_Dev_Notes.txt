@@ -2,6 +2,13 @@ HRCLOUD3 DEV NOTES
 ----------
 
 2/19/2022
+v0.8.1 - Still working on maintaining sessions.
+
+-Working on maintaining sessions.
+-Improve session handling. 
+
+----------
+2/19/2022
 v0.8.0 - Still working on maintaining sessions.
 
 -Working on maintaining sessions.
