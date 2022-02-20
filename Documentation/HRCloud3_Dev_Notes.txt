@@ -1,6 +1,18 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+2/20/2022
+v0.8.2 - Working on UI elements.
+
+-Working on CSS.
+  -CSS being done can either be left in-place as a baseline default, or incorporated into the DEFAULT theme.
+  -The advantage to leaving it in-place is that functionality will be included for other theme developers.
+  -The disadvantage is it is kind-of messy.
+  -Will need to think on this more.
+-Working on Javascript structure.
+-Need to eventually do something clever to enable custom fonts.
+
+----------
 2/19/2022
 v0.8.1 - Still working on maintaining sessions.
 
