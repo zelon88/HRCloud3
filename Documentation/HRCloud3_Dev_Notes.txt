@@ -2,6 +2,13 @@ HRCLOUD3 DEV NOTES
 ----------
 
 2/19/2022
+v0.8.0 - Still working on maintaining sessions.
+
+-Working on maintaining sessions.
+-Can now maintain a session indefinately. 
+
+----------
+2/19/2022
 v0.7.9 - Still working on maintaining sessions.
 
 -Working on maintaining sessions.
@@ -9,6 +16,7 @@ v0.7.9 - Still working on maintaining sessions.
 -Must continue working to find the source of erroneous session expiry.
 -Forgot to upload the actual code from yesterday.
 
+----------
 2/19/2022
 v0.7.8 - Working on maintaining sessions.
 
