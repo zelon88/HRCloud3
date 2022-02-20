@@ -313,29 +313,22 @@ function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClien
   $SessionIsVerified = $SessionID = $oldSessionID = $oldSessionIDOld = $user = FALSE;
   // / Check that required inputs are valid.
   if ($SessionIDInput !== FALSE && $UserInput !== FALSE && $ClientTokenInput !== FALSE) { 
-    logEntry('SessionIDInput = '.$SessionIDInput, FALSE);
     // / Loop through the userlist and look for the specified username.
     foreach ($Users as $user) { 
       // / If the username is found we stop iterating through the user list.
       if ($UserInput === $user[1]) { 
-        // / Create temporary session IDs to see if they matches the one supplied by the user.
+        // / Create a series of valid session IDs.
         $SessionID = hash('sha256', $Minute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
-        logEntry('sessionID = '.$SessionID, FALSE);
-        $oldSessionIDOld = hash('sha256', $LastMinute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$OldServerToken.$Salts[2].$user[1]);
-        logEntry('oldSessionIDOld = '.$oldSessionIDOld, FALSE);
-        $oldSessionID = hash('sha256', $LastMinute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$OldServerToken.$Salts[2].$user[1]);
-        logEntry('oldSessionID = '.$oldSessionID, FALSE);
-        $oldSessionIDA = hash('sha256', $LastMinute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
-        logEntry('oldSessionIDA = '.$oldSessionIDA, FALSE);
-        $oldSessionIDB = hash('sha256', $Minute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
-        logEntry('oldSessionIDB = '.$oldSessionIDB, FALSE);
+        $oldSessionID = hash('sha256', $Minute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
+        $oldSessionIDA = hash('sha256', $LastMinute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$OldServerToken.$Salts[2].$user[1]);
         break; } } }
+  // / Build an array of valid session IDs to compare against the one supplied by the user.
+  $validSessionArray = array($SessionID, $oldSessionID, $oldSessionIDA);
   // / Perform the check to see if the session ID is valid.
-  if ($SessionIDInput === $SessionID or $SessionIDInput === $oldSessionIDOld) $SessionIsVerified = TRUE;
-  if ($SessionIDInput === $oldSessionID or $SessionIDInput === $oldSessionIDA or $SessionIDInput === $oldSessionIDB) $SessionIsVerified = TRUE;
+  if (in_array($SessionIDInput, $validSessionArray)) $SessionIsVerified = TRUE;
   // / Clean up unneeded memory.
-  $user = $oldSessionIDOld = NULL; 
-  unset($user, $oldSessionIDOld);
+  $user = $validSessionArray = $oldSessionID = $oldSessionIDA = NULL; 
+  unset($user, $validSessionArray, $oldSessionID, $oldSessionIDA);
   return (array($SessionID, $SessionIsVerified)); } 
 
 // / A function to validate and sanitize requried session and POST variables.
@@ -402,9 +395,9 @@ function requireLogin() {
     die();
   return(array()); }
 
-// / A function to generate initial user tokens before a user has fully logged in.
+// / A function to generate initial client tokens before a user has fully logged in.
 // / When a user returns to the site they will be prompted to enter their username.
-// / The server will generate user tokens for the specified username and provide them to the current user.
+// / The server will generate client tokens for the specified username and provide them to the current user.
 // / The current user now has up to 2 minutes to enter the token with the correct password.
 // / Requiring a valid token & invalidating issued tokens often prevents replay attacks & complicates eavesdropping for credentials.
 // / If the "$Old" variable is set to TRUE, tokens for the previous minute will be generated instead.
@@ -435,7 +428,7 @@ function generateServerToken() {
   $TokenIsValid = TRUE;
   return(array($ServerToken, $OldServerToken, $TokenIsValid)); }
 
-// / A function to generate new user tokens and validate supplied ones.
+// / A function to generate new client tokens and validate supplied ones.
 // / This is the secret sauce behind full password encryption in-transit.
 function generateTokens($ClientTokenInput, $UserInput) { 
   // / Set variables. 
@@ -851,17 +844,17 @@ if ($GlobalsAreVerified) {
   // / This code also specifies the $UserDataDir which is a direct handle to the users subdirectory within the DATA library.
   list ($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir) = generateUserLogs($UserID);
   if (!$UserLogsExists) dieGracefully(11, 'Could not generate a user log file!', FALSE);
-  else if ($Verbose) logEntry('Created user logs.', FALSE);
+  else if ($Verbose) logEntry('Verified user log file.', FALSE);
 
   // / This code generates a user cache file if none exists. Useful for initializing new users logging-in for the first time.
   list ($UserCacheExists, $UserCache, $UserCacheDir) = generateUserCache($UserID);
   if (!$UserCacheExists) dieGracefully(12, 'Could not generate a user cache file!', TRUE);
-  else if ($Verbose) logEntry('Created user cache.', TRUE);
+  else if ($Verbose) logEntry('Verified user cache file.', TRUE);
 
   // / This code generates a user notifications file if none exists. Useful for initializing new users logging-in for the first time.
   list ($NotificationsFileExists, $NotificationsFile) = generateNotificationsFile($UserID, $UserDataDir);
   if (!$NotificationsFileExists) dieGracefully(13, 'Could not generate a user notifications file!', TRUE);
-  else if ($Verbose) logEntry('Created user notifications.', TRUE); 
+  else if ($Verbose) logEntry('Verified user notifications file.', TRUE); 
   
   // / This code updates the $UserOptions['STAYLOGGEDIN'] setting once a user has been authenticated.
   $UserOptions['STAYLOGGEDIN'] = 'ENABLED';
@@ -869,28 +862,28 @@ if ($GlobalsAreVerified) {
   if (!$UserCacheWritten) dieGracefully(14, 'Could not save changes to the user cache file!', TRUE);
   else if ($Verbose) logEntry('Saved changes to the user cache file.', TRUE); }
 
-// / This code is triggered when there was not enough information to authenticate the user.
+// / This code is performed when there was not enough information to authenticate the user.
 else if ($Verbose) logEntry('Deferred authentication procedure.', FALSE);
 
-// / Return user tokens when requested.
-// / This is usually performed when an unauthenticated user is trying to log in. 
-// / If a user has supplied a user name to the core along with a request for user tokens, the user tokens for the specified user name will be returned to the user.
-// / User tokens are used to secure the session from delayed eavesdropping attempts or replay attacks, and also serve to invalidate the session after 2 minutes.
-if ($RequestTokens && !$SessionIsVerified) echo($UserInput.','.getClientTokens($UserInput, FALSE)); 
-
-//list ($ClientToken, $OldClientToken, $ServerToken, $OldServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $UserInput);
+// / Return client tokens when requested.
+// / This code is performed when an unauthenticated user is trying to log in. 
+// / If a user has supplied a user name to the core along with a request for client tokens, tokens for that user will be returned.
+if ($RequestTokens && !$SessionIsVerified) { 
+  // / Output a username and client token.
+  // / Note that fake tokens are returned if the requested user does not exist.
+  echo($UserInput.','.getClientTokens($UserInput, FALSE)); 
+  if ($Verbose) logEntry('User requested tokens for login.', FALSE); }
 
 // / This code is performed once all authentication processes are complete and a session has been created.
 if ($SessionIsVerified) { 
+  // / Return user name, sessionID, and client token when requested.
+  // / Used to continue an automatically expiring session.
+  if ($UserOptions['STAYLOGGEDIN'] === 'ENABLED') echo($UserInput.','.$SessionID.','.$ClientToken.','.$UserOptions['STAYLOGGEDIN']);
 
   // / This code loads the user cache file containing the user specific settings configuration into memory.
   list ($UserOptions, $UserCacheExists) = loadUserCache();
   if (!$UserCacheExists) dieGracefully(15, 'Could not load the user cache file!', TRUE);
-  else if ($Verbose) logEntry('Loaded user cache.', TRUE);
+  else if ($Verbose) logEntry('Loaded user cache file.', TRUE);
 
-  // / Return user name, sessionID, and client token when requested.
-  // / Used to continue an automatically expiring session.
-  if ($UserOptions['STAYLOGGEDIN'] === 'ENABLED') {
-    
-    echo($UserInput.','.$SessionID.','.$ClientToken.','.$UserOptions['STAYLOGGEDIN']); } }
+   }
 // / -----------------------------------------------------------------------------------
