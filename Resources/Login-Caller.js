@@ -18,6 +18,16 @@ Also provides login related UI functionality.
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
+// / Declare global variables.
+var UserInput = false;
+var SessionID = false;
+var ClientToken = false;
+var StayLoggedIn = false;
+var ActiveSLI = false;
+var SessionActive = false; 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
 // / A function to take the password typed by the user and create a SHA256 hash of it.
 function hashCreds(RawPassword) {
   var passwordBits = sjcl.hash.sha256.hash(RawPassword);  
@@ -128,17 +138,19 @@ function StayLoggedInSender() {
         ClientTokenInput: document.getElementById('ClientToken').value,
         ActiveSLI: document.getElementById('ActiveSLI').value,
         StayLoggedIn: document.getElementById('StayLoggedIn').value },
-      success: function(sliResponse) {
-        var responseArraySLI = sliResponse.split(',');
-        var UserInput = responseArraySLI[0];
-        var SessionID = responseArraySLI[1];
-        var ClientToken = responseArraySLI[2]; 
-        var StayLoggedIn = responseArraySLI[3];
-        changeValue('UserInputTokens', UserInput);
-        changeValue('SessionID', SessionID);
-        changeValue('ClientToken', ClientToken);
-        changeValue('ActiveSLI', 'ENABLED');
-        changeValue('StayLoggedIn', StayLoggedIn); } }); }); }
+      success: function(sliResponse) { 
+        if (sliResponse.length > 0 && !sliResponse.includes('ERROR!!!')) { 
+          var SessionActive = true 
+          var responseArraySLI = sliResponse.split(',');
+          var UserInput = responseArraySLI[0];
+          var SessionID = responseArraySLI[1];
+          var ClientToken = responseArraySLI[2]; 
+          var StayLoggedIn = responseArraySLI[3];
+          changeValue('UserInputTokens', UserInput);
+          changeValue('SessionID', SessionID);
+          changeValue('ClientToken', ClientToken);
+          changeValue('ActiveSLI', 'ENABLED');
+          changeValue('StayLoggedIn', StayLoggedIn); } } }); }); }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
