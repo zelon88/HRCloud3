@@ -336,8 +336,6 @@ function verifyGlobals() {
   // / Set variables. 
   $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = FALSE;
   $UserDir = '';
-  
-
   // / This code triggers the authentication process.
   // / This code is performed when a user submits enough credentials & tokens to start a new session.
   // / There is a structure to how inputs are processed.
@@ -357,7 +355,6 @@ function verifyGlobals() {
     $GlobalsAreVerified = TRUE; }
   // / When no authentication credentials are supplied all related variables are initialized to NULL.
   else $UserInput = $ClientTokenInput = $PasswordInput = NULL;
-
   // / This code is performed when a user submits tokens and a session ID via POST request to continue an existing session.
   if (isset($_POST['UserInput']) && isset($_POST['SessionID']) && isset($_POST['ClientTokenInput'])) { 
     $_SESSION['UserInputName'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['UserInput']));
@@ -369,19 +366,16 @@ function verifyGlobals() {
     else $_POST['SessionID'] = $_SESSION['SessionID'] = $SessionID = $SessionIDInput = NULL; 
     $SessionType = 'POST';
     if ($SessionIsVerified) $GlobalsAreVerified = TRUE; }
-
   // / Check if the user is attempting to login & prepare variables required to generate ClientTokens.
   // / This code is performed when a user requests tokens to begin the login process.
   if (isset($_POST['RequestTokens']) && isset($_POST['UserInput'])) {
     $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['UserInput']));
     $RequestTokens = TRUE; }
-
   if ($SessionType === 'POST' or $SessionID === 'SESSION') { 
     // / Set the UserDir based on user input or most recently used.
     if (isset($_POST['UserDir'])) $_SESSION['UserDir'] = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['UserDir']));
     if (!isset($_SESSION['UserDir']) or $_SESSION['UserDir'] == '') $_SESSION['UserDir'] = DIRECTORY_SEPARATOR; 
     $UserDir = $_SESSION['UserDir']; }
-
   return(array($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified)); }
 
 // / A function to throw the login page when needed.
