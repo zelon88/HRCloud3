@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html 
 
 Author: Eric A. Meyer, Modified by Justin Grimes
-Date: 2/20/2022
+Date: 2/21/2022
 <3 Open-Source
 
 This CSS file makes the CSS environment more predictible.
@@ -32,28 +32,27 @@ time, mark, audio, video {
 	border: 0;
 	font-size: 100%;
 	/* font: inherit; */
-	vertical-align: baseline;
-}
+	vertical-align: baseline; }
+
 /* HTML5 display-role reset for older browsers */
 article, aside, details, figcaption, figure, 
 footer, header, hgroup, menu, nav, section {
-	display: block;
-}
+	display: block; }
+
 body {
-	line-height: 1;
-}
+	line-height: 1; }
+
 ol, ul {
-	list-style: none;
-}
+	list-style: none; }
+
 blockquote, q {
-	quotes: none;
-}
+	quotes: none; }
+
 blockquote:before, blockquote:after,
 q:before, q:after {
 	content: '';
-	content: none;
-}
+	content: none; }
+
 table {
 	border-collapse: collapse;
-	border-spacing: 0;
-}
+	border-spacing: 0; }

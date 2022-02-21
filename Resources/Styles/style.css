@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 2/20/2022
+Date: 2/21/2022
 <3 Open-Source
 
 This CSS file determines the main default stylesheet for the application.
@@ -15,18 +15,18 @@ This CSS file determines the main default stylesheet for the application.
 
 /* Global Settings */
 html {
-    height: 100%;
-}
+    height: 100%; }
+
 body {
   height: 100%;
   font: Arial;
   margin: 0;
   padding: 0;
-  background: #ffffff; /*White*/
-}
+  background: #ffffff; /*White*/ }
+
 input{ 
-  box-sizing:border-box; 
-}
+  box-sizing:border-box; }
+
 input[type=submit] {
   height: 25px;
   width: 133px;
@@ -65,65 +65,63 @@ input[type=submit] {
   filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#476e9e', endColorstr='#7892c2',GradientType=0); /*Dark blue-light blue gradient*/
   background-color:#476e9e; /*Dark blue*/
   position:relative;
-  top:1px;
-}
+  top:1px; }
+
 hr {
-  clear:both;
-  display:block;
-  width: 96%;               
-  background-color:#FFFF00; /*Yellow*/
-  height: 1px;
-}
+  clear: both;
+  display: block;
+  width: 96%;
+  height: 1px; }
 
 /* Classes */
 .iframer ul {
-  background-color: #ffffff; /*White*/
-} 
+  background-color: #ffffff; /*White*/ }
+
 .nav ul {
   list-style: none;
   background-color: #444; /*Dark Grey*/
   text-align: center;
   padding: 0;
-  margin: 0;
-}
+  margin: 0; }
+
 .nav li {
   font-family: 'Arial', 'Arial';
   font-size: 1.2em;
   line-height: 40px;
   height: 40px;
-  border-bottom: 1px solid #888; /*Light Grey*/
-}
+  border-bottom: 1px solid #888; /*Light Grey*/ }
+
 .nav a {
   text-decoration: none;
   color: #fff;
   display: block;
-  transition: .3s background-color;
-}
+  transition: .3s background-color; }
+
 .nav a:hover {
-  background-color: #1B3656; /*Very Light Grey*/
-}
+  background-color: #1B3656; /*Very Light Grey*/ }
+
 .nav a.active {
   background-color: #fff; /*White*/
   color: #444; /*Dark Grey*/
-  cursor: default;
-}
+  cursor: default; }
+
 @media screen and (min-width: 600px) {
   .nav li {
     width: 120px;
     border-bottom: none;
     height: 50px;
     line-height: 50px;
-    font-size: 1.4em;
-  }
+    font-size: 1.4em; }
+
   /* Option 1 - Display Inline */
   .nav li {
     display: inline-block;
-    margin-right: -4px;
-  }
+    margin-right: -4px; }
+
   .centerdiv {
     float: center;
-    max-width: 650px;
-  }
+    max-width: 650px; }
+
    .button {
     height: 18px;
     width: 35px;
@@ -152,8 +150,7 @@ hr {
     margin-left:4px;
     margin-right:4px;
     text-decoration:none;
-    text-shadow:0px 1px 0px #283966; /*Dark blue 3(Darker)*/
-  }
+    text-shadow:0px 1px 0px #283966; /*Dark blue 3(Darker)*/ }
 
     /* Options 2 - Float
     .nav li {

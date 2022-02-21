@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 2/20/2022
+Date: 2/21/2022
 <3 Open-Source
 
 This CSS file determines the stylesheet for the top navigation bar.
@@ -20,16 +20,19 @@ ul {
   font: 1.5rem/1.7rem Arial, sans-serif;
   background-color: #025;
   box-shadow: 0 0.5rem 0.5rem rgba(0, 0, 0, 0.3); }
+
 li {
   position: relative;
   display: inline-block;
   list-style: none; }
+
 li a {
   display: block;
   padding: 1rem 1.5rem;
   color: #ccc;
   text-decoration: none;
   transition: background 0.2s; }
+
 li a:hover {
   color: white;
   background: #57a; }
@@ -84,3 +87,11 @@ li a:hover {
   position: absolute;
   left: -999rem;
   top: 0; }
+
+.close-button { 
+  float: right;
+  margin: 4px; }
+
+.avatar-small {
+  float: left;
+  margin: 4px; }

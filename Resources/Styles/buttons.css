@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 2/20/2022
+Date: 2/21/2022
 <3 Open-Source
 
 This CSS file determines the stylesheet for buttons.
@@ -15,41 +15,39 @@ This CSS file determines the stylesheet for buttons.
 
 /* Classes */
 .BUTTON_1 {
-   background: #9E8362;
-   background-image: -webkit-linear-gradient(top, #9E8362, #9E8047);
-   background-image: -moz-linear-gradient(top, #9E8362, #9E8047);
-   background-image: -ms-linear-gradient(top, #9E8362, #9E8047);
-   background-image: -o-linear-gradient(top, #9E8362, #9E8047);
-   background-image: -webkit-gradient(to bottom, #9E8362, #9E8047);
-   -webkit-border-radius: 20px;
-   -moz-border-radius: 20px;
-   border-radius: 20px;
+   background: #7892C2;
+   background-image: -webkit-linear-gradient(top, #7892C2, #283966);
+   background-image: -moz-linear-gradient(top, #7892C2, #283966);
+   background-image: -ms-linear-gradient(top, #7892C2, #283966);
+   background-image: -o-linear-gradient(top, #7892C2, #283966);
+   background-image: -webkit-gradient(to bottom, #7892C2, #283966);
+   -webkit-border-radius: 10px;
+   -moz-border-radius: 10px;
+   border-radius: 10px;
    color: #FFFFFF;
    font-family: Arial;
    font-size: 16px;
    font-weight: 100;
-   padding: 12px;
-   -webkit-box-shadow: 1px 1px 20px 0 #000000;
-   -moz-box-shadow: 1px 1px 20px 0 #000000;
-   box-shadow: 1px 1px 20px 0 #000000;
+   padding: 10px;
+   -webkit-box-shadow: 1px 2px 10px 0 #000000;
+   -moz-box-shadow: 1px 2px 10px 0 #000000;
+   box-shadow: 1px 2px 10px 0 #000000;
    text-shadow: 1px 1px 20px #000000;
-   border: solid #C2A878 1px;
+   border: solid #337FED 1px;
    text-decoration: none;
    display: inline-block;
    cursor: pointer;
-   text-align: center;
-}
+   text-align: center; }
 
 .BUTTON_1:hover {
-   border: solid #C2A878 1px;
-   background: #B08F5E;
-   background-image: -webkit-linear-gradient(top, #B08F5E, #9E8047);
-   background-image: -moz-linear-gradient(top, #B08F5E, #9E8047);
-   background-image: -ms-linear-gradient(top, #B08F5E, #9E8047);
-   background-image: -o-linear-gradient(top, #B08F5E, #9E8047);
-   background-image: -webkit-gradient(to bottom, #B08F5E, #9E8047);
-   -webkit-border-radius: 20px;
-   -moz-border-radius: 20px;
-   border-radius: 20px;
-   text-decoration: none;
-}
+   border: solid #4E6096 1px;
+   background: #7892C2;
+   background-image: -webkit-linear-gradient(top, #7892C2, #4E6096);
+   background-image: -moz-linear-gradient(top, #7892C2, #4E6096);
+   background-image: -ms-linear-gradient(top, #7892C2, #4E6096);
+   background-image: -o-linear-gradient(top, #7892C2, #4E6096);
+   background-image: -webkit-gradient(to bottom, #7892C2, #4E6096);
+   -webkit-border-radius: 10px;
+   -moz-border-radius: 10px;
+   border-radius: 10px;
+   text-decoration: none; }
