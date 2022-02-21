@@ -40,7 +40,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     <link rel='shortcut icon' href='/Resources/Themes/DEFAULT/favicon.ico'/>
     <!-- Load stylesheets -->
     <link rel='stylesheet' href='/Resources/Styles/navigationStyles.css'/>
-    <link rel='stylesheet' href='/Resources/Styles/loginModalStyles.css'/>
+    <link rel='stylesheet' href='/Resources/Styles/modalStyles.css'/>
     <link rel='stylesheet' href='/Resources/Styles/centerAnything.css'/>
     <link rel='stylesheet' href='/Resources/Styles/meyers-reset.css'>
     <link rel='stylesheet' href='/Resources/Styles/style.css'>
@@ -118,20 +118,24 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     <div id='loginModal' class='modal'>
       <!-- Login Modal Content. -->
       <form id='loginFormNav' name='loginFormNav' method='POST' target='noredirect' class='modal-content animate'>
-        <div id='modalCornerAvatarContainer' class='imgcontainer'>
-          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' class='avatar'>
-        </div>
+        
+
+            <div class='modal-header'>
+              <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' id='avatarSmall' name='avatarSmall' alt='Avatar' class='avatar-small'>
+              <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButton' name='closeButton' onclick='toggleVisibility("loginModal");' alt='Close' class='close-button'>
+              <a style='display: inline-block; margin-top: 4px;'>Log in to <?php echo $ApplicationName; ?></a>
+            </div>
+            
+
         <div id='loginContainer' name='loginContainer' style='background-color:#f1f1f1; text-align:center;' class='container'>
-          <br />
-          <input type='text' placeholder='Enter Username' id='UserInput' value='' name='UserInput' required>
+          <input type='text' placeholder='Enter Username' id='UserInput' value='' name='UserInput' style='padding: 10px;' required>
           <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
-          <br />
-          <p><button id='submitButton' class='BUTTON_1'>Continue</button></p>
-          <br />
-          <span class='psw'><a href='#'>Forgot Username</a></span>
-          <span class='psw'><a href='#'>Create New Account</a></span>
-          <br />
-          <p><button type='button' onclick='toggleVisibility("loginModal");' class='BUTTON_1'>Cancel</button></p>
+          <button id='submitButton' class='BUTTON_1' style='margin:10px;'>Continue</button>
+          <br>
+          <hr>
+          <button type='button' class='BUTTON_1' style='margin:10px;'>Forgot Username</button>
+          <button type='button' class='BUTTON_1' style='margin:10px;'>Create New Account</button>
+          <br>
         </div>
       </form>
     </div>
@@ -150,9 +154,10 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
           <input type='hidden' id='PasswordInput' name='PasswordInput' value='' required>
           <input type='hidden' id='UserInputPassword' name='UserInput' value='' required>
           <br />
-          <p><button id='submitButton' onclick='secureLogin(document.getElementById("RawPassword").value);' class='btn from-left'>Continue</button></p>
+          <p><button id='submitButton' onclick='secureLogin(document.getElementById("RawPassword").value);' class='BUTTON_1'>Continue</button></p>
           <br />
           <span class='psw'><a href='#'>Forgot Password</a></span>
+          <br />
           <span class='psw'><a href='#'>Create New Account</a></span>
           <br />
           <p><button type='button' onclick='toggleVisibility("passwordModal");' class='BUTTON_1'>Cancel</button></p>
