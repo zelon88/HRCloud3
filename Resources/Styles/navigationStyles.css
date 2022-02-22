@@ -88,10 +88,22 @@ li a:hover {
   left: -999rem;
   top: 0; }
 
+.help-button { 
+  float: right;
+  margin: 2px; }
+
 .close-button { 
   float: right;
-  margin: 4px; }
+  margin: 2px; }
 
 .avatar-small {
   float: left;
-  margin: 4px; }
+  margin: 2px; }
+
+.warning-small {
+  float: left;
+  margin: 2px; }
+
+.error-small {
+  float: left;
+  margin: 2px; }
