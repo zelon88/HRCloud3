@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/10/2021
+Date: 2/21/2022
 <3 Open-Source
 
 This file is for negotiating login requests & processing the response from the server.
@@ -25,6 +25,15 @@ var ClientToken = false;
 var StayLoggedIn = false;
 var ActiveSLI = false;
 var SessionActive = false; 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to test that JQuery is functional.
+// / To test JQuery, uncomment the following function & place an <a> element on a page where JQuery is called. 
+// / If JQuery is working the <a> element should slowly disappear when clicked.
+//$("a").click(function( event ) { 
+  //event.preventDefault();
+  //$(this).hide("slow"); });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -102,7 +111,7 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
           var StayLoggedIn = responseArray[3];
           toggleVisibility('passwordModal');
           toggleVisibility('successModal');
-          setTimeout(function() { toggleVisibility('successModal'); }, 3000);
+          setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
           changeValue('UserInputTokens', UserInput);
           changeValue('SessionID', SessionID);
           changeValue('ClientToken', ClientToken);
@@ -115,11 +124,11 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
         else { 
           toggleVisibility('passwordModal');
           toggleVisibility('errorModal');
-          setTimeout(function() { toggleVisibility('errorModal'); }, 3000); } },
+          setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
       error: function(passwordResponse) {
           toggleVisibility('passwordModal');
           toggleVisibility('criticalModal');
-          setTimeout(function() { toggleVisibility('criticalModal'); }, 5000); } }); });
+          setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -151,13 +160,4 @@ function StayLoggedInSender() {
           changeValue('ClientToken', ClientToken);
           changeValue('ActiveSLI', 'ENABLED');
           changeValue('StayLoggedIn', StayLoggedIn); } } }); }); }
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to test that JQuery is functional.
-// / To test JQuery using this code, uncomment it and place an <a>TEST</a> somewhere on the page
-  // / you want to test. If JQuery is working the <a> element should slowly disappear when clicked.
-//$("a").click(function( event ) { 
-  //event.preventDefault();
-  //$(this).hide("slow"); });
 // / -----------------------------------------------------------------------------------
