@@ -1,6 +1,27 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+2/21/2022
+v0.8.4 - Working on UI.
+
+-Added a bunch of icons from iconarchive.
+-Refined the login modals, header HTML.
+-Added a bunch of tooltips to the login process.
+-Added warning, error, checkmark icons to the top-left corner of some modals.
+-Different modals should have relevant icons for their top-left corner. The avatar is for profile-related modals.
+-Need to come up with a methodology modal generation (what triggers them), and when to use them over other methods.
+-I plan on using the modals for the user registration process, account recovert as well as error messages.
+-Maybe procedurally generate the modals?
+
+----------
+2/21/2022
+v0.8.3 - Working on UI.
+
+-Working on login UI.
+-Tweaking buttons, styles, flow.
+-Renamed 'loginModalStyles.css' to 'modalStyles.css' because I plan to use the modals for more than just login purposes.
+
+----------
 2/20/2022
 v0.8.2 - Working on UI elements.
 
