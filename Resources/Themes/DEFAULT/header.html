@@ -117,41 +117,43 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
   <!-- The Username Modal -->
   <div id='modals'>
     <!-- The Username Modal -->
-    <div id='loginModal' class='modal'>
+    <div id='loginModal' class='modal' name='loginModal'>
       <!-- Username Modal Content. -->
-      <form id='loginFormNav' name='loginFormNav' method='POST' target='noredirect' class='modal-content animate'>
+      <form id='loginFormNav' class='modalContent animate' name='loginFormNav' method='POST' target='noredirect'>
         <!-- Username Modal Header -->
-        <div id='loginModalHeader' name='loginModalHeader' class='modal-header'>
-          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' id='avatarSmallLogin' name='avatarSmallLogin' alt='Avatar' class='avatar-small'>
-          <a style='display: inline-block; margin-top: 4px;'>Enter Your <?php echo $ApplicationName; ?> Username</a>
-          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonLogin' name='closeButtonLogin' onclick='toggleVisibility("loginModal");' alt='Close' title='Close Window' class='close-button'>
-          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpLogin' name='helpLogin' alt='Help' title='If you already have an <?php echo $ApplicationName; ?> account and remember your username; type it into the text field then press the "Continue" button to proceed. If you do not remember your username; press the "Forgot Username" button and follow the instructions to recover your account. If you would like to create a new account; press the "Create Account" button. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.' class='help-button'>
+        <div id='loginModalHeader' class='modalHeader' name='loginModalHeader'>
+          <img  id='avatarSmallLogin' class='avatar-small' name='avatarSmallLogin' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar'>
+          <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Username</a>
+          <img id='closeButtonLogin' class='closeButton' name='closeButtonLogin' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='toggleVisibility("loginModal");'>
+          <img id='helpLogin' class='helpButton' name='helpLogin' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you already have an <?php echo $ApplicationName; ?> account and remember your username; type it into the text field then press the "Continue" button to proceed. If you do not remember your username; press the "Forgot Username" button and follow the instructions to recover your account. If you would like to create a new account; press the "Create Account" button. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.'>
         </div>
+
         <!-- Username Modal Message Container -->
-        <div id='loginContainer' name='loginContainer' style='background-color:#f1f1f1; text-align:center;' class='container'>
-          <input type='text' placeholder='Enter Username' id='UserInput' value='' name='UserInput' title='Enter your <?php echo $ApplicationName; ?> username into this field.' style='padding: 10px;' required>
+        <div id='loginContainer' class='container' name='loginContainer' style='background-color:#f1f1f1; text-align:center;'>
+          <input type='text' id='UserInput' class='textInput' name='UserInput' title='Enter your <?php echo $ApplicationName; ?> username into this field.' placeholder='Enter Username' value='' required>
           <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
-          <button id='submitButton' class='BUTTON_1' title='Proceed with login.' style='margin:10px;'>Continue</button>
+          <button id='submitButton' class='BUTTON_1' name='submitButton'  title='Proceed with login.' style='margin:10px;'>Continue</button>
           <br />
           <hr />
-          <button type='button' class='BUTTON_1' title='Recover an account with a forgotten username.' style='margin:10px;'>Forgot Username</button>
-          <button type='button' class='BUTTON_1' title='Create a new <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Create New Account</button>
+          <button type='button' id='forgotUsernameButton' class='BUTTON_1' name='forgotUsernameButton' onclick='' title='Recover an account with a forgotten username.' style='margin:10px;'>Forgot Username</button>
+          <button type='button' id='createAccountButton' class='BUTTON_1' name='createAccountButton' onclick='toggleVisibility("loginModal"); toggleVisibility("createAccountModal");' title='Create a new <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Create New Account</button>
           <br />
         </div>
       </form>
     </div>
 
     <!-- The Password Modal -->
-    <div id='passwordModal' class='modal'>
+    <div id='passwordModal' class='modal' name='passwordModal'>
       <!-- Password Modal Content. -->
-      <form id='passwordFormNav' name='passwordFormNav' method='POST' target='noredirect' class='modal-content animate'>
+      <form id='passwordFormNav' class='modalContent animate' name='passwordFormNav' method='POST' target='noredirect'>
         <!-- Password Modal Header -->
-        <div id='passwordModalHeader' name='passwordModalHeader' class='modal-header'>
-          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' id='avatarSmallPassword' name='avatarSmallPassword' alt='Avatar' class='avatar-small'>
-          <a style='display: inline-block; margin-top: 4px;'>Enter Your <?php echo $ApplicationName; ?> Password</a>
-          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonPassword' name='closeButtonPassword' onclick='toggleVisibility("passwordModal");' alt='Close' title='Close Window' class='close-button'>
-          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpPassword' name='helpPassword' alt='Help' title='If you remember your  <?php echo $ApplicationName; ?> password; type it into the text field then press the "Continue" button to proceed. If you do not remember your password; press the "Forgot Password" button and follow the instructions to recover your account. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.' class='help-button'>
+        <div id='passwordModalHeader' class='modalHeader' name='passwordModalHeader'>
+          <img id='avatarSmallPassword' class='avatar-small' name='avatarSmallPassword' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar'>
+          <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Password</a>
+          <img id='closeButtonPassword' class='closeButton' name='closeButtonPassword' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='toggleVisibility("passwordModal");'>
+          <img id='helpPassword' class='helpButton' name='helpPassword' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you remember your <?php echo $ApplicationName; ?> password; type it into the text field then press the "Continue" button to proceed. If you do not remember your password; press the "Forgot Password" button and follow the instructions to recover your account. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.'>
         </div>
+
         <!-- Password Modal Message Container -->
         <div id='passwordContainer' name='passwordContainer' style='background-color:#f1f1f1; text-align:center;' class='container'>
           <input type='password' placeholder='Enter Password' id='RawPassword' name='RawPassword' title='Enter your <?php echo $ApplicationName; ?> password.' style='padding: 10px;' required>
@@ -168,15 +170,15 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     </div>
 
     <!-- The Successful Login Modal -->
-    <div id='successModal' class='modal'>
+    <div id='successModal' name='successModal' class='modal'>
       <!-- Successful Login Modal Content. -->
-      <div id='successModalContent' name='successModalContent' class='modal-content animate'>
+      <div id='successModalContent' name='successModalContent' class='modalContent animate'>
         <!-- Successful Login Modal Header -->
-        <div id='successModalHeader' name='successModalHeader' class='modal-header'>
+        <div id='successModalHeader' name='successModalHeader' class='modalHeader'>
           <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' id='avatarSmallSuccess' name='avatarSmallSuccess' alt='Avatar' class='avatar-small'>
-          <a style='display: inline-block; margin-top: 4px;'>Login Success</a>
-          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonSuccess' name='closeButtonSuccess' onclick='toggleVisibility("successModal");' alt='Close' title='Close Window' class='close-button'>
-          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpSuccess' name='helpSuccess' alt='Help' title='Your login credentials are valid. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.' class='help-button'>
+          <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Login Success</a>
+          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonSuccess' name='closeButtonSuccess' onclick='toggleVisibility("successModal");' alt='Close' title='Close Window' class='closeButton'>
+          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpSuccess' name='helpSuccess' alt='Help' title='Your login credentials are valid. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.' class='helpButton'>
         </div>
         <!-- Successful Login Modal Message Container -->
         <div id='successContainer' name='successContainer' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
@@ -188,18 +190,18 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     </div>
 
     <!-- The Failed Login Modal -->
-    <div id='errorModal' class='modal'>
+    <div id='errorModal' name='errorModal' class='modal'>
       <!-- Failed Login Modal Content. -->
-      <div id='errorModalContent' name='errorModalContent' class='modal-content animate'>
+      <div id='errorModalContent' name='errorModalContent' class='modalContent animate'>
         <!-- Failed Login Modal Header -->
-        <div id='errorModalHeader' name='errorModalHeader' class='modal-header'>
+        <div id='errorModalHeader' name='errorModalHeader' class='modalHeader'>
           <img src='/Resources/Themes/DEFAULT/alert24.png' id='warningSmallError' name='warningSmallError' alt='Alert' class='warning-small'>
-          <a style='display: inline-block; margin-top: 4px;'>Log Failed</a>
-          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonError' name='closeButtonError' onclick='toggleVisibility("errorModal");' alt='Close' title='Close Window' class='close-button'>
-          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpError' name='helpError' alt='Help' title='Your login credentials are not valid. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.' class='help-button'>
+          <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Login Failed</a>
+          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonError' name='closeButtonError' onclick='toggleVisibility("errorModal");' alt='Close' title='Close Window' class='closeButton'>
+          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpError' name='helpError' alt='Help' title='Your login credentials are not valid. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.' class='helpButton'>
         </div>
         <!-- Failed Login Modal Message Container -->
-        <div id='errorContainer' name='errorModal' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
+        <div id='errorContainer' name='errorContainer' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
           <br />
           <p>Login failed! Please try again.</p>
           <br />
@@ -208,18 +210,18 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     </div>
 
     <!-- The Critical Login Error Modal -->
-    <div id='criticalModal' class='modal'>
+    <div id='criticalModal' name='criticalModal' class='modal'>
       <!-- Critical Login Error Modal Content. -->
-      <div id='criticalModalContent' name='criticalModalContent' class='modal-content animate'>
+      <div id='criticalModalContent' name='criticalModalContent' class='modalContent animate'>
         <!-- Critical Login Error Modal Header -->
-        <div id='criticalModalHeader' name='criticalModalHeader' class='modal-header'>
+        <div id='criticalModalHeader' name='criticalModalHeader' class='modalHeader'>
           <img src='/Resources/Themes/DEFAULT/exclamation24.png' id='errorSmallCritical' name='errorSmallCritical' alt='Error' class='error-small'>
-          <a style='display: inline-block; margin-top: 4px;'>Login Error</a>
-          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonCritical' name='closeButtonCritical' onclick='toggleVisibility("criticalrModal");' alt='Close' title='Close Window' class='close-button'>
-          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpCritical' name='helpCritical' alt='Help' title='An error occurred and your login request could not be completed. Please try again later. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.' class='help-button'>
+          <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Login Error</a>
+          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonCritical' name='closeButtonCritical' onclick='toggleVisibility("criticalModal");' alt='Close' title='Close Window' class='closeButton'>
+          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpCritical' name='helpCritical' alt='Help' title='An error occurred and your login request could not be completed. Please try again later. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.' class='helpButton'>
         </div>
         <!-- Critical Login Error Modal Message Container -->
-        <div id='criticalContainer' name='criticalModal' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
+        <div id='criticalContainer' name='criticalContainer' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
           <br />
           <p>There was a critical error during login. Please contact support and try again later.</p>
           <br />
@@ -228,15 +230,15 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     </div>
 
     <!-- The Logout Modal -->
-    <div id='logoutModal' class='modal'>
+    <div id='logoutModal' name='logoutModal' class='modal'>
       <!-- Logout Modal Content. -->
-      <div id='logoutModalContent' name='logoutModalContent' class='modal-content animate'>
+      <div id='logoutModalContent' name='logoutModalContent' class='modalContent animate'>
         <!-- Logout Modal Header -->
-        <div id='logoutModalHeader' name='logoutModalHeader' class='modal-header'>
+        <div id='logoutModalHeader' name='logoutModalHeader' class='modalHeader'>
           <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' id='avatarSmallLogout' name='avatarSmallLogout' alt='Avatar' class='avatar-small'>
-          <a style='display: inline-block; margin-top: 4px;'>Logout of <?php echo $ApplicationName; ?></a>
-          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonLogout' name='closeButtonLogout' onclick='toggleVisibility("criticalrModal");' alt='Close' title='Close Window' class='close-button'>
-          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpLogout' name='helpLogout' alt='Help' title='To log out of your <?php echo $ApplicationName; ?> account; press the "Confirm Logout" button. If you log out of your account you will have to login again before you can continue to use <?php echo $ApplicationName; ?>. To stay logged in; press the "Cancel" button. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.' class='help-button'>
+          <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Logout of <?php echo $ApplicationName; ?></a>
+          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonLogout' name='closeButtonLogout' onclick='toggleVisibility("logoutModal");' alt='Close' title='Close Window' class='closeButton'>
+          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpLogout' name='helpLogout' alt='Help' title='To log out of your <?php echo $ApplicationName; ?> account; press the "Confirm Logout" button. If you log out of your account you will have to login again before you can continue to use <?php echo $ApplicationName; ?>. To stay logged in; press the "Cancel" button. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.' class='helpButton'>
         </div>
         <!-- Logout Modal Message Container -->
         <div id='logoutContainer' name='logoutContainer' style='background-color:#f1f1f1; text-align:center;' class='container'>
@@ -252,6 +254,42 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     </div>
   </div>
 </div>
+
+    <!-- The Create Account Modal -->
+    <div id='createAccountModal' name='createAccountModal' class='modal'>
+      <!-- Critical Login Error Modal Content. -->
+      <div id='createAccountModalContent' name='createAccountModalContent' class='modalContent animate'>
+        <!-- Critical Login Error Modal Header -->
+        <div id='createAccountModalHeader' name='createAccountModalHeader' class='modalHeader'>
+          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' id='avatarSmallLogin' name='avatarSmallLogin' alt='Avatar' class='avatar-small'>
+          <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Create A New Account</a>
+          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonCreate' name='closeButtonCreate' onclick='toggleVisibility("createAccountModal");' alt='Close' title='Close Window' class='closeButton'>
+          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpCreate' name='helpCreate' alt='Help' title='To close this window; press the red "X" icon in the top-right corner of the window.' class='helpButton'>
+        </div>
+        <!-- Create Account Modal Message Container -->
+        <div id='createAccountContainer' name='createAccountContainer' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
+          <input type='text' placeholder='Enter Desired Username' id='NewUserInput' name='NewUserInput' title='Enter your desired <?php echo $ApplicationName; ?> username.' style='padding: 10px;' required>
+          <br /> 
+          <button id='checkButton' onclick='checkAvailability(document.getElementById("NewUserInput").value);' class='BUTTON_1' title='Check username availability.' style='margin:10px;'>Check Availability</button>
+          <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' value='' required>
+          <br />
+          <p id='checkResultsNever' name='checkResultsNever' style='display:block;'>Please enter an available username to continue.</p>
+          <p id='checkResultsSuccess' name='checkResultsSuccess' style='display:none;'><b>Congratulations!</b> The desired username is <b>available</b>!</p>
+          <p id='checkResultsFailure' name='checkResultsFailure' style='display:none;'><b>Sorry!</b> The desired username is <b>not available</b>.</p>
+          <br />
+          <div id='createAccountDetails' name='createAccountDetails' style="display:none;">
+            <input type='text' placeholder='Enter Your Email Address' id='NewUserEmail' name='NewUserEmail' title='Enter your email address.' style='padding: 10px;' required>
+            <input type='password' placeholder='Enter Your Desired Password' id='NewUserPassword' name='NewUserPassword' title='Enter your desired password.' style='padding: 10px;' required>
+            <input type='password' placeholder='Enter Your Desired Password Again' id='NewUserPasswordConfirm' name='NewUserPasswordConfirm' title='Enter your desired password.' style='padding: 10px;' required>
+            <button id='submitButton' onclick='createAccount();' class='BUTTON_1' title='Proceed with account creation.' style='margin:10px;'>Create Account</button>
+            <br />
+          </div>
+          <hr />
+          <button type='button' class='BUTTON_1' title='Recover an account with a forgotten password.' style='margin:10px;'>Forgot Password</button>
+          <br />
+        </div> 
+      </div>
+    </div>
 
 <!-- Hidden Login Form For Storing Keep-Alive Variables -->
 <form id='tokens' name='tokens' method='post' target='noredirect'>

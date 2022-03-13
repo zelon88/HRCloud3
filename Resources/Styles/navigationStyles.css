@@ -88,11 +88,11 @@ li a:hover {
   left: -999rem;
   top: 0; }
 
-.help-button { 
+.helpButton { 
   float: right;
   margin: 2px; }
 
-.close-button { 
+.closeButton { 
   float: right;
   margin: 2px; }
 

@@ -48,7 +48,7 @@ This CSS file determines the stylesheet for popup modals.
   padding-right: 10px; }
 
 /* Modal Content/Box */
-.modal-content {
+.modalContent {
   background-color: #fefefe;
   margin: 5px auto; 
   border: 3px solid #888;
@@ -67,14 +67,18 @@ This CSS file determines the stylesheet for popup modals.
   from {transform: scale(0)}
   to {transform: scale(1)} } 
 
-.modal-header {
+.modalHeader {
   display: block; 
   height: 32px; 
-  margin: auto; }
-
-.modal-header {
   font: 1.2rem/1.4rem Arial, sans-serif;
   text-align: center; 
-  display: block; 
-  height: 32px; 
+  margin: auto; 
   margin-top: 3px; }
+
+.modalHeaderText { 
+  display: inline-block; 
+  margin-top: 4px; 
+  margin-left: 28px; }
+
+  .textInput { 
+    padding: 10px; }

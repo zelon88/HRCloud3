@@ -1,0 +1,2 @@
+<?php
+$PostConfigUsers = array();
