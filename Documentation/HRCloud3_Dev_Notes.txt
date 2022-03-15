@@ -1,6 +1,23 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+3/14/2022
+v0.8.5 - Working on New User Account Creation process.
+
+-Working on UI for New User Registration.
+-Need to add user creation logic to adminCore.php
+-We need a mechanism to track number of requests in a short time period and deny users who abuse the check availability feature.
+-I'm thinking a php cache file that contains an array with index of timestamp->client_IP. Each entry in the array is a usernname availability check.
+-Before a check is made the array is loaded and old entries are scrubbed.
+-Remaining entries are tallied and if the requesting IP has greater than X requests then do not conduct the availability check.
+-This will limit the number of checks that one client can perform.
+-Added  $AllowUserRegistration  config variable to config.php for allowing/disallowing visitors creating new accounts on their own.
+-Add config entries for Privacy Policy and Terms Of Service files in config.php for storing an organizations policies that the UI can display.
+-Removed 'Data' folder from $RequiredDirs and also deleted it from the repo.
+-Revise $LastMinute & $NextMinute detection & accomodation.
+-Added checkLibraryStatus() function to core.php for quickly determining the status of a given library by name.
+
+----------
 2/21/2022
 v0.8.4 - Working on UI.
 

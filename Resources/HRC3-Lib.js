@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 2/21/2022
+Date: 3/14/2022
 <3 Open-Source
 
 The Home Page provides common functionality for many of the UI elements in HRCloud3.
@@ -36,7 +36,7 @@ function changeContent(id, newContent) {
 // / Switches the 'Visibility' property between 'block' & 'none'.
 function toggleVisibility(id) {
   var e = document.getElementById(id);
-  if(e.style.display == 'block') e.style.display = 'none';
+  if (e.style.display == 'block') e.style.display = 'none';
   else e.style.display = 'block'; }
 // / -----------------------------------------------------------------------------------
 

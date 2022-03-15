@@ -96,16 +96,17 @@ function sanitize($Variable, $Strict) {
 // / A function to set the date and time for internal logic like file cleanup.
 // / Set variables. 
 function verifyDate() { 
-  // / Set variables. Create an accurate human-readable date from the servers timezone.
+  // / Set an abbreviated date that can be used in filenames.
   $Date = date("m-d-y");
+  // / Set a full human readable date that can be appended to individual log lines.
   $Time = date("F j, Y, g:i a"); 
+  // / An integer representing the current minute.
   $Minute = intval(date('i'));
   $LastMinute = $Minute - 1;
   $NextMinute = $Minute + 1;
-  // / We need to accomodate the off-chance that execution spans multiple days. 
-  // / In other words, the application starts at 11:59am and ends at 12:00am.
-  // / I tried to think what would happen if we spanned multiple months or years but I threw up in my mouth. >D
-  if ($LastMinute === 0) $LastMinute = 59;
+  // / Detect & accomodate rollover minutes.
+  if ($LastMinute <= 1) $LastMinute = 60;
+  if ($NextMinute > 60) $NextMinute = 1;
   return(array($Date, $Time, $Minute, $LastMinute)); }
 
 // / A function to generate and validate the operational environment for the Diablo Engine.
@@ -113,7 +114,7 @@ function verifyInstallation() {
   // / Set variables. 
   global $Date, $Time, $Salts, $RootPath;
   $dirCheck = $indexCheck = $dirExists = $indexExists = $logCheck = $cacheCheck = TRUE;
-  $requiredDirs = array('Applications', 'Widgets', 'Logs', 'Data', 'Cache', 'Cache'.DIRECTORY_SEPARATOR.'Data');
+  $requiredDirs = array('Applications', 'Widgets', 'Logs',  'Cache', 'Cache'.DIRECTORY_SEPARATOR.'Data');
   $InstallationIsVerified = FALSE;
   // / For servers with unprotected directory roots, we must verify (at minimum) that a local index file exists to catch unwanted traversal.
   if (!file_exists('index.html')) $indexCheck = FALSE;
@@ -310,7 +311,7 @@ function checkVersionInfo() {
 function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken) {
   global $Users, $Salts, $Minute, $LastMinute;
   // / Set variables.
-  $SessionIsVerified = $SessionID = $oldSessionID = $oldSessionIDOld = $user = FALSE;
+  $SessionIsVerified = $SessionID = $oldSessionID = $oldSessionIDA = $user = FALSE;
   // / Check that required inputs are valid.
   if ($SessionIDInput !== FALSE && $UserInput !== FALSE && $ClientTokenInput !== FALSE) { 
     // / Loop through the userlist and look for the specified username.
@@ -524,7 +525,7 @@ function generateDefaultUserCacheData() {
 // / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded 
 // / by the loadUserCache() function.
 function generateUserCache($UserID) { 
-  // / Set variables. Note the $UserCacheExists, $UserCache and $UserCacheDir are all assumed to be false unless they are changed to something valid.
+  // / Set variables. Note the $UserCacheExists, $UserCache and $UserCacheDir are all assumed to be FALSE unless they are changed to TRUE.
   // / If $UserCacheExists, $UserCache or $UserCacheDir return FALSE, the calling code should assume this function failed.
   global $Salts, $UserCacheRequiredOptions, $UserCacheArrayData;
   $UserCacheExists = $UserCache = $UserCacheDir = FALSE;
@@ -532,7 +533,7 @@ function generateUserCache($UserID) {
   if (!file_exists($UserCacheDir)) $dirExists = mkdir($UserCacheDir);
   // / Define the $UserCacheFile.
   $UserCacheFile = $UserCacheDir.'UserCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php';
-  // / Wrap the data above in the proper PHP array syntax so it can be included later in the function.
+  // / Wrap the data above in proper PHP array syntax so it can be included later in the function.
   $userCacheData = '<?php'.PHP_EOL.'$userCacheData = array('.$UserCacheArrayData.');'.PHP_EOL;
   // / Write default cache data to the $UserCacheFile. 
   $UserCacheExists = file_put_contents($UserCacheFile, $userCacheData);
@@ -587,14 +588,12 @@ function loadUserCache() {
       $UserOptions = array_replace([], $userCacheData);
       $userCacheData = NULL;
       unset($userCacheData);
-      /*
       // / Iterate through each option specified in the user cache and verify that is it valid.
       foreach ($UserOptions as $option => $value) {
         // / If an option is not valid it is removed from memory.
         if (!in_array($option, $UserCacheRequiredOptions)) { 
           $UserOptions[$option] = NULL;
           unset($UserOptions[$option]); } }
-      */
       $UserCacheIsLoaded = TRUE; 
       // / Iterate through the default UserCache items and look for new array elements that should exist.
       foreach ($UserCacheRequiredOptions as $key => $ucaElement) { 
@@ -632,9 +631,8 @@ function loadLibraries() {
   return(array($LibrariesActive, $LibrariesInactive, $LibrariesCustom, $LibrariesDefault, $LibrariesAreLoaded)); } 
 
 // / A function to read the data from the supplied array of libraries and load their contents.
-// / Note that $LibrariesActive is re-defined after this function runs. So it is specified as an argument to the function and a return value.
 function loadLibraryData() {
-  // / Set variables. Note that we assume the function is a sucess unless an iteration of the loop changes $LibraryDataIsLoaded to false.
+  // / Set variables. Note that we assume the function is a success unless an iteration of the loop changes $LibraryDataIsLoaded to FALSE.
   global $LibrariesActive;
   $LibraryDataIsLoaded = TRUE;
   $LibraryError = FALSE;
@@ -657,16 +655,31 @@ function loadLibraryData() {
     if (!$LibraryDataIsLoaded) break; }
   return(array($LibraryError, $LibraryDataIsLoaded)); }  
 
+// / A function to check the status of a given library.
+// / Accepts a string as the only input.
+// / Will compare the string against the names of all libraries.
+function checkLibraryStatus($library) { 
+  global $LibrariesActive, $LibrariesInactive, $LibrariesCustom, $LibrariesDefault;
+  $LibrraryExists = $LibraryIsActive = $LibraryIsInactive = $LibraryIsCustom = $LibraryIsDefault = $libA = $libB = $libC = $libD = FALSE;
+  foreach ($LibrariesActive as $libA) if ($libA[0] === $library) $LibraryExists = $LibraryIsActive = TRUE;
+  foreach ($LibrariesInactive as $libB) if ($libB[0] === $library) $LibraryExists = $LibraryIsInactive = TRUE;
+  foreach ($LibrariesCustom as $libC) if ($libC[0] === $library) $LibraryExists = $LibraryIsCustom = TRUE;
+  foreach ($LibrariesDefault as $libD) if ($libD[0] === $library) $LibraryExists = $LibraryIsDefault = TRUE; 
+  // / Clean up unneeded memory.
+  $libA = $libB = $libC = $libD = $library = NULL;
+  unset($libA, $libB, $libC, $libD, $library); 
+  return(array($LibraryExists, $LibraryIsActive, $LibraryIsInactive, $LibraryIsCustom, $LibraryIsDefault)); }
+
 // / A function to determine if a notifications file exists for the current user and generate one if missing.
 // / A notification is considered a single line of the notifications file.
 function generateNotificationsFile($UserID, $UserDataDir) { 
-  // / Set variables. Note that we assume the $notificationsCheck is true until we verify that a $NotificationsFile exists.
+  // / Set variables. Note that we assume the $notificationsCheck is TRUE until we verify that a $NotificationsFile exists.
   global $Salts;
   $NotificationsFile = $UserDataDir.'UserNotifications-'.hash('sha256',$Salts[1].'NOTIFICATIONS'.$UserID).'.php';
   $NotificationsFileExists = FALSE;
   // / Detect if no file exists and try to create one.
   if (!file_exists($NotificationsFile)) file_put_contents($NotificationsFile, ''); 
-  // / If the file operation operation returns false, check again.
+  // / If the file operation operation returns FALSE, check again.
   if (file_exists($NotificationsFile)) $NotificationsFileExists = TRUE;
   return(array($NotificationsFileExists, $NotificationsFile)); } 
 
@@ -720,7 +733,7 @@ function readNotifications() {
 // / Notifications are not stored with any corresponding serialization or indexing data.
 // / The date-time of the notifications combined with its content determines unique identity.
 function purgeNotification($NotificationToPurge) { 
-  // / Set variables. Note that we assume the $NotificationsFileWritten and $NotificationsPurged are false until the notification
+  // / Set variables. Note that we assume the $NotificationsFileWritten and $NotificationsPurged are FALSE until the notification
   // / is deleted and a file is created. If either of those fail we assume that the operation failed.
   global $NotificationFile, $Notifications;
   $notificationFileWritten = $NotificationPurged = FALSE;
@@ -744,17 +757,7 @@ function purgeNotification($NotificationToPurge) {
 function pushNotification($NotificationToPush, $TargetUserID) { 
   // / Sanitize the notification with strict character enforcement.
   $NotificationToPush = sanitize($NotificationToPush, TRUE);
-
-
   return($NotificationSent); }
-
-function initializeLibraries() { 
-  $LibrariesInitialized = FALSE;
-
-
-
-
-}
 
 // / A function for the user to send an email.
 function sendEmail($address, $content, $template) { 

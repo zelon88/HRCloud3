@@ -23,7 +23,13 @@ if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! dataCore:
 // / ----------------------------------------------------------------------------------
 // / The following code sets the functions for the session.
 
-// / Data Encryption specific function and logic.
+// Data Backup specific functions & logic.
+if ($DataBackups) { 
+  function backup($DataType, $Data) { 
+
+}
+
+// / Data Encryption specific functions & logic.
 if ($DataEncryption) { 
   // / A function to initialize encryption by ensuring that user supplied keys exist.
   function DCinitEncryption() { 

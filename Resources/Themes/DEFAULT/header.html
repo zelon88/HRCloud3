@@ -9,7 +9,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 2/21/2022
+Date: 3/14/2022
 <3 Open-Source
 
 The Header file is for preparing an HTML document to contain the output of Diablo Engine.
@@ -19,6 +19,8 @@ The Header file is for preparing an HTML document to contain the output of Diabl
 // / These variables will be overwritten by the ones contained in config.php once it has been loaded. 
 $ApplicationName = 'HRCloud3 Diablo Engine';
 $StayLoggedInInterval = 45000;
+$TermsOfServiceFile = 'Documentation/Terms_Of_Service.txt';
+$PrivacyPolicyFile = 'Documentation/Privacy_Policy.txt';
 
 // / Attempt to load the config.php file.
 if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../../../config.php');
@@ -36,6 +38,8 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
       // / Declare PHP controlled global Javascript variables.
       let StayLoggedInInterval = '<?php echo $StayLoggedInInterval; ?>';
       let ApplicationName = '<?php echo $ApplicationName; ?>';
+      let TermsOfServiceFile = '<?php echo $TermsOfServiceFile; ?>';
+      let PrivacyPolicyFile = '<?php echo $PrivacyPolicyFile; ?>';
     </script>
     <link rel='shortcut icon' href='/Resources/Themes/DEFAULT/favicon.ico'/>
     <!-- Load stylesheets -->
@@ -114,23 +118,23 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     </li>
   </ul>
 
-  <!-- The Username Modal -->
+  <!-- Popup Modals -->
   <div id='modals'>
+
     <!-- The Username Modal -->
     <div id='loginModal' class='modal' name='loginModal'>
       <!-- Username Modal Content. -->
       <form id='loginFormNav' class='modalContent animate' name='loginFormNav' method='POST' target='noredirect'>
         <!-- Username Modal Header -->
         <div id='loginModalHeader' class='modalHeader' name='loginModalHeader'>
-          <img  id='avatarSmallLogin' class='avatar-small' name='avatarSmallLogin' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar'>
+          <img id='avatarSmallLogin' class='avatar-small' name='avatarSmallLogin' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
           <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Username</a>
           <img id='closeButtonLogin' class='closeButton' name='closeButtonLogin' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='toggleVisibility("loginModal");'>
           <img id='helpLogin' class='helpButton' name='helpLogin' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you already have an <?php echo $ApplicationName; ?> account and remember your username; type it into the text field then press the "Continue" button to proceed. If you do not remember your username; press the "Forgot Username" button and follow the instructions to recover your account. If you would like to create a new account; press the "Create Account" button. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.'>
         </div>
-
         <!-- Username Modal Message Container -->
-        <div id='loginContainer' class='container' name='loginContainer' style='background-color:#f1f1f1; text-align:center;'>
-          <input type='text' id='UserInput' class='textInput' name='UserInput' title='Enter your <?php echo $ApplicationName; ?> username into this field.' placeholder='Enter Username' value='' required>
+        <div id='loginContainer' name='loginContainer' style='text-align:center;'>
+          <input type='text' id='UserInput' class='textInput' name='UserInput' title='Enter your <?php echo $ApplicationName; ?> username.' placeholder='Enter Username' value='' required>
           <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
           <button id='submitButton' class='BUTTON_1' name='submitButton'  title='Proceed with login.' style='margin:10px;'>Continue</button>
           <br />
@@ -148,14 +152,13 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
       <form id='passwordFormNav' class='modalContent animate' name='passwordFormNav' method='POST' target='noredirect'>
         <!-- Password Modal Header -->
         <div id='passwordModalHeader' class='modalHeader' name='passwordModalHeader'>
-          <img id='avatarSmallPassword' class='avatar-small' name='avatarSmallPassword' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar'>
-          <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Password</a>
+          <img id='avatarSmallPassword' class='avatar-small' name='avatarSmallPassword' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
+          <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Password</a>
           <img id='closeButtonPassword' class='closeButton' name='closeButtonPassword' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='toggleVisibility("passwordModal");'>
           <img id='helpPassword' class='helpButton' name='helpPassword' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you remember your <?php echo $ApplicationName; ?> password; type it into the text field then press the "Continue" button to proceed. If you do not remember your password; press the "Forgot Password" button and follow the instructions to recover your account. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.'>
         </div>
-
         <!-- Password Modal Message Container -->
-        <div id='passwordContainer' name='passwordContainer' style='background-color:#f1f1f1; text-align:center;' class='container'>
+        <div id='passwordContainer' name='passwordContainer' style='text-align:center;'>
           <input type='password' placeholder='Enter Password' id='RawPassword' name='RawPassword' title='Enter your <?php echo $ApplicationName; ?> password.' style='padding: 10px;' required>
           <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' value='' required>
           <input type='hidden' id='PasswordInput' name='PasswordInput' value='' required>
@@ -170,18 +173,18 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     </div>
 
     <!-- The Successful Login Modal -->
-    <div id='successModal' name='successModal' class='modal'>
+    <div id='successModal' class='modal' name='successModal'>
       <!-- Successful Login Modal Content. -->
-      <div id='successModalContent' name='successModalContent' class='modalContent animate'>
+      <div id='successModalContent' class='modalContent animate' name='successModalContent'>
         <!-- Successful Login Modal Header -->
-        <div id='successModalHeader' name='successModalHeader' class='modalHeader'>
-          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' id='avatarSmallSuccess' name='avatarSmallSuccess' alt='Avatar' class='avatar-small'>
-          <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Login Success</a>
-          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonSuccess' name='closeButtonSuccess' onclick='toggleVisibility("successModal");' alt='Close' title='Close Window' class='closeButton'>
-          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpSuccess' name='helpSuccess' alt='Help' title='Your login credentials are valid. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.' class='helpButton'>
+        <div id='successModalHeader' class='modalHeader' name='successModalHeader'>
+          <img id='avatarSmallSuccess' class='avatar-small' name='avatarSmallSuccess' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
+          <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Login Success</a>
+          <img id='closeButtonSuccess'  class='closeButton' name='closeButtonSuccess' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("successModal");' alt='Close' title='Close Window'>
+          <img id='helpSuccess' class='helpButton' name='helpSuccess' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='Your login credentials are valid. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.'>
         </div>
         <!-- Successful Login Modal Message Container -->
-        <div id='successContainer' name='successContainer' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
+        <div id='successContainer' name='successContainer' style='text-align:center; display:block;'>
           <br />
           <p>Success! Please wait.</p>
           <br />
@@ -190,18 +193,18 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     </div>
 
     <!-- The Failed Login Modal -->
-    <div id='errorModal' name='errorModal' class='modal'>
+    <div id='errorModal' class='modal' name='errorModal'>
       <!-- Failed Login Modal Content. -->
-      <div id='errorModalContent' name='errorModalContent' class='modalContent animate'>
+      <div id='errorModalContent' class='modalContent animate' name='errorModalContent'>
         <!-- Failed Login Modal Header -->
-        <div id='errorModalHeader' name='errorModalHeader' class='modalHeader'>
-          <img src='/Resources/Themes/DEFAULT/alert24.png' id='warningSmallError' name='warningSmallError' alt='Alert' class='warning-small'>
-          <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Login Failed</a>
-          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonError' name='closeButtonError' onclick='toggleVisibility("errorModal");' alt='Close' title='Close Window' class='closeButton'>
-          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpError' name='helpError' alt='Help' title='Your login credentials are not valid. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.' class='helpButton'>
+        <div id='errorModalHeader' class='modalHeader' name='errorModalHeader'>
+          <img id='warningSmallError' class='warning-small' name='warningSmallError' src='/Resources/Themes/DEFAULT/alert24.png' alt='Alert' title='Alert'>
+          <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Login Failed</a>
+          <img id='closeButtonError' class='closeButton' name='closeButtonError' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("errorModal");' alt='Close' title='Close Window'>
+          <img id='helpError' class='helpButton' name='helpError' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='Your login credentials are not valid. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.'>
         </div>
         <!-- Failed Login Modal Message Container -->
-        <div id='errorContainer' name='errorContainer' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
+        <div id='errorContainer' name='errorContainer' style='text-align:center; display:block;'>
           <br />
           <p>Login failed! Please try again.</p>
           <br />
@@ -210,98 +213,91 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     </div>
 
     <!-- The Critical Login Error Modal -->
-    <div id='criticalModal' name='criticalModal' class='modal'>
+    <div id='criticalModal' class='modal' name='criticalModal'>
       <!-- Critical Login Error Modal Content. -->
-      <div id='criticalModalContent' name='criticalModalContent' class='modalContent animate'>
+      <div id='criticalModalContent' class='modalContent animate' name='criticalModalContent'>
         <!-- Critical Login Error Modal Header -->
-        <div id='criticalModalHeader' name='criticalModalHeader' class='modalHeader'>
-          <img src='/Resources/Themes/DEFAULT/exclamation24.png' id='errorSmallCritical' name='errorSmallCritical' alt='Error' class='error-small'>
-          <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Login Error</a>
-          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonCritical' name='closeButtonCritical' onclick='toggleVisibility("criticalModal");' alt='Close' title='Close Window' class='closeButton'>
-          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpCritical' name='helpCritical' alt='Help' title='An error occurred and your login request could not be completed. Please try again later. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.' class='helpButton'>
+        <div id='criticalModalHeader' class='modalHeader' name='criticalModalHeader'>
+          <img id='errorSmallCritical' class='error-small' name='errorSmallCritical' src='/Resources/Themes/DEFAULT/exclamation24.png' alt='Error' title='Error'>
+          <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Login Error</a>
+          <img id='closeButtonCritical' class='closeButton' name='closeButtonCritical' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("criticalModal");' alt='Close' title='Close Window'>
+          <img id='helpCritical' class='helpButton' name='helpCritical' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='An error occurred and your login request could not be completed. Please try again later. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.'>
         </div>
         <!-- Critical Login Error Modal Message Container -->
-        <div id='criticalContainer' name='criticalContainer' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
+        <div id='criticalContainer' name='criticalContainer' style='text-align:center; display:block;'>
           <br />
-          <p>There was a critical error during login. Please contact support and try again later.</p>
+          <p>There was a critical error. Please contact support or try again later.</p>
           <br />
         </div> 
       </div>
     </div>
 
     <!-- The Logout Modal -->
-    <div id='logoutModal' name='logoutModal' class='modal'>
+    <div id='logoutModal' class='modal' name='logoutModal'>
       <!-- Logout Modal Content. -->
-      <div id='logoutModalContent' name='logoutModalContent' class='modalContent animate'>
+      <div id='logoutModalContent' class='modalContent animate' name='logoutModalContent'>
         <!-- Logout Modal Header -->
-        <div id='logoutModalHeader' name='logoutModalHeader' class='modalHeader'>
-          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' id='avatarSmallLogout' name='avatarSmallLogout' alt='Avatar' class='avatar-small'>
-          <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Logout of <?php echo $ApplicationName; ?></a>
-          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonLogout' name='closeButtonLogout' onclick='toggleVisibility("logoutModal");' alt='Close' title='Close Window' class='closeButton'>
-          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpLogout' name='helpLogout' alt='Help' title='To log out of your <?php echo $ApplicationName; ?> account; press the "Confirm Logout" button. If you log out of your account you will have to login again before you can continue to use <?php echo $ApplicationName; ?>. To stay logged in; press the "Cancel" button. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.' class='helpButton'>
+        <div id='logoutModalHeader' class='modalHeader' name='logoutModalHeader'>
+          <img id='avatarSmallLogout' class='avatar-small' name='avatarSmallLogout' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
+          <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Logout of <?php echo $ApplicationName; ?></a>
+          <img id='closeButtonLogout' class='closeButton' name='closeButtonLogout' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("logoutModal");' alt='Close' title='Close Window'>
+          <img id='helpLogout' class='helpButton' name='helpLogout' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='To log out of your <?php echo $ApplicationName; ?> account; press the "Confirm Logout" button. If you log out of your account you will have to login again before you can continue to use <?php echo $ApplicationName; ?>. To stay logged in; press the "Cancel" button. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.'>
         </div>
         <!-- Logout Modal Message Container -->
-        <div id='logoutContainer' name='logoutContainer' style='background-color:#f1f1f1; text-align:center;' class='container'>
-          <br />
-          <p>Are you sure you want to log out?</p>
+        <div id='logoutContainer' name='logoutContainer' style='text-align:center; display:block;'>
           <input type='hidden' id='UserInput' name='UserInput' value='' required>
           <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
+          <button id='logoutConfirmButton' onclick='logout();' class='BUTTON_1' title='Log out of your <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Confirm Logout</button>
           <br />
-          <button id='logoutConfirmButton' onclick='toggleVisibility("logoutModal"); toggleVisibility("logoutButton"); toggleVisibility("loginButton"); toggleVisibility("successModal"); setTimeout(function() { toggleVisibility("successModal"); }, 3000);' class='BUTTON_1'>Confirm Logout</button>
-          <hr />
-          <button type='button' onclick='toggleVisibility("logoutModal");' class='BUTTON_1' title='Cancel' style='margin:10px;'>Cancel</button>
         </div>
+      </div>
     </div>
-  </div>
-</div>
 
     <!-- The Create Account Modal -->
-    <div id='createAccountModal' name='createAccountModal' class='modal'>
-      <!-- Critical Login Error Modal Content. -->
-      <div id='createAccountModalContent' name='createAccountModalContent' class='modalContent animate'>
-        <!-- Critical Login Error Modal Header -->
-        <div id='createAccountModalHeader' name='createAccountModalHeader' class='modalHeader'>
-          <img src='/Resources/Themes/DEFAULT/placeholderAvatar.png' id='avatarSmallLogin' name='avatarSmallLogin' alt='Avatar' class='avatar-small'>
+    <div id='createAccountModal' class='modal' name='createAccountModal'>
+      <!-- Create Account Modal Content. -->
+      <div id='createAccountModalContent' class='modalContent animate' name='createAccountModalContent'>
+        <!-- Create Account Modal Header -->
+        <div id='createAccountModalHeader' class='modalHeader' name='createAccountModalHeader'>
+          <img id='avatarSmallLogin' class='avatar-small' name='avatarSmallLogin' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
           <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Create A New Account</a>
-          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonCreate' name='closeButtonCreate' onclick='toggleVisibility("createAccountModal");' alt='Close' title='Close Window' class='closeButton'>
-          <img src='/Resources/Themes/DEFAULT/help24.png' id='helpCreate' name='helpCreate' alt='Help' title='To close this window; press the red "X" icon in the top-right corner of the window.' class='helpButton'>
+          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonCreate' name='closeButtonCreate' onclick='toggleVisibility("createAccountModal"); cancelAvailability();' alt='Close' title='Close Window' class='closeButton'>
+          <img id='helpCreate' class='helpButton' name='helpCreate' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='Enter a desired username into the field, then press "Continue" to check if that username is available. Once you have entered an available username you will be able to complete the login process by entering your email address & desired password. To close this window; press the red "X" icon in the top-right corner of the window.'>
         </div>
         <!-- Create Account Modal Message Container -->
-        <div id='createAccountContainer' name='createAccountContainer' style='background-color:#f1f1f1; text-align:center; display:block;' class='container'>
-          <input type='text' placeholder='Enter Desired Username' id='NewUserInput' name='NewUserInput' title='Enter your desired <?php echo $ApplicationName; ?> username.' style='padding: 10px;' required>
-          <br /> 
-          <button id='checkButton' onclick='checkAvailability(document.getElementById("NewUserInput").value);' class='BUTTON_1' title='Check username availability.' style='margin:10px;'>Check Availability</button>
-          <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' value='' required>
-          <br />
-          <p id='checkResultsNever' name='checkResultsNever' style='display:block;'>Please enter an available username to continue.</p>
-          <p id='checkResultsSuccess' name='checkResultsSuccess' style='display:none;'><b>Congratulations!</b> The desired username is <b>available</b>!</p>
-          <p id='checkResultsFailure' name='checkResultsFailure' style='display:none;'><b>Sorry!</b> The desired username is <b>not available</b>.</p>
-          <br />
-          <div id='createAccountDetails' name='createAccountDetails' style="display:none;">
-            <input type='text' placeholder='Enter Your Email Address' id='NewUserEmail' name='NewUserEmail' title='Enter your email address.' style='padding: 10px;' required>
-            <input type='password' placeholder='Enter Your Desired Password' id='NewUserPassword' name='NewUserPassword' title='Enter your desired password.' style='padding: 10px;' required>
-            <input type='password' placeholder='Enter Your Desired Password Again' id='NewUserPasswordConfirm' name='NewUserPasswordConfirm' title='Enter your desired password.' style='padding: 10px;' required>
-            <button id='submitButton' onclick='createAccount();' class='BUTTON_1' title='Proceed with account creation.' style='margin:10px;'>Create Account</button>
+        <div id='createAccountContainer' name='createAccountContainer' style='text-align:center; display:block;'>
+          <form id='createAccountFormNav' name='createAccountFormNav' method='POST' target='noredirect'>
+            <input type='text' placeholder='Enter Desired Username' id='NewUserInput' name='NewUserInput' title='Enter your desired <?php echo $ApplicationName; ?> username.' style='padding: 10px;'>
+            <button id='checkButton' class='BUTTON_1' name='checkButton' onclick='checkAvailability(document.getElementById("NewUserInput").value);' title='Check username availability.' style='margin:10px;'>Check Username Availability</button>
+            <input type='text' id='NewUserName' name='NewUserName' title='Your selected <?php echo $ApplicationName; ?> username.' value='' style='display:none; padding: 10px;' required disabled>
             <br />
-          </div>
-          <hr />
-          <button type='button' class='BUTTON_1' title='Recover an account with a forgotten password.' style='margin:10px;'>Forgot Password</button>
-          <br />
+            <p id='checkResultsSuccess' name='checkResultsSuccess' style='display:none; margin-top:10px;'>Congratulations! The desired username is <b>available</b>!</p>
+            <p id='checkResultsFailure' name='checkResultsFailure' style='display:none; margin-top:10px;'>Sorry! The desired username is <b>not available</b>.</p>
+            <div id='createAccountDetails' name='createAccountDetails' style='display:none;'>
+              <hr />
+              <input type='text' placeholder='Enter Your Email Address' id='NewUserEmail' name='NewUserEmail' title='Enter your email address.' style='padding: 10px;' required>
+              <input type='password' placeholder='Enter Desired Password' id='NewUserPassword' name='NewUserPassword' title='Enter desired password.' style='padding: 10px;' required>
+              <input type='password' placeholder='Re-Enter Desired Password' id='NewUserPasswordConfirm' name='NewUserPasswordConfirm' title='Enter desired password.' style='padding: 10px;' required>
+              <button id='createSubmitButton'class='BUTTON_1' name='createSubmitButton' onclick='createAccount();' title='Proceed with account creation.' style='margin:10px;'>Create Account</button>
+              <br />
+            </div>
+          </form>
         </div> 
       </div>
     </div>
 
-<!-- Hidden Login Form For Storing Keep-Alive Variables -->
-<form id='tokens' name='tokens' method='post' target='noredirect'>
-  <input type='hidden' id='UserInputTokens' name='UserInput' value='' required>
-  <input type='hidden' id='SessionID' name='SessionID' value='' required>
-  <input type='hidden' id='ClientToken' name='ClientToken' value='' required>
-  <input type='hidden' id='ActiveSLI' name='ActiveSLI' value='DISABLED' required>
-  <input type='hidden' id='StayLoggedIn' name='StayLoggedIn' value='DISABLED' required>
-</form>
+  </div>
 
-<!-- These scripts are loaded at the end of the page to allow the rest of the page to load before introducing additional functionality. -->
-<!-- Expect problems if you move these. -->
-<script type='text/javascript' src='/Resources/sjcl.js'></script>
-<script type='text/javascript' src='/Resources/HRC3-Lib.js'></script>
-<script type='text/javascript' src='/Resources/Login-Caller.js'></script>
+  <!-- Hidden Login Form For Storing Keep-Alive Variables -->
+  <form id='tokens' name='tokens' method='post' target='noredirect'>
+    <input type='hidden' id='UserInputTokens' name='UserInput' value='' required>
+    <input type='hidden' id='SessionID' name='SessionID' value='' required>
+    <input type='hidden' id='ClientToken' name='ClientToken' value='' required>
+    <input type='hidden' id='ActiveSLI' name='ActiveSLI' value='DISABLED' required>
+    <input type='hidden' id='StayLoggedIn' name='StayLoggedIn' value='DISABLED' required>
+  </form>
+
+  <!-- These scripts are loaded at the end of the page to allow the entire page to load before introducing additional functionality. -->
+  <script type='text/javascript' src='/Resources/sjcl.js'></script>
+  <script type='text/javascript' src='/Resources/HRC3-Lib.js'></script>
+  <script type='text/javascript' src='/Resources/Login-Caller.js'></script>

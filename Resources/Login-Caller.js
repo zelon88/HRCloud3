@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 2/21/2022
+Date: 3/14/2022
 <3 Open-Source
 
 This file is for negotiating login requests & processing the response from the server.
@@ -89,11 +89,11 @@ $('#loginFormNav').on('submit', function (loginAjax) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A funciton function to submit the Navigation Bar login form with AJAX & update the UI elements.
+// / A function to submit the Navigation Bar login form with AJAX & update the UI elements.
 // / When this function is run the passwordModal is being displayed.
 // / On HTTP & application success; This function hides passwordModal & replaces it with the successModal for 3 seconds.
 // / On HTTP & application success; While successModal is displayed the hidden form fields of the client UI are updated.
-// / On HTTP success  application error; This function hides passwordModal & replaces it with the errorModal for 3 seconds.
+// / On HTTP success & application error; This function hides passwordModal & replaces it with the errorModal for 3 seconds.
 // / On any HTTP error; This function hides passwordModal & replaces it with the criticalModal for 5 seconds.
 $('#passwordFormNav').on('submit', function (passwordAjax) { 
     passwordAjax.preventDefault();
@@ -109,7 +109,7 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
           var SessionID = responseArray[1];
           var ClientToken = responseArray[2];
           var StayLoggedIn = responseArray[3];
-          toggleVisibility('passwordModal');
+          setVisibility('passwordModal', 'none');
           toggleVisibility('successModal');
           setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
           changeValue('UserInputTokens', UserInput);
@@ -160,4 +160,67 @@ function StayLoggedInSender() {
           changeValue('ClientToken', ClientToken);
           changeValue('ActiveSLI', 'ENABLED');
           changeValue('StayLoggedIn', StayLoggedIn); } } }); }); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to check that a desired username is available.
+// / When this function is run the value of the NewUserInput field is validated.
+// / On HTTP & application success; This function will display a success message under the NewUserInput field.
+// / On HTTP & application success; This function will display the rest of the new user form.
+// / On HTTP & application success; This function will disable editing of the NewUserInput field.
+// / On HTTP & application success; This function will update the value of the NewUserName field.
+// / On any error; This function will display an error message under the NewUserInput field.
+function checkAvailability(desiredUsername) {
+  $(function () {
+    $.ajax({
+      type: 'POST',
+      url: '/core.php',
+      data: {
+        UserInput: desiredUsername,
+        CheckUserAvailability: 'ENABLED', },
+      success: function(checkAvailabilityResponse) { 
+        if (checkAvailabilityResponse.includes('FALSE')) { 
+          setVisibility('checkResultsFailure', 'block'); }
+        else { 
+          setVisibility('checkResultsFailure', 'none');
+          setVisibility('checkResultsSuccess', 'block');
+          setVisibility('createAccountDetails', 'block');
+          setVisibility('NewUserInput', 'none');
+          setVisibility('checkButton', 'none'); 
+          setVisibility('NewUserName', 'inline-block');
+          changeValue('NewUserName', desiredUsername);
+        } },
+      error: function(checkAvailabilityResponse) { 
+        toggleVisibility('checkResultsFailure'); } }); }); } 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to reset the Create Account modal to defaults when the process is abandoned.
+// / Re-sets the UI elements so that the process restarts at the beginning.
+function cancelAvailability() {
+  setVisibility('checkResultsFailure', 'none');
+  setVisibility('checkResultsSuccess', 'none');
+  setVisibility('createAccountDetails', 'none');
+  setVisibility('NewUserInput', 'inline-block');
+  setVisibility('checkButton', 'inline-block'); 
+  setVisibility('NewUserName', 'none');
+  changeValue('NewUserInput', '');
+  changeValue('NewUserName', ''); } 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to log the user out and destroy an existing session.
+// / Resets the UI to a state where a different user can log in.
+function logout() { 
+  toggleVisibility('logoutModal'); 
+  toggleVisibility('logoutButton'); 
+  toggleVisibility('loginButton'); 
+  setVisibility('successModal', 'block'); 
+  setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
+  changeValue('UserInputTokens', '');
+  changeValue('SessionID', '');
+  changeValue('ClientToken', '');
+  changeValue('ActiveSLI', 'DISABLED');
+  changeValue('StayLoggedIn', StayLoggedIn); 
+}
 // / -----------------------------------------------------------------------------------

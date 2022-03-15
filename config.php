@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 2/16/2022
+Date: 3/14/2022
 <3 Open-Source
 
 The Configuration File contains all of the critical settings required for Diablo to run on the server.
@@ -20,17 +20,23 @@ The Configuration File contains all of the critical settings required for Diablo
 // / Set  $ApplicationName  to a string that represents the name of this application.
 $ApplicationName = 'HRCloud3';
 
+// / Allow Anonymous User Registration
+// / Set  $AllowUserRegistration  to  TRUE  if you want to allow visitors to create new accounts.
+// / Set  $AllowUserRegistration  To  FALSE  if you do not want to allow visitors to create new accounts.
+$AllowUserRegistration = TRUE;
+
 // / Maintenance Mode
-// / Set  $MaintenanceMode  to  TRUE  if you want to prevent execution of the Diablo engine.
+// / Set  $MaintenanceMode  to  TRUE  if you want to prevent execution of the Diablo Engine.
+// / Set  $MaintenanceMode  to  FALSE  if you want to allow execution of the Diablo Engine.
 $MaintenanceMode = FALSE;
 
 // / Stay Logged In Interval
-// / Set  $StayLoggedInInterval  to the number of milliseconds in between session keep-alive requests.
 // / Logged in users will send session keep-alive requests to the server at this interval for the life of the session.
 // / Must be an integer.
 // / If this is set too low; the server will be flooded with requests and user bandwith usage will increase.
 // / If this is set too high; user sessions will be destroyed too soon.
 // / The longer the interval the greater the exposure for session hijacking.
+// / Set  $StayLoggedInInterval  to the number of milliseconds in between session keep-alive requests.
 // / Minimum reccomended is 20000. 
 // / Maximum reccomended is 130000.
 $StayLoggedInInterval = 3000;
@@ -45,26 +51,39 @@ $Verbose = TRUE;
 $UpdateSources = array('https://github.com/zelon88/Diablo-Engine/');
 
 // / User Data Compression.
-// / Set  $DataCompression  to  TRUE  if you want to compress all user files with the xPress compression algorithm by zelon88.
+// / Set  $DataCompression  to  TRUE  if you want to compress user files with the xPress compression algorithm by zelon88.
 // / For more information about xPress Compression by zelon88 visit https://www.github.com/zelon88/xPress
-// / If enabled you must also specify and enable a DATA library in the $Libraries section of this config file.
+// / If enabled you must also specify & enable a DATA library in the $Libraries section of this config file.
 // / Expect the DATA library to potentially make up 75% of user space requirements (many terabytes).
 // / Set  $DataCompression  to  FALSE  to disable all internal data compression operations.
 // / Disabling this will not disable GZIP HTTP compression.
 $DataCompression = TRUE;
 
 // / User Data Encryption.
-// / Set  $DataEncryption  to  TRUE  if you want to encrypt all user files with user-held and controlled keys.
-// / If enabled you must also specify and enable a DATA library in the $Libraries section of this config file.
-// / The keys are stored in the users DATA library and can be used to decrypt the files for automated scans.
-// / Do not market this to people under the guise that it keeps employees from viewing uploaded data. 
-// / It cannot stop that, but it does make it inconvinient or impossible to do manually depending on local permissions. 
-// / The keys are stored in whatever directory is set as the DATA $Library. Anyone with read access to this directory
-// / will be able to read the keys. Keep in mind that the $Libraries can also be located on remote network shares,
-// / storage devices, or removable devices like USB sticks.
+// / Set  $DataEncryption  to  TRUE  if you want to encrypt user files with user-held & controlled keys.
+// / If enabled you must also specify & enable a DATA library in the $Libraries section of this config file.
+// / Encryption keys are stored in the DATA $Library. 
+// / Anyone with read access to the DATA library will be able to read these keys. 
 // / Set  $DataEncryption  to  FALSE  to disable all internal data encryption operations.
 // / Disabling this will not disable authentication encryption or HTTPS encryption.
 $DataEncryption = TRUE;
+
+// / Data Backups
+// / Set  $DataBackups  to  TRUE  if you want to enable backup functionality throughout the application.
+// / If enabled you must also specify & enable a BACKUPS library in the $Libraries section of this config file.
+// / Set  $DataBackups  to  FALSE  if you so not want any backup operations to be performed.
+// / Disabling backups will prevent both automated & manual backups from taking place.
+$DataBackups = TRUE;
+
+// / Backup Username Availability Check Cache
+// / The Username Availability Check Cache is a cache of IPs that have recently checked for available usernames,
+// / These requests are tracked to avoid malicious actors using bots or crawlers to enumerate the user database.
+// / Cache contents are rotated automatically but could prove useful when investigating security incidents.
+// / This setting has the potential to consume considerable storage space if the server remains under constant attack.
+// / Set  $BackupUsernameCheckCache  to  TRUE  if you want the server to preserve Username Availability Check Cache files.
+// / Set  $BackupUsernameCheckCache  to  FALSE  if you want the server to discard Username Availability Check Cache files.
+// / Will only work if the  BACKUPS  library is defined and enabled.
+$BackupUsernameCheckCache = TRUE;
 
 // / Dangerous File Definitions
 // / Set  $DangerousFiles  to an array with each element containing a string of a valid file extension.
@@ -73,40 +92,51 @@ $DataEncryption = TRUE;
 $DangerousFiles = array('js', 'php', 'sh', 'exe', 'dll', 'ps1', 'vbs', 'hta', 'py', 'pl', 'flv', 'jar');
 
 // / Security Salts.
-// / Set AT LEAST 4 array elements to use for authenticating operations that require additional security. 
-// / Add additional array elenents will be used where possible, but the first 4 are required. 
+// / Set an array containing four (4) string elements to be used for obscuring authentication-related operations.
+// / You should save a copy of these salts in a safe place. 
+// / You may require these salts to recover data in the event of a catastrophe.
 $Salts = array('fgdsfg!sdhafbde3i85_+#$@%<G345234381234120', '2lw12564165fgdasfsdf585&^e4f1e3djtjthfnb erfsdaf', 
  '><<>?#@$@%$f%^$#$#!$$#@!DFASF #$FERG#$F34f3F$42F34f$f4', '5683bnfrbnd7uh78r34hp9rh437r8g34378734ryh37489ryh347r9');
 
+// / Terms Of Service File
+// / The Terms Of Service File contains the Terms Of Service for your organization.
+// / The contents of this file will be displayed to users upon request.
+$TermsOfServiceFile = 'Documentation/Terms_Of_Service.txt';
+
+// / Privacy Policy File
+// / The Privacy Policy File contains the Privacy Policy for your organization.
+// / The contents of this file will be displayed to users upon request.
+$PrivacyPolicyFile = 'Documentation/Privacy_Policy.txt';
+
 // / Default Theme
 // / Set  $DefaultTheme  to the default Theme to use.
-// / Users can set their own, but this one will be used as default.
+// / Users can set their own theme, but this one will be used as default.
 // / GUIs are stored in /Resources/Themes. Each Theme has its own subdirectory in this folder.
 // / Only administrators can install new Themes, but users can select their own from the ones that are already installed.
 $DefaultTheme = 'DEFAULT';
 
 // / Default Timezone
 // / Set  $DefaultTimezone  to the default timezone to use.
-// / Users can set their own, but this one will be used as default.
+// / Users can set their own timezone, but this one will be used as default.
 // / Uses PHP timezone IDs.
 // / See https://www.php.net/manual/en/timezones.php for more information.
 $DefaultTimezone = 'America/New_York';
 
 // / Default Color Sheme
 // / Set  $DefaultColorScheme  to the default color scheme to use.
-// / Users can set their own, but this one will be used as default.
+// / Users can set their own color scheme, but this one will be used as default.
 $DefaultColorScheme = 'BLUE';
 
 // / Default Font
 // / Set  $DefaultFont  to the default font to use.
-// / Users can set their own, but this one will be used as default.
+// / Users can set their own fonts, but this one will be used as default.
 // / Uses client system fonts. 
 // / If a client does not have the specified font installed the default local system font is used instead. 
 $DefaultFont = 'ARIAL';
 
 // / Default Display Name
 // / Set  $DefaultDisplayName  to the default display name to use.
-// / Users can set their own, but this one will be used as default.
+// / Users can set their own display name, but this one will be used as default.
 // / This is what interative GUI elements like HRAI will refer to the user as by default.
 $DefaultDisplayName = 'Commander';
 
@@ -146,7 +176,8 @@ $DefaultStayLoggedIn = 'ENABLED';
 // / Admins can add their own custom libraries by simply copy/pasting an existing entry and being cautious of the ending '('.
 // / The "DATA" library is used for storing private account related user data & metadata
 // / Set $LibrariesDefault to an array containing all of the default libraries included with this version of HRCloud3.
-$LibrariesDefault = array('DATA', 'MOVIES', 'MUSIC', 'SHOWS', 'CHANNELS', 'DRIVE', 'STREAMS', 'IMAGES', 'DOCUMENTS'); 
+$LibrariesDefault = array('DATA', 'MOVIES', 'MUSIC', 'SHOWS', 'CHANNELS', 'DRIVE', 'BACKUPS', 'STREAMS', 'IMAGES', 'DOCUMENTS'); 
+
 // / Set $Libraries to an array of arrays.
 // / Arrays are formatted as  $Libraries['LIBRARY_NAME', ENABLED/DISABLED(bool), '/path/to/library/directory/']
 $Libraries = array(
@@ -156,6 +187,7 @@ $Libraries = array(
  array('SHOWS', TRUE, '/home/justin/Documents/Projects/DATA/SHOWS/'),
  array('CHANNELS', FALSE, '/home/justin/Documents/Projects/DATA/CHANNELS/'),
  array('DRIVE', TRUE, '/home/justin/Documents/Projects/DATA/DRIVE/'),
+ array('BACKUPS', TRUE, '/home/justin/Documents/Projects/DATA/BACKUPS/'),
  array('STREAMS', FALSE, ''),
  array('IMAGES', FALSE, ''),
  array('DOCUMENTS', FALSE, ''),
