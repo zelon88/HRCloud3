@@ -16,37 +16,90 @@ The Admin Core handles admin related functions like adding/removing users & chan
 
 // / ----------------------------------------------------------------------------------
 // / Make sure the core is loaded.
-if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! adminCore: The requested application is currently unavailable.'.PHP_EOL); 
+if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! adminCore0: The requested application does not support out-of-context execution!'.PHP_EOL); 
 // / ----------------------------------------------------------------------------------
 
 // / ----------------------------------------------------------------------------------
 // / The following code sets the functions for the session.
 
+// / A function to detect information helpful for identifying a client.
+function detectClientinfo() { 
+  $HashedUserAgent = hash('sha256', $_SERVER['HTTP_USER_AGENT']);
+  $ClientIP = $_SERVER['REMOTE_ADDR'];
+ return(array($HashedUserAgent, $ClientIP)); }
+
 // / A function to generate a missing Username Availability Cache file. 
-// / Contains the client IP, client user agent, and timestamp of each non-admin username availability request.
+// / Contains a timestamp, hashed client user agent, & client IP of each non-admin username availability request.
 function generateUserAvailabilityCache($UsernameAvailabilityCacheFile) { 
-  // / Set variables. Note the $UsernameAvailabilityCacheExists is assumed to be false unless it is changed to TRUE.
-  // / If $UserAvailabilityCacheExists returns FALSE, the calling code should assume this function failed.
+  // / Set variables. 
+  global $UACData, $RawTime;
+  $UACData = array(array($RawTime,'',''));
   $UsernameAvailabilityCacheExists = $usernameAvailabilityCacheData = FALSE;
   // / Craft a proper PHP array so it can be written to the User Availability Cache file.
-  $usernameAvailabilityCacheData = '<?php'.PHP_EOL.'$usernameAvailabilityCacheData = array();'.PHP_EOL;
+  $usernameAvailabilityCacheData = '<?php'.PHP_EOL.'$UACData = array(\''.explode('\',\'', $UACData).'\');'.PHP_EOL;
   // / Write default cache data. 
-  $UsernameAvailabilityCacheExists = file_put_contents($UsernameAvailabilityCacheFile, $usernameAvailabilityCacheData);
+  $UsernameAvailabilityCacheCreated = file_put_contents($UsernameAvailabilityCacheFile, $usernameAvailabilityCacheData);
   // / Clean up unneeded memory.
   $usernameAvailabilityCacheData = NULL;
   unset($usernameAvailabilityCacheData); 
-  return($UsernameAvailabilityCacheExists); } 
+  return($UsernameAvailabilityCacheCreated); } 
+
+// / A function to load the Username Availability Cache into memory.
+function loadUserAvailabilityCache($UsernameAvailabilityCacheFile) { 
+  // / Set variables.
+  global $UACData;
+  $UserAvailabilityCacheLoaded = FALSE;
+  // / Load the cache file.
+  $UserAvailabilityCacheLoaded = include($UsernameAvailabilityCacheFile);
+  // / Detect and rewrite a successful return value from the include statement to something predictable.
+  if ($UserAvailabilityCacheLoaded === 1) $UserAvailabilityCacheLoaded = TRUE;
+  return(array($UserAvailabilityCacheLoaded, $UACData)); }
+
+function checkUserAvailabilityCache($UACData) { 
+
+
+}
 
 // / A function to check the availability of a username.
-function checkAvailability($desiredUsername) { 
+function checkUserAvailability($desiredUsername) { 
   // / Set variables. 
   global $Salts, $RootPath, $UserIsAdmin, $AllowUserRegistration, $Users;
-  $UsernameIsAvailable = TRUE;
-  $CheckIsAllowed = $UsernameAvailabilityCacheExists = $UsernameAvailabilityCacheFile = FALSE;
-  // / Define the $usernameAvailabilityCacheFile.
+  $UsernameIsAvailable = $UsernameAvailabilityCacheExists = $UsernameAvailabilityCacheFile = $UsernameAvailabilityCacheCreated = $UserAvailabilityCacheLoaded = FALSE;
+
+  // / Define the Username Availability Cache file.
   $UsernameAvailabilityCacheFile = $RootPath.'Cache'.DIRECTORY_SEPARATOR.'UsernameAvailabilityCache-'.hash('sha256',$Salts[4].'USERNAMEAVAILABILITYCACHE').'.php';
-  // / Only allow the function to continue if the user is an administrator or user registration is enabled in config.php.
-  if ($UserIsAdmin or $AllowUserRegistration) { 
+  // / Check that a user cache file exists. Create one if needed
+  if (!file_exists($UsernameAvailabilityCacheFile)) $UsernameAvailabilityCacheCreated = generateUserAvailabilityCache($UsernameAvailabilityCacheFile);
+  if (file_exists($UsernameAvailabilityCacheFile)) list ($UserAvailabilityCacheLoaded, $UACData) = loadUserAvailabilityCache($UsernameAvailabilityCacheFile);
+
+    // / Verify that all conditions for performing a Username Availability Check have been met.
+    if ($checkIsAllowed) { 
+      // / Iterate through each defined user.
+      foreach ($Users as $user) { 
+        $userName = $user[1];
+        // / Check if the desired username matches the currently selected user.
+        if ($desiredUsername === $UserInput) { 
+          $UsernameIsAvailable = FALSE; 
+          break; } } }
+
+
+// / Check if backups are enabled by config.php & backup the User Availability Cache file if needed.
+if ($DataBackups && $BackupUsernameCheckCache) { 
+  // / Load the data core to make backups possible.
+  if (!in_array('DATA', $CoresLoaded) list ($CoresLoaded, $CoreLoadedSuccessfully) = loadCores('DATA');
+  if (!$CoreLoadedSuccessfully) dieGracefully(18, 'Could not load the data core file (dataCore.php)!', FALSE);
+  else if ($Verbose) logEntry('Loaded the data core file.', FALSE); } 
+  // / Backup the Username Avaiability Cache file.
+  $BackupSuccess = backupFile('CACHE', $BackupUsernameCheckCache);
+  if (!$BackupSuccess) dieGracefully(19, 'Could not backup the usename availability cache file!', FALSE);
+  else if ($Verbose) logEntry('Backed up the username availability cache file.', FALSE); } 
+
+
+          unlink($UsernameAvailabilityCacheFile); 
+          $UsernameAvailabilityCacheExists = generateUserAvailabilityCache($UsernameAvailabilityCacheFile);
+
+  
+
   	
 
   	// / If the user is an administrator we can approve the request without consulting the Username Availibility Cache.
@@ -57,43 +110,21 @@ function checkAvailability($desiredUsername) {
       if (file_exists($UsernameAvailabilityCacheFile) $UsernameAvailabilityCacheExists = TRUE;
       else $UsernameAvailabilityCacheExists = generateUserAvailabilityCache($UsernameAvailabilityCacheFile);
       if ($UsernameAvailabilityCacheExists) { 
-      	// / Check if the Username Availability Cache File is more than 24 hours old.
-        if (time()-filemtime($UsernameAvailabilityCacheFile) > 24 * 3600) { 
-          // / Check if backups are enabled by config.php.
-          if ($DataBackups && $BackupUsernameCheckCache) { 
-          	// / Check if the 'BACKUPS' library is active.
-          	list ($LibraryExists, $LibraryIsActive, $LibraryIsInactive, $LibraryIsCustom, $LibraryIsDefault) = checkLibraryStatus('BACKUPS');
-          	if ($LibraryExists && $LibraryIsActive) backup('CACHE', $UsernameAvailabilityCacheFile)
-            
 
-        }
-          unlink($UsernameAvailabilityCacheFile); 
-          $UsernameAvailabilityCacheExists = generateUserAvailabilityCache($UsernameAvailabilityCacheFile);
+
       }
-    	// / Create a cache file.
-    	  // / Backup Cache File.
-      // / Load the cache file.
-      // / Purge old cache data.
-    	// / Check if backups are enabled.
-      // / Check if the current user is in the cache data.
-      // / Update cache data as needed.
-    	// / Rewrite the data only if changes were made
-      // / Check the date of the cache file.
-    	// / Check if backups are enabled.
-    	  // / Backup cache.
-    	// / Delete cache. 
+      // / -Check if cache exists, create one.
+      // / -Load the cache file.
+      // /   -Check if the current user is in the cache data.
+      // /   -Update cache data as needed.
+      // / --Backup cache file.
+      // / --Delete cache file.
+      // / -Regenerate the cache.
+
 
 
  } 
-    // / Verify that all conditions for performing a Username Availability Check have been met.
-    if ($CheckIsAllowed) { 
-      // / Iterate through each defined user.
-      foreach ($Users as $user) { 
-        $userName = $user[1];
-        // / Check if the desired username matches the currently selected user.
-        if ($desiredUsername === $UserInput) { 
-          $UsernameIsAvailable = FALSE; 
-          break; } }
+
 
       // / 5 attempts in 1 minute, or 10 attempts in 5 minutes, or 15 attempts in 1 hour.
         // / One malicious automated client can burn 10 usernames in 2 minutes but then there is a 3 minute cooldown.
@@ -103,8 +134,8 @@ function checkAvailability($desiredUsername) {
         // / If we limit the attempts to aggressively we will prevent legitimate username creation attempts.
 
 
-    }
-  }
+    
+  
 }
 
 // / A function to add a user.
@@ -130,3 +161,4 @@ function updateMainSource($source) {
 
 }
 // / ----------------------------------------------------------------------------------
+

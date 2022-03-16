@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/18/2019
+Date: 3/15/2022
 <3 Open-Source
 
 The Data Core handles complex bulk data operations like compression/extraction & encryption/decryption.
@@ -17,17 +17,55 @@ Functions are prefaced with DC so they don't collide with other functions of oth
 
 // / ----------------------------------------------------------------------------------
 // / Make sure the core is loaded.
-if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! dataCore: The requested application is currently unavailable.'.PHP_EOL); 
+if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! dataCore0: The requested application does not support out-of-context execution'.PHP_EOL); 
 // / ----------------------------------------------------------------------------------
 
 // / ----------------------------------------------------------------------------------
 // / The following code sets the functions for the session.
 
 // Data Backup specific functions & logic.
-if ($DataBackups) { 
-  function backup($DataType, $Data) { 
 
-}
+// / A function to verify the status of the backup ecosystem. 
+function backupCheck() { 
+  // / Set variables.
+  global $DataBackups;
+  $BackupLoc = $BackupsActive = $LibraryIsSelected = $LibraryName = $LibraryDir = $LibraryContents = $LibraryExists = $LibraryIsActive = $LibraryIsInactive = $LibraryIsCustom = $LibraryIsDefault = FALSE;
+  // / Select the BACKUPS library, if it is active.
+  list ($LibraryIsSelected, $LibraryName, $LibraryDir, $LibraryContents, $LibraryExists, $LibraryIsActive, $LibraryIsInactive, $LibraryIsCustom, $LibraryIsDefault) = selectLibrary('BACKUPS');
+  // / All checks are considered to have passed if the BACKUPS library is active & selected.
+  if ($LibraryExists && $LibraryIsActive && $LibraryIsSelected && $DataBackups) { 
+    $BackupsActive = TRUE;
+    $BackupLoc = $LibraryDir; }
+  return(array($BackupsActive, $BackupLoc)); }
+
+// / A function to backup individual files.
+// / Supported Data Types include:
+// /   'CACHE'
+// /   'USERCACHE'
+// /   'LOG'
+// /   'USERLOG'
+// /   'CONFIG'
+function backupFile($DataType, $Data) { 
+  global $Date;
+  $iterator = 0;
+  $BackupSuccess = FALSE;
+  list ($BackupsActive, $BackupLoc) = backupCheck();
+  if ($BackupsActive) { 
+    if ($DataType === 'CACHE') { 
+      $backupCacheLoc = $BackupLoc.'Cache'.DIRECTORY_SEPARATOR;
+      $dataExtension = '.php.';
+      $dataFile = basename($Data, $dataExtension);
+      $dataFilename = basename($Data);
+      $backupData = $backupCacheLoc.$dataFile.'_'.$Date.'_'.$iterator.$dataExtension;
+      while (file_exists($backupData)) { 
+        $iterator++;
+        $backupData = $backupCacheLoc.$dataFile.'_'.$Date.'_'.$iterator.$dataExtension; }
+      if (file_exists($Data)) copy($Data, $backupData);
+      if (file_exists($backupData)) $BackupSuccess = TRUE;
+    // / Clean up unneeded memory.
+    $backupCacheLoc = $dataExtension = $dataFile = $dataFilename = $backupData = NULL;
+    unset($backupCacheLoc, $dataExtension, $dataFile, $dataFilename, $backupData);
+    return($BackupSuccess); } } }
 
 // / Data Encryption specific functions & logic.
 if ($DataEncryption) { 

@@ -110,6 +110,7 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
           var ClientToken = responseArray[2];
           var StayLoggedIn = responseArray[3];
           setVisibility('passwordModal', 'none');
+          changeContent('successModalHeaderText', 'Login Success');
           toggleVisibility('successModal');
           setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
           changeValue('UserInputTokens', UserInput);
@@ -123,10 +124,12 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
           }
         else { 
           toggleVisibility('passwordModal');
+          changeContent('errorModalHeaderText', 'Login Failed');
           toggleVisibility('errorModal');
           setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
       error: function(passwordResponse) {
           toggleVisibility('passwordModal');
+          changeContent('criticalModalHeaderText', 'Login Error');
           toggleVisibility('criticalModal');
           setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
 // / -----------------------------------------------------------------------------------
@@ -215,12 +218,12 @@ function logout() {
   toggleVisibility('logoutModal'); 
   toggleVisibility('logoutButton'); 
   toggleVisibility('loginButton'); 
+  changeContent('successModalHeaderText', 'Logout Success');
   setVisibility('successModal', 'block'); 
   setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
   changeValue('UserInputTokens', '');
   changeValue('SessionID', '');
   changeValue('ClientToken', '');
   changeValue('ActiveSLI', 'DISABLED');
-  changeValue('StayLoggedIn', StayLoggedIn); 
-}
+  changeValue('StayLoggedIn', StayLoggedIn); }
 // / -----------------------------------------------------------------------------------

@@ -128,7 +128,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         <!-- Username Modal Header -->
         <div id='loginModalHeader' class='modalHeader' name='loginModalHeader'>
           <img id='avatarSmallLogin' class='avatar-small' name='avatarSmallLogin' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
-          <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Username</a>
+          <a id='loginModalHeaderText' class='modalHeaderText' name='loginModalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Username</a>
           <img id='closeButtonLogin' class='closeButton' name='closeButtonLogin' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='toggleVisibility("loginModal");'>
           <img id='helpLogin' class='helpButton' name='helpLogin' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you already have an <?php echo $ApplicationName; ?> account and remember your username; type it into the text field then press the "Continue" button to proceed. If you do not remember your username; press the "Forgot Username" button and follow the instructions to recover your account. If you would like to create a new account; press the "Create Account" button. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.'>
         </div>
@@ -153,7 +153,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         <!-- Password Modal Header -->
         <div id='passwordModalHeader' class='modalHeader' name='passwordModalHeader'>
           <img id='avatarSmallPassword' class='avatar-small' name='avatarSmallPassword' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
-          <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Password</a>
+          <a id='passwordModalHeaderText' class='modalHeaderText' name='passwordModalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Password</a>
           <img id='closeButtonPassword' class='closeButton' name='closeButtonPassword' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='toggleVisibility("passwordModal");'>
           <img id='helpPassword' class='helpButton' name='helpPassword' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you remember your <?php echo $ApplicationName; ?> password; type it into the text field then press the "Continue" button to proceed. If you do not remember your password; press the "Forgot Password" button and follow the instructions to recover your account. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.'>
         </div>
@@ -179,7 +179,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         <!-- Successful Login Modal Header -->
         <div id='successModalHeader' class='modalHeader' name='successModalHeader'>
           <img id='avatarSmallSuccess' class='avatar-small' name='avatarSmallSuccess' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
-          <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Login Success</a>
+          <a id='successModalHeaderText' class='modalHeaderText' name='successModalHeaderText'>Login Success</a>
           <img id='closeButtonSuccess'  class='closeButton' name='closeButtonSuccess' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("successModal");' alt='Close' title='Close Window'>
           <img id='helpSuccess' class='helpButton' name='helpSuccess' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='Your login credentials are valid. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.'>
         </div>
@@ -199,7 +199,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         <!-- Failed Login Modal Header -->
         <div id='errorModalHeader' class='modalHeader' name='errorModalHeader'>
           <img id='warningSmallError' class='warning-small' name='warningSmallError' src='/Resources/Themes/DEFAULT/alert24.png' alt='Alert' title='Alert'>
-          <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Login Failed</a>
+          <a id='errorModalHeaderText' class='modalHeaderText' name='errorModalHeaderText'>Login Failed</a>
           <img id='closeButtonError' class='closeButton' name='closeButtonError' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("errorModal");' alt='Close' title='Close Window'>
           <img id='helpError' class='helpButton' name='helpError' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='Your login credentials are not valid. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.'>
         </div>
@@ -219,7 +219,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         <!-- Critical Login Error Modal Header -->
         <div id='criticalModalHeader' class='modalHeader' name='criticalModalHeader'>
           <img id='errorSmallCritical' class='error-small' name='errorSmallCritical' src='/Resources/Themes/DEFAULT/exclamation24.png' alt='Error' title='Error'>
-          <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Login Error</a>
+          <a id='criticalModalHeaderText' class='modalHeaderText' name='criticalModalHeaderText'>Login Error</a>
           <img id='closeButtonCritical' class='closeButton' name='closeButtonCritical' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("criticalModal");' alt='Close' title='Close Window'>
           <img id='helpCritical' class='helpButton' name='helpCritical' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='An error occurred and your login request could not be completed. Please try again later. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.'>
         </div>
@@ -239,7 +239,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         <!-- Logout Modal Header -->
         <div id='logoutModalHeader' class='modalHeader' name='logoutModalHeader'>
           <img id='avatarSmallLogout' class='avatar-small' name='avatarSmallLogout' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
-          <a id='modalHeaderText' class='modalHeaderText' name='modalHeaderText'>Logout of <?php echo $ApplicationName; ?></a>
+          <a id='logoutModalHeaderText' class='modalHeaderText' name='logoutModalHeaderText'>Logout of <?php echo $ApplicationName; ?></a>
           <img id='closeButtonLogout' class='closeButton' name='closeButtonLogout' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("logoutModal");' alt='Close' title='Close Window'>
           <img id='helpLogout' class='helpButton' name='helpLogout' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='To log out of your <?php echo $ApplicationName; ?> account; press the "Confirm Logout" button. If you log out of your account you will have to login again before you can continue to use <?php echo $ApplicationName; ?>. To stay logged in; press the "Cancel" button. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.'>
         </div>
@@ -260,8 +260,8 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         <!-- Create Account Modal Header -->
         <div id='createAccountModalHeader' class='modalHeader' name='createAccountModalHeader'>
           <img id='avatarSmallLogin' class='avatar-small' name='avatarSmallLogin' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
-          <a id='modalHeaderText' name='modalHeaderText' class='modalHeaderText'>Create A New Account</a>
-          <img src='/Resources/Themes/DEFAULT/x24.png' id='closeButtonCreate' name='closeButtonCreate' onclick='toggleVisibility("createAccountModal"); cancelAvailability();' alt='Close' title='Close Window' class='closeButton'>
+          <a id='createModalHeaderText' class='modalHeaderText' name='createModalHeaderText'>Create A New Account</a>
+          <img id='closeButtonCreate' class='closeButton' name='closeButtonCreate' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("createAccountModal"); cancelAvailability();' alt='Close' title='Close Window'>
           <img id='helpCreate' class='helpButton' name='helpCreate' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='Enter a desired username into the field, then press "Continue" to check if that username is available. Once you have entered an available username you will be able to complete the login process by entering your email address & desired password. To close this window; press the red "X" icon in the top-right corner of the window.'>
         </div>
         <!-- Create Account Modal Message Container -->
@@ -300,4 +300,4 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
   <!-- These scripts are loaded at the end of the page to allow the entire page to load before introducing additional functionality. -->
   <script type='text/javascript' src='/Resources/sjcl.js'></script>
   <script type='text/javascript' src='/Resources/HRC3-Lib.js'></script>
-  <script type='text/javascript' src='/Resources/Login-Caller.js'></script>
+  <script type='text/javascript' src='/Resources/Themes/DEFAULT/Login-Caller.js'></script>

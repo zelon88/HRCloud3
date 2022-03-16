@@ -6,7 +6,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/4/2021
+Date: 3/15/2021
 <3 Open-Source
 
 This plain text file contains descriptions of all the native error messages contained in or produced by the HRCloud3 Diablo engine. These descriptions should 
@@ -45,7 +45,7 @@ ERROR MESSAGE
   ERROR!!! 0, Could not process the Configuration file (config.php)!
 
 FILE
-  /core.php
+  /adminCore.php
 
 LOG LEVEL
   NONE
@@ -55,6 +55,42 @@ ERROR DESCRIPTION
   This may be the result of incorrect file permission levels on the installation directory or config.php file.
   This may be the result of incorrect user or group associations for the www-data user or group.
   This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! dataCoere0: The requested application does not support out-of-context execution!
+
+FILE
+  /dataCoere.php
+
+LOG LEVEL
+  NONE
+
+ERROR DESCRIPTION
+  The dataCoere.php is a component of the Diablo Engine and cannot support execution outside the context of the Diablo Engine core.php file.
+  This may be the result of running the adninCore.php file improperly, such as via a command line interpreter or directly via an internet browser.
+  In practice, no user or admin should ever have to call, execute, or visit the dataCoere.php file directly. All requests should be directed to core.php instead.
+  The core.php file has built in mechanisms for validating, activating, and loading the dataCoere.php file. 
+  If you are making requests to core.php file and receiving this error, the installation has probably become corrupt. 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! adminCore0: The requested application does not support out-of-context execution!
+
+FILE
+  /adminCore.php
+
+LOG LEVEL
+  NONE
+
+ERROR DESCRIPTION
+  The adminCore.php is a component of the Diablo Engine and cannot support execution outside the context of the Diablo Engine core.php file.
+  This may be the result of running the adninCore.php file improperly, such as via a command line interpreter or directly via an internet browser.
+  In practice, no user or admin should ever have to call, execute, or visit the adminCore.php file directly. All requests should be directed to core.php instead.
+  The core.php file has built in mechanisms for validating, activating, and loading the adminCore.php file. 
+  If you are making requests to core.php file and receiving this error, the installation has probably become corrupt. 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -155,7 +191,7 @@ LOG LEVEL
   SYSTEM
 
 ERROR DESCRIPTION
-  There are internal PHP errors. Hardware damage, compromise or software corruption that are preventing execution.
+  There are internal PHP errors. Hardware damage, compromise or software corruption that is preventing execution.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -372,4 +408,58 @@ ERROR DESCRIPTION
   The user is sending requests to the wrong destination file on the server.
   The core.php file is damaged or corrupt.
   The server is being fuzzed, improperly sandboxed, or scanned for vulnerabilities.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 18, <TIMESTAMP>, Could not load the data core file fiile (dataCore.php)!
+
+FILE
+  /adminCore.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The dataCore.php file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
+  This may be the result of incorrect file permission levels on the installation directory or dataCore.php file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 19, <TIMESTAMP>, Could not backup the user availability cache file!
+
+FILE
+  /adminCore.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The User Availability Cache file located in the Cache directory which is required for brute force protection is missing or unreachable.
+  In order for this message to be displayed, DataBackups must be enabled in config.php.
+  In order for backups to work, the BACKUPS library must be enabled and the directory must be set to a valid & writable path in config.php.
+  This may be the result of incorrect file permission levels on the installation directory or User Availability Cache file.
+  This may be the result of incorrect file permission levels on the BACKUPS library directory specified in config.php.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 20, <TIMESTAMP>, Could not load the admin core file fiile (adminCore.php)!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The adminCore.php file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
+  This may be the result of incorrect file permission levels on the installation directory or adminCore.php file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------

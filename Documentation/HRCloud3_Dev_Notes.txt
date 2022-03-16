@@ -1,6 +1,28 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+3/15/2022
+v0.8.6 - Working on Username Availability Cache & Checks.
+
+-Things are getting fun because there are a lot of core files in the oven, so to speak. 
+-It's like Thanksgiving, but for code!
+-Added $RawTime variable to verifyDate() which contains the time in seconds since Unix epoch.
+-Added error messages & documentation for ERROR 18, 19, & 20.
+-Added a bunch of functions to adminCore.php, dataCore.php, and core.php.
+-Have figured out good code structure for detecting/bringing up a new core.
+-Added checkLibraryStatus() function to core.php for quickly determining the status of a given library by name.
+-checkLibraryStatus() is more comprehensive than libCheck() but not as fast.
+-Added error messages for out-of-context core execution.
+-Added some JS to adjust the modal header text to be more appropriate when logging out. This will prove useful later.
+-Added $UsernameAvailabilityRequest and $DesiredUsername return values to the verifyGlobal() function to accomodate username requests.
+-The code in dataCore.php and especially adminCore.php is pretty rough at the moment and probably have syntax errors.
+-Moved Login-Caller.js from the Resources directory to Resources/Themes/DEFAIULT, considering it contains a lot of theme-specific code.
+-Login-Caller.js still has a lot of re-usable code for other themes, mainly the name of HTML elements.
+-Maybe I should break Login-Caller down again? Maybe the Login-Caller.js in the Themes folder should only contain Theme specific code?
+-Maybe everything that is left could be stuffed in HRC3-Lib.js or another UI-centric file that is non-theme dependant.
+-Maybe Login-Caller.js should be renamed now that it is in the Themes folder. 
+
+----------
 3/14/2022
 v0.8.5 - Working on New User Account Creation process.
 
@@ -15,7 +37,6 @@ v0.8.5 - Working on New User Account Creation process.
 -Add config entries for Privacy Policy and Terms Of Service files in config.php for storing an organizations policies that the UI can display.
 -Removed 'Data' folder from $RequiredDirs and also deleted it from the repo.
 -Revise $LastMinute & $NextMinute detection & accomodation.
--Added checkLibraryStatus() function to core.php for quickly determining the status of a given library by name.
 
 ----------
 2/21/2022

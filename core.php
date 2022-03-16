@@ -94,8 +94,10 @@ function sanitize($Variable, $Strict) {
   return (array($Variable, $VariableIsSanitized)); }
 
 // / A function to set the date and time for internal logic like file cleanup.
-// / Set variables. 
 function verifyDate() { 
+// / Set variables. 
+  // / Set the raw time, in seconds since the Unix epoch.
+  $RawTime = time();
   // / Set an abbreviated date that can be used in filenames.
   $Date = date("m-d-y");
   // / Set a full human readable date that can be appended to individual log lines.
@@ -107,7 +109,7 @@ function verifyDate() {
   // / Detect & accomodate rollover minutes.
   if ($LastMinute <= 1) $LastMinute = 60;
   if ($NextMinute > 60) $NextMinute = 1;
-  return(array($Date, $Time, $Minute, $LastMinute)); }
+  return(array($RawTime, $Date, $Time, $Minute, $LastMinute)); }
 
 // / A function to generate and validate the operational environment for the Diablo Engine.
 function verifyInstallation() { 
@@ -147,11 +149,12 @@ function verifyInstallation() {
   return(array($LogFile, $CacheFile, $InstallationIsVerified)); }
 
 // / A function to initialize global variables to default values.
-function initializeVariables() {
+function initializeVariables() { 
+  // / Set variables. 
+  global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $TokenIsValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions, $ServerToken, $OldServerToken, $UsernameAvailabilityRequest;
   $UserOptionCount = $ucCount = 0;
-  global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $TokenIsValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions, $ServerToken, $OldServerToken;
   // / Initialize all required sanity checks to FALSE.
-  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $TokenIsValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = $key = FALSE;
+  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $TokenIsValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = $key = $UsernameAvailabilityRequest = FALSE;
   // / Initialize all required user options to NULL.
   list ($UserCacheArrayData, $UserCacheRequiredOptions) = generateDefaultUserCacheData();
   $ucCount = count($UserCacheRequiredOptions);
@@ -170,12 +173,13 @@ function initializeVariables() {
 // / $LibCheck returns FALSE if the input library is not active.
 // / $DesiredLibrary returns the array index of the desired library if it is active.
 // / $DesiredLibrary returns FALSE if the desired library is not active.
+// / This function is faster but less comprehensive than the checkLibraryStatus() function.
 function libCheck($library) { 
   // / Set variables. 
   global $LibrariesActive;
   $lib = $key = $LibCheck = $DesiredLibrary = FALSE;
   // / Check that the $LibrariesActive variable has been defined, that it is the proper type, & that the desired library is present in the array.
-  if (isset($LibrariesActive)) if (is_array($LibrariesActive)) foreach ($LibrariesActive as $key => $lib) if ($lib[0] === 'DATA') { 
+  if (isset($LibrariesActive)) if (is_array($LibrariesActive)) foreach ($LibrariesActive as $key => $lib) if ($lib[0] === $library) { 
       $LibCheck = TRUE; 
       $DesiredLibrary = $key; 
       break; } 
@@ -290,7 +294,7 @@ function loadCores($coresToLoad) {
 
 // / A function to check that the platform is running a consistent version.
 // / Checks that the $EngineVersionInfo variable in 'versionInfo.php' matches the $EngineVersion variable in 'compatibilityCore.php'.
-function checkVersionInfo() {
+function checkVersionInfo() { 
   // / Set variables.
   global $CoresLoaded, $EngineVersion, $RootPath;
   $VersionsMatch = FALSE;
@@ -308,7 +312,8 @@ function checkVersionInfo() {
   return($VersionsMatch); }
 
 // / A function to determine if the supplied session is valid.
-function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken) {
+function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken) { 
+  // / Set variables. 
   global $Users, $Salts, $Minute, $LastMinute;
   // / Set variables.
   $SessionIsVerified = $SessionID = $oldSessionID = $oldSessionIDA = $user = FALSE;
@@ -335,8 +340,16 @@ function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClien
 // / A function to validate and sanitize requried session and POST variables.
 function verifyGlobals() { 
   // / Set variables. 
-  $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = FALSE;
-  $UserDir = '';
+  $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = $UsernameAvailabilityRequest = FALSE;
+  $UserDir = $DesiredUsername = '';
+  // / This code triggers the Username Availability Request process.
+  // / Username Availability Requests are expensive for the server to perform.
+  // / They also leak which usernames are taken, which is a tool used by malicious actors to enumerate a Diablo Engine user list.
+  // / To prevent this from happening, requests for username availability are cached. 
+  // / Clients who request too many usernames in a short amount of time will be blacklisted for a short time.
+  if (isset($_POST['NewUserInput'])) { 
+    $UsernameAvailabilityRequest = TRUE;
+    $DesiredUsername = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['NewUserInput'])); }
   // / This code triggers the authentication process.
   // / This code is performed when a user submits enough credentials & tokens to start a new session.
   // / There is a structure to how inputs are processed.
@@ -377,7 +390,7 @@ function verifyGlobals() {
     if (isset($_POST['UserDir'])) $_SESSION['UserDir'] = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['UserDir']));
     if (!isset($_SESSION['UserDir']) or $_SESSION['UserDir'] == '') $_SESSION['UserDir'] = DIRECTORY_SEPARATOR; 
     $UserDir = $_SESSION['UserDir']; }
-  return(array($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified)); }
+  return(array($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername)); }
 
 // / A function to throw the login page when needed.
 function requireLogin() { 
@@ -414,7 +427,8 @@ function getClientTokens($UserInput, $Old) {
   return($ClientToken); } 
 
 // / A function to generate new server tokens.
-function generateServerToken() {
+function generateServerToken() { 
+  // / Set variables. 
   global $Minute, $LastMinute, $Salts, $ServerToken, $OldServerToken;
   $ServerToken = NULL;
   $TokenIsValid = FALSE;
@@ -474,7 +488,7 @@ function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $C
         $_SESSION['ClientTokenInput'] = $ClientTokenInput = $ClientToken;
         $UserEmail = $user[2];
         $PasswordIsCorrect = $AuthIsComplete = $SessionIsVerified = TRUE;
-        if ($PasswordIsCorrect) list ($UserID, $UserInput, $PasswordInput, $sessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $sessionIsVerified) = verifyGlobals();
+        if ($PasswordIsCorrect) list ($UserID, $UserInput, $PasswordInput, $sessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $sessionIsVerified, $usernameAvailabilityRequest, $DesiredUsername) = verifyGlobals();
         // / Here we grant the user their designated permissions.
         if (is_bool($user[4])) { 
           $UserIsAdmin = $User[4]; 
@@ -512,6 +526,7 @@ function generateUserLogs($UserID) {
 // / A function to define the default $UserCacheData used as $arrayData in generateUserCache and loadUserCache. 
 // / Without this function this data would need to be hard-coded.
 function generateDefaultUserCacheData() { 
+  // / Set variables. 
   global $UserCacheRequiredOptions, $UserCacheArrayData, $DefaultColorScheme, $DefaultFont, $DefaultTimezone, $DefaultDisplayName, $DefaultTips, $DefaultTheme, $DefaultHRAI, $DefaultHRAIAudio, $DefaultLandingPage, $DefaultStayLoggedIn;
   // / Define the default data for a fresh installation of the $UserCacheFile.
   // / This is specially encoded to be written in a machine-readable .php file that will be included in generateUserCache().
@@ -544,6 +559,7 @@ function generateUserCache($UserID) {
 
 // / A function to format a modified user cache array so that it can be safely re-written to the user cache file without causing syntax errors.
 function updateUserCacheData() { 
+  // / Set variables. 
   global $UserOptions;
   // / Define the default data for a fresh installation of the $UserCacheFile.
   // / This is specially encoded to be written in a machine-readable .php file that will be included in generateUserCache().
@@ -616,9 +632,7 @@ function loadUserCache() {
 function loadLibraries() { 
   // / Set variables. Note the default libraries that can be used as filters later in the application.
   global $Libraries, $LibrariesDefault;
-  $LibrariesActive = array();
-  $LibrariesInactive = array();
-  $LibrariesCustom = array();
+  $LibrariesActive = $LibrariesInactive = $LibrariesCustom = array();
   // / Iterate through each library specified in config.php.
   foreach ($Libraries as $Library) { 
     // / If the array is not part of the default libraries it is assumed to be a custom library.
@@ -658,9 +672,12 @@ function loadLibraryData() {
 // / A function to check the status of a given library.
 // / Accepts a string as the only input.
 // / Will compare the string against the names of all libraries.
+// / This function is slower but more comprehensive than the libCheck() function.
 function checkLibraryStatus($library) { 
+  // / Set variables.
   global $LibrariesActive, $LibrariesInactive, $LibrariesCustom, $LibrariesDefault;
   $LibrraryExists = $LibraryIsActive = $LibraryIsInactive = $LibraryIsCustom = $LibraryIsDefault = $libA = $libB = $libC = $libD = FALSE;
+  // / Iterate through each category & flag the categories where the supplied library appears.
   foreach ($LibrariesActive as $libA) if ($libA[0] === $library) $LibraryExists = $LibraryIsActive = TRUE;
   foreach ($LibrariesInactive as $libB) if ($libB[0] === $library) $LibraryExists = $LibraryIsInactive = TRUE;
   foreach ($LibrariesCustom as $libC) if ($libC[0] === $library) $LibraryExists = $LibraryIsCustom = TRUE;
@@ -669,6 +686,30 @@ function checkLibraryStatus($library) {
   $libA = $libB = $libC = $libD = $library = NULL;
   unset($libA, $libB, $libC, $libD, $library); 
   return(array($LibraryExists, $LibraryIsActive, $LibraryIsInactive, $LibraryIsCustom, $LibraryIsDefault)); }
+
+// / A function to set specific variables for a specified library.
+function selectLibrary($library) {
+  // / Set variables. 
+  $lib = array('', '', '', '');
+  $libName = $LiberaryIsSelected = $LibraryName = $LibraryDir = $LibraryContents = $LibraryExists = $LibraryIsActive = $LibraryIsInactive = $LibraryIsCustom = $LibraryIsDefault = FALSE;
+  // / Determine the status of the supplied library.
+  list ($LibraryExists, $LibraryIsActive, $LibraryIsInactive, $LibraryIsCustom, $LibraryIsDefault) = checkLibraryStatus($library);
+  // / Make sure the supplied library is valid to ensure that it can be selected.
+  if ($LibraryExists && $LibraryIsActive) { 
+    // / Iterate through the list of active libraries looking for the supplied one.
+    foreach ($LibrariesActive as $lib) { 
+      $libName = $lib[0];
+      // / If we find a match we set library specific variables for this library.
+      if ($libName === $library) { 
+        $LibraryName = $libName;
+        $LibraryDir = $lib[2];
+        $LibraryContents = $lib[3]; 
+        $LibraryIsSelected = TRUE; 
+        break; } } }
+  // / Clean up unneeded memory.
+  $lib = $libName = NULL;
+  unset($lib, $libName); 
+  return (array($LibraryIsSelected, $LibraryName, $LibraryDir, $LibraryContents, $LibraryExists, $LibraryIsActive, $LibraryIsInactive, $LibraryIsCustom, $LibraryIsDefault)); }
 
 // / A function to determine if a notifications file exists for the current user and generate one if missing.
 // / A notification is considered a single line of the notifications file.
@@ -699,6 +740,7 @@ function loadNotifications() {
 // / NOTE: If a notification entry begins with a single character of whitespace, the notification is "unread." 
 // / Example:     [date]["TAB"][notification]
 function decodeNotification($Notification) { 
+  // / Set variables. 
   $NotificationDate = $NotificationContent = FALSE;
   // / Please note that the whitespace in the "explode" below is actually a TAB character!
   // / Also sanitize the $Notification before loading it.
@@ -772,7 +814,7 @@ function sendEmail($address, $content, $template) {
 set_time_limit(0);
 
 // / This code verifies the date & time for file & log operations.
-list ($Date, $Time, $Minute, $LastMinute) = verifyDate();
+list ($RawTime, $Date, $Time, $Minute, $LastMinute) = verifyDate();
 
 // / This code verifies the integrity of the application.
 // / Also generates required directories in case they are missing & creates required log & cache files.
@@ -797,7 +839,7 @@ else if ($Verbose) logEntry('Loaded cache file.', FALSE);
 
 // / This code takes in all required inputs to build a session and ensures they exist & are a valid type.
 // / If the globals cannot be verified, but the user is trying to login we will show them a login form.
-list ($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified) = verifyGlobals();
+list ($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername) = verifyGlobals();
 if (!$GlobalsAreVerified) if ($RequestTokens && $UserInput === NULL) requireLogin(); 
 else if ($Verbose) logEntry('Verified global variables.', FALSE);
 
@@ -880,7 +922,14 @@ if ($SessionIsVerified) {
   // / This code loads the user cache file containing the user specific settings configuration into memory.
   list ($UserOptions, $UserCacheExists) = loadUserCache();
   if (!$UserCacheExists) dieGracefully(15, 'Could not load the user cache file!', TRUE);
-  else if ($Verbose) logEntry('Loaded user cache file.', TRUE);
+  else if ($Verbose) logEntry('Loaded user cache file.', TRUE); }
 
-   }
+// / This code is performed when a user submits an Username Availability Request
+// / Only approve  a username availability request if the user is an administrator or user registration is enabled in config.php.
+if ($UsernameAvailabilityRequest) if ($UserIsAdmin or $AllowUserRegistration) { 
+  // / Load the admin core to make user availability request proccessing possible.
+  if (!in_array('ADMIN', $CoresLoaded)) list ($CoresLoaded, $CoreLoadedSuccessfully) = loadCores('ADMIN');
+  if (!$CoreLoadedSuccessfully) dieGracefully(20, 'Could not load the admin core file (adminCore.php)!', FALSE);
+  else if ($Verbose) logEntry('Loaded the admin core file.', FALSE); } 
+
 // / -----------------------------------------------------------------------------------
