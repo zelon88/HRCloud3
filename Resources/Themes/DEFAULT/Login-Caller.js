@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/14/2022
+Date: 3/18/2022
 <3 Open-Source
 
 This file is for negotiating login requests & processing the response from the server.
@@ -103,7 +103,7 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
       data: $(this).serialize(),
       success: function(passwordResponse) {
         var passwordCorrect = !passwordResponse.includes('ERROR!!!');
-        if (passwordCorrect) { 
+        if (passwordCorrect && passwordResponse !== '') { 
           var responseArray = passwordResponse.split(',');
           var UserInput = responseArray[0];
           var SessionID = responseArray[1];
@@ -123,9 +123,8 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
           StayLoggedInCaller(); 
           }
         else { 
-          toggleVisibility('passwordModal');
           changeContent('errorModalHeaderText', 'Login Failed');
-          toggleVisibility('errorModal');
+          setVisibility('errorModal', 'block');
           setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
       error: function(passwordResponse) {
           toggleVisibility('passwordModal');
@@ -175,32 +174,35 @@ function StayLoggedInSender() {
 // / On any error; This function will display an error message under the NewUserInput field.
 function checkAvailability(desiredUsername) {
   $(function () {
-    $.ajax({
-      type: 'POST',
-      url: '/core.php',
-      data: {
-        NewUserInput: desiredUsername,
-        CheckUserAvailability: 'ENABLED', },
-      success: function(checkAvailabilityResponse) { 
-        if (checkAvailabilityResponse.includes('FALSE')) { 
-          setVisibility('checkResultsFailure', 'block'); }
-        else { 
-          setVisibility('checkResultsFailure', 'none');
-          setVisibility('checkResultsSuccess', 'block');
-          setVisibility('createAccountDetails', 'block');
-          setVisibility('NewUserInput', 'none');
-          setVisibility('checkButton', 'none'); 
-          setVisibility('NewUserName', 'inline-block');
-          changeValue('NewUserName', desiredUsername);
-        } },
-      error: function(checkAvailabilityResponse) { 
-        toggleVisibility('checkResultsFailure'); } }); }); } 
+    if (desiredUsername !== '') { 
+      $.ajax({
+        type: 'POST',
+        url: '/core.php',
+        data: {
+          NewUserInput: desiredUsername,
+          CheckUserAvailability: 'ENABLED', },
+        success: function(checkAvailabilityResponse) { 
+          if (checkAvailabilityResponse.includes('DENIED')) { 
+            setVisibility('checkResultsDenied', 'block'); }
+          if (checkAvailabilityResponse.includes('NOT AVAILABLE')) { 
+            setVisibility('checkResultsFailure', 'block'); }
+          if (checkAvailabilityResponse == 'AVAILABLE') { 
+            setVisibility('checkResultsFailure', 'none');
+            setVisibility('checkResultsSuccess', 'block');
+            setVisibility('createAccountDetails', 'block');
+            setVisibility('NewUserInput', 'none');
+            setVisibility('checkButton', 'none'); 
+            setVisibility('NewUserName', 'inline-block');
+            changeValue('NewUserName', desiredUsername); } },
+        error: function(checkAvailabilityResponse) { 
+          toggleVisibility('checkResultsFailure'); } }); } }); } 
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
 // / A function to reset the Create Account modal to defaults when the process is abandoned.
 // / Re-sets the UI elements so that the process restarts at the beginning.
 function cancelAvailability() {
+  setVisibility('checkResultsDenied', 'none');
   setVisibility('checkResultsFailure', 'none');
   setVisibility('checkResultsSuccess', 'none');
   setVisibility('createAccountDetails', 'none');
@@ -226,4 +228,20 @@ function logout() {
   changeValue('ClientToken', '');
   changeValue('ActiveSLI', 'DISABLED');
   changeValue('StayLoggedIn', StayLoggedIn); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to display the Terms Of Service file when a user clicks the tosButton.
+// / Opens the Terms Of Service file in a fixed window.
+function openTOS(termsOfServiceFile) { 
+  window.open('/' + termsOfServiceFile,'Terms Of Service','resizable,height=800,width=600'); 
+  return false; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to display the Privacy Policy file when a user clicks the tosButton.
+// / Opens the Terms Of Service file in a fixed window.
+function openPP(privacyPolicyFile) { 
+  window.open('/' + privacyPolicyFile,'Privacy Policy','resizable,height=800,width=600'); 
+  return false; }
 // / -----------------------------------------------------------------------------------

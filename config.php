@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/14/2022
+Date: 3/18/2022
 <3 Open-Source
 
 The Configuration File contains all of the critical settings required for Diablo to run on the server.
@@ -24,6 +24,31 @@ $ApplicationName = 'HRCloud3';
 // / Set  $AllowUserRegistration  to  TRUE  if you want to allow visitors to create new accounts.
 // / Set  $AllowUserRegistration  To  FALSE  if you do not want to allow visitors to create new accounts.
 $AllowUserRegistration = TRUE;
+
+// / Set User Availability Request Hit Thresholds
+// / Only takes effect if  $AllowUserRegistration  is also set to TRUE.
+// / Set  $UAHitThresholds[0]  to number of Username Availability requests allowed in  $UATimeThresholds[0].
+// / Default for  $UAHitThresholds[0]  is 6. 
+// / Set  $UAHitThreshold[1]  to number of Username Availability requests allowed in  $UATimeThresholds[1].
+// / Default for  $UAHitThreshold[1]  is 12. 
+// / Set  $UAHitThresholds[2]  to number of Username Availability requests allowed in  $UATimeThresholds[2].
+// / Default for  $UAHitThresholds[2]  is 18. 
+// / All values must be integers. Higher values mean more requests will be allowed.
+$UAHitThresholds = array(6, 12, 18);
+
+// / Set User Availability Request Time Thresholds
+// / Only takes effect if  $AllowUserRegistration  is also set to TRUE.
+// / Set  $UAHitThresholds[0]  to number of seconds to wait before forgetting recent Username Availability requests.
+// / Default for  $UAHitThresholds[0]  is 60. 
+// / The application will allow  $UAHitThresholds[0]  Username Availability Requests in  $UATimeThresholds[0]  seconds.
+// / Set  $UAHitThresholds[1]  to number of seconds to wait before forgetting somewhat recent Username Availability requests.
+// / Default for  $UAHitThresholds[1]  is 900. 
+// / The application will allow  $UAHitThresholds[1]  Username Availability Requests in  $UATimeThresholds[1]  seconds.
+// / Set  $UAHitThresholds[2]  to number of seconds to wait before forgetting not recent Username Availability requests.
+// / Default for  $UAHitThresholds[2]  is 3600. 
+// / The application will allow  $UAHitThresholds[2]  Username Availability Requests in  $UATimeThresholds[2]  seconds.
+// / All values must be integers. Higher values mean longer cooldown between denied Username Availability Requests.
+$UATimeThresholds = array(60, 900, 3600);
 
 // / Maintenance Mode
 // / Set  $MaintenanceMode  to  TRUE  if you want to prevent execution of the Diablo Engine.
@@ -106,6 +131,7 @@ $TermsOfServiceFile = 'Documentation/Terms_Of_Service.txt';
 // / Privacy Policy File
 // / The Privacy Policy File contains the Privacy Policy for your organization.
 // / The contents of this file will be displayed to users upon request.
+// / This path should be relative to the installation directory.
 $PrivacyPolicyFile = 'Documentation/Privacy_Policy.txt';
 
 // / Default Theme
@@ -198,15 +224,15 @@ $Libraries = array(
 // / Super Admin Users.
 // / Users are treated as objects. Users added here have global admin powers that cannot be changed via the GUI.
 // / Users added through the GUI after initial setup are contained in the cache.
-// / Arrays are formatted as  $Users['USER_ID', 'USER_NAME', 'USER_EMAIL', 'SHA-256_HASHED_PASSWORD', "ADMIN_YES/NO(bool)", "LAST_SESION_ID"]
+// / Arrays are formatted as  $Users['USER_ID', 'USER_NAME', 'USER_EMAIL', 'SHA-256_HASHED_PASSWORD', 'ADMIN_YES/NO(bool)', 'LAST_SESION_ID']
 $Users = array(
  array('1', 'zelon88', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'TRUE', ""), // Default Passwords are all 'password'
- array('2', 'Nikki', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ""), 
- array('3', 'Leo', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ""), 
- array('4', 'Raph', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ""), 
- array('5', 'Mikey', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ""), 
- array('6', 'Donny', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ""),
- array('7', 'test', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', "") );
+ array('2', 'Nikki', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ''), 
+ array('3', 'Leo', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ''), 
+ array('4', 'Raph', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ''), 
+ array('5', 'Mikey', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ''), 
+ array('6', 'Donny', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ''),
+ array('7', 'test', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', '') );
 
 // / Available Cores.
 // / The following array specifies which corefiles are permitted to load within the platform. 

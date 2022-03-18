@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/14/2022
+Date: 3/18/2022
 <3 Open-Source
 
 This CSS file determines the stylesheet for popup modals.
@@ -83,3 +83,6 @@ This CSS file determines the stylesheet for popup modals.
 
 .textInput { 
   padding: 10px; }
+
+.tosText { 
+  font: 0.8rem/1.0rem Arial, sans-serif; }

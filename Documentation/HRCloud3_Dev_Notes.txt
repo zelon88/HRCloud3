@@ -1,6 +1,35 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+3/18/2022
+v0.8.8 - Workin on Login/Register/Modals UI elements.
+
+-Cleaned up the design system a little bit, improve consistency across modals.
+-Eventually we will probably have to write a "modal generator" for dynamicly creataed modals.
+-Added animations to the create account modals. 
+  -When a username is available the modal expands and the remaining form elements woosh into view.
+-Added blank form valiidation to NewUserInput on client side.
+-Added blank response handling to password modal jquery code in Login-Caller.js.
+-Made it so the password modal no longer disappears on incorrect password responses.
+  -This makes logging in more convinient as a false password no longer has to reclick login and reenter username.
+-Added Privacy Policy and Terms Of Service links to all login boxes that accept user input.
+  -TOS and PP links are defined in config.php.
+  -By default config.php points to Terms_Of_Service.txt and Privacy_Policy.txt located in the Documentation directory.
+  -These text files can be replaced with HTML if desired, just remember to update config.php with the new location.
+  -The Terms_Of_Service.txt and Privacy_Policy.txt files that come with this application so far are blank placeholders.
+  -Remember to modify these text files to paste in the actual TOS and PP for your organization!
+-Thinking about limiting the number of login attempts (password entry) in the same way as limited username availability requests.
+  -Still on the fence.
+-Added config.php variables to control the time threshold and hit threshold for the User Availability Request process.
+  -This will allow organizations with fleets of identical computers to raise the thresholds as required to avoid getting errors.
+  -Initially the thresholds were hard coded until all the bugs were worked out, then I made them strings in the config file.
+  -But then I realized there were a bunch of strings, and everything else uses arrays (like $Salts for example). 
+  -So I reformatted the strings in config.php to arrays instead and I am much more happy with the result.
+  -It is my only hope that regular users will understand the intent, as it sounds complicated when you put it on paper but the idea is simple.
+-Added PHP code to header.html that will remove the Create Account process from the UI when the $AllowUserRegistration variable is set to FALSE.
+-Need to focus on creating the rest of the Create Account logic.
+
+----------
 3/17/2022
 v0.8.7 - Finally have working Username Availability Requests!
 
@@ -12,6 +41,7 @@ v0.8.7 - Finally have working Username Availability Requests!
   -DENIED
 -If the username is blank the core will simply not respond. 
   -The Username Availability Request process will not even start at the core level, in core.php. 
+  -This made me go back and modify the authenticate() to deny blank userrnames as a matter of policy.
 -Javascript validation should be done in the UI to make sure a blank username isn't submitted by accident.
 -Once the request is complete the application stops executing more code, to reduce exposure to compromise.
 -Now I just need to incorporate the response into the UI.
@@ -52,7 +82,8 @@ v0.8.5 - Working on New User Account Creation process.
 -Working on UI for New User Registration.
 -Need to add user creation logic to adminCore.php
 -We need a mechanism to track number of requests in a short time period and deny users who abuse the check availability feature.
--I'm thinking a php cache file that contains an array with index of timestamp->client_IP. Each entry in the array is a usernname availability check.
+-I'm thinking a php cache file that contains an array with index of timestamp->client_IP. 
+  -Each entry in the array is a usernname availability check.
 -Before a check is made the array is loaded and old entries are scrubbed.
 -Remaining entries are tallied and if the requesting IP has greater than X requests then do not conduct the availability check.
 -This will limit the number of checks that one client can perform.
@@ -145,7 +176,8 @@ v0.7.6 - Working on guiCore, adding core functionality.
   -Iframes sidescroll, only one object tall.
   -Iframes should be outputted via PHP functions and contained in widgets.
   -Authentication levels for widgets are coded into the widget themselves.
-  -That way widgets can be made for unauthenticated users for things that don't need auth. Like converting one-time files or outputting server analytics or marketing.
+  -That way widgets can be made for unauthenticated users for things that don't need auth. 
+    -Like converting one-time files or outputting server analytics or marketing.
 -Refactored getFiles() in guiCore.php pretty heavily.
 -Add Applications and Widgets folders to verifyInstallation() in core.php.
 -Need to add code in core.php to create a cache file to store the order that guiElements are displayed in.
@@ -163,7 +195,7 @@ v0.7.5 - UI Playground time!
 -Refactor some of the existing guiCore functions.
 -I think I want to have semi-static html files in a subfolder of /Resources.
   -This way the UI will be completely modular.
-  -Each .html file in the /Resources/Themes folder can be wrapped in a PHP conditional that controls when and which html code actually gets displayed.
+  -Each .html file in the /Resources/Themes folder can be wrapped in a PHP conditional that controls the html code that gets displayed.
 -Add missing and new errors to Error_Descriptions.txt.
 -Fix bug in Login-Caller.js that would make logging in impossible if your username is "ERROR".
 -Add mechanism to set default values to generated user cache files before first logon. 
@@ -193,7 +225,7 @@ v0.7.4 - Finish automated token submission, fix login UI elements.
     -If supplied credentials are valid; execution continues and the users UI is populated with a hidden form containing login data.
     -If supplied credentials are not valid; execution is deferred and sensitive memory is null'ed and unset.
     -Now that the user has logged in they submit their hidden login data with every request.
-  -Continued requests trigger a loop in verifySession() which is called by verifyGlobals() to iterates through the userlist to calculate the SessionID for the supplied user.
+  -Continued requests trigger a loop in verifySession() which is called by verifyGlobals() to iterate through the userlist to calculate the SessionID for the supplied user.
     -If the SessionID supplied is valid, further authentication is deferred.
 -Moved a lot of stuff around in header.html and Login-Caller.js.
 

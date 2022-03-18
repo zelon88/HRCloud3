@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/14/2022
+Date: 3/18/2022
 <3 Open-Source
 
 The Admin Core handles admin related functions like adding/removing users & changing global settings.
@@ -62,7 +62,7 @@ function checkUserAvailabilityCache($UACData, $HashedUserAgent, $ClientIP) {
   // / Set variables. 
   // / Note that $checkValid and $IntegrityCheck are initialized to FALSE and that $subCheck is initialized to TRUE.
   // / All checks are considered to have passed if $checkValid and $subCheck are TRUE at the end of all loops.
-  global $RawTime;
+  global $RawTime, $UAHitThresholds, $UATimeThresholds;
   $hitCountOne = $hitCountTwo = $hitCountThree = 0;
   $checkValid = $startTime = $endTime = $timeDifference = $IntegrityCheck = FALSE; 
   $subCheck = $UsernameAvailabilityPermissionGranted = TRUE;
@@ -87,25 +87,25 @@ function checkUserAvailabilityCache($UACData, $HashedUserAgent, $ClientIP) {
           $timeDifference = $endTime - $startTime;
           
           // / Count the number of requests that have taken place within the past 60 seconds.
-          if ($timeDifference <= 60) { 
+          if ($timeDifference <= $UATimeThresholds[0]) { 
             $hitCountOne++;
             // / If there have been more than 3 requests in 60 seconds, deny this request.
-            if ($hitCountOne > 3) $UsernameAvailabilityPermissionGranted = FALSE; }
+            if ($hitCountOne > $UAHitThresholds[0]) $UsernameAvailabilityPermissionGranted = FALSE; }
           
           // / Count the number of requests that have taken place within the past 600 seconds.
-          if ($timeDifference > 60 && $timeDifference <= 600) { 
+          if ($timeDifference > $UATimeThresholds[0] && $timeDifference <= $UATimeThresholds[1]) { 
             $hitCountTwo++;
             // / If there have been more than 10 requests in 600 seconds, deny this request.
-            if ($hitCountTwo > 10) $UsernameAvailabilityPermissionGranted = FALSE; }
+            if ($hitCountTwo > $UAHitThresholds[1]) $UsernameAvailabilityPermissionGranted = FALSE; }
           
-          // / Count the number of requests that have taken place within the past 6,000 seconds.
-          if ($timeDifference > 601 && $timeDifference < 6000) { 
+          // / Count the number of requests that have taken place within the past 3,600 seconds.
+          if ($timeDifference > $UATimeThresholds[1] && $timeDifference <= $UATimeThresholds[2]) { 
             $hitCountThree++;
-            // / If there have been more than 15 requests in 6,000 seconds, deny this request.
-            if ($hitCountThree > 15) $UsernameAvailabilityPermissionGranted = FALSE; }
+            // / If there have been more than 15 requests in 3,600 seconds, deny this request.
+            if ($hitCountThree > $UAHitThresholds[2]) $UsernameAvailabilityPermissionGranted = FALSE; }
 
           // / Remove any entries that are older than 6,001 seconds.
-          if ($timeDifference > 6001) { 
+          if ($timeDifference > $UATimeThresholds[2]) { 
             $uacLine[$uacKey] = NULL; 
             unset($uacLine[$uacKey]); } } } } } 
   // / Consolidate all sanity checks performed into one to ensure they all passed.

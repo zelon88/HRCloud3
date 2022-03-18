@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/15/2022
+Date: 3/17/2022
 <3 Open-Source
 
 The Data Core handles complex bulk data operations like compression/extraction & encryption/decryption.

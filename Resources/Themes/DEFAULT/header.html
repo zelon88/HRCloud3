@@ -124,7 +124,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     <!-- The Username Modal -->
     <div id='loginModal' class='modal' name='loginModal'>
       <!-- Username Modal Content. -->
-      <form id='loginFormNav' class='modalContent animate' name='loginFormNav' method='POST' target='noredirect'>
+      <div id='loginNav' class='modalContent animate' name='loginNav'>
         <!-- Username Modal Header -->
         <div id='loginModalHeader' class='modalHeader' name='loginModalHeader'>
           <img id='avatarSmallLogin' class='avatar-small' name='avatarSmallLogin' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
@@ -134,22 +134,28 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         </div>
         <!-- Username Modal Message Container -->
         <div id='loginContainer' name='loginContainer' style='text-align:center;'>
-          <input type='text' id='UserInput' class='textInput' name='UserInput' title='Enter your <?php echo $ApplicationName; ?> username.' placeholder='Enter Username' value='' required>
-          <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
-          <button id='submitButton' class='BUTTON_1' name='submitButton'  title='Proceed with login.' style='margin:10px;'>Continue</button>
-          <br />
-          <hr />
+          <form id='loginFormNav' name='loginFormNav' method='POST' target='noredirect'>
+            <input type='text' id='UserInput' class='textInput' name='UserInput' title='Enter your <?php echo $ApplicationName; ?> username.' placeholder='Enter Username' value='' required>
+            <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
+            <button id='submitButton' class='BUTTON_1' name='submitButton'  title='Proceed with login.' style='margin:10px;'>Continue</button>
+            <br />
+            <hr />
+          </form>
           <button type='button' id='forgotUsernameButton' class='BUTTON_1' name='forgotUsernameButton' onclick='' title='Recover an account with a forgotten username.' style='margin:10px;'>Forgot Username</button>
+<?php if ($AllowUserRegistration) { ?>
           <button type='button' id='createAccountButton' class='BUTTON_1' name='createAccountButton' onclick='toggleVisibility("loginModal"); toggleVisibility("createAccountModal");' title='Create a new <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Create New Account</button>
+<?php } ?>
+          <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
           <br />
         </div>
-      </form>
+      </div>
     </div>
 
     <!-- The Password Modal -->
     <div id='passwordModal' class='modal' name='passwordModal'>
       <!-- Password Modal Content. -->
-      <form id='passwordFormNav' class='modalContent animate' name='passwordFormNav' method='POST' target='noredirect'>
+      <div id='passwordNav' class='modalContent animate' name='passwordNav'>
         <!-- Password Modal Header -->
         <div id='passwordModalHeader' class='modalHeader' name='passwordModalHeader'>
           <img id='avatarSmallPassword' class='avatar-small' name='avatarSmallPassword' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
@@ -159,17 +165,21 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         </div>
         <!-- Password Modal Message Container -->
         <div id='passwordContainer' name='passwordContainer' style='text-align:center;'>
-          <input type='password' placeholder='Enter Password' id='RawPassword' name='RawPassword' title='Enter your <?php echo $ApplicationName; ?> password.' style='padding: 10px;' required>
-          <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' value='' required>
-          <input type='hidden' id='PasswordInput' name='PasswordInput' value='' required>
-          <input type='hidden' id='UserInputPassword' name='UserInput' value='' required>
-          <button id='submitButton' onclick='secureLogin(document.getElementById("RawPassword").value);' class='BUTTON_1' title='Proceed with login.' style='margin:10px;'>Continue</button>
-          <br />
-          <hr />
+          <form id='passwordFormNav' name='passwordFormNav' method='POST' target='noredirect'>
+            <input type='password' placeholder='Enter Password' id='RawPassword' name='RawPassword' title='Enter your <?php echo $ApplicationName; ?> password.' style='padding: 10px;' required>
+            <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' value='' required>
+            <input type='hidden' id='PasswordInput' name='PasswordInput' value='' required>
+            <input type='hidden' id='UserInputPassword' name='UserInput' value='' required>
+            <button id='submitButton' onclick='secureLogin(document.getElementById("RawPassword").value);' class='BUTTON_1' title='Proceed with login.' style='margin:10px;'>Continue</button>
+            <br />
+            <hr />
+          </form>
           <button type='button' class='BUTTON_1' title='Recover an account with a forgotten password.' style='margin:10px;'>Forgot Password</button>
+          <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
           <br />
         </div>
-      </form>
+      </div>
     </div>
 
     <!-- The Successful Login Modal -->
@@ -249,10 +259,13 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
           <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
           <button id='logoutConfirmButton' onclick='logout();' class='BUTTON_1' title='Log out of your <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Confirm Logout</button>
           <br />
+          <hr />
+          <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
         </div>
       </div>
     </div>
-
+<?php if ($AllowUserRegistration) { ?>
     <!-- The Create Account Modal -->
     <div id='createAccountModal' class='modal' name='createAccountModal'>
       <!-- Create Account Modal Content. -->
@@ -271,21 +284,28 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
             <button id='checkButton' class='BUTTON_1' name='checkButton' onclick='checkAvailability(document.getElementById("NewUserInput").value);' title='Check username availability.' style='margin:10px;'>Check Username Availability</button>
             <input type='text' id='NewUserName' name='NewUserName' title='Your selected <?php echo $ApplicationName; ?> username.' value='' style='display:none; padding: 10px;' required disabled>
             <br />
-            <p id='checkResultsSuccess' name='checkResultsSuccess' style='display:none; margin-top:10px;'>Congratulations! The desired username is <b>available</b>!</p>
-            <p id='checkResultsFailure' name='checkResultsFailure' style='display:none; margin-top:10px;'>Sorry! The desired username is <b>not available</b>.</p>
-            <div id='createAccountDetails' name='createAccountDetails' style='display:none;'>
-              <hr />
+            <p id='checkResultsSuccess' class='animate' name='checkResultsSuccess' style='display:none; margin-top:10px;'>Congratulations! The desired username is <b>available</b>!</p>
+            <p id='checkResultsFailure' class='animate' name='checkResultsFailure' style='display:none; margin-top:10px;'>Sorry! The desired username is <b>not available</b>.</p>
+            <p id='checkResultsDenied' class='animate' name='checkResultsDenied' style='display:none; margin-top:10px;'>Sorry! You have exceeded the allowed number of username requests per client. <b>Please try again later</b>.</p>
+            <div id='createAccountDetails' class='animate' name='createAccountDetails' style='display:none;'>
+              <br />
               <input type='text' placeholder='Enter Your Email Address' id='NewUserEmail' name='NewUserEmail' title='Enter your email address.' style='padding: 10px;' required>
               <input type='password' placeholder='Enter Desired Password' id='NewUserPassword' name='NewUserPassword' title='Enter desired password.' style='padding: 10px;' required>
               <input type='password' placeholder='Re-Enter Desired Password' id='NewUserPasswordConfirm' name='NewUserPasswordConfirm' title='Enter desired password.' style='padding: 10px;' required>
+              <br />
+              <input type='checkbox' id='agreeToTerms' class='tosText' name='agreeToTerms' title='You must agree to the Terms Of Service & Privacy Policy in order to create a new account.' value='AGREE' required>
+              <label id='agreeToTermsLabel' class='tosText' name='agreeToTermsLabel' title='You must agree to the Terms Of Service & Privacy Policy in order to create a new account.' for='agreeToTerms'> I agree to the Terms Of Service & Privacy Policy.</label>
               <button id='createSubmitButton'class='BUTTON_1' name='createSubmitButton' onclick='createAccount();' title='Proceed with account creation.' style='margin:10px;'>Create Account</button>
               <br />
             </div>
           </form>
+          <hr />
+          <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
         </div> 
       </div>
     </div>
-
+<?php } ?>
   </div>
 
   <!-- Hidden Login Form For Storing Keep-Alive Variables -->
