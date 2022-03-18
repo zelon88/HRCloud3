@@ -1,6 +1,29 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+3/17/2022
+v0.8.7 - Finally have working Username Availability Requests!
+
+-The username availability cach/approve/check procedure works. 
+-Users who request too many usernames too quickly will find that their request is denied.
+-There are three responses the server can make to a properly crafted Username Availability Request.
+  -AVAILABLE
+  -NOT AVAILABLE
+  -DENIED
+-If the username is blank the core will simply not respond. 
+  -The Username Availability Request process will not even start at the core level, in core.php. 
+-Javascript validation should be done in the UI to make sure a blank username isn't submitted by accident.
+-Once the request is complete the application stops executing more code, to reduce exposure to compromise.
+-Now I just need to incorporate the response into the UI.
+-I also want to finish getting the TOS/Privacy Policy links from config.php onto the login modal dynamically. 
+-That is probably going to ben next, after the new account request process is complete.
+-Forgot to increment the versionInfo.php and compatibilityCore.php files last time, my bad.
+-This has the downside of not being able to distinguish between multiple different users coming from identical machines.
+  -Like a school or large organization.
+  -I think the best way to fix this is with adjustable duration variables in config.php.
+  -If we rely on anything that comes from the header we open oursselves up for user spoofing or crafted requests/cache file.
+
+----------
 3/15/2022
 v0.8.6 - Working on Username Availability Cache & Checks.
 

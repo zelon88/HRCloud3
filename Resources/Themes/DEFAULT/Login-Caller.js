@@ -179,7 +179,7 @@ function checkAvailability(desiredUsername) {
       type: 'POST',
       url: '/core.php',
       data: {
-        UserInput: desiredUsername,
+        NewUserInput: desiredUsername,
         CheckUserAvailability: 'ENABLED', },
       success: function(checkAvailabilityResponse) { 
         if (checkAvailabilityResponse.includes('FALSE')) { 

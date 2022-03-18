@@ -151,10 +151,10 @@ function verifyInstallation() {
 // / A function to initialize global variables to default values.
 function initializeVariables() { 
   // / Set variables. 
-  global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $TokenIsValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions, $ServerToken, $OldServerToken, $UsernameAvailabilityRequest;
+  global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $TokenIsValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions, $ServerToken, $OldServerToken, $UsernameAvailabilityRequest, $UserIsAdmin;
   $UserOptionCount = $ucCount = 0;
   // / Initialize all required sanity checks to FALSE.
-  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $TokenIsValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = $key = $UsernameAvailabilityRequest = FALSE;
+  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $TokenIsValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = $key = $UsernameAvailabilityRequest = $UserIsAdmin = FALSE;
   // / Initialize all required user options to NULL.
   list ($UserCacheArrayData, $UserCacheRequiredOptions) = generateDefaultUserCacheData();
   $ucCount = count($UserCacheRequiredOptions);
@@ -479,6 +479,8 @@ function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $C
     $UserID = $user[0];
     // / Continue ONLY if the $UserInput matches a valid $UserName.
     if ($user[1] === $UserInput) { 
+      // / If the UserInput is blank, we don't even bother checking it.
+      if ($UserInput === '') break; 
       $_SESSION['UserInput'] = $UserName = $user[1];
       // / Continue ONLY if all tokens match and the password hash is correct.
       if ($ServerToken.$ClientToken.$user[3] === $ServerToken.$ClientTokenInput.$PasswordInput) {
@@ -646,17 +648,19 @@ function loadLibraries() {
 
 // / A function to read the data from the supplied array of libraries and load their contents.
 function loadLibraryData() {
-  // / Set variables. Note that we assume the function is a success unless an iteration of the loop changes $LibraryDataIsLoaded to FALSE.
+  // / Set variables. 
   global $LibrariesActive;
-  $LibraryDataIsLoaded = TRUE;
+  $LibraryDataIsLoaded = FALSE;
   $LibraryError = FALSE;
   // / Validate the library location for each library.
-  foreach ($LibrariesActive as $LibraryActive) {
+  foreach ($LibrariesActive as $key => $LibraryActive) {
     // / Check that the selected library is actually supposed to be activated.
     if ($LibraryActive[1]) { 
       // / Check that the libraray data directory exists. 
       // / If the libraray data directory exists we scan its contents to an array at $LibraryActive[3]. 
-      if (file_exists($LibraryActive[2])) $LibraryActive[3] = scandir($LibraryActive[2]); 
+      if (file_exists($LibraryActive[2])) { 
+        $LibraryDataIsLoaded = TRUE;
+        $LibrariesActive[$key][3] = scandir($LibraryActive[2]); }
       // / If the library data directory does not exist, we set the error to $LibraryActive[2] and $LibraryDataIsLoaded to FALSE.
       else { 
         $LibraryDataIsLoaded = FALSE;
@@ -664,9 +668,10 @@ function loadLibraryData() {
     // / If the selected library is not supposed to be activated, we set the $LibraryError to $LibraryActive[1] & $LibraryDataIsLoaded to FALSE.
     else { 
       $LibraryDataIsLoaded = FALSE;
-      $LibraryError = $LibraryActive[0]; }
-    // / Stop validating as soon as an error is thrown.
-    if (!$LibraryDataIsLoaded) break; }
+      $LibraryError = $LibraryActive[0]; } }
+  // / Clean up unneeded memory.
+  $key = NULL;
+  unset($key); 
   return(array($LibraryError, $LibraryDataIsLoaded)); }  
 
 // / A function to check the status of a given library.
@@ -691,6 +696,7 @@ function checkLibraryStatus($library) {
 function selectLibrary($library) {
   // / Set variables. 
   $lib = array('', '', '', '');
+  global $LibrariesActive;
   $libName = $LiberaryIsSelected = $LibraryName = $LibraryDir = $LibraryContents = $LibraryExists = $LibraryIsActive = $LibraryIsInactive = $LibraryIsCustom = $LibraryIsDefault = FALSE;
   // / Determine the status of the supplied library.
   list ($LibraryExists, $LibraryIsActive, $LibraryIsInactive, $LibraryIsCustom, $LibraryIsDefault) = checkLibraryStatus($library);
@@ -926,10 +932,28 @@ if ($SessionIsVerified) {
 
 // / This code is performed when a user submits an Username Availability Request
 // / Only approve  a username availability request if the user is an administrator or user registration is enabled in config.php.
-if ($UsernameAvailabilityRequest) if ($UserIsAdmin or $AllowUserRegistration) { 
+if ($UsernameAvailabilityRequest) if ($DesiredUsername !== '') if ($UserIsAdmin or $AllowUserRegistration) { 
+  // / Output a log entry detailing the start of a Username Availability Request.
+  if ($Verbose) logEntry('Initiating a username availability request.', FALSE); 
+
   // / Load the admin core to make user availability request proccessing possible.
   if (!in_array('ADMIN', $CoresLoaded)) list ($CoresLoaded, $CoreLoadedSuccessfully) = loadCores('ADMIN');
   if (!$CoreLoadedSuccessfully) dieGracefully(20, 'Could not load the admin core file (adminCore.php)!', FALSE);
-  else if ($Verbose) logEntry('Loaded the admin core file.', FALSE); } 
+  else if ($Verbose) logEntry('Loaded the admin core file.', FALSE); 
 
+  // / Check if the username is available.
+  list ($UsernameAvailabilityPermissionGranted, $UsernameIsAvailable) = checkUserAvailability($DesiredUsername);
+  if ($UsernameAvailabilityPermissionGranted) { 
+    if ($UsernameIsAvailable) {
+      if ($Verbose) logEntry('The desired username is AVAILABLE.', FALSE);  
+      echo('AVAILABLE'); }
+    if (!$UsernameIsAvailable) {
+      if ($Verbose) logEntry('The desired username is NOT AVAILABLE.', FALSE); 
+      echo('NOT AVAILABLE'); } } 
+  else { 
+    if ($Verbose) logEntry('The username availability request cannot be performed at this time.', FALSE);
+    echo('DENIED'); }
+  if ($Verbose) logEntry('The username availability request is complete.', FALSE);
+  // / Stop executing code once a username availability request has been fulfilled.
+  die(); }
 // / -----------------------------------------------------------------------------------

@@ -429,7 +429,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 19, <TIMESTAMP>, Could not backup the user availability cache file!
+  ERROR!!! 19, <TIMESTAMP>, Could not backup the username availability cache file!
 
 FILE
   /adminCore.php
@@ -460,6 +460,105 @@ LOG LEVEL
 ERROR DESCRIPTION
   The adminCore.php file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
   This may be the result of incorrect file permission levels on the installation directory or adminCore.php file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 21, <TIMESTAMP>, Could not create a username availability cache file!
+
+FILE
+  /adminCore.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  This may be the result of incorrect file permission levels on the installation directory or User Availability Cache file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 22, <TIMESTAMP>, Could not load the username availability cache file!
+
+FILE
+  /adminCore.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  This may be the result of incorrect file permission levels on the installation directory or User Availability Cache file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 23, <TIMESTAMP>, Could not validate the username availability cache file!
+
+FILE
+  /adminCore.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The Username Availability Cache file has become corrupt.
+  In case of corruption the Username Availability Cache file can be deleted.
+  If deleted, all cached data regarding previous Username Availability Requests will be lost and reset.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 24, <TIMESTAMP>, Could not update the username availability cache file!
+
+FILE
+  /adminCore.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  This may be the result of incorrect file permission levels on the installation directory or User Availability Cache file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 25, <TIMESTAMP>, Could not perform the username availability check!
+
+FILE
+  /adminCore.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The Username Availability Cache file has become corrupt.
+  In case of corruption the Username Availability Cache file can be deleted.
+  If deleted, all cached data regarding previous Username Availability Requests will be lost and reset.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 26, <TIMESTAMP>, Could not recreate a username availability cache file!
+
+FILE
+  /adminCore.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  This may be the result of incorrect file permission levels on the installation directory or User Availability Cache file.
   This may be the result of incorrect user or group associations for the www-data user or group.
   This could be because HRCloud3 is running on an unsupported operating system or PHP version.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
