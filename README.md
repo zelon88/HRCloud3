@@ -7,4 +7,4 @@ When complete, this one package should be a self contained installation capable 
 
 Feel free to contribute!
 
-**[Join us on Slack!](https://join.slack.com/t/honestrepair/shared_invite/zt-15jd9y01x-5tPNbaWwui4rJ~WsKqjZsg)
+**[Join us on Slack!](https://join.slack.com/t/honestrepair/shared_invite/zt-15jd9y01x-5tPNbaWwui4rJ~WsKqjZsg)**
