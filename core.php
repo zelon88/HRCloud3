@@ -151,10 +151,11 @@ function verifyInstallation() {
 // / A function to initialize global variables to default values.
 function initializeVariables() { 
   // / Set variables. 
-  global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $TokenIsValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions, $ServerToken, $OldServerToken, $UsernameAvailabilityRequest, $UserIsAdmin;
+  global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $TokenIsValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions, $ServerToken, $OldServerToken, $UsernameAvailabilityRequest, $UserIsAdmin, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $DesiredUsername, $NewUserEmail, $AgreeToTerms, $NewUserPassword, $NewUserPasswordConfirm;
   $UserOptionCount = $ucCount = 0;
+  $DesiredUsername = '';
   // / Initialize all required sanity checks to FALSE.
-  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $TokenIsValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = $key = $UsernameAvailabilityRequest = $UserIsAdmin = FALSE;
+  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $TokenIsValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = $key = $UsernameAvailabilityRequest = $UserIsAdmin = $UsernameAvailabilityResponseNeeded = $NewAccountRequest = $NewUserEmail = $AgreeToTerms = $NewUserPassword = $NewUserPasswordConfirm = FALSE;
   // / Initialize all required user options to NULL.
   list ($UserCacheArrayData, $UserCacheRequiredOptions) = generateDefaultUserCacheData();
   $ucCount = count($UserCacheRequiredOptions);
@@ -340,16 +341,29 @@ function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClien
 // / A function to validate and sanitize requried session and POST variables.
 function verifyGlobals() { 
   // / Set variables. 
-  $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = $UsernameAvailabilityRequest = FALSE;
+  $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = $UsernameAvailabilityRequest = $UsernameAvailabilityResponseNeeded = $NewAccountRequest = $NewUserEmail = $AgreeToTerms = $NewUserPassword = $NewUserPasswordConfirm = FALSE;
   $UserDir = $DesiredUsername = '';
   // / This code triggers the Username Availability Request process.
   // / Username Availability Requests are expensive for the server to perform.
   // / They also leak which usernames are taken, which is a tool used by malicious actors to enumerate a Diablo Engine user list.
   // / To prevent this from happening, requests for username availability are cached. 
   // / Clients who request too many usernames in a short amount of time will be blacklisted for a short time.
-  if (isset($_POST['NewUserInput'])) { 
-    $UsernameAvailabilityRequest = TRUE;
+  if (isset($_POST['NewUserInput']) && isset($_POST['CheckUserAvailability'])) { 
+    $UsernameAvailabilityRequest = $UsernameAvailabilityResponseNeeded = TRUE;
     $DesiredUsername = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['NewUserInput'])); }
+  // / This code triggers the New Account Request process.
+  // / New Account Request processes are potentially hazardous as they require that the core handle & store a lot of user input.
+  // / They also leak which usernames are taken, which is a tool used by malicious actors to enumerate a Diablo Engine user list.
+  // / To prevent this from happening, requests for new accounts are cached using the Username Availability Request process.
+  // / The New Account Request process requires the user is not already blacklisted by the Username Availability Request process. 
+  if (isset($_POST['NewUserName']) && isset($_POST['CreateNewAccount']) && isset($_POST['NewUserEmail']) && isset($_POST['AgreeToTerms']) && isset($_POST['NewUserPassword']) && isset($_POST['NewUserPasswordConfirm'])) if ($_POST['AgreeToTerms'] === 'AGREE') if ($_POST['NewUserPassword'] !== '') if ($_POST['NewUserPassword'] === $_POST['NewUserPasswordConfirm']) { 
+    $UsernameAvailabilityRequest = $NewAccountRequest = TRUE;
+    $UsernameAvailabilityResponseNeeded = FALSE;
+    $DesiredUsername = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['NewUserName']));
+    $NewUserEmail = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['NewUserEmail']));
+    $AgreeToTerms = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['AgreeToTerms']));
+    $NewUserPassword = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['NewUserPassword']));
+    $NewUserPasswordConfirm = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['NewUserPasswordConfirm'])); }
   // / This code triggers the authentication process.
   // / This code is performed when a user submits enough credentials & tokens to start a new session.
   // / There is a structure to how inputs are processed.
@@ -370,7 +384,7 @@ function verifyGlobals() {
   // / When no authentication credentials are supplied all related variables are initialized to NULL.
   else $UserInput = $ClientTokenInput = $PasswordInput = NULL;
   // / This code is performed when a user submits tokens and a session ID via POST request to continue an existing session.
-  if (isset($_POST['UserInput']) && isset($_POST['SessionID']) && isset($_POST['ClientTokenInput'])) { 
+  if (isset($_POST['UserInput']) && isset($_POST['SessionID']) && isset($_POST['ClientTokenInput'])) if ($_POST['UserInput'] !== '') { 
     $_SESSION['UserInputName'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['UserInput']));
     $_SESSION['SessionIDInput'] = $SessionIDInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['SessionID']));
     $_SESSION['ClientTokenInput'] = $ClientTokenInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['ClientTokenInput']));
@@ -382,7 +396,7 @@ function verifyGlobals() {
     if ($SessionIsVerified) $GlobalsAreVerified = TRUE; }
   // / Check if the user is attempting to login & prepare variables required to generate ClientTokens.
   // / This code is performed when a user requests tokens to begin the login process.
-  if (isset($_POST['RequestTokens']) && isset($_POST['UserInput'])) {
+  if (isset($_POST['RequestTokens']) && isset($_POST['UserInput'])) if ($_POST['UserInput'] !== '') {
     $_SESSION['UserInput'] = $UserInput = str_replace(str_split('|\\/~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['UserInput']));
     $RequestTokens = TRUE; }
   if ($SessionType === 'POST' or $SessionID === 'SESSION') { 
@@ -390,7 +404,7 @@ function verifyGlobals() {
     if (isset($_POST['UserDir'])) $_SESSION['UserDir'] = str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"\''), ' ', trim($_POST['UserDir']));
     if (!isset($_SESSION['UserDir']) or $_SESSION['UserDir'] == '') $_SESSION['UserDir'] = DIRECTORY_SEPARATOR; 
     $UserDir = $_SESSION['UserDir']; }
-  return(array($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername)); }
+  return(array($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $NewUserEmail, $AgreeToTerms, $NewUserPassword)); }
 
 // / A function to throw the login page when needed.
 function requireLogin() { 
@@ -490,15 +504,15 @@ function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $C
         $_SESSION['ClientTokenInput'] = $ClientTokenInput = $ClientToken;
         $UserEmail = $user[2];
         $PasswordIsCorrect = $AuthIsComplete = $SessionIsVerified = TRUE;
-        if ($PasswordIsCorrect) list ($UserID, $UserInput, $PasswordInput, $sessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $sessionIsVerified, $usernameAvailabilityRequest, $DesiredUsername) = verifyGlobals();
+        if ($PasswordIsCorrect) list ($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $sessionIsVerified, $usernameAvailabilityRequest, $desiredUsername, $usernameAvailabilityResponseNeeded, $newAccountRequest, $newUserEmail, $agreeToTerms, $newUserPassword) = verifyGlobals();
         // / Here we grant the user their designated permissions.
         if (is_bool($user[4])) { 
           $UserIsAdmin = $User[4]; 
           // / Once we authenticate a user we no longer need to continue iterating through the user list, so we stop.
           break; } } } }
   // / Clean up unneeded memory.
-  $sessionIsVerified = $user = $userID = NULL;
-  unset($sessionIsVerified, $user, $userID);
+  $sessionIsVerified = $usernameAvailabilityRequest = $desiredUsername = $usernameAvailabilityResponseNeeded = $newAccountRequest = $newUserEmail = $agreeToTerms = $newUserPassword = $user = $userID = NULL;
+  unset($sessionIsVerified, $usernameAvailabilityRequest, $desiredUsername, $usernameAvailabilityResponseNeeded, $newAccountRequest, $newUserEmail, $agreeToTerms, $newUserPassword, $user, $userID);
   // / Cleanup sensitive memory only if is it not required to complete authentication.
   // / This code should only fire if the user login credentials were incorrect.
   if (!$PasswordIsCorrect && !$SessionIsVerified) cleanupSensitiveMemory();
@@ -845,7 +859,7 @@ else if ($Verbose) logEntry('Loaded cache file.', FALSE);
 
 // / This code takes in all required inputs to build a session and ensures they exist & are a valid type.
 // / If the globals cannot be verified, but the user is trying to login we will show them a login form.
-list ($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername) = verifyGlobals();
+list ($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $NewUserEmail, $AgreeToTerms, $NewUserPassword) = verifyGlobals();
 if (!$GlobalsAreVerified) if ($RequestTokens && $UserInput === NULL) requireLogin(); 
 else if ($Verbose) logEntry('Verified global variables.', FALSE);
 
@@ -919,7 +933,8 @@ if ($RequestTokens && !$SessionIsVerified) {
   echo($UserInput.','.getClientTokens($UserInput, FALSE)); 
   if ($Verbose) logEntry('User requested tokens for login.', FALSE); }
 
-// / This code is performed once all authentication processes are complete and a session has been created.
+// / This code returns keep alive tokens to the user.
+// / It is performed once all authentication processes are complete and a session has been created.
 if ($SessionIsVerified) { 
   // / Return user name, sessionID, and client token when requested.
   // / Used to continue an automatically expiring session.
@@ -930,8 +945,8 @@ if ($SessionIsVerified) {
   if (!$UserCacheExists) dieGracefully(15, 'Could not load the user cache file!', TRUE);
   else if ($Verbose) logEntry('Loaded user cache file.', TRUE); }
 
-// / This code is performed when a user submits an Username Availability Request
-// / Only approve  a username availability request if the user is an administrator or user registration is enabled in config.php.
+// / This code is performed when a user submits an Username Availability Request.
+// / Only approve  a Username Availability Request if the user is an administrator or user registration is enabled in config.php.
 if ($UsernameAvailabilityRequest) if ($DesiredUsername !== '') if ($UserIsAdmin or $AllowUserRegistration) { 
   // / Output a log entry detailing the start of a Username Availability Request.
   if ($Verbose) logEntry('Initiating a username availability request.', FALSE); 
@@ -941,19 +956,18 @@ if ($UsernameAvailabilityRequest) if ($DesiredUsername !== '') if ($UserIsAdmin 
   if (!$CoreLoadedSuccessfully) dieGracefully(20, 'Could not load the admin core file (adminCore.php)!', FALSE);
   else if ($Verbose) logEntry('Loaded the admin core file.', FALSE); 
 
-  // / Check if the username is available.
-  list ($UsernameAvailabilityPermissionGranted, $UsernameIsAvailable) = checkUserAvailability($DesiredUsername);
-  if ($UsernameAvailabilityPermissionGranted) { 
-    if ($UsernameIsAvailable) {
-      if ($Verbose) logEntry('The desired username is AVAILABLE.', FALSE);  
-      echo('AVAILABLE'); }
-    if (!$UsernameIsAvailable) {
-      if ($Verbose) logEntry('The desired username is NOT AVAILABLE.', FALSE); 
-      echo('NOT AVAILABLE'); } } 
-  else { 
-    if ($Verbose) logEntry('The username availability request cannot be performed at this time.', FALSE);
-    echo('DENIED'); }
+  // / Check if the username is available & provide a response to the Username Availability Request if needed.
+  list ($UsernameAvailabilityPermissionGranted, $UsernameIsAvailable) = checkUserAvailability($DesiredUsername, $UsernameAvailabilityResponseNeeded);
+
   if ($Verbose) logEntry('The username availability request is complete.', FALSE);
-  // / Stop executing code once a username availability request has been fulfilled.
-  die(); }
+  // / Stop executing code unless the user indends to continue the New Account Creation process.
+  if (!$NewAccountRequest) die(); }
+
+// / The following code is performed when a user submits a New Account Request.
+// / Only approve a New Account Request after a successful Username Availability Request has been approved.
+if ($NewAccountRequest && $UsernameAvailabilityRequest && $UsernameAvailabilityPermissionGranted && $UsernameIsAvailable) { 
+
+
+
+}
 // / -----------------------------------------------------------------------------------

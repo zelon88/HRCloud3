@@ -2,6 +2,18 @@ HRCLOUD3 DEV NOTES
 ----------
 
 3/18/2022
+v0.8.9 - Workin on New Account Creation process.
+
+-Streamlined the Username Availability Request code in core.php
+  -The code to trigger the request is now non-blocking when a NewUserRequest is also in process.
+  -The code to trigger the request is now more consistent with the rest of the logic code in core.php.
+-Offloaded some code to adminCore.php.
+  -Specifically the code to display the results which now lives in the respondUserAvailabilityRequest() function.
+  -To avoid the function being used maliciously, it takes no input from arguments. Only global variables. 
+  -Also added an argument to the checkAvailability() function to determine if results should be displayed.
+
+----------
+3/18/2022
 v0.8.8 - Workin on Login/Register/Modals UI elements.
 
 -Cleaned up the design system a little bit, improve consistency across modals.

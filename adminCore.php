@@ -139,6 +139,7 @@ function updateUserAvailabilityCache($UsernameAvailabilityCacheFile, $UACData, $
   unset($uacEntry, $usernameAvailabilityCacheData); 
   return($UsernameAvailabilityCacheUpdated); }
 
+// / A function to perform the actual check to see if the desired username is already in the user list.
 function performUserAvailabilityCheck($desiredUsername) { 
   // / Set variables. 
   global $Users;
@@ -166,7 +167,7 @@ function performUserAvailabilityCheck($desiredUsername) {
 // / These calculations assume that the bot tries userenames constantly with no break in between attempts.
 // / A 10 bot botnet would be able to burn 100 usernames in the first 2 minutes, but the cooldown would also burn bots.
 // / If we limit the attempts to aggressively we will prevent legitimate username creation attempts.
-function checkUserAvailability($desiredUsername) { 
+function checkUserAvailability($desiredUsername, $UsernameAvailabilityResponseNeeded) { 
   // / Set variables. 
   global $Verbose, $Salts, $RootPath, $UserIsAdmin, $AllowUserRegistration, $Users, $DataBackups, $BackupUsernameCheckCache, $CoresLoaded;
   $UACData = '';
@@ -224,11 +225,29 @@ function checkUserAvailability($desiredUsername) {
   	list ($ArrayCheck, $UsernameIsAvailable) = performUserAvailabilityCheck($desiredUsername);
     if (!$ArrayCheck) dieGracefully(25, 'Could not perform the username availability check!', FALSE);
     else if ($Verbose) logEntry('Performed the username availability check.', FALSE); }
+  
+  // / Output the results of the Username Availability Request to the user.
+  if ($UsernameAvailabilityResponseNeeded) respondUserAvailabilityRequest($UsernameAvailabilityPermissionGranted, $UsernameIsAvailable);
 
   // / Clean up unneeded memory.
   $desiredUsername = $UACData = $UsernameAvailabilityCacheExists = $UsernameAvailabilityCacheFile = $UsernameAvailabilityCacheCreated = $UserAvailabilityCacheLoaded = $IntegrityCheck = $UsernameAvailabilityCacheUpdated = $HashedUserAgent = $ClientIP = $BackupSuccess = NULL;
   unset($desiredUsername, $UACData, $UsernameAvailabilityCacheExists, $UsernameAvailabilityCacheFile, $UsernameAvailabilityCacheCreated, $UserAvailabilityCacheLoaded, $IntegrityCheck, $UsernameAvailabilityCacheUpdated, $HashedUserAgent, $ClientIP, $BackupSuccess); 
   return(array($UsernameAvailabilityPermissionGranted, $UsernameIsAvailable)); } 
+
+// / A function to output the results of a completed Username Availability Request to the user.
+function respondUserAvailabilityRequest($UsernameAvailabilityPermissionGranted, $UsernameIsAvailable) { 
+// / Set variables.
+  global $Verbose;
+  if ($UsernameAvailabilityPermissionGranted) { 
+    if ($UsernameIsAvailable) {
+      if ($Verbose) logEntry('The desired username is AVAILABLE.', FALSE);  
+      echo('AVAILABLE'); }
+    if (!$UsernameIsAvailable) {
+      if ($Verbose) logEntry('The desired username is NOT AVAILABLE.', FALSE); 
+      echo('NOT AVAILABLE'); } } 
+  else { 
+    if ($Verbose) logEntry('The username availability request cannot be performed at this time.', FALSE);
+    echo('DENIED'); } }
 
 // / A function to add a user.
 // / Accepts an array as input. 
