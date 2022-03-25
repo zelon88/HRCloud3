@@ -222,17 +222,18 @@ $Libraries = array(
  array('CUSTOM-3', FALSE, '') );
 
 // / Super Admin Users.
-// / Users are treated as objects. Users added here have global admin powers that cannot be changed via the GUI.
+// / Users are treated as objects. 
 // / Users added through the GUI after initial setup are contained in the cache.
-// / Arrays are formatted as  $Users['USER_ID', 'USER_NAME', 'USER_EMAIL', 'SHA-256_HASHED_PASSWORD', 'ADMIN_YES/NO(bool)', 'LAST_SESION_ID']
+// / Arrays are formatted as  $Users['USER_ID'] = array('USER_ID', 'USER_NAME', 'USER_EMAIL', 'SHA-256_HASHED_PASSWORD', 'ADMIN_YES/NO(bool)', 'ENABLED_YES/NO(bool)')
+// / User names MUST start at 0 and be incremented by 1. 
 $Users = array(
- array('1', 'zelon88', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'TRUE', ""), // Default Passwords are all 'password'
- array('2', 'Nikki', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ''), 
- array('3', 'Leo', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ''), 
- array('4', 'Raph', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ''), 
- array('5', 'Mikey', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ''), 
- array('6', 'Donny', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', ''),
- array('7', 'test', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', '') );
+ 0 => array('0', 'zelon88', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'TRUE', 'TRUE'), // Default Passwords are all 'password'
+ 1 => array('1', 'Nikki', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', 'TRUE'), 
+ 2 => array('2', 'Leo', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', 'TRUE'), 
+ 3 => array('3', 'Raph', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', 'TRUE'), 
+ 4 => array('4', 'Mikey', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', 'TRUE'), 
+ 5 => array('5', 'Donny', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', 'TRUE'),
+ 6 => array('6', 'test', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', 'TRUE') );
 
 // / Available Cores.
 // / The following array specifies which corefiles are permitted to load within the platform. 

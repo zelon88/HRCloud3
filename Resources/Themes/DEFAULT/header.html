@@ -109,7 +109,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
 
     <li>
       <!-- Login / Logout Buttons -->
-      <a id='loginButton' style='display:block;' onclick='toggleVisibility("loginModal");'>Login</a>
+      <a id='loginButton' style='display:block;' onclick='toggleVisibility("loginModal"); setFocus("UserInput");'>Login</a>
       <a id='logoutButton' style='display:none;' onclick='toggleVisibility("logoutModal");'>Logout</a>
     </li>
 
@@ -135,7 +135,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         <!-- Username Modal Message Container -->
         <div id='loginContainer' name='loginContainer' style='text-align:center;'>
           <form id='loginFormNav' name='loginFormNav' method='POST' target='noredirect'>
-            <input type='text' id='UserInput' class='textInput' name='UserInput' title='Enter your <?php echo $ApplicationName; ?> username.' placeholder='Enter Username' value='' required>
+            <input type='text' id='UserInput' class='textInput' name='UserInput' title='Enter your <?php echo $ApplicationName; ?> username.' placeholder='Enter Username' value='' required autofocus>
             <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
             <button id='submitButton' class='BUTTON_1' name='submitButton'  title='Proceed with login.' style='margin:10px;'>Continue</button>
             <br />
@@ -143,7 +143,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
           </form>
           <button type='button' id='forgotUsernameButton' class='BUTTON_1' name='forgotUsernameButton' onclick='' title='Recover an account with a forgotten username.' style='margin:10px;'>Forgot Username</button>
 <?php if ($AllowUserRegistration) { ?>
-          <button type='button' id='createAccountButton' class='BUTTON_1' name='createAccountButton' onclick='toggleVisibility("loginModal"); toggleVisibility("createAccountModal");' title='Create a new <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Create New Account</button>
+          <button type='button' id='createAccountButton' class='BUTTON_1' name='createAccountButton' onclick='toggleVisibility("loginModal"); toggleVisibility("createAccountModal"); setFocus("NewUserInput");' title='Create a new <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Create New Account</button>
 <?php } ?>
           <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
           <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
@@ -181,6 +181,74 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         </div>
       </div>
     </div>
+
+    <!-- The Logout Modal -->
+    <div id='logoutModal' class='modal' name='logoutModal'>
+      <!-- Logout Modal Content. -->
+      <div id='logoutModalContent' class='modalContent animate' name='logoutModalContent'>
+        <!-- Logout Modal Header -->
+        <div id='logoutModalHeader' class='modalHeader' name='logoutModalHeader'>
+          <img id='avatarSmallLogout' class='avatar-small' name='avatarSmallLogout' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
+          <a id='logoutModalHeaderText' class='modalHeaderText' name='logoutModalHeaderText'>Logout of <?php echo $ApplicationName; ?></a>
+          <img id='closeButtonLogout' class='closeButton' name='closeButtonLogout' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("logoutModal");' alt='Close' title='Close Window'>
+          <img id='helpLogout' class='helpButton' name='helpLogout' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='To log out of your <?php echo $ApplicationName; ?> account; press the "Confirm Logout" button. If you log out of your account you will have to login again before you can continue to use <?php echo $ApplicationName; ?>. To stay logged in; press the "Cancel" button. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.'>
+        </div>
+        <!-- Logout Modal Message Container -->
+        <div id='logoutContainer' name='logoutContainer' style='text-align:center; display:block;'>
+          <input type='hidden' id='UserInput' name='UserInput' value='' required>
+          <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
+          <button id='logoutConfirmButton' onclick='logout();' class='BUTTON_1' title='Log out of your <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Confirm Logout</button>
+          <br />
+          <hr />
+          <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
+        </div>
+      </div>
+    </div>
+<?php if ($AllowUserRegistration) { ?>
+    <!-- The Create Account Modal -->
+    <div id='createAccountModal' class='modal' name='createAccountModal'>
+      <!-- Create Account Modal Content. -->
+      <div id='createAccountModalContent' class='modalContent animate' name='createAccountModalContent'>
+        <!-- Create Account Modal Header -->
+        <div id='createAccountModalHeader' class='modalHeader' name='createAccountModalHeader'>
+          <img id='avatarSmallLogin' class='avatar-small' name='avatarSmallLogin' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
+          <a id='createModalHeaderText' class='modalHeaderText' name='createModalHeaderText'>Create A New Account</a>
+          <img id='closeButtonCreate' class='closeButton' name='closeButtonCreate' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("createAccountModal"); cancelAvailability();' alt='Close' title='Close Window'>
+          <img id='helpCreate' class='helpButton' name='helpCreate' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='Enter a desired username into the field, then press "Continue" to check if that username is available. Once you have entered an available username you will be able to complete the login process by entering your email address & desired password. To close this window; press the red "X" icon in the top-right corner of the window.'>
+        </div>
+        <!-- Create Account Modal Message Container -->
+        <div id='createAccountContainer' name='createAccountContainer' style='text-align:center; display:block;'>
+          <form id='createAccountFormNav' name='createAccountFormNav' method='POST' target='noredirect'>
+            <input type='text' placeholder='Enter Desired Username' id='NewUserInput' name='NewUserInput' title='Enter your desired <?php echo $ApplicationName; ?> username.' style='padding: 10px;'>
+            <button id='checkButton' class='BUTTON_1' name='checkButton' onclick='checkAvailability(document.getElementById("NewUserInput").value);' title='Check username availability.' style='margin:10px;'>Check Username Availability</button>
+            <input type='text' id='NewUserName' name='NewUserName' title='Your selected <?php echo $ApplicationName; ?> username.' value='' style='display:none; padding: 10px;' required disabled>
+            <br />
+            <p id='checkResultsSuccess' class='animate' name='checkResultsSuccess' style='display:none; margin-top:10px;'>Congratulations! The desired username is <b>available</b>!</p>
+            <p id='checkResultsFailure' class='animate' name='checkResultsFailure' style='display:none; margin-top:10px;'>Sorry! The desired username is <b>not available</b>.</p>
+            <p id='checkResultsDenied' class='animate' name='checkResultsDenied' style='display:none; margin-top:10px;'>Sorry! You have exceeded the allowed number of username requests per client. <b>Please try again later</b>.</p>
+            <div id='createAccountDetails' class='animate' name='createAccountDetails' style='display:none;'>
+              <br />
+              <input type='text' placeholder='Enter Your Email Address' id='NewUserEmail' name='NewUserEmail' title='Enter your email address.' style='padding: 10px;' required>
+              <input type='password' placeholder='Enter Desired Password' id='RawNewUserPassword' name='RawNewUserPassword' title='Enter desired password.' style='padding: 10px;' required>
+              <input type='password' placeholder='Re-Enter Desired Password' id='RawNewUserPasswordConfirm' name='RawNewUserPasswordConfirm' title='Enter desired password.' style='padding: 10px;' required>
+              <input type='hidden' id='NewUserPassword' name='NewUserPassword' value='' required>
+              <input type='hidden' id='NewUserPasswordConfirm' name='NewUserPasswordConfirm' value='' required>
+              <input type='hidden' id='CreateNewAccount' name='CreateNewAccount' value='' required>
+              <br />
+              <input type='checkbox' id='AgreeToTerms' class='tosText' name='AgreeToTerms' title='You must agree to the Terms Of Service & Privacy Policy in order to create a new account.' value='AGREE' required>
+              <label id='agreeToTermsLabel' class='tosText' name='agreeToTermsLabel' title='You must agree to the Terms Of Service & Privacy Policy in order to create a new account.' for='AgreeToTerms'> I agree to the Terms Of Service & Privacy Policy.</label>
+              <button id='createSubmitButton' class='BUTTON_1' name='createSubmitButton' onclick='createAccount();' title='Proceed with account creation.' style='margin:10px;'>Create Account</button>
+              <br />
+            </div>
+          </form>
+          <hr />
+          <button id='tosButton' class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton' class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
+        </div> 
+      </div>
+    </div>
+<?php } ?>
 
     <!-- The Successful Login Modal -->
     <div id='successModal' class='modal' name='successModal'>
@@ -242,70 +310,6 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
       </div>
     </div>
 
-    <!-- The Logout Modal -->
-    <div id='logoutModal' class='modal' name='logoutModal'>
-      <!-- Logout Modal Content. -->
-      <div id='logoutModalContent' class='modalContent animate' name='logoutModalContent'>
-        <!-- Logout Modal Header -->
-        <div id='logoutModalHeader' class='modalHeader' name='logoutModalHeader'>
-          <img id='avatarSmallLogout' class='avatar-small' name='avatarSmallLogout' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
-          <a id='logoutModalHeaderText' class='modalHeaderText' name='logoutModalHeaderText'>Logout of <?php echo $ApplicationName; ?></a>
-          <img id='closeButtonLogout' class='closeButton' name='closeButtonLogout' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("logoutModal");' alt='Close' title='Close Window'>
-          <img id='helpLogout' class='helpButton' name='helpLogout' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='To log out of your <?php echo $ApplicationName; ?> account; press the "Confirm Logout" button. If you log out of your account you will have to login again before you can continue to use <?php echo $ApplicationName; ?>. To stay logged in; press the "Cancel" button. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.'>
-        </div>
-        <!-- Logout Modal Message Container -->
-        <div id='logoutContainer' name='logoutContainer' style='text-align:center; display:block;'>
-          <input type='hidden' id='UserInput' name='UserInput' value='' required>
-          <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
-          <button id='logoutConfirmButton' onclick='logout();' class='BUTTON_1' title='Log out of your <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Confirm Logout</button>
-          <br />
-          <hr />
-          <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
-          <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
-        </div>
-      </div>
-    </div>
-<?php if ($AllowUserRegistration) { ?>
-    <!-- The Create Account Modal -->
-    <div id='createAccountModal' class='modal' name='createAccountModal'>
-      <!-- Create Account Modal Content. -->
-      <div id='createAccountModalContent' class='modalContent animate' name='createAccountModalContent'>
-        <!-- Create Account Modal Header -->
-        <div id='createAccountModalHeader' class='modalHeader' name='createAccountModalHeader'>
-          <img id='avatarSmallLogin' class='avatar-small' name='avatarSmallLogin' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
-          <a id='createModalHeaderText' class='modalHeaderText' name='createModalHeaderText'>Create A New Account</a>
-          <img id='closeButtonCreate' class='closeButton' name='closeButtonCreate' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("createAccountModal"); cancelAvailability();' alt='Close' title='Close Window'>
-          <img id='helpCreate' class='helpButton' name='helpCreate' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='Enter a desired username into the field, then press "Continue" to check if that username is available. Once you have entered an available username you will be able to complete the login process by entering your email address & desired password. To close this window; press the red "X" icon in the top-right corner of the window.'>
-        </div>
-        <!-- Create Account Modal Message Container -->
-        <div id='createAccountContainer' name='createAccountContainer' style='text-align:center; display:block;'>
-          <form id='createAccountFormNav' name='createAccountFormNav' method='POST' target='noredirect'>
-            <input type='text' placeholder='Enter Desired Username' id='NewUserInput' name='NewUserInput' title='Enter your desired <?php echo $ApplicationName; ?> username.' style='padding: 10px;'>
-            <button id='checkButton' class='BUTTON_1' name='checkButton' onclick='checkAvailability(document.getElementById("NewUserInput").value);' title='Check username availability.' style='margin:10px;'>Check Username Availability</button>
-            <input type='text' id='NewUserName' name='NewUserName' title='Your selected <?php echo $ApplicationName; ?> username.' value='' style='display:none; padding: 10px;' required disabled>
-            <br />
-            <p id='checkResultsSuccess' class='animate' name='checkResultsSuccess' style='display:none; margin-top:10px;'>Congratulations! The desired username is <b>available</b>!</p>
-            <p id='checkResultsFailure' class='animate' name='checkResultsFailure' style='display:none; margin-top:10px;'>Sorry! The desired username is <b>not available</b>.</p>
-            <p id='checkResultsDenied' class='animate' name='checkResultsDenied' style='display:none; margin-top:10px;'>Sorry! You have exceeded the allowed number of username requests per client. <b>Please try again later</b>.</p>
-            <div id='createAccountDetails' class='animate' name='createAccountDetails' style='display:none;'>
-              <br />
-              <input type='text' placeholder='Enter Your Email Address' id='NewUserEmail' name='NewUserEmail' title='Enter your email address.' style='padding: 10px;' required>
-              <input type='password' placeholder='Enter Desired Password' id='NewUserPassword' name='NewUserPassword' title='Enter desired password.' style='padding: 10px;' required>
-              <input type='password' placeholder='Re-Enter Desired Password' id='NewUserPasswordConfirm' name='NewUserPasswordConfirm' title='Enter desired password.' style='padding: 10px;' required>
-              <br />
-              <input type='checkbox' id='AgreeToTerms' class='tosText' name='AgreeToTerms' title='You must agree to the Terms Of Service & Privacy Policy in order to create a new account.' value='AGREE' required>
-              <label id='agreeToTermsLabel' class='tosText' name='agreeToTermsLabel' title='You must agree to the Terms Of Service & Privacy Policy in order to create a new account.' for='AgreeToTerms'> I agree to the Terms Of Service & Privacy Policy.</label>
-              <button id='createSubmitButton'class='BUTTON_1' name='createSubmitButton' onclick='createAccount();' title='Proceed with account creation.' style='margin:10px;'>Create Account</button>
-              <br />
-            </div>
-          </form>
-          <hr />
-          <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
-          <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
-        </div> 
-      </div>
-    </div>
-<?php } ?>
   </div>
 
   <!-- Hidden Login Form For Storing Keep-Alive Variables -->

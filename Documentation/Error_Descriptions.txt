@@ -16,13 +16,13 @@ If you have a knowledgebase system for your organization it is recommended that 
 future reference. You are also encouraged to add your own notes to this file as you encounter problems. If you decide to add your own notes to this file 
 please consider uploading it to a public Github repo so that other HRCloud3 administrators can benefit from the knowledge you've acquired. 
 
-Each section in this file contains information about a different error message. Each section has the following subsections
+Each section in this file contains information about a different error message. Details about each section are below.
 
 ~~EXAMPLE~~
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
   The exact error response produced by the application. Text wrapped in angle brackets < > denote encoded information. For example, "<TIMESTAMP>"
-  would actually be replaced with an abbreviated date.
+  would actually be replaced with an abbreviated date. <REQUEST_IDENTIFIER> will be replaced with a short but unique number to identify related log events.
 
 FILE
   The file path pointing to the file which contains this error message. File is relative to the root HRCloud3 installation directory.
@@ -159,7 +159,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 3, <TIMESTAMP>, Could not verify installation!
+  ERROR!!! 3, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not verify installation!
 
 FILE
   /core.php
@@ -182,7 +182,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 4, <TIMESTAMP>, Could not initialize variables to default values!
+  ERROR!!! 4, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not initialize variables to default values!
 
 FILE
   /core.php
@@ -196,7 +196,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 5, <TIMESTAMP>, Application Version discrepancy detected!
+  ERROR!!! 5, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Application Version discrepancy detected!
 
 FILE
   /core.php
@@ -212,7 +212,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 6, <TIMESTAMP>, Could not load cache file!
+  ERROR!!! 6, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not load cache file!
 
 FILE
   /core.php
@@ -228,7 +228,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 7, <TIMESTAMP>, Invalid tokens!
+  ERROR!!! 7, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Invalid tokens!
 
 FILE
   /core.php
@@ -246,7 +246,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 8, <TIMESTAMP>, Invalid username or password!
+  ERROR!!! 8, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Invalid username or password!
 
 FILE
   /core.php
@@ -262,7 +262,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 9, <TIMESTAMP>, Could not load libraries!
+  ERROR!!! 9, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not load libraries!
 
 FILE
   /core.php
@@ -276,7 +276,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 10, <TIMESTAMP>, Could not load library data from <LIBRARY NAME OR DIRECTORY>!
+  ERROR!!! 10, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not load library data from <LIBRARY NAME OR DIRECTORY>!
 
 FILE
   /core.php
@@ -298,7 +298,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 11, <TIMESTAMP>, Could not generate a user log file!
+  ERROR!!! 11, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not generate a user log file!
 
 FILE
   /core.php
@@ -314,7 +314,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 12, <TIMESTAMP>, Could not generate a user cache file!
+  ERROR!!! 12, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not generate a user cache file!
 
 FILE
   /core.php
@@ -330,7 +330,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 13, <TIMESTAMP>, Could not generate a user notifications file!
+  ERROR!!! 13, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not generate a user notifications file!
 
 FILE
   /core.php
@@ -346,23 +346,24 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 14, <TIMESTAMP>, Could not save changes to the user cache file!
+  ERROR!!! 14, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not validate supplied passwords!
 
 FILE
   /core.php
 
 LOG LEVEL
-  SYSTEM, USER
+  SYSTEM
 
 ERROR DESCRIPTION
-  The "DATA" library directory specified in the config.php file has no trailing slash.
-  The "DATA" library directory specified in the config.php file has incorrect permissions.
-  The "DATA" library directory points to a destination where the www-data user or group cannot access.
+  This may be the result of a mismatch between the submitted password and password confirmation.
+  This may occur when the submitted passwords are not properly hashed with the SHA256 hashing algorithm before being submitted to core.php.
+  The password was handled improperly by the UI or browser plugins or third party manipulation.
+  The request was malformed or has been tampered with in-transit between the client and the server.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 15, <TIMESTAMP>, Could not load the user cache file!
+  ERROR!!! 15, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not load the user cache file!
 
 FILE
   /core.php
@@ -412,7 +413,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 18, <TIMESTAMP>, Could not load the data core file fiile (dataCore.php)!
+  ERROR!!! 18, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not load the data core file fiile (dataCore.php)!
 
 FILE
   /adminCore.php
@@ -429,7 +430,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 19, <TIMESTAMP>, Could not backup the username availability cache file!
+  ERROR!!! 19, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not backup the username availability cache file!
 
 FILE
   /adminCore.php
@@ -449,7 +450,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 20, <TIMESTAMP>, Could not load the admin core file fiile (adminCore.php)!
+  ERROR!!! 20, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not load the admin core file fiile (adminCore.php)!
 
 FILE
   /core.php
@@ -466,7 +467,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 21, <TIMESTAMP>, Could not create a username availability cache file!
+  ERROR!!! 21, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not create a username availability cache file!
 
 FILE
   /adminCore.php
@@ -482,7 +483,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 22, <TIMESTAMP>, Could not load the username availability cache file!
+  ERROR!!! 22, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not load the username availability cache file!
 
 FILE
   /adminCore.php
@@ -498,7 +499,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 23, <TIMESTAMP>, Could not validate the username availability cache file!
+  ERROR!!! 23, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not validate the username availability cache file!
 
 FILE
   /adminCore.php
@@ -515,7 +516,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 24, <TIMESTAMP>, Could not update the username availability cache file!
+  ERROR!!! 24, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not update the username availability cache file!
 
 FILE
   /adminCore.php
@@ -532,7 +533,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 25, <TIMESTAMP>, Could not perform the username availability check!
+  ERROR!!! 25, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not perform the username availability check!
 
 FILE
   /adminCore.php
@@ -549,7 +550,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 26, <TIMESTAMP>, Could not recreate a username availability cache file!
+  ERROR!!! 26, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not recreate a username availability cache file!
 
 FILE
   /adminCore.php
@@ -562,3 +563,72 @@ ERROR DESCRIPTION
   This may be the result of incorrect user or group associations for the www-data user or group.
   This could be because HRCloud3 is running on an unsupported operating system or PHP version.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 27, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not initiate a new account request!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  This may be the result of the user having consumed all available Username Availability Requests for the allotted timeframe.
+  If the user has consumed all Username Availability Requests, wait several minutes before trying to create the account again.
+  This may occur when the desired username has been taken since the initial Username Availability Request was made.
+  This may be the result of the desired username being unavailable.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 28, <TIMESTAMP>, <REQUEST_IDENTIFIER>, The specified user account is disabled!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  This may be the result of the user account having been locked out due suspicious behaviour.
+  This may be the result of the user account having been disabled manually by an administrator. 
+  The user account is not enabled.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 29, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not create the desired user account!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  This may be the result of a mismatch between the submitted password and password confirmation.
+  This may be the result of incorrect file permission levels on the installation directory or Cache file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  The Cache file has become corrupt.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 30, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not update the cache file!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  This may be the result of incorrect file permission levels on the installation directory or Cache file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  The Cache file has become corrupt.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+

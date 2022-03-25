@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/18/2022
+Date: 3/24/2022
 <3 Open-Source
 
 The Admin Core handles admin related functions like adding/removing users & changing global settings.
@@ -146,7 +146,7 @@ function performUserAvailabilityCheck($desiredUsername) {
   $ArrayCheck = $userName = $user = FALSE;
   $UsernameIsAvailable = TRUE;
   // / Verify that all conditions for performing a Username Availability Check have been met.
-    if (is_array($Users)) { 
+  if (is_array($Users)) { 
     $ArrayCheck = TRUE;
     // / Iterate through each defined user.
     foreach ($Users as $user) { 
@@ -227,7 +227,7 @@ function checkUserAvailability($desiredUsername, $UsernameAvailabilityResponseNe
     else if ($Verbose) logEntry('Performed the username availability check.', FALSE); }
   
   // / Output the results of the Username Availability Request to the user.
-  if ($UsernameAvailabilityResponseNeeded) respondUserAvailabilityRequest($UsernameAvailabilityPermissionGranted, $UsernameIsAvailable);
+  if ($UsernameAvailabilityResponseNeeded) respondUserAvailabilityRequest($desiredUsername, $UsernameAvailabilityPermissionGranted, $UsernameIsAvailable);
 
   // / Clean up unneeded memory.
   $desiredUsername = $UACData = $UsernameAvailabilityCacheExists = $UsernameAvailabilityCacheFile = $UsernameAvailabilityCacheCreated = $UserAvailabilityCacheLoaded = $IntegrityCheck = $UsernameAvailabilityCacheUpdated = $HashedUserAgent = $ClientIP = $BackupSuccess = NULL;
@@ -235,25 +235,52 @@ function checkUserAvailability($desiredUsername, $UsernameAvailabilityResponseNe
   return(array($UsernameAvailabilityPermissionGranted, $UsernameIsAvailable)); } 
 
 // / A function to output the results of a completed Username Availability Request to the user.
-function respondUserAvailabilityRequest($UsernameAvailabilityPermissionGranted, $UsernameIsAvailable) { 
+function respondUserAvailabilityRequest($desiredUsername, $UsernameAvailabilityPermissionGranted, $UsernameIsAvailable) { 
 // / Set variables.
   global $Verbose;
+  // / The following code is performed when the username availability request was approved.
   if ($UsernameAvailabilityPermissionGranted) { 
+    // / The following code is performed when the username is available.
     if ($UsernameIsAvailable) {
       if ($Verbose) logEntry('The desired username is AVAILABLE.', FALSE);  
-      echo('AVAILABLE'); }
+      echo('AVAILABLE,'.$desiredUsername.PHP_EOL); }
+    // / The following code is performed when the username is not available.
     if (!$UsernameIsAvailable) {
       if ($Verbose) logEntry('The desired username is NOT AVAILABLE.', FALSE); 
-      echo('NOT AVAILABLE'); } } 
+      echo('NOT AVAILABLE'.PHP_EOL); } } 
+  // / The following code is performed when the username availability request was denied.
   else { 
     if ($Verbose) logEntry('The username availability request cannot be performed at this time.', FALSE);
-    echo('DENIED'); } }
+    echo('DENIED'.PHP_EOL); } 
+  // / Clean up unneeded memory.
+  $desiredUsername = NULL;
+  unset($desiredUsername); }
 
 // / A function to add a user.
 // / Accepts an array as input. 
-function addUser($userToAdd) { 
-
-}
+function addUser($DesiredUsername, $NewUserEmail, $NewUserPassword, $NewUserPasswordConfirm) { 
+  global $Users, $CacheFile;
+  $UserCreated = $PasswordsMatch = $UserID = $newCacheLine = $cacheCheck = FALSE;
+  $userNum = 0;
+  if ($NewUserPassword === $NewUserPasswordConfirm) if (is_string($NewUserPassword)) if (strlen($NewUserPassword) === 64) $PasswordsMatch = TRUE;
+  if ($PasswordsMatch) { 
+    logEntry('Password validation complete.', FALSE);
+    while (isset($Users[$userNum])) $userNum++; 
+    $UserID = $userNum;
+    $newCacheLine = '$PostConfigUsers['.$UserID.'] = array(\''.$UserID.'\',\''.$DesiredUsername.'\',\''.$NewUserEmail.'\',\''.$NewUserPassword.'\',FALSE,TRUE);'; 
+    $cacheCheck = file_put_contents($CacheFile, $newCacheLine.PHP_EOL, FILE_APPEND);
+    if ($cacheCheck) { 
+      logEntry('Inserted user data into existing cache file.', FALSE);
+      $UserCreated = TRUE;
+      $Users[$UserID] = array($UserID, $DesiredUsername, $NewUserEmail, $NewUserPassword, FALSE); } 
+    else dieGracefully(30, 'Could not update the cache file!', FALSE); }
+  else dieGracefully(31, 'Could not validate supplied passwords!', FALSE);
+  // / Output the results of the Create Account process.
+  if ($UserCreated) echo('APPROVED'.PHP_EOL);
+  else echo('NOT APPROVED'.PHP_EOL);
+  $PasswordsMatch = $userNum = $newCacheLine = $cacheCheck = NULL;
+  unset($PasswordsMatch, $userNum, $newCacheLine, $cacheCheck);
+  return(array($UserCreated, $UserID, $Users)); }
 
 // / A function to delete a user.
 // / Accepts an array as input. 

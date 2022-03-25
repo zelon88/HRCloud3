@@ -1,6 +1,60 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+3/24/2022
+v0.9.0 - Finishing up New Account Creation process.
+
+-Added ERROR 27 in core.php and to Error_Descriptions.txt.
+  -"Could not initiate a new account request!"
+-Improved logging when Verbosity is enabled.
+-Moved some logic around towards the bottom of core.php to improve readability & consistency.
+-Created createAccount() function in adminCore.php.
+-Adjusted flow (by moving brackets) so the New Account process only takes place after the Username Availability Request process.
+  -This way we can be sure that adminCore is loaded and all required variables are set.
+-Remove loop in loadCache() function that would hash unhashed passwords from config.php.
+  -Unhashed passwords in config.php hasn't been supported for soome time, so this code was a useless relic anyway.
+-Modified Login-Caller.js and adminCore.php so that only sanitized usernames are processed by the core and returned by the UI.
+  -The user can submit whatever they want, but the core will sanitize it and only process the sanitized result.
+  -The UI will return results for the sanitized result, NOT the username given by the user.
+  -The UI will be updated to reflect any adjustments made to the username by the core.
+-Implement the sanitize() function in the verifyGlobals() function to improve readability and WET code with DRY code.
+  -This has the advantage of adding type checking to all inputs.
+  -Also moved the trim() function from the end of the sanitization statement to the beginning.
+  -What was happpening was the input was trimmed, then characters replaced.
+  -This had the unintended effect of occasionally adding whitespace at the end of sanitized strings.
+  -By removing characters before the trim() function we ensure that all whitespace was actually removed.
+-Removed Last_Session_ID from the $Users array.
+  -This would be better suited to the individual users cache file or DATA directory.
+  -Updating the Users cache file everytime a session ID changes is a lot of file modifications and a lot of data.
+  -Maybe we can key off of a blank session ID parameter to determine when a user account has never been logged into.
+-Added ERROR 28 in core.php and Error_Descriptions.txt.
+ -"The specified user account is disabled!""
+-Improved sanitization of logEntry() and dieGracefully() functions.
+-Added PHP_EOL, DIRECTORY_SEPARATOR, and FILE_APPEND flag detection to improve PHP version/environmental compatibility between systems.
+-Added a unique $RequestID to log files to distinguish between indiviual requests being processed.
+  -Makes surfing logs much easier.
+  -The $RequestID is calculated in the verifyDate() function.
+  -Putting the $RequestID in verifyDate() means that it's already defined when we go to use logEntry() or dieGracefully().
+-Adjusted the format of the $Users array in config.php so that it is indexed with the $UserID as the key.
+-Added newlines to the end of core several output sequences.
+  -Now it's easier to read the response when HRC3 outputs data along with an error message.
+  -Before the error and data would be mushed together with no whitespace.
+-Added ERROR 29 in core.php and to Error_Descriptions.txt.
+  -"Could not create the desired user account!"
+-Added ERROR 30 in core.php and to Error_Descriptions.txt.
+  -"Could not update the cache file!"
+-Replaced ERROR 14 in core.php.
+  -"Could not create the desired user account!"
+-Strengthened Client Token validation.
+  -Improved the checks that determine when a token is valid.
+  -Fix a bug that meant usernames that do not exist do not return a client token.
+    -Now fake tokens will be returned instead, to prevent username enumeration.
+-Oh my God, it is 2:30am and I just logged into an account I created completely with the UI for the first time.
+  -The only thing I really don't like is that there will be really clean no way to update the $Users array in config.php after you start adding postConfigUsers.
+  -You would need to reindex both arrays for that to work.
+  -I think a better solution is to block off the first 10 user IDs specifically for config users.
+
+----------
 3/18/2022
 v0.8.9 - Workin on New Account Creation process.
 

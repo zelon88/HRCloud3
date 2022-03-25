@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/14/2022
+Date: 3/24/2022
 <3 Open-Source
 
 The Home Page provides common functionality for many of the UI elements in HRCloud3.
@@ -15,6 +15,13 @@ The Home Page provides common functionality for many of the UI elements in HRClo
 There may be additional specialized functionality contained in separate Javascript files.
 */
 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to focus the cursor on a specified element.
+// / Useful for building dynamic forms.
+function getFocus(id) { 
+  document.getElementById(id).focus(); }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------

@@ -84,6 +84,7 @@ $('#loginFormNav').on('submit', function (loginAjax) {
           var ClientTokenInput = responseArray[1];
           toggleVisibility('loginModal');
           toggleVisibility('passwordModal');
+          getFocus('RawPassword');
           changeValue('ClientTokenInput', ClientTokenInput); 
           changeValue('UserInputPassword', UserInput); } } }); });
 // / -----------------------------------------------------------------------------------
@@ -108,7 +109,6 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
           var UserInput = responseArray[0];
           var SessionID = responseArray[1];
           var ClientToken = responseArray[2];
-          var StayLoggedIn = responseArray[3];
           setVisibility('passwordModal', 'none');
           changeContent('successModalHeaderText', 'Login Success');
           toggleVisibility('successModal');
@@ -117,13 +117,15 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
           changeValue('SessionID', SessionID);
           changeValue('ClientToken', ClientToken);
           changeValue('ActiveSLI', 'ENABLED');
-          changeValue('StayLoggedIn', StayLoggedIn);
+          changeValue('StayLoggedIn', 'ENABLED');
           toggleVisibility('loginButton');
           toggleVisibility('logoutButton');
           StayLoggedInCaller(); 
           }
         else { 
           changeContent('errorModalHeaderText', 'Login Failed');
+          document.getElementById('RawNewUserPassword').required = true;
+          document.getElementById('RawNewUserPasswordConfirm').required = true;
           setVisibility('errorModal', 'block');
           setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
       error: function(passwordResponse) {
@@ -152,11 +154,11 @@ function StayLoggedInSender() {
       success: function(sliResponse) { 
         if (sliResponse.length > 0 && !sliResponse.includes('ERROR!!!')) { 
           var SessionActive = true 
+          var StayLoggedIn = 'ENABLED';
           var responseArraySLI = sliResponse.split(',');
           var UserInput = responseArraySLI[0];
           var SessionID = responseArraySLI[1];
           var ClientToken = responseArraySLI[2]; 
-          var StayLoggedIn = responseArraySLI[3];
           changeValue('UserInputTokens', UserInput);
           changeValue('SessionID', SessionID);
           changeValue('ClientToken', ClientToken);
@@ -183,17 +185,26 @@ function checkAvailability(desiredUsername) {
           CheckUserAvailability: 'ENABLED', },
         success: function(checkAvailabilityResponse) { 
           if (checkAvailabilityResponse.includes('DENIED')) { 
-            setVisibility('checkResultsDenied', 'block'); }
+            setVisibility('checkResultsDenied', 'block'); 
+            setVisibility('checkResultsFailure', 'none'); 
+            setVisibility('checkResultsSuccess', 'none'); }
           if (checkAvailabilityResponse.includes('NOT AVAILABLE')) { 
-            setVisibility('checkResultsFailure', 'block'); }
-          if (checkAvailabilityResponse == 'AVAILABLE') { 
+            setVisibility('checkResultsDenied', 'none'); 
+            setVisibility('checkResultsFailure', 'block'); 
+            setVisibility('checkResultsSuccess', 'none'); }
+          if (checkAvailabilityResponse.includes('AVAILABLE,')) {
+            var responseArrayCAR = checkAvailabilityResponse.split(','); 
+            var checkResults = responseArrayCAR[0];
+            var approvedUsername = responseArrayCAR[1];
+            setVisibility('checkResultsDenied', 'none');
             setVisibility('checkResultsFailure', 'none');
             setVisibility('checkResultsSuccess', 'block');
             setVisibility('createAccountDetails', 'block');
             setVisibility('NewUserInput', 'none');
             setVisibility('checkButton', 'none'); 
             setVisibility('NewUserName', 'inline-block');
-            changeValue('NewUserName', desiredUsername); } },
+            changeValue('NewUserName', approvedUsername); 
+            setFocus('NewUserEmail'); } },
         error: function(checkAvailabilityResponse) { 
           toggleVisibility('checkResultsFailure'); } }); } }); } 
 // / -----------------------------------------------------------------------------------
@@ -231,6 +242,36 @@ function logout() {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
+// / A function to perform the client-side encryption of the users password before they send it to the server.
+function secureCreateAcccount(RawPassword) {
+  var AccountPasswordInput = hashCreds(RawPassword);
+  changeValue('NewUserPassword', AccountPasswordInput); 
+  changeValue('NewUserPasswordConfirm', AccountPasswordInput);  
+  document.getElementById('RawNewUserPassword').required = false;
+  document.getElementById('RawNewUserPasswordConfirm').required = false;
+  clearInput('RawNewUserPassword');
+  clearInput('RawNewUserPasswordConfirm');
+  return(AccountPasswordInput); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to submit the Create Account form and process the results.
+// / Validates the input and hashes the password
+function createAccount() { 
+  var rawNewUserPassword = document.getElementById('RawNewUserPassword').value;
+  var rawNewUserPasswordConfirm = document.getElementById('RawNewUserPasswordConfirm').value;
+  var emailAddress = document.getElementById('NewUserEmail').value;
+  if (rawNewUserPassword === rawNewUserPasswordConfirm) { 
+    NewUserPassword = secureCreateAcccount(rawNewUserPassword);
+
+ }
+  else { 
+
+
+  } }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
 // / A function to display the Terms Of Service file when a user clicks the tosButton.
 // / Opens the Terms Of Service file in a fixed window.
 function openTOS(termsOfServiceFile) { 
@@ -244,4 +285,36 @@ function openTOS(termsOfServiceFile) {
 function openPP(privacyPolicyFile) { 
   window.open('/' + privacyPolicyFile,'Privacy Policy','resizable,height=800,width=600'); 
   return false; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to submit the Navigation Bar Create Account form with AJAX & update the UI elements.
+// / When this function is run the createAccount modal is being displayed.
+// / On HTTP & application success; This function hides createAccountModal & replaces it with the successModal for 3 seconds.
+// / On HTTP success & application error; This function hides passwordModal & replaces it with the errorModal for 3 seconds.
+// / On any HTTP error; This function hides passwordModal & replaces it with the criticalModal for 5 seconds.
+$('#createAccountFormNav').on('submit', function (createAccountAjax) { 
+    createAccountAjax.preventDefault();
+    $.ajax({
+      type: 'POST',
+      url: '/core.php',
+      data: $(this).serialize(),
+      success: function(createAccountResponse) {
+        var accountCreatedError = createAccountResponse.includes('ERROR!!!');
+        if (!accountCreatedError && createAccountResponse !== '' && createAccountResponse.includes('APPROVED')) { 
+          setVisibility('createAccountModal', 'none');
+          changeContent('successModalHeaderText', 'Created Account Successfully');
+          toggleVisibility('successModal');
+          setTimeout(function() { setVisibility('successModal', 'none'); }, 3000); }
+        else { 
+          changeContent('errorModalHeaderText', 'Account Creation Failed');
+          document.getElementById('RawNewUserPassword').required = true;
+          document.getElementById('RawNewUserPasswordConfirm').required = true;
+          setVisibility('errorModal', 'block');
+          setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
+      error: function(createAccountResponse) {
+          toggleVisibility('passwordModal');
+          changeContent('criticalModalHeaderText', 'Account Creation Critical Error');
+          toggleVisibility('criticalModal');
+          setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
 // / -----------------------------------------------------------------------------------
