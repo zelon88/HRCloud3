@@ -632,3 +632,35 @@ ERROR DESCRIPTION
   This could be because HRCloud3 is running on an unsupported operating system or PHP version.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 31, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not load PHPMailer!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  This may be the result of incorrect file permission levels on the installation directory or Dependency folder.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 32, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not load the admin core file fiile (adminCore.php)!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The adminCore.php file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
+  This may be the result of incorrect file permission levels on the installation directory or adminCore.php file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

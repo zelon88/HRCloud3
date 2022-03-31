@@ -141,10 +141,38 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
             <br />
             <hr />
           </form>
-          <button type='button' id='forgotUsernameButton' class='BUTTON_1' name='forgotUsernameButton' onclick='' title='Recover an account with a forgotten username.' style='margin:10px;'>Forgot Username</button>
+          <button type='button' id='forgotUsernameButton' class='BUTTON_1' name='forgotUsernameButton' onclick='toggleVisibility("loginModal"); toggleVisibility("forgotUserModal"); setFocus("ForgotUserEmailInput");'  title='Recover an account with a forgotten username.' style='margin:10px;'>Forgot Username</button>
 <?php if ($AllowUserRegistration) { ?>
           <button type='button' id='createAccountButton' class='BUTTON_1' name='createAccountButton' onclick='toggleVisibility("loginModal"); toggleVisibility("createAccountModal"); setFocus("NewUserInput");' title='Create a new <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Create New Account</button>
 <?php } ?>
+          <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
+          <br />
+        </div>
+      </div>
+    </div>
+
+    <!-- The Forgot Username Modal -->
+    <div id='forgotUserModal' class='modal' name='forgotUserModal'>
+      <!-- Forgot Username Modal Content. -->
+      <div id='forgotUserFormNav' class='modalContent animate' name='forgotUserFormNav'>
+        <!-- Forgot Username Modal Header -->
+        <div id='forgotUserModalHeader' class='modalHeader' name='forgotUserModalHeader'>
+          <img id='avatarSmallForgotUser' class='avatar-small' name='avatarSmallForgotUser' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
+          <a id='forgotUserModalHeaderText' class='modalHeaderText' name='forgotUserModalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Account Email Address</a>
+          <img id='closeButtonForgotUser' class='closeButton' name='closeButtonForgotUser' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='toggleVisibility("forgotUserModal");'>
+          <img id='helpForgotUser' class='helpButton' name='helpForgotUser' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you already have an <?php echo $ApplicationName; ?> account and do not remember your username; type your email address into the text field then press the "Recover Account" button to proceed with account recovery.'>
+        </div>
+        <!-- Forgot Username Modal Message Container -->
+        <div id='forgotUserContainer' name='forgotUserContainer' style='text-align:center;'>
+          <form id='forgotUserFormNav' name='forgotUserFormNav' method='POST' target='noredirect'>
+            <input type='text' id='ForgotUserEmailInput' class='textInput' name='ForgotUserEmailInput' title='Enter your email address.' placeholder='Enter Your Email Address' value='' required autofocus>
+            <input type='hidden' id='recoverAccount' name='RecoverAccount' value='' required>
+            <button id='submitButton' class='BUTTON_1' name='submitButton'  title='Proceed with account recovery.' style='margin:10px;'>Recover Account</button>
+            <br />
+            <p id='checkResultsSuccess' class='animate' name='checkResultsSuccess' style='display:none; margin-top:10px;'>Thank you! If the email address you provided matches an account on file you will receive an email containing further information.!</p>
+            <hr />
+          </form>
           <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
           <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
           <br />

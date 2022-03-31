@@ -291,8 +291,8 @@ function openPP(privacyPolicyFile) {
 // / A function to submit the Navigation Bar Create Account form with AJAX & update the UI elements.
 // / When this function is run the createAccount modal is being displayed.
 // / On HTTP & application success; This function hides createAccountModal & replaces it with the successModal for 3 seconds.
-// / On HTTP success & application error; This function hides passwordModal & replaces it with the errorModal for 3 seconds.
-// / On any HTTP error; This function hides passwordModal & replaces it with the criticalModal for 5 seconds.
+// / On HTTP success & application error; This function hides createAccountModal & replaces it with the errorModal for 3 seconds.
+// / On any HTTP error; This function hides createAccountModal & replaces it with the criticalModal for 5 seconds.
 $('#createAccountFormNav').on('submit', function (createAccountAjax) { 
     createAccountAjax.preventDefault();
     $.ajax({
@@ -315,6 +315,29 @@ $('#createAccountFormNav').on('submit', function (createAccountAjax) {
       error: function(createAccountResponse) {
           toggleVisibility('passwordModal');
           changeContent('criticalModalHeaderText', 'Account Creation Critical Error');
+          toggleVisibility('criticalModal');
+          setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to submit the Navigation Bar Recover Username form with AJAX & update the UI elements.
+// / When this function is run the forgotUserModal modal is being displayed.
+// / On HTTP & application success; This function hides forgotUserModal & replaces it with the successModal for 3 seconds.
+// / On HTTP success & application error; This function hides forgotUserModal & replaces it with the errorModal for 3 seconds.
+// / On any HTTP error; This function hides forgotUserModal & replaces it with the criticalModal for 5 seconds.
+$('#forgotUserFormNav').on('submit', function (forgotUserAjax) { 
+    forgotUserAjax.preventDefault();
+    $.ajax({
+      type: 'POST',
+      url: '/core.php',
+      data: $(this).serialize(),
+      success: function(forgotUserResponse) {
+        var forgotUserError = forgotUserResponse.includes('ERROR!!!');
+        if (!forgotUserError && forgotUserResponse !== '' && forgotUserResponse.includes('COMPLETE')) { 
+          setVisibility('checkResultsSuccess', 'block'); } },
+      error: function(forgotUserResponse) {
+          setVisibility('forgotUserModal', 'none');
+          changeContent('criticalModalHeaderText', 'Account Recovery Critical Error');
           toggleVisibility('criticalModal');
           setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
 // / -----------------------------------------------------------------------------------

@@ -26,7 +26,7 @@ if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! adminCore
 function detectClientInfo() { 
   $HashedUserAgent = hash('sha256', $_SERVER['HTTP_USER_AGENT']);
   $ClientIP = $_SERVER['REMOTE_ADDR'];
- return(array($HashedUserAgent, $ClientIP)); }
+ return array($HashedUserAgent, $ClientIP); }
 
 // / A function to generate a missing Username Availability Cache file. 
 // / Contains a timestamp, hashed client user agent, & client IP of each non-admin Username Availability request.
@@ -43,7 +43,7 @@ function generateUserAvailabilityCache($UsernameAvailabilityCacheFile) {
   // / Clean up unneeded memory.
   $uacLine = $usernameAvailabilityCacheData = NULL;
   unset($uacLine, $usernameAvailabilityCacheData); 
-  return($UsernameAvailabilityCacheCreated); } 
+  return $UsernameAvailabilityCacheCreated; } 
 
 // / A function to load the Username Availability Cache into memory.
 function loadUserAvailabilityCache($UsernameAvailabilityCacheFile) { 
@@ -54,7 +54,7 @@ function loadUserAvailabilityCache($UsernameAvailabilityCacheFile) {
   $UserAvailabilityCacheLoaded = include($UsernameAvailabilityCacheFile);
   // / Detect and rewrite a successful return value from the include statement to something predictable.
   if ($UserAvailabilityCacheLoaded === 1) $UserAvailabilityCacheLoaded = TRUE;
-  return(array($UserAvailabilityCacheLoaded, $UACData)); }
+  return array($UserAvailabilityCacheLoaded, $UACData); }
 
 // / A function to check if the current should be permitted to perform Username Availability Requests.
 // / Also removes entries from the cache that are older than 6,000 seconds.
@@ -114,7 +114,7 @@ function checkUserAvailabilityCache($UACData, $HashedUserAgent, $ClientIP) {
   // / Clean up unneeded memory.
   $hitCountOne = $hitCountTwo = $hitCountThree = $checkValid = $startTime = $endTime = $timeDifference = $uacLine = $subCheck = $uacKey = NULL;
   unset($hitCountOne, $hitCountTwo, $hitCountThree, $checkValid, $startTime, $endTime, $timeDifference, $uacLine, $subCheck, $uacKey); 
-  return(array($IntegrityCheck, $UsernameAvailabilityPermissionGranted)); }
+  return array($IntegrityCheck, $UsernameAvailabilityPermissionGranted); }
 
 // / A function to update the Username Availability Cache with information about the current request.
 function updateUserAvailabilityCache($UsernameAvailabilityCacheFile, $UACData, $HashedUserAgent, $ClientIP) { 
@@ -137,7 +137,7 @@ function updateUserAvailabilityCache($UsernameAvailabilityCacheFile, $UACData, $
   // / Clean up unneeded memory.
   $uacEntry = $usernameAvailabilityCacheData = NULL;
   unset($uacEntry, $usernameAvailabilityCacheData); 
-  return($UsernameAvailabilityCacheUpdated); }
+  return $UsernameAvailabilityCacheUpdated; }
 
 // / A function to perform the actual check to see if the desired username is already in the user list.
 function performUserAvailabilityCheck($desiredUsername) { 
@@ -158,7 +158,7 @@ function performUserAvailabilityCheck($desiredUsername) {
   // / Clean up unneeded memory.
   $userName = $user = $desiredUsername = NULL;
   unset($userName, $user, $desiredUsername); 
-  return(array($ArrayCheck, $UsernameIsAvailable)); }
+  return array($ArrayCheck, $UsernameIsAvailable); }
 
 // / A function to check the availability of a username.
 // / 5 attempts in 1 minute, or 10 attempts in 5 minutes, or 15 attempts in 1 hour.
@@ -232,7 +232,7 @@ function checkUserAvailability($desiredUsername, $UsernameAvailabilityResponseNe
   // / Clean up unneeded memory.
   $desiredUsername = $UACData = $UsernameAvailabilityCacheExists = $UsernameAvailabilityCacheFile = $UsernameAvailabilityCacheCreated = $UserAvailabilityCacheLoaded = $IntegrityCheck = $UsernameAvailabilityCacheUpdated = $HashedUserAgent = $ClientIP = $BackupSuccess = NULL;
   unset($desiredUsername, $UACData, $UsernameAvailabilityCacheExists, $UsernameAvailabilityCacheFile, $UsernameAvailabilityCacheCreated, $UserAvailabilityCacheLoaded, $IntegrityCheck, $UsernameAvailabilityCacheUpdated, $HashedUserAgent, $ClientIP, $BackupSuccess); 
-  return(array($UsernameAvailabilityPermissionGranted, $UsernameIsAvailable)); } 
+  return array($UsernameAvailabilityPermissionGranted, $UsernameIsAvailable); } 
 
 // / A function to output the results of a completed Username Availability Request to the user.
 function respondUserAvailabilityRequest($desiredUsername, $UsernameAvailabilityPermissionGranted, $UsernameIsAvailable) { 
@@ -261,7 +261,7 @@ function respondUserAvailabilityRequest($desiredUsername, $UsernameAvailabilityP
 function addUser($DesiredUsername, $NewUserEmail, $NewUserPassword, $NewUserPasswordConfirm) { 
   global $Users, $CacheFile;
   $UserCreated = $PasswordsMatch = $UserID = $newCacheLine = $cacheCheck = FALSE;
-  $userNum = 0;
+  $userNum = 1000;
   if ($NewUserPassword === $NewUserPasswordConfirm) if (is_string($NewUserPassword)) if (strlen($NewUserPassword) === 64) $PasswordsMatch = TRUE;
   if ($PasswordsMatch) { 
     logEntry('Password validation complete.', FALSE);
@@ -280,7 +280,7 @@ function addUser($DesiredUsername, $NewUserEmail, $NewUserPassword, $NewUserPass
   else echo('NOT APPROVED'.PHP_EOL);
   $PasswordsMatch = $userNum = $newCacheLine = $cacheCheck = NULL;
   unset($PasswordsMatch, $userNum, $newCacheLine, $cacheCheck);
-  return(array($UserCreated, $UserID, $Users)); }
+  return array($UserCreated, $UserID, $Users); }
 
 // / A function to delete a user.
 // / Accepts an array as input. 

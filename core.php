@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/24/2022
+Date: 3/30/2022
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -61,7 +61,7 @@ if ($MaintenanceMode) die('The requested application is currently unavailable du
 
 // / Detemine the version of PHP in use to run the application.
 // / Any PHP version earlier than 7.0 IS STRICTLY NOT SUPPORTED!!!
-// / Specifically, PHP versions earlier than 7.0 require the list() functions used to be unserialized. 
+// / Specifically, PHP versions earlier than 7.0 require the list () functions used to be unserialized. 
 // / If you run this application on a PHP version earlier than 7.0 you may experience extremely bizarre or even dangerous behavior.
 // / PLEASE DO NOT RUN THIS APPLICATION ON ANYTHING EARLIER THAN PHP 7.0!!! 
 // / HONESTREPAIR ASSUMES NO LIABILITY FOR USING THIS SOFTWARE!!!
@@ -91,7 +91,7 @@ function sanitize($Variable, $Strict) {
     // / Note that when $strict is TRUE we also filter out backslashes. Not good if you're filtering a URL or path.
     if ($Strict) $Variable = trim(str_replace(str_split('|\\~#[](){};:$!#^&%@>*<"\'/'), '', $Variable));
     if (!$Strict) $Variable = trim(str_replace(str_split('|\\[](){};"\''), '', $Variable)); }
-  return (array($Variable, $VariableIsSanitized)); }
+  return array($Variable, $VariableIsSanitized); }
 
 // / A function to set the date and time for internal logic like file cleanup.
 function verifyDate() { 
@@ -111,7 +111,7 @@ function verifyDate() {
   if ($NextMinute > 60) $NextMinute = 1;
   // / Set a short & unique request ID to help differentiate requests in logfiles.
   $RequestID = crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME_FLOAT'] . $_SERVER['REMOTE_PORT']);
-  return(array($RawTime, $Date, $Time, $Minute, $LastMinute, $RequestID)); }
+  return array($RawTime, $Date, $Time, $Minute, $LastMinute, $RequestID); }
 
 // / A function to generate and validate the operational environment for the Diablo Engine.
 function verifyInstallation() { 
@@ -151,16 +151,20 @@ function verifyInstallation() {
   // / Clean up unneeded memory.
   $dirCheck = $indexCheck = $logCheck = $cacheCheck = $requiredDirs = $requiredDir = $dirExists = $indexExists = $logHash = NULL;
   unset($dirCheck, $indexCheck, $logCheck, $cacheCheck, $requiredDirs, $requiredDir, $dirExists, $indexExists, $logHash);
-  return(array($LogFile, $CacheFile, $InstallationIsVerified)); }
+  return array($LogFile, $CacheFile, $InstallationIsVerified); }
 
 // / A function to initialize global variables to default values.
 function initializeVariables() { 
   // / Set variables. 
-  global $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $TokenIsValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions, $ServerToken, $OldServerToken, $UsernameAvailabilityRequest, $UserIsAdmin, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $DesiredUsername, $NewUserEmail, $AgreeToTerms, $NewUserPassword, $NewUserPasswordConfirm, $UserIsEnabled;
+  global $RootPath, $CoreLoadedSuccessfully, $VersionsMatch, $CacheIsLoaded, $SessionIsVerified, $GlobalsAreVerified, $TokensAreValid, $TokenIsValid, $PasswordIsCorrect, $AuthIsComplete, $LibrariesAreLoaded, $LibraryDataIsLoaded, $UserLogsExists, $UserCacheExists, $NotificationsFileExists, $UserOptions, $UserCacheArrayData, $UserCacheRequiredOptions, $ServerToken, $OldServerToken, $UsernameAvailabilityRequest, $UserIsAdmin, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $DesiredUsername, $NewUserEmail, $AgreeToTerms, $NewUserPassword, $NewUserPasswordConfirm, $UserIsEnabled, $DependencyDir, $ApplicationsDir, $PHPMailerLoaded;
+  // / Initialize default values for required variables.  
   $UserOptionCount = $ucCount = 0;
   $DesiredUsername = '';
   // / Initialize all required sanity checks to FALSE.
-  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $TokenIsValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = $key = $UsernameAvailabilityRequest = $UserIsAdmin = $UsernameAvailabilityResponseNeeded = $NewAccountRequest = $NewUserEmail = $AgreeToTerms = $NewUserPassword = $NewUserPasswordConfirm = $UserIsEnabled = FALSE;
+  $CoreLoadedSuccessfully = $VersionsMatch = $CacheIsLoaded = $SessionIsVerified = $GlobalsAreVerified = $TokensAreValid = $TokenIsValid = $PasswordIsCorrect = $AuthIsComplete = $LibrariesAreLoaded = $LibraryDataIsLoaded = $UserLogsExists = $UserCacheExists = $NotificationsFileExists = $ServerToken = $OldServerToken = $key = $UsernameAvailabilityRequest = $UserIsAdmin = $UsernameAvailabilityResponseNeeded = $NewAccountRequest = $NewUserEmail = $AgreeToTerms = $NewUserPassword = $NewUserPasswordConfirm = $UserIsEnabled = $PHPMailerLoaded = FALSE;
+  // / Initialize all directory values.
+  $DependencyDir = $RootPath.'Dependencies'.DIRECTORY_SEPARATOR;
+  $ApplicationsDir = $RootPath.'Applications'.DIRECTORY_SEPARATOR;
   // / Initialize all required user options to NULL.
   list ($UserCacheArrayData, $UserCacheRequiredOptions) = generateDefaultUserCacheData();
   $ucCount = count($UserCacheRequiredOptions);
@@ -172,7 +176,7 @@ function initializeVariables() {
   // / Clean up unneeded memory.
   $ucItem = $ucCount = $key = NULL;
   unset($ucItem, $ucCount, $key);
-  return (array($InitializationComplete, $UserOptionCount)); }
+  return array($InitializationComplete, $UserOptionCount); }
 
 
 // / A function to generate useful, consistent, and easily repeatable error messages.
@@ -187,7 +191,7 @@ function dieGracefully($ErrorNumber, $ErrorMessage, $LogToUser) {
   global $LogFile, $UserLogFile, $Time, $UserLogsExist, $RequestID;
   // / Perform a sanity check on the $ErrorNumber. 
   if (!is_numeric($ErrorNumber)) $ErrorNumber = 0;
-  list($ErrorOutput, $variableIsSanitized) = sanitize('ERROR!!! '.$ErrorNumber.', '.$Time.', '.$RequestID.', '.$ErrorMessage, FALSE);
+  list ($ErrorOutput, $variableIsSanitized) = sanitize('ERROR!!! '.$ErrorNumber.', '.$Time.', '.$RequestID.', '.$ErrorMessage, FALSE);
   // / Write the primary log file. Note that we don't care about success or failure because we're about to kill the script regardless.
   file_put_contents($LogFile, $ErrorOutput.PHP_EOL, FILE_APPEND);
   if ($LogToUser && $UserLogsExist) file_put_contents($UserLogFile, $ErrorOutput, FILE_APPEND);
@@ -205,7 +209,7 @@ function logEntry($EntryText, $LogToUser) {
   global $LogFile, $UserLogFile, $Time, $UserLogsExist, $RequestID;
   $logWrittenA = $logWrittenB = FALSE;
   // / Format the actual log message.
-  list($EntryOutput, $variableIsSanitized) = sanitize('OP-Act: '.$Time.', '.$RequestID.', '.$EntryText, FALSE);
+  list ($EntryOutput, $variableIsSanitized) = sanitize('OP-Act: '.$Time.', '.$RequestID.', '.$EntryText, FALSE);
   // / Write the actual log file.
   $logWrittenA = file_put_contents($LogFile, $EntryOutput.PHP_EOL, FILE_APPEND);
   if ($LogToUser && $UserLogsExist) $logWrittenB = file_put_contents($UserLogFile, $EntryOutput, FILE_APPEND);
@@ -214,7 +218,7 @@ function logEntry($EntryText, $LogToUser) {
   // / Clean up unneeded memory.
   $logWrittenA = $logWrittenB = $variableIsSanitized = NULL;
   unset ($logWrittenA, $logWrittenB, $variableIsSanitized);
-  return($LogWritten); } 
+  return $LogWritten; } 
 
 // / A function to load the system cache, which contains the master user list.
 // / Cache files are stored as .php files and cache data is stored as an array. This ensures the files
@@ -232,7 +236,7 @@ function loadCache() {
   $Users = array_merge($PostConfigUsers, $Users);
   $CacheIsLoaded = TRUE;
   // / Return an array of all users as well as a boolean to tell us if the function succeeded.
-  return(array($Users, $CacheIsLoaded)); }
+  return array($Users, $CacheIsLoaded); }
 
 // / A function to load core files.
 // / Accepts either an array of cores or a single string.
@@ -273,7 +277,7 @@ function loadCores($coresToLoad) {
   $coresToLoad  = $coreFile = $coreToLoad = $error = NULL;
   unset($coresToLoad, $coreFile, $coreToLoad, $error);
   // / Return an array of the cores that are currently loaded as well as a boolean to tell us if the function succeeded.
-  return(array($CoresLoaded, $CoresAreLoaded)); }
+  return array($CoresLoaded, $CoresAreLoaded); }
 
 // / A function to check that the platform is running a consistent version.
 // / Checks that the $EngineVersionInfo variable in 'versionInfo.php' matches the $EngineVersion variable in 'compatibilityCore.php'.
@@ -292,7 +296,7 @@ function checkVersionInfo() {
   // / Now that we've gathered version information from two sources within the engine, we compare them.
   if (isset($EngineVersion) && isset($EngineVersionInfo)) if ($EngineVersion === $EngineVersionInfo) $VersionsMatch = TRUE; 
   // / Return TRUE if the both version strings match. Return FALSE if the two versions strings do not match.
-  return($VersionsMatch); }
+  return $VersionsMatch; }
 
 // / A function to determine if the supplied session is valid.
 function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken) { 
@@ -318,14 +322,14 @@ function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClien
   // / Clean up unneeded memory.
   $user = $validSessionArray = $oldSessionID = $oldSessionIDA = NULL; 
   unset($user, $validSessionArray, $oldSessionID, $oldSessionIDA);
-  return (array($SessionID, $SessionIsVerified)); } 
+  return array($SessionID, $SessionIsVerified); } 
 
 // / A function to validate and sanitize requried session and POST variables.
 function verifyGlobals() { 
   // / Set variables. 
   $variableIsSanitized = TRUE; 
-  $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = $UsernameAvailabilityRequest = $UsernameAvailabilityResponseNeeded = $NewAccountRequest = $NewUserEmail = $AgreeToTerms = $NewUserPassword = $NewUserPasswordConfirm = FALSE;
-  $UserDir = $DesiredUsername = '';
+  $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = $UsernameAvailabilityRequest = $UsernameAvailabilityResponseNeeded = $NewAccountRequest = $NewUserEmail = $AgreeToTerms = $NewUserPassword = $NewUserPasswordConfirm = $ForgotUsernameRequest = FALSE;
+  $UserDir = $DesiredUsername = $ForgotUserEmail = '';
   // / This code triggers the Username Availability Request process.
   // / Username Availability Requests are expensive for the server to perform.
   // / They also leak which usernames are taken, which is a tool used by malicious actors to enumerate a Diablo Engine user list.
@@ -333,7 +337,11 @@ function verifyGlobals() {
   // / Clients who request too many usernames in a short amount of time will be blacklisted for a short time.
   if (isset($_POST['NewUserInput']) && isset($_POST['CheckUserAvailability'])) { 
     $UsernameAvailabilityRequest = $UsernameAvailabilityResponseNeeded = TRUE;
-    list($DesiredUsername, $variableIsSanitized) = sanitize($_POST['NewUserInput'], TRUE); }
+    list ($DesiredUsername, $variableIsSanitized) = sanitize($_POST['NewUserInput'], TRUE); }
+  // / This code triggers the Forgot Username process / Username Recovery process.
+  if (isset($_POST['RecoverAccount']) && isset($_POST['ForgotUserEmailInput'])) { 
+    list ($ForgotUserEmail, $variableIsSanitized) = sanitize($_POST['ForgotUserEmailInput'], TRUE);
+    $ForgotUsernameRequest = TRUE; }
   // / This code triggers the New Account Request process.
   // / New Account Request processes are potentially hazardous as they require that the core handle & store a lot of user input.
   // / They also leak which usernames are taken, which is a tool used by malicious actors to enumerate a Diablo Engine user list.
@@ -342,19 +350,19 @@ function verifyGlobals() {
   if (isset($_POST['NewUserInput']) && isset($_POST['CreateNewAccount']) && isset($_POST['NewUserEmail']) && isset($_POST['AgreeToTerms']) && isset($_POST['NewUserPassword']) && isset($_POST['NewUserPasswordConfirm'])) if ($_POST['AgreeToTerms'] === 'AGREE') if ($_POST['NewUserPassword'] !== '') if ($_POST['NewUserPassword'] === $_POST['NewUserPasswordConfirm']) { 
     $UsernameAvailabilityRequest = $NewAccountRequest = TRUE;
     $UsernameAvailabilityResponseNeeded = FALSE;
-    list($DesiredUsername, $variableIsSanitized) = sanitize($_POST['NewUserInput'], TRUE);
-    list($NewUserEmail, $variableIsSanitized) = sanitize($_POST['NewUserEmail'], TRUE);
-    list($AgreeToTerms, $variableIsSanitized) = sanitize($_POST['AgreeToTerms'], TRUE);
-    list($NewUserPassword, $variableIsSanitized) = sanitize($_POST['NewUserPassword'], TRUE);
-    list($NewUserPasswordConfirm, $variableIsSanitized) = sanitize($_POST['NewUserPasswordConfirm'], TRUE); }
+    list ($DesiredUsername, $variableIsSanitized) = sanitize($_POST['NewUserInput'], TRUE);
+    list ($NewUserEmail, $variableIsSanitized) = sanitize($_POST['NewUserEmail'], TRUE);
+    list ($AgreeToTerms, $variableIsSanitized) = sanitize($_POST['AgreeToTerms'], TRUE);
+    list ($NewUserPassword, $variableIsSanitized) = sanitize($_POST['NewUserPassword'], TRUE);
+    list ($NewUserPasswordConfirm, $variableIsSanitized) = sanitize($_POST['NewUserPasswordConfirm'], TRUE); }
   // / This code triggers the authentication process.
   // / This code is performed when a user submits enough credentials & tokens to start a new session.
   if (isset($_POST['UserInput']) && isset($_POST['PasswordInput']) && isset($_POST['ClientTokenInput']) && !isset($_POST['SessionID'])) { 
-    list($UserInput, $variableIsSanitized) = sanitize($_POST['UserInput'], TRUE);
+    list ($UserInput, $variableIsSanitized) = sanitize($_POST['UserInput'], TRUE);
     $_SESSION['UserInput'] = $UserInput;
-    list($PasswordInput, $VeriableIsSanitized) = sanitize($_POST['PasswordInput'], TRUE); 
+    list ($PasswordInput, $VeriableIsSanitized) = sanitize($_POST['PasswordInput'], TRUE); 
     $_SESSION['PasswordInput'] = $PasswordInput;
-    list($ClientTokenInput, $VeriableIsSanitized) = sanitize($_POST['ClientTokenInput'], TRUE); 
+    list ($ClientTokenInput, $VeriableIsSanitized) = sanitize($_POST['ClientTokenInput'], TRUE); 
     $_SESSION['ClientTokenInput'] = $ClientTokenInput;
     $SessionType = 'LOGIN';
     $UserID = 'DEFAULT';
@@ -363,14 +371,14 @@ function verifyGlobals() {
   else $UserInput = $ClientTokenInput = $PasswordInput = NULL;
   // / This code is performed when a user submits tokens and a session ID via POST request to continue an existing session.
   if (isset($_POST['UserInput']) && isset($_POST['SessionID']) && isset($_POST['ClientTokenInput'])) if ($_POST['UserInput'] !== '') { 
-    list($UserInput, $variableIsSanitized) = sanitize($_POST['UserInput'], TRUE);
+    list ($UserInput, $variableIsSanitized) = sanitize($_POST['UserInput'], TRUE);
     $_SESSION['UserInputName'] = $UserInput;
-    list($SessionIDInput, $variableIsSanitized) = sanitize($_POST['SessionID'], TRUE);
+    list ($SessionIDInput, $variableIsSanitized) = sanitize($_POST['SessionID'], TRUE);
     $_SESSION['SessionIDInput'] = $SessionIDInput;
-    list($ClientTokenInput, $variableIsSanitized) = sanitize($_POST['ClientTokenInput'], TRUE);
+    list ($ClientTokenInput, $variableIsSanitized) = sanitize($_POST['ClientTokenInput'], TRUE);
     $_SESSION['ClientTokenInput'] = $ClientTokenInput;
-    list($ClientToken, $OldClientToken, $ServerToken, $OldServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $UserInput);
-    list($SessionID, $SessionIsVerified) = verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken);
+    list ($ClientToken, $OldClientToken, $ServerToken, $OldServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $UserInput);
+    list ($SessionID, $SessionIsVerified) = verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken);
     if ($SessionIsVerified) $_SESSION['SessionID'] = $SessionID;
     else $_POST['SessionID'] = $_SESSION['SessionID'] = $SessionID = $SessionIDInput = NULL; 
     $SessionType = 'POST';
@@ -378,21 +386,21 @@ function verifyGlobals() {
   // / Check if the user is attempting to login & prepare variables required to generate ClientTokens.
   // / This code is performed when a user requests tokens to begin the login process.
   if (isset($_POST['RequestTokens']) && isset($_POST['UserInput'])) if ($_POST['UserInput'] !== '') {
-    list($UserInput, $variableIsSanitized) = sanitize($_POST['UserInput'], TRUE);
+    list ($UserInput, $variableIsSanitized) = sanitize($_POST['UserInput'], TRUE);
     $_SESSION['UserInput'] = $UserInput;
     $RequestTokens = TRUE; }
   if ($SessionType === 'POST' or $SessionID === 'SESSION') { 
     // / Set the UserDir based on user input or most recently used.
     if (isset($_POST['UserDir'])) { 
-      list($UserInput, $variableIsSanitized) = sanitize($_POST['UserDir'], FALSE); 
+      list ($UserInput, $variableIsSanitized) = sanitize($_POST['UserDir'], FALSE); 
       $_SESSION['UserDir'] = $UserDir; }
     if (!isset($_SESSION['UserDir']) or $_SESSION['UserDir'] == '') $_SESSION['UserDir'] = DIRECTORY_SEPARATOR; 
     $UserDir = $_SESSION['UserDir']; }
   // / Check that any sanitization operations that took place were completed successfully.
     if (!$variableIsSanitized) $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = $UsernameAvailabilityRequest = $UsernameAvailabilityResponseNeeded = $NewAccountRequest = $NewUserEmail = $AgreeToTerms = $NewUserPassword = $NewUserPasswordConfirm = FALSE;
-  return(array($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $NewUserEmail, $AgreeToTerms, $NewUserPassword, $NewUserPasswordConfirm)); }
+  return array($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $NewUserEmail, $AgreeToTerms, $NewUserPassword, $NewUserPasswordConfirm, $ForgotUsernameRequest, $ForgotUserEmail); }
 
-// / A function to throw the login page when needed.
+// / A function to throw a full screen login page when needed.
 function requireLogin() { 
   // / Check that a login page exits.
   if (file_exists('login.php'))
@@ -401,13 +409,13 @@ function requireLogin() {
     // / Kill the script to give the user a chance to use the login page.
     logEntry('User is not logged in.', FALSE);
     die();
-  return(array()); }
+  return array(); }
 
 // / A function to generate initial client tokens before a user has fully logged in.
 // / When a user returns to the site they will be prompted to enter their username.
 // / The server will generate client tokens for the specified username and provide them to the current user.
 // / The current user now has up to 2 minutes to enter the token with the correct password.
-// / Requiring a valid token & invalidating issued tokens often prevents replay attacks & complicates eavesdropping for credentials.
+// / Requiring a valid token & invalidating issued tokens prevents replay attacks & complicates eavesdropping for credentials.
 // / If the "$Old" variable is set to TRUE, tokens for the previous minute will be generated instead.
 function getClientTokens($UserInput, $Old) {
   // / Set variables.
@@ -430,7 +438,7 @@ function getClientTokens($UserInput, $Old) {
   // / Clean up unneeded memory.
   $user = $minute = NULL;
   unset($user, $minute);
-  return(array($UserFound, $ClientToken)); } 
+  return array($UserFound, $ClientToken); } 
 
 // / A function to generate new server tokens.
 function generateServerToken() { 
@@ -441,7 +449,7 @@ function generateServerToken() {
   $ServerToken = hash('sha256', $Minute.$Salts[1].$Salts[3]);
   $OldServerToken = hash('sha256', $LastMinute.$Salts[1].$Salts[3]);
   $TokenIsValid = TRUE;
-  return(array($ServerToken, $OldServerToken, $TokenIsValid)); }
+  return array($ServerToken, $OldServerToken, $TokenIsValid); }
 
 // / A function to generate new client tokens and validate supplied ones.
 // / This is the secret sauce behind full password encryption in-transit.
@@ -453,14 +461,14 @@ function generateTokens($ClientTokenInput, $UserInput) {
   // / Initialize ServerTokens.
   list ($ServerToken, $OldServerToken, $TokenIsValid) = generateServerToken();
   // / Generate client tokens to cross reference with the supplied ones.
-  list($userFound, $ClientToken) = getClientTokens($UserInput, FALSE);
-  list($oldUserFound, $OldClientToken) = getClientTokens($UserInput, TRUE);
+  list ($userFound, $ClientToken) = getClientTokens($UserInput, FALSE);
+  list ($oldUserFound, $OldClientToken) = getClientTokens($UserInput, TRUE);
   // / Compare the supplied tokens with the generated ones.
   if ($ClientTokenInput === $ClientToken or $ClientTokenInput === $OldClientToken) if ($TokenIsValid && $userFound && $ClientToken !== '') $TokensAreValid = TRUE;
   // / Free unneeded memory.
   $userFound = $oldUserFound = NULL;
   unset($userFound, $oldUserFound);
-  return(array($ClientToken, $OldClientToken, $ServerToken, $OldServerToken, $TokensAreValid)); } 
+  return array($ClientToken, $OldClientToken, $ServerToken, $OldServerToken, $TokensAreValid); } 
 
 // / A function to cleanup personally identifiable sensitive information left in memory during authentication operations. 
 function cleanupSensitiveMemory() {
@@ -495,19 +503,19 @@ function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $C
         else { 
           $PasswordIsCorrect = $AuthIsComplete = TRUE;
           $SessionIsVerified = $UserIsEnabled = FALSE; }
-        if ($PasswordIsCorrect) list ($userID, $UserInput, $PasswordInput, $sessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $sessionIsVerified, $usernameAvailabilityRequest, $desiredUsername, $usernameAvailabilityResponseNeeded, $newAccountRequest, $newUserEmail, $agreeToTerms, $newUserPassword, $newUserPasswordConfirm) = verifyGlobals();
+        if ($PasswordIsCorrect) list ($userID, $UserInput, $PasswordInput, $sessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $sessionIsVerified, $usernameAvailabilityRequest, $desiredUsername, $usernameAvailabilityResponseNeeded, $newAccountRequest, $newUserEmail, $agreeToTerms, $newUserPassword, $newUserPasswordConfirm, $forgotUsernameRequest, $forgotUserEmail) = verifyGlobals();
         // / Here we grant the user their designated permissions.
         if (is_bool($user[4])) { 
           $UserIsAdmin = $user[4]; 
           // / Once we authenticate a user we no longer need to continue iterating through the user list, so we stop.
           break; } } } }
   // / Clean up unneeded memory.
-  $sessionIsVerified = $usernameAvailabilityRequest = $desiredUsername = $usernameAvailabilityResponseNeeded = $newAccountRequest = $newUserEmail = $agreeToTerms = $newUserPassword = $user = $userID = $newUserPasswordConfirm = $sessionID = NULL;
-  unset($sessionIsVerified, $usernameAvailabilityRequest, $desiredUsername, $usernameAvailabilityResponseNeeded, $newAccountRequest, $newUserEmail, $agreeToTerms, $newUserPassword, $user, $userID, $newUserPasswordConfirm, $sessionID);
+  $sessionIsVerified = $usernameAvailabilityRequest = $desiredUsername = $usernameAvailabilityResponseNeeded = $newAccountRequest = $newUserEmail = $agreeToTerms = $newUserPassword = $user = $userID = $newUserPasswordConfirm = $sessionID = $forgotUsernameRequest = $forgotUserEmail = NULL;
+  unset($sessionIsVerified, $usernameAvailabilityRequest, $desiredUsername, $usernameAvailabilityResponseNeeded, $newAccountRequest, $newUserEmail, $agreeToTerms, $newUserPassword, $user, $userID, $newUserPasswordConfirm, $sessionID, $forgotUsernameRequest, $forgotUserEmail);
   // / Cleanup sensitive memory only if is it not required to complete authentication.
   // / This code should only fire if the user login credentials were incorrect.
   if (!$PasswordIsCorrect && !$SessionIsVerified) cleanupSensitiveMemory();
-  return(array($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete, $SessionID, $SessionIsVerified, $UserIsEnabled)); }
+  return array($UserID, $UserName, $UserEmail, $PasswordIsCorrect, $UserIsAdmin, $AuthIsComplete, $SessionID, $SessionIsVerified, $UserIsEnabled); }
 
 // / A function to generate a user log file to the DATA library.
 function generateUserLogs($UserID) { 
@@ -528,10 +536,9 @@ function generateUserLogs($UserID) {
     if (!is_dir($UserLogDir)) mkdir($UserLogDir); 
     if (is_dir($UserLogDir)) file_put_contents($UserLogFile, 'OP-Act: '.$Time.', Created a user log file, "'.$UserLogFile.'".'.PHP_EOL);
     if (file_exists($UserLogFile)) $UserLogsExist = TRUE; }
-  return (array($UserLogsExist, $UserLogDir, $UserLogFile, $UserDataDir)); }
+  return array($UserLogsExist, $UserLogDir, $UserLogFile, $UserDataDir); }
 
-// / A function to define the default $UserCacheData used as $arrayData in generateUserCache and loadUserCache. 
-// / Without this function this data would need to be hard-coded.
+// / A function to define the default $UserCacheData for generateUserCache() & loadUserCache() functions. 
 function generateDefaultUserCacheData() { 
   // / Set variables. 
   global $UserCacheRequiredOptions, $UserCacheArrayData, $DefaultColorScheme, $DefaultFont, $DefaultTimezone, $DefaultDisplayName, $DefaultTips, $DefaultTheme, $DefaultHRAI, $DefaultHRAIAudio, $DefaultLandingPage, $DefaultStayLoggedIn;
@@ -541,11 +548,11 @@ function generateDefaultUserCacheData() {
   // / Define an array of default cache elements that every user cache file must contain.
   // / Note that the values in this array MUST match the $UserCacheArrayData above which containing the valid defaults for each element of $UserOptions[].
   $UserCacheRequiredOptions = array('FRIENDS'=>array(), 'BLOCKED'=>array(), 'COLOR'=>$DefaultColorScheme, 'FONT'=>$DefaultFont, 'TIMEZONE'=>$DefaultTimezone, 'DISPLAYNAME'=>$DefaultDisplayName, 'TIPS'=>$DefaultTips, 'THEME'=>$DefaultTheme, 'HRAI'=>$DefaultHRAI, 'HRAIAUDIO'=>$DefaultHRAIAudio, 'LANDINGPAGE'=>$DefaultLandingPage, 'STAYLOGGEDIN'=>$DefaultStayLoggedIn); 
-  return (array($UserCacheArrayData, $UserCacheRequiredOptions)); }
+  return array($UserCacheArrayData, $UserCacheRequiredOptions); }
 
-// / A function to generate a missing user cache file. Useful when new users log in for the first time.
-// / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded 
-// / by the loadUserCache() function.
+// / A function to generate a missing user cache file. 
+// / Used when new users log in for the first time.
+// / The $UserCacheData variable gets crudely validated and turned into $UserOptions when loaded by the loadUserCache() function.
 function generateUserCache($UserID) { 
   // / Set variables. Note the $UserCacheExists, $UserCache and $UserCacheDir are all assumed to be FALSE unless they are changed to TRUE.
   // / If $UserCacheExists, $UserCache or $UserCacheDir return FALSE, the calling code should assume this function failed.
@@ -562,18 +569,19 @@ function generateUserCache($UserID) {
   // / Clean up unneeded memory.
   $userCacheData = $arrayData = $dirExists = NULL;
   unset($userCacheData, $arrayData, $dirExists); 
-  return(array($UserCacheExists, $UserCacheFile, $UserCacheDir)); } 
+  return array($UserCacheExists, $UserCacheFile, $UserCacheDir); } 
 
-// / A function to format a modified user cache array so that it can be safely re-written to the user cache file without causing syntax errors.
+// / A function to format a modified user cache array before re-writing it to the user cache file in PHP syntaxed form.
 function updateUserCacheData() { 
   // / Set variables. 
   global $UserOptions;
   // / Define the default data for a fresh installation of the $UserCacheFile.
   // / This is specially encoded to be written in a machine-readable .php file that will be included in generateUserCache().
   $UserCacheArrayData = '$userCacheData = array(\'COLOR\'=>\''.$UserOptions['COLOR'].'\', \'FONT\'=>\''.$UserOptions['FONT'].'\', \'TIMEZONE\'=>\''.$UserOptions['TIMEZONE'].'\', \'DISPLAYNAME\'=>\''.$UserOptions['DISPLAYNAME'].'\', \'TIPS\'=>\''.$UserOptions['TIPS'].'\', \'THEME\'=>\''.$UserOptions['THEME'].'\', \'HRAI\'=>\''.$UserOptions['HRAI'].'\', \'HRAIAUDIO\'=>\''.$UserOptions['HRAIAUDIO'].'\', \'LANDINGPAGE\'=>\''.$UserOptions['LANDINGPAGE'].'\', \'STAYLOGGEDIN\'=>\''.$UserOptions['STAYLOGGEDIN'].'\');'.PHP_EOL;
-  return ($UserCacheArrayData); }
+  return $UserCacheArrayData; }
 
 // / A function to save modified settings to the user cache.
+// / Uses the updateUserCacheData() function to format the data array.
 function saveUserCache() { 
   // / Set variables.
   global $UserCache, $UserOptions;
@@ -582,7 +590,7 @@ function saveUserCache() {
   // / Clean up unneeded memory.
   $newUserCacheData = $handle = $len = $final_len = $cache_old = $i = $newEntry = $key = $uOpt = $Prepend = NULL;
   unset($newUserCacheData, $handle, $len, $final_len, $cache_old, $i, $newEntry, $key, $uOpt, $Prepend);
-  return($UserCacheWritten); }
+  return $UserCacheWritten; }
 
 // / A function to load the user cache, which contains an individual users option settings.
 // / Cache files are stored as .php files and cache data is stored as an array. This ensures the files
@@ -601,12 +609,12 @@ function loadUserCache() {
       if (!isset($userCacheData)) { 
         $userCache = NULL; 
         unset($userCache); 
-        return(array($UserOptions, $UserCacheIsLoaded)); }
+        return array($UserOptions, $UserCacheIsLoaded); }
       // / If the cache data isn't an array we return an error and stop.
       if (!is_array($userCacheData)) { 
         $userCache = $userCacheData = NULL; 
         unset($userCache, $userCacheData); 
-        return(array($UserOptions, $UserCacheIsLoaded)); }
+        return array($UserOptions, $UserCacheIsLoaded); }
       // / If the user cache is valid we copy it to the $UserOptions array & delete the temporary data.
       $UserOptions = $userCacheData;
       // / Remove the raw cache data from memory.
@@ -634,9 +642,11 @@ function loadUserCache() {
   // / Clean up unneeded memory.
   $option = $value = $key = $ucaElement = $ucaElementWritten = NULL;
   unset($UserCacheRequiredOptions, $option, $value, $key, $ucaElement, $ucaElementWritten);
-  return(array($UserOptions, $UserCacheIsLoaded)); }
+  return array($UserOptions, $UserCacheIsLoaded); }
 
 // / A function to initialize the libraries into categories based on their status.
+// / Categories include: Active, Inactive, Custom & Default.
+// / The final return value is a sanity check that should return TRUE after all other processing is complete.
 function loadLibraries() { 
   // / Set variables. Note the default libraries that can be used as filters later in the application.
   global $Libraries, $LibrariesDefault;
@@ -650,7 +660,7 @@ function loadLibraries() {
     // / If a libary is disabled it is marked as inactive and can be used as a filter later or to display as inactive in a GUI.
     else array_push($LibrariesInactive, $Library); }
   $LibrariesAreLoaded = TRUE;
-  return(array($LibrariesActive, $LibrariesInactive, $LibrariesCustom, $LibrariesDefault, $LibrariesAreLoaded)); } 
+  return array($LibrariesActive, $LibrariesInactive, $LibrariesCustom, $LibrariesDefault, $LibrariesAreLoaded); } 
 
 // / A function to read the data from the supplied array of libraries and load their contents.
 function loadLibraryData() {
@@ -678,7 +688,7 @@ function loadLibraryData() {
   // / Clean up unneeded memory.
   $key = NULL;
   unset($key); 
-  return(array($LibraryError, $LibraryDataIsLoaded)); }  
+  return array($LibraryError, $LibraryDataIsLoaded); }  
 
 // / A function to check the status of a given library.
 // / Accepts a string as the only input.
@@ -689,14 +699,22 @@ function checkLibraryStatus($library) {
   global $LibrariesActive, $LibrariesInactive, $LibrariesCustom, $LibrariesDefault;
   $LibrraryExists = $LibraryIsActive = $LibraryIsInactive = $LibraryIsCustom = $LibraryIsDefault = $libA = $libB = $libC = $libD = FALSE;
   // / Iterate through each category & flag the categories where the supplied library appears.
-  foreach ($LibrariesActive as $libA) if ($libA[0] === $library) $LibraryExists = $LibraryIsActive = TRUE;
-  foreach ($LibrariesInactive as $libB) if ($libB[0] === $library) $LibraryExists = $LibraryIsInactive = TRUE;
-  foreach ($LibrariesCustom as $libC) if ($libC[0] === $library) $LibraryExists = $LibraryIsCustom = TRUE;
-  foreach ($LibrariesDefault as $libD) if ($libD[0] === $library) $LibraryExists = $LibraryIsDefault = TRUE; 
+  foreach ($LibrariesActive as $libA) if ($libA[0] === $library) { 
+    $LibraryExists = $LibraryIsActive = TRUE; 
+    break; }
+  foreach ($LibrariesInactive as $libB) if ($libB[0] === $library) { 
+    $LibraryExists = $LibraryIsInactive = TRUE; 
+    break; }
+  foreach ($LibrariesCustom as $libC) if ($libC[0] === $library) { 
+    $LibraryExists = $LibraryIsCustom = TRUE; 
+    break; }
+  foreach ($LibrariesDefault as $libD) if ($libD[0] === $library) { 
+    $LibraryExists = $LibraryIsDefault = TRUE; 
+    break; }
   // / Clean up unneeded memory.
   $libA = $libB = $libC = $libD = $library = NULL;
   unset($libA, $libB, $libC, $libD, $library); 
-  return(array($LibraryExists, $LibraryIsActive, $LibraryIsInactive, $LibraryIsCustom, $LibraryIsDefault)); }
+  return array($LibraryExists, $LibraryIsActive, $LibraryIsInactive, $LibraryIsCustom, $LibraryIsDefault); }
 
 // / A function to quickly check if a desired library is active.
 // / $LibCheck returns the array key of the desired library if the input library is active.
@@ -716,9 +734,10 @@ function libCheck($library) {
   // / Clean up unneeded memory.
   $lib = $key = NULL;
   unset($lib, $key);
-  return (array($LibCheck, $DesiredLibrary)); }
+  return array($LibCheck, $DesiredLibrary); }
 
-// / A function to set specific variables for a specified library.
+// / A function to set detailed variables for a specified library.
+// / Makes use of the checkLibraryStatus() function.
 function selectLibrary($library) {
   // / Set variables. 
   $lib = array('', '', '', '');
@@ -741,7 +760,7 @@ function selectLibrary($library) {
   // / Clean up unneeded memory.
   $lib = $libName = NULL;
   unset($lib, $libName); 
-  return (array($LibraryIsSelected, $LibraryName, $LibraryDir, $LibraryContents, $LibraryExists, $LibraryIsActive, $LibraryIsInactive, $LibraryIsCustom, $LibraryIsDefault)); }
+  return array($LibraryIsSelected, $LibraryName, $LibraryDir, $LibraryContents, $LibraryExists, $LibraryIsActive, $LibraryIsInactive, $LibraryIsCustom, $LibraryIsDefault); }
 
 // / A function to determine if a notifications file exists for the current user and generate one if missing.
 // / A notification is considered a single line of the notifications file.
@@ -754,7 +773,7 @@ function generateNotificationsFile($UserID, $UserDataDir) {
   if (!file_exists($NotificationsFile)) file_put_contents($NotificationsFile, ''); 
   // / If the file operation operation returns FALSE, check again.
   if (file_exists($NotificationsFile)) $NotificationsFileExists = TRUE;
-  return(array($NotificationsFileExists, $NotificationsFile)); } 
+  return array($NotificationsFileExists, $NotificationsFile); } 
 
 // / A function for loading notifications.
 // / A notification is considered a single line of the notifications file.
@@ -764,7 +783,7 @@ function loadNotifications() {
   $Notifications = file($NotificationsFile);
   // / Check that $Notifications is actually an array.
   if (!is_array($Notifications) or !$Notifications) $Notifications = array(); 
-  return($Notifications); }
+  return $Notifications; }
 
 // / A function to prepare a single notification for the UI.
 // / Notifications are comprised of the date they were created and the content of the notification.
@@ -777,7 +796,7 @@ function decodeNotification($Notification) {
   // / Please note that the whitespace in the "explode" below is actually a TAB character!
   // / Also sanitize the $Notification before loading it.
   list ($NotificationDate, $NotificationContent) = explode("  ", sanitize($Notification, TRUE));
-  return(array($NotificationDate, $NotificationContent)); }
+  return array($NotificationDate, $NotificationContent); }
 
 // / A function for marking notifications as read.
 // / A notification is considered a single line of the notifications file.
@@ -800,7 +819,7 @@ function readNotifications() {
   // / Clean up unneeded memory.
   $key = $notification = $firstChar = NULL;
   unset($key, $notification, $firstChar);
-  return(array($NotificationsFileUpdated)); }
+  return array($NotificationsFileUpdated); }
 
 // / A function for purging notifications.
 // / A notification is considered a single line of the notifications file.
@@ -825,18 +844,84 @@ function purgeNotification($NotificationToPurge) {
   // / Clean up unneeded memory.
   $NotificationToPurge = $notificationFileWritten = $key = $notificationsCheck = NULL;
   unset($NotificationToPurge, $notificationFileWritten, $key, $notificationsToCheck);
-  return(array($NotificationPurged, $Notifications)); }
+  return array($NotificationPurged, $Notifications); }
 
 // / A function to push a notification to a user.
 function pushNotification($NotificationToPush, $TargetUserID) { 
   // / Sanitize the notification with strict character enforcement.
   $NotificationToPush = sanitize($NotificationToPush, TRUE);
-  return($NotificationSent); }
+  return $NotificationSent; }
 
-// / A function for the user to send an email.
-function sendEmail($address, $content, $template) { 
+// / A function to load an included dependency when called.
+// / Accepts a string name of a valid dependency as the first argument,
+// / If the string name is not set in the $AvailableDependencies array in config.php it will not be allowed to load.
+// / Accepts a string or array of strings as the second argument. 
+// / Each string in the second argument should be a valid path to a .php file to be included relative to the "Dependencies" directory.
+// / If a specified .php file has been included already it will not be inluded again.
+// / Returns TRUE when the specified dependency was successfully loaded..
+// / Returns FALSE when the specified dependency could not be loaded.
+function loadDependency($dependency, $files) { 
+  // / Set variables. 
+  global $DependencyDir;
+  $DependencyLoadedSuccessfully = FALSE;
+  $check = TRUE;
+  if (!is_array($files)) $files = array($files);
+  // / Loop through all of the dependencies one at a time,
+  foreach ($files as $dep) { 
+    $depFile = $DependencyDir.$dependency.DIRECTORY_SEPARATOR.$dep;
+    // / Only continue loading files if all required files exist.
+    if (file_exists($depFile)) require_once($depFile); 
+    else $check = FALSE; } 
+  if ($check) $DependencyLoadedSuccessfully = TRUE;
+  // / Clean up unneeded memory.
+  $dependency = $files = $depFile = $dep = $check = NULL;
+  unset($dependency, $files, $depFile, $dep, $check);
+  return $DependencyLoadedSuccessfully; }
 
-} 
+// / A function to send an email.
+// / Accepts string inputs for $address, $subject, & $content.
+// / Returns a boolean value 
+function sendEmail($address, $subject, $content) { 
+  // / Set variables. 
+  global $PHPMailerLoaded, $EmailUseSMTP, $EmailFromAddress, $EmailFromName, $EmailSMTPRequireAuthentication, $Verbose, $EmailSendEncryption, $EmailSendEncryptionAutoTLS, $EmailSendEncryptionType;
+  $phpMailerArray = array('src/PHPMailer.php', 'src/SMTP.php', 'src/Exception.php');
+  $EmailSent = FALSE;
+  $mailSMTPEncryptionType = 'none'; 
+  if ($EmailSendEncryption) $mailSMTPEncryptionType = $EmailSendEncryptionType;
+  // / Load PHPMailer into memory only if it hasn't been loaded already.
+  if (!$PHPMailerLoaded) $PHPMailerLoaded = loadDependency('PHPMailer', $phpMailerArray);
+  if (!$PHPMailerLoaded) dieGracefully(31, 'Could not load PHPMailer!', FALSE);
+  else if ($Verbose) logEntry('Loaded PHPMailer', FALSE);
+  // / Initialize a PHPMailer class.
+  $mail = new PHPMailer\PHPMailer\PHPMailer();
+  // / Define required parameters for the email to be sent.
+  $mail->SMTPSecure = $mailSMTPEncryptionType;
+  $mail->SMTPAutoTLS = $EmailSendEncryptionAutoTLS;
+  $mail->AddAddress($address);
+  $mail->SetFrom($EmailFromAddress, $EmailFromName);
+  $mail->Subject = $subject;
+  $mail->Body = $content;
+  $mail->isHTML(TRUE); 
+  // / Define SMTP specific parameters for the email to be sent.
+  if ($EmailUseSMTP) {
+    $mail->IsSMTP();
+    $mail->SMTPAuth = $EmailSMTPRequireAuthentication;
+    $mail->Host = $EmailSMTPServer;
+    $mail->Port = $EmailSMTPPort;
+    $mail->Username = $EmailSMTPUsername;
+    $mail->Password = $EmailSMTPPassword; }
+  // / Attempt to send the email using PHPMailer & the settings defined above.
+  try {
+    $mail->Send();
+    $EmailSent = TRUE;
+    if ($Verbose) logEntry('Email sent successfully.', FALSE); }
+  // / Catch any errors generated by PHPMailer and write them to the log.
+  catch(Exception $exceptionInfo) { 
+    logEntry('PHPMailer returned the following error: '.$mail->ErrorInfo.', '.$exceptionInfo->getMessage(), FALSE); }
+  // / Clean up unneeded memory.
+  $mailSMTPEncryptionType = $mail = $exceptionInfo = $phpMailerArray = NULL;
+  unset($mailSMTPEncryptionType, $mail, $exceptionInfo, $phpMailerArray);
+  return $EmailSent; } 
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -871,7 +956,7 @@ else if ($Verbose) logEntry('Loaded cache file.', FALSE);
 
 // / This code takes in all required inputs to build a session and ensures they exist & are a valid type.
 // / If the globals cannot be verified, but the user is trying to login we will show them a login form.
-list ($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $NewUserEmail, $AgreeToTerms, $NewUserPassword, $NewUserPasswordConfirm) = verifyGlobals();
+list ($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $NewUserEmail, $AgreeToTerms, $NewUserPassword, $NewUserPasswordConfirm, $ForgotUsernameRequest, $ForgotUserEmail) = verifyGlobals();
 if (!$GlobalsAreVerified) if ($RequestTokens && $UserInput === NULL) requireLogin(); 
 else if ($Verbose) logEntry('Verified global variables.', FALSE);
 
@@ -939,7 +1024,7 @@ if ($RequestTokens && !$SessionIsVerified) {
 
   // / Output a username and client token.
   // / Note that fake tokens are returned if the requested user does not exist.
-  list($UserFound, $ClientToken) = getClientTokens($UserInput, FALSE);
+  list ($UserFound, $ClientToken) = getClientTokens($UserInput, FALSE);
   echo($UserInput.','.$ClientToken.PHP_EOL); }
 
 // / This code returns keep alive tokens to the user.
@@ -961,7 +1046,7 @@ if ($SessionIsVerified) {
 if ($UsernameAvailabilityRequest) if ($DesiredUsername !== '') if ($UserIsAdmin or $AllowUserRegistration) { 
   if ($Verbose) logEntry('Initiating a username availability request.', FALSE); 
 
-  // / Load the admin core to make user availability request proccessing possible.
+  // / Load the admin core to make Username Availability Request proccessing possible.
   if (!in_array('ADMIN', $CoresLoaded)) list ($CoresLoaded, $CoreLoadedSuccessfully) = loadCores('ADMIN');
   if (!$CoreLoadedSuccessfully) dieGracefully(20, 'Could not load the admin core file (adminCore.php)!', FALSE);
   else if ($Verbose) logEntry('Loaded the admin core file.', FALSE); 
@@ -986,7 +1071,7 @@ if ($UsernameAvailabilityRequest) if ($DesiredUsername !== '') if ($UserIsAdmin 
     
       // / Create the user account.
       // / Logging is performed by the called code.
-      list($UserCreated, $UserID, $Users) = addUser($DesiredUsername, $NewUserEmail, $NewUserPassword, $NewUserPasswordConfirm);
+      list ($UserCreated, $UserID, $Users) = addUser($DesiredUsername, $NewUserEmail, $NewUserPassword, $NewUserPasswordConfirm);
       if (!$UserCreated) dieGracefully(14, 'Could not create the desired user account!', FALSE);
       else if ($Verbose) logEntry('Successfully created a new user account.', FALSE);
 
@@ -995,4 +1080,15 @@ if ($UsernameAvailabilityRequest) if ($DesiredUsername !== '') if ($UserIsAdmin 
 
       // / Stop executing code.
       die(); } } }
-// / -----------------------------------------------------------------------------------
+
+// / This code is performed when a user submits an Forgot Username Request.
+if ($ForgotUsernameRequest && $ForgotUserEmail !== '') { 
+  if ($Verbose) logEntry('Initiating a forgotten username request.', FALSE); 
+
+  // / Load the admin core to make Forgot Username Request proccessing possible.
+  if (!in_array('ADMIN', $CoresLoaded)) list ($CoresLoaded, $CoreLoadedSuccessfully) = loadCores('ADMIN');
+  if (!$CoreLoadedSuccessfully) dieGracefully(32, 'Could not load the admin core file (adminCore.php)!', FALSE);
+  else if ($Verbose) logEntry('Loaded the admin core file.', FALSE); 
+
+}
+// / ----------------------------------------------------------------------------------
