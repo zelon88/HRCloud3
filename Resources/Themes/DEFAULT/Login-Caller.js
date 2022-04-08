@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/18/2022
+Date: 4/7/2022
 <3 Open-Source
 
 This file is for negotiating login requests & processing the response from the server.
@@ -71,22 +71,22 @@ function StayLoggedInCaller() {
 // / This function hides the loginModal & replaces it with the passwordModal.
 // / This function also passes user input to hidden form fields so they can be transferred to passwordFormNav.
 $('#loginFormNav').on('submit', function (loginAjax) {
-    var UserInput = document.getElementById('UserInput').value;
-    loginAjax.preventDefault();
-    $.ajax({
-      type: 'POST',
-      url: '/core.php',
-      data: $(this).serialize(),
-      success: function(loginReponse) {
-        if (!loginReponse.includes('ERROR!!!')) { 
-          var responseArray = loginReponse.split(',');
-          var UserInput = responseArray[0];
-          var ClientTokenInput = responseArray[1];
-          toggleVisibility('loginModal');
-          toggleVisibility('passwordModal');
-          getFocus('RawPassword');
-          changeValue('ClientTokenInput', ClientTokenInput); 
-          changeValue('UserInputPassword', UserInput); } } }); });
+  var UserInput = document.getElementById('UserInput').value;
+  loginAjax.preventDefault();
+  $.ajax({
+    type: 'POST',
+    url: '/core.php',
+    data: $(this).serialize(),
+    success: function(loginReponse) {
+      if (!loginReponse.includes('ERROR!!!')) { 
+        var responseArray = loginReponse.split(',');
+        var UserInput = responseArray[0];
+        var ClientTokenInput = responseArray[1];
+        toggleVisibility('loginModal');
+        toggleVisibility('passwordModal');
+        setFocus('RawPassword');
+        changeValue('ClientTokenInput', ClientTokenInput); 
+        changeValue('UserInputPassword', UserInput); } } }); });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -97,42 +97,42 @@ $('#loginFormNav').on('submit', function (loginAjax) {
 // / On HTTP success & application error; This function hides passwordModal & replaces it with the errorModal for 3 seconds.
 // / On any HTTP error; This function hides passwordModal & replaces it with the criticalModal for 5 seconds.
 $('#passwordFormNav').on('submit', function (passwordAjax) { 
-    passwordAjax.preventDefault();
-    $.ajax({
-      type: 'POST',
-      url: '/core.php',
-      data: $(this).serialize(),
-      success: function(passwordResponse) {
-        var passwordCorrect = !passwordResponse.includes('ERROR!!!');
-        if (passwordCorrect && passwordResponse !== '') { 
-          var responseArray = passwordResponse.split(',');
-          var UserInput = responseArray[0];
-          var SessionID = responseArray[1];
-          var ClientToken = responseArray[2];
-          setVisibility('passwordModal', 'none');
-          changeContent('successModalHeaderText', 'Login Success');
-          toggleVisibility('successModal');
-          setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
-          changeValue('UserInputTokens', UserInput);
-          changeValue('SessionID', SessionID);
-          changeValue('ClientToken', ClientToken);
-          changeValue('ActiveSLI', 'ENABLED');
-          changeValue('StayLoggedIn', 'ENABLED');
-          toggleVisibility('loginButton');
-          toggleVisibility('logoutButton');
-          StayLoggedInCaller(); 
-          }
-        else { 
-          changeContent('errorModalHeaderText', 'Login Failed');
-          document.getElementById('RawNewUserPassword').required = true;
-          document.getElementById('RawNewUserPasswordConfirm').required = true;
-          setVisibility('errorModal', 'block');
-          setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
-      error: function(passwordResponse) {
-          toggleVisibility('passwordModal');
-          changeContent('criticalModalHeaderText', 'Login Error');
-          toggleVisibility('criticalModal');
-          setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
+  passwordAjax.preventDefault();
+  $.ajax({
+    type: 'POST',
+    url: '/core.php',
+    data: $(this).serialize(),
+    success: function(passwordResponse) {
+      var passwordCorrect = !passwordResponse.includes('ERROR!!!');
+      if (passwordCorrect && passwordResponse !== '') { 
+        var responseArray = passwordResponse.split(',');
+        var UserInput = responseArray[0];
+        var SessionID = responseArray[1];
+        var ClientToken = responseArray[2];
+        setVisibility('passwordModal', 'none');
+        changeContent('successModalHeaderText', 'Login Success');
+        toggleVisibility('successModal');
+        setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
+        changeValue('UserInputTokens', UserInput);
+        changeValue('SessionID', SessionID);
+        changeValue('ClientToken', ClientToken);
+        changeValue('ActiveSLI', 'ENABLED');
+        changeValue('StayLoggedIn', 'ENABLED');
+        toggleVisibility('loginButton');
+        toggleVisibility('logoutButton');
+        StayLoggedInCaller(); 
+        }
+      else { 
+        changeContent('errorModalHeaderText', 'Login Failed');
+        document.getElementById('RawNewUserPassword').required = true;
+        document.getElementById('RawNewUserPasswordConfirm').required = true;
+        setVisibility('errorModal', 'block');
+        setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
+    error: function(passwordResponse) {
+        toggleVisibility('passwordModal');
+        changeContent('criticalModalHeaderText', 'Login Error');
+        toggleVisibility('criticalModal');
+        setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -242,7 +242,7 @@ function logout() {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to perform the client-side encryption of the users password before they send it to the server.
+// / A function to perform the client-side encryption of the users password before they send it to the server during account creation.
 function secureCreateAcccount(RawPassword) {
   var AccountPasswordInput = hashCreds(RawPassword);
   changeValue('NewUserPassword', AccountPasswordInput); 
@@ -250,7 +250,7 @@ function secureCreateAcccount(RawPassword) {
   document.getElementById('RawNewUserPassword').required = false;
   document.getElementById('RawNewUserPasswordConfirm').required = false;
   clearInput('RawNewUserPassword');
-  clearInput('RawNewUserPasswordConfirm');
+  clearInput('RawNewUserPasswordConfirm'); 
   return(AccountPasswordInput); }
 // / -----------------------------------------------------------------------------------
 
@@ -258,17 +258,8 @@ function secureCreateAcccount(RawPassword) {
 // / A function to submit the Create Account form and process the results.
 // / Validates the input and hashes the password
 function createAccount() { 
-  var rawNewUserPassword = document.getElementById('RawNewUserPassword').value;
-  var rawNewUserPasswordConfirm = document.getElementById('RawNewUserPasswordConfirm').value;
   var emailAddress = document.getElementById('NewUserEmail').value;
-  if (rawNewUserPassword === rawNewUserPasswordConfirm) { 
-    NewUserPassword = secureCreateAcccount(rawNewUserPassword);
-
  }
-  else { 
-
-
-  } }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -294,6 +285,12 @@ function openPP(privacyPolicyFile) {
 // / On HTTP success & application error; This function hides createAccountModal & replaces it with the errorModal for 3 seconds.
 // / On any HTTP error; This function hides createAccountModal & replaces it with the criticalModal for 5 seconds.
 $('#createAccountFormNav').on('submit', function (createAccountAjax) { 
+  var rawNewUserPassword = document.getElementById('RawNewUserPassword').value;
+  var rawNewUserPasswordConfirm = document.getElementById('RawNewUserPasswordConfirm').value;
+  if (rawNewUserPassword === rawNewUserPasswordConfirm) { 
+    NewUserPassword = secureCreateAcccount(rawNewUserPassword); 
+    outlineNone('RawNewUserPassword');
+    outlineNone('RawNewUserPasswordConfirm');
     createAccountAjax.preventDefault();
     $.ajax({
       type: 'POST',
@@ -316,28 +313,40 @@ $('#createAccountFormNav').on('submit', function (createAccountAjax) {
           toggleVisibility('passwordModal');
           changeContent('criticalModalHeaderText', 'Account Creation Critical Error');
           toggleVisibility('criticalModal');
-          setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
+          setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); } 
+    else { 
+      outlineRed('RawNewUserPassword');
+      outlineRed('RawNewUserPasswordConfirm');
+    } });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to submit the Navigation Bar Recover Username form with AJAX & update the UI elements.
-// / When this function is run the forgotUserModal modal is being displayed.
+// / A function to submit the Navigation Bar forgot username form with AJAX & update the UI elements.
+// / When this function is run the forgotUserModal is being displayed.
 // / On HTTP & application success; This function hides forgotUserModal & replaces it with the successModal for 3 seconds.
 // / On HTTP success & application error; This function hides forgotUserModal & replaces it with the errorModal for 3 seconds.
 // / On any HTTP error; This function hides forgotUserModal & replaces it with the criticalModal for 5 seconds.
-$('#forgotUserFormNav').on('submit', function (forgotUserAjax) { 
-    forgotUserAjax.preventDefault();
-    $.ajax({
-      type: 'POST',
-      url: '/core.php',
-      data: $(this).serialize(),
-      success: function(forgotUserResponse) {
-        var forgotUserError = forgotUserResponse.includes('ERROR!!!');
-        if (!forgotUserError && forgotUserResponse !== '' && forgotUserResponse.includes('COMPLETE')) { 
-          setVisibility('checkResultsSuccess', 'block'); } },
-      error: function(forgotUserResponse) {
-          setVisibility('forgotUserModal', 'none');
-          changeContent('criticalModalHeaderText', 'Account Recovery Critical Error');
-          toggleVisibility('criticalModal');
-          setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
+$('#forgotUsernameFormNav').on('submit', function (forgotUsernameAjax) { 
+  forgotUsernameAjax.preventDefault();
+  $.ajax({
+    type: 'POST',
+    url: '/core.php',
+    data: $(this).serialize(),
+    success: function(forgotUsernameResponse) {
+      var forgotUsernameCorrect = !forgotUsernameResponse.includes('ERROR!!!');
+      if (forgotUsernameCorrect && forgotUsernameResponse.includes('APPROVED')) { 
+        setVisibility('forgotUserModal', 'none');
+        changeContent('successModalHeaderText', 'Recovery Email Sent Successfully');
+        toggleVisibility('successModal');
+        setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
+        }
+      else { 
+        changeContent('errorModalHeaderText', 'Account Recovery Failed');
+        setVisibility('errorModal', 'block');
+        setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
+    error: function(passwordResponse) {
+        toggleVisibility('passwordModal');
+        changeContent('criticalModalHeaderText', 'Account Recovery Critical Error');
+        toggleVisibility('criticalModal');
+        setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
 // / -----------------------------------------------------------------------------------

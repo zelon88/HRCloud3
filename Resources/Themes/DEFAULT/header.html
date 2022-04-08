@@ -33,7 +33,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     <!-- Populate the title field with the ApplicationName from the config.php file. -->
     <title><?php echo $ApplicationName; ?></title>
     <!-- Load JQuery. This should be pointed to a local source. Keep it up-to-date. Do not place other scripts above this one. -->
-    <script type='text/javascript' src='/Resources/jquery-3.5.1.min.js'></script>
+    <script type='text/javascript' src='/Resources/jquery-3.6.0.min.js'></script>
     <script type='text/javascript'>
       // / Declare PHP controlled global Javascript variables.
       let StayLoggedInInterval = '<?php echo $StayLoggedInInterval; ?>';
@@ -155,7 +155,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
     <!-- The Forgot Username Modal -->
     <div id='forgotUserModal' class='modal' name='forgotUserModal'>
       <!-- Forgot Username Modal Content. -->
-      <div id='forgotUserFormNav' class='modalContent animate' name='forgotUserFormNav'>
+      <div id='forgotUserNav' class='modalContent animate' name='forgotUserNav'>
         <!-- Forgot Username Modal Header -->
         <div id='forgotUserModalHeader' class='modalHeader' name='forgotUserModalHeader'>
           <img id='avatarSmallForgotUser' class='avatar-small' name='avatarSmallForgotUser' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
@@ -165,7 +165,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         </div>
         <!-- Forgot Username Modal Message Container -->
         <div id='forgotUserContainer' name='forgotUserContainer' style='text-align:center;'>
-          <form id='forgotUserFormNav' name='forgotUserFormNav' method='POST' target='noredirect'>
+          <form id='forgotUsernameFormNav' name='forgotUsernameFormNav' method='POST' target='noredirect'>
             <input type='text' id='ForgotUserEmailInput' class='textInput' name='ForgotUserEmailInput' title='Enter your email address.' placeholder='Enter Your Email Address' value='' required autofocus>
             <input type='hidden' id='recoverAccount' name='RecoverAccount' value='' required>
             <button id='submitButton' class='BUTTON_1' name='submitButton'  title='Proceed with account recovery.' style='margin:10px;'>Recover Account</button>
@@ -262,7 +262,8 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
               <input type='password' placeholder='Re-Enter Desired Password' id='RawNewUserPasswordConfirm' name='RawNewUserPasswordConfirm' title='Enter desired password.' style='padding: 10px;' required>
               <input type='hidden' id='NewUserPassword' name='NewUserPassword' value='' required>
               <input type='hidden' id='NewUserPasswordConfirm' name='NewUserPasswordConfirm' value='' required>
-              <input type='hidden' id='CreateNewAccount' name='CreateNewAccount' value='' required>
+              <input type='hidden' id='CreateNewAccount' name='CreateNewAccount' value='ENABLED' required>
+              <input type='hidden' id='PasswordsMatch' name='PasswordsMatch' required>
               <br />
               <input type='checkbox' id='AgreeToTerms' class='tosText' name='AgreeToTerms' title='You must agree to the Terms Of Service & Privacy Policy in order to create a new account.' value='AGREE' required>
               <label id='agreeToTermsLabel' class='tosText' name='agreeToTermsLabel' title='You must agree to the Terms Of Service & Privacy Policy in order to create a new account.' for='AgreeToTerms'> I agree to the Terms Of Service & Privacy Policy.</label>
@@ -287,7 +288,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
           <img id='avatarSmallSuccess' class='avatar-small' name='avatarSmallSuccess' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
           <a id='successModalHeaderText' class='modalHeaderText' name='successModalHeaderText'>Login Success</a>
           <img id='closeButtonSuccess'  class='closeButton' name='closeButtonSuccess' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("successModal");' alt='Close' title='Close Window'>
-          <img id='helpSuccess' class='helpButton' name='helpSuccess' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='Your login credentials are valid. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.'>
+          <img id='helpSuccess' class='helpButton' name='helpSuccess' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='Operation success! This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.'>
         </div>
         <!-- Successful Login Modal Message Container -->
         <div id='successContainer' name='successContainer' style='text-align:center; display:block;'>
@@ -307,12 +308,12 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
           <img id='warningSmallError' class='warning-small' name='warningSmallError' src='/Resources/Themes/DEFAULT/alert24.png' alt='Alert' title='Alert'>
           <a id='errorModalHeaderText' class='modalHeaderText' name='errorModalHeaderText'>Login Failed</a>
           <img id='closeButtonError' class='closeButton' name='closeButtonError' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("errorModal");' alt='Close' title='Close Window'>
-          <img id='helpError' class='helpButton' name='helpError' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='Your login credentials are not valid. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.'>
+          <img id='helpError' class='helpButton' name='helpError' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='The requested operation failed for some reason. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.'>
         </div>
         <!-- Failed Login Modal Message Container -->
         <div id='errorContainer' name='errorContainer' style='text-align:center; display:block;'>
           <br />
-          <p>Login failed! Please try again.</p>
+          <p>Operation failed! Please try again.</p>
           <br />
         </div> 
       </div>
@@ -327,7 +328,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
           <img id='errorSmallCritical' class='error-small' name='errorSmallCritical' src='/Resources/Themes/DEFAULT/exclamation24.png' alt='Error' title='Error'>
           <a id='criticalModalHeaderText' class='modalHeaderText' name='criticalModalHeaderText'>Login Error</a>
           <img id='closeButtonCritical' class='closeButton' name='closeButtonCritical' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("criticalModal");' alt='Close' title='Close Window'>
-          <img id='helpCritical' class='helpButton' name='helpCritical' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='An error occurred and your login request could not be completed. Please try again later. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.'>
+          <img id='helpCritical' class='helpButton' name='helpCritical' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='A critical error occurred and your request could not be processed. Please try again later. This window will disappear shortly. To close this window; press the red "X" icon in the top-right corner of the window.'>
         </div>
         <!-- Critical Login Error Modal Message Container -->
         <div id='criticalContainer' name='criticalContainer' style='text-align:center; display:block;'>

@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/30/2022
+Date: 4/7/2022
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -152,6 +152,21 @@ function verifyInstallation() {
   $dirCheck = $indexCheck = $logCheck = $cacheCheck = $requiredDirs = $requiredDir = $dirExists = $indexExists = $logHash = NULL;
   unset($dirCheck, $indexCheck, $logCheck, $cacheCheck, $requiredDirs, $requiredDir, $dirExists, $indexExists, $logHash);
   return array($LogFile, $CacheFile, $InstallationIsVerified); }
+
+// / A function to verify that the connection is taking place over HTTPS.
+// / $ConnectionIsVerified returns TRUE if the connection should be allowed according to the settings defined in config.php.
+// / $ConnectionIsVerified returns FALSE if the connection should be not allowed according to the settings defined in config.php.
+// / $ConnectionIsSecure returns TRUE if the connection is secured over HTTPS.
+// / $ConnectionIsSecure returns FALSE if the connection is not secured over HTTPS.  
+function verifyConnection() { 
+  global $ForceHTTPS;
+  $ConnectionIsVerified = $ConnectionIsSecure = FALSE;
+  // / Determine if the connection is encrypted.
+  if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') $ConnectionIsSecure = TRUE; 
+  // / Set the $ConnectionIsVerified flag depending on whether or not the connection should be allowed according to the settings defined in config.php.
+  if ($ForceHTTPS & $ConnectionIsSecure) $ConnectionIsVerified = TRUE;
+  if (!$ForceHTTPS) $ConnectionIsVerified = TRUE;
+  return array($ConnectionIsVerified, $ConnectionIsSecure);  }
 
 // / A function to initialize global variables to default values.
 function initializeVariables() { 
@@ -862,12 +877,12 @@ function pushNotification($NotificationToPush, $TargetUserID) {
 // / Returns FALSE when the specified dependency could not be loaded.
 function loadDependency($dependency, $files) { 
   // / Set variables. 
-  global $DependencyDir;
+  global $DependencyDir, $AvailableDependencies;
   $DependencyLoadedSuccessfully = FALSE;
   $check = TRUE;
   if (!is_array($files)) $files = array($files);
   // / Loop through all of the dependencies one at a time,
-  foreach ($files as $dep) { 
+  if (in_array($dependency, $AvailableDependencies)) foreach ($files as $dep) { 
     $depFile = $DependencyDir.$dependency.DIRECTORY_SEPARATOR.$dep;
     // / Only continue loading files if all required files exist.
     if (file_exists($depFile)) require_once($depFile); 
@@ -939,6 +954,12 @@ list ($LogFile, $CacheFile, $InstallationIsVerified) = verifyInstallation();
 if (!$InstallationIsVerified) dieGracefully(3, 'Could not verify installation!', FALSE);
 else if ($Verbose) logEntry('Verified installation.', FALSE);
 
+// / Stop the application if the request is unencrypted & $ForceHTTPS is enabled. 
+list ($ConnectionIsVerified, $ConnectionIsSecure) = verifyConnection();
+if (!$ConnectionIsVerified) dieGracefully(33, 'Could not verify connection!', FALSE);
+else if ($Verbose) logEntry('Verified connection.', FALSE);
+
+// / This code initialized required variables to default values.
 list ($InitializationComplete, $UserOptionCount) = initializeVariables();
 if (!$InitializationComplete) dieGracefully(4, 'Could not initialize variables to default values!', FALSE);
 else if ($Verbose) logEntry('Initialized variables to default values.', FALSE);

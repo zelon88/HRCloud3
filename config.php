@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/18/2022
+Date: 4/7/2022
 <3 Open-Source
 
 The Configuration File contains all of the critical settings required for Diablo to run on the server.
@@ -16,16 +16,27 @@ The Configuration File contains all of the critical settings required for Diablo
 
 // / ----------------------------------------------------------------------------------
 
-// / Application Name
+// / --Application Name--
 // / Set  $ApplicationName  to a string that represents the name of this application.
 $ApplicationName = 'HRCloud3';
 
-// / Allow Anonymous User Registration
+// / --Application URL--
+// / Set  $ApplicationName  to a string that represents the URL where this application will be accessed.
+// / Don't forget to set HTTP or HTTPS
+$ApplicationURL = 'http://localhost';
+
+// / --Force HTTPS Encryption--
+// / Set  $ForceHTTPS  to  TRUE  to deny any requests that do not include HTTPS.
+// / Set  $ForceHTTPS  to  FALSE  to allow any requests, even from unencrypted sources.
+// / If this is set to  TRUE  the  $ApplicationURL  setting must include https://
+$ForceHTTPS = FALSE;
+
+// / --Allow Anonymous User Registration--
 // / Set  $AllowUserRegistration  to  TRUE  if you want to allow visitors to create new accounts.
 // / Set  $AllowUserRegistration  To  FALSE  if you do not want to allow visitors to create new accounts.
 $AllowUserRegistration = TRUE;
 
-// / Set User Availability Request Hit Thresholds
+// / --Set User Availability Request Hit Thresholds--
 // / Only takes effect if  $AllowUserRegistration  is also set to TRUE.
 // / Set  $UAHitThresholds[0]  to number of Username Availability requests allowed in  $UATimeThresholds[0].
 // / Default for  $UAHitThresholds[0]  is 6. 
@@ -36,7 +47,7 @@ $AllowUserRegistration = TRUE;
 // / All values must be integers. Higher values mean more requests will be allowed.
 $UAHitThresholds = array(6, 12, 18);
 
-// / Set User Availability Request Time Thresholds
+// / --Set User Availability Request Time Thresholds--
 // / Only takes effect if  $AllowUserRegistration  is also set to TRUE.
 // / Set  $UAHitThresholds[0]  to number of seconds to wait before forgetting recent Username Availability requests.
 // / Default for  $UAHitThresholds[0]  is 60. 
@@ -73,7 +84,7 @@ $Verbose = TRUE;
 
 // / --Update Sources--
 // / Set  $UpdateSources  to a Git repo URL or .zip file URL containing a valid Diablo branch or codebase.
-$UpdateSources = array('https://github.com/zelon88/Diablo-Engine/');
+$UpdateSources = array('https://github.com/zelon88/Diablo-Engine');
 
 // / --User Data Compression--
 // / Set  $DataCompression  to  TRUE  if you want to compress user files with the xPress compression algorithm by zelon88.
@@ -198,8 +209,7 @@ $DefaultStayLoggedIn = 'ENABLED';
 
 // / --Library Definitions--
 // / Libraries are treated as objects. They are defined in the following arrays.
-// / Do not forget to add the trailing slash. Trailing slash is required.
-// / Admins can add their own custom libraries by simply copy/pasting an existing entry and being cautious of the ending '('.
+// / Admins can add their own custom libraries by simply copy/pasting an existing entry and being cautious of the ending ')'.
 // / The "DATA" library is used for storing private account related user data & metadata
 // / Set $LibrariesDefault to an array containing all of the default libraries included with this version of HRCloud3.
 $LibrariesDefault = array('DATA', 'MOVIES', 'MUSIC', 'SHOWS', 'CHANNELS', 'DRIVE', 'BACKUPS', 'STREAMS', 'IMAGES', 'DOCUMENTS'); 
@@ -245,7 +255,7 @@ $AvailableCores = array('SETTINGS', 'ADMIN', 'CLOUD', 'COMPATIBILITY', 'SANITIZE
 
 // / --Available Dependencies--
 // / The following array specifies which dependencies are permitted to load within the platform.
-// / Cores not specified here will not be allowed to run using the loadDependency() function.
+// / Dependencies not specified here will not be allowed to run using the loadDependency() function.
 $AvailableDependencies = array('PHPMailer');
 
 // / --Send Email Via SMTP--

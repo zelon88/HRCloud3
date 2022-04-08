@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/24/2022
+Date: 4/7/2022
 <3 Open-Source
 
 The Home Page provides common functionality for many of the UI elements in HRCloud3.
@@ -20,7 +20,7 @@ There may be additional specialized functionality contained in separate Javascri
 // / -----------------------------------------------------------------------------------
 // / A function to focus the cursor on a specified element.
 // / Useful for building dynamic forms.
-function getFocus(id) { 
+function setFocus(id) { 
   document.getElementById(id).focus(); }
 // / -----------------------------------------------------------------------------------
 
@@ -88,4 +88,16 @@ function replaceDiv(originalDivID, newDivID) {
 // / Must use with await. Example: await sleep(500);
 function sleep(ms) { 
   new Promise(ms => setTimeout(ms, 2000)); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to outline an element in red to draw attention to it.
+function outlineRed(id) { 
+  document.getElementById(id).style.borderColor = 'red'; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to outline an element in red to draw attention to it.
+function outlineNone(id) { 
+  document.getElementById(id).style.removeProperty('borderColor'); }
 // / -----------------------------------------------------------------------------------

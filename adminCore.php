@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/24/2022
+Date: 4/7/2022
 <3 Open-Source
 
 The Admin Core handles admin related functions like adding/removing users & changing global settings.
@@ -236,7 +236,7 @@ function checkUserAvailability($desiredUsername, $UsernameAvailabilityResponseNe
 
 // / A function to output the results of a completed Username Availability Request to the user.
 function respondUserAvailabilityRequest($desiredUsername, $UsernameAvailabilityPermissionGranted, $UsernameIsAvailable) { 
-// / Set variables.
+  // / Set variables.
   global $Verbose;
   // / The following code is performed when the username availability request was approved.
   if ($UsernameAvailabilityPermissionGranted) { 
@@ -259,6 +259,7 @@ function respondUserAvailabilityRequest($desiredUsername, $UsernameAvailabilityP
 // / A function to add a user.
 // / Accepts an array as input. 
 function addUser($DesiredUsername, $NewUserEmail, $NewUserPassword, $NewUserPasswordConfirm) { 
+  // / Set variables.
   global $Users, $CacheFile;
   $UserCreated = $PasswordsMatch = $UserID = $newCacheLine = $cacheCheck = FALSE;
   $userNum = 1000;
@@ -281,6 +282,61 @@ function addUser($DesiredUsername, $NewUserEmail, $NewUserPassword, $NewUserPass
   $PasswordsMatch = $userNum = $newCacheLine = $cacheCheck = NULL;
   unset($PasswordsMatch, $userNum, $newCacheLine, $cacheCheck);
   return array($UserCreated, $UserID, $Users); }
+
+// / A function to gather all accounts and statuses owned by a supplied email address.
+// / Returns an array where $key is the name of the account and value is the status of the account.
+// / Returns FALSE when no accounts were found for the supplied email address.
+function gatherAccounts($ForgotUserEmailAddress) { 
+  // / Set variables.
+  global $Users;
+  $ReturnArray = FALSE;
+  foreach ($Users as $user) { 
+    // / If the currently selected user account has the same email address as the one supplied add it to the ReturnArray().
+    if ($user[2] === $ForgotUserEmailAddress) $ReturnArray[$user[1]] = $user[5];
+  // / Clean up unneeded memory.
+  $user = NULL;
+  unset($user);
+  return $ReturnArray; }
+
+// / A function to create the email that will be sent to the user containing a list of owned accounts and statuses.
+function craftForgotUserEmail($userData, $ForgotUserEmailAddress) { 
+  // / Set variables.
+  global $Time, $ApplicationName, $ApplicationURL;
+  $EmailCrafted = $EmailData = FALSE;
+  $accountList = '';
+  // / Craft the beginning of the email.
+  $emailHead = 'Hello '.$ForgotUserEmailAddress.'! <br /><br />On '.$Time.' you requested assistance recovering your '.$ApplicationName.' account at <a href=\''.$ApplicationURL.'\'>'.$ApplicationURL.'</a>. <br /><br />The following is a list of '.$ApplicationName.' accounts associated with this email address: <br /><br /><ul>';
+  // / Craft the middle of the email with a bulleted (unordered) list of all accounts and statuses.
+  if (is_array($userData)) { 
+    $EmailCrafted = TRUE;
+    // / Iterate through the userlist and gather all accounts & statuses for any account that matches the email address specified.
+    foreach ($userData as $key => $data) $accountList = $accountList.'<li>Username: <b>'.$key.'</b> | Status: <b>'.$data.'</b></li>'; } 
+  // / Craft the end of the email.
+  $emailFoot = '</ul> <br /><br />Please visit <a href=\''.$ApplicationURL.'\'>'.$ApplicationName.'</a> to login or create a new account.';
+  // / Make sure the $accountList came out as expected, and replace it with a placeholder if it is still blank.
+  if ($accountList == '') $accountList = '<li><b>No Accounts Found!</b></li>'; 
+  // / Craft the entire email message from the components assembled above.
+  $EmailData = $emailHead.$accountList.$emailFoot;
+  // / Clean up unneeded memory.
+  $accountList = $emailHead = $emailFoot = $key = $data = $userData = NULL;
+  unset($accountList, $emailHead, $emailFoot, $key, $data, $userData);
+  return array($EmailCrafted, $EmailData); }
+
+// / A function to send an email containing usernames owned by a supplied email address.
+function recoverAccounts($ForgotUserEmailAddress) { 
+  // / Set variables.
+  global $EmailFromName;
+  $ownedAccounts = $emailCrafted = $EmailSent = FALSE;
+  // / Gather account information.
+  $ownedAccounts = gatherAccounts($ForgotUserEmailAddress);
+  // / Craft a username recovery email message.
+  list ($emailCrafted, $emmailData) = craftForgotUserEmail($ownedAccounts, $ForgotUserEmailAddress);
+  if ($emailCrafted) $EmailSent = sendEmail($ForgotUserEmailAddress, $EmailFromName, $emmailData);
+  // / Clean up unneeded memory.
+  $ownedAccounts = $emailCrafted = $emailData = NULL;
+  unset($ownedAccounts, $emailCrafted, $emailData);
+  return $EmailSent; }
+
 
 // / A function to delete a user.
 // / Accepts an array as input. 

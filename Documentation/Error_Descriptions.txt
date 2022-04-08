@@ -664,3 +664,20 @@ ERROR DESCRIPTION
   This may be the result of incorrect user or group associations for the www-data user or group.
   This could be because HRCloud3 is running on an unsupported operating system or PHP version.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 33, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not verify connection!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The client request took place over an unencrypted channel but encryption enforcement is set in config.php.
+  This may be the result of having  $ForceHTTPS  set to enabled in config.php while  $ApplicationURL  is pointing to an unencypted URL.
+  The  $ApplicationURL  in config.php is missing the 'https://'.
+  The  $ApplicationURL  in config.php specifies an 'http://' prefix.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
