@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/7/2022
+Date: 4/8/2022
 <3 Open-Source
 
 The Admin Core handles admin related functions like adding/removing users & changing global settings.
@@ -20,13 +20,7 @@ if (!isset($ConfigIsLoaded) or $ConfigIsLoaded !== TRUE) die('ERROR!!! adminCore
 // / ----------------------------------------------------------------------------------
 
 // / ----------------------------------------------------------------------------------
-// / The following code sets the functions for the session.
-
-// / A function to detect information helpful for identifying a client.
-function detectClientInfo() { 
-  $HashedUserAgent = hash('sha256', $_SERVER['HTTP_USER_AGENT']);
-  $ClientIP = $_SERVER['REMOTE_ADDR'];
- return array($HashedUserAgent, $ClientIP); }
+// / The following code sets the functions for the session.d
 
 // / A function to generate a missing Username Availability Cache file. 
 // / Contains a timestamp, hashed client user agent, & client IP of each non-admin Username Availability request.
@@ -84,25 +78,21 @@ function checkUserAvailabilityCache($UACData, $HashedUserAgent, $ClientIP) {
           $endTime = $RawTime;
           // / Calculate the time difference between the current data entry and the current time.
           $timeDifference = $endTime - $startTime;
-          
           // / Count the number of requests that have taken place within the past 60 seconds.
           if ($timeDifference <= $UATimeThresholds[0]) { 
             $hitCountOne++;
             // / If there have been more than 3 requests in 60 seconds, deny this request.
             if ($hitCountOne > $UAHitThresholds[0]) $UsernameAvailabilityPermissionGranted = FALSE; }
-          
           // / Count the number of requests that have taken place within the past 600 seconds.
           if ($timeDifference > $UATimeThresholds[0] && $timeDifference <= $UATimeThresholds[1]) { 
             $hitCountTwo++;
             // / If there have been more than 10 requests in 600 seconds, deny this request.
             if ($hitCountTwo > $UAHitThresholds[1]) $UsernameAvailabilityPermissionGranted = FALSE; }
-          
           // / Count the number of requests that have taken place within the past 3,600 seconds.
           if ($timeDifference > $UATimeThresholds[1] && $timeDifference <= $UATimeThresholds[2]) { 
             $hitCountThree++;
             // / If there have been more than 15 requests in 3,600 seconds, deny this request.
             if ($hitCountThree > $UAHitThresholds[2]) $UsernameAvailabilityPermissionGranted = FALSE; }
-
           // / Remove any entries that are older than 6,001 seconds.
           if ($timeDifference > $UATimeThresholds[2]) { 
             $uacLine[$uacKey] = NULL; 
@@ -193,36 +183,29 @@ function checkUserAvailability($desiredUsername, $UsernameAvailabilityResponseNe
   global $Verbose, $Salts, $RootPath, $UserIsAdmin, $AllowUserRegistration, $Users, $DataBackups, $BackupUsernameCheckCache, $CoresLoaded;
   $UACData = '';
   $UsernameIsAvailable = $UsernameAvailabilityCacheExists = $UsernameAvailabilityCacheFile = $UsernameAvailabilityCacheCreated = $UserAvailabilityCacheLoaded = $IntegrityCheck = $UsernameAvailabilityPermissionGranted = $UsernameAvailabilityCacheUpdated = $HashedUserAgent = $ClientIP = $BackupSuccess = $UsernameIsAvailable = FALSE;
-
   // / Check if the user is an administrator. 
   // / If the user is not an administrator, check to ensure the user is not using brute force to enumerate the user list.
   if (!$UserIsAdmin) { 
     // / Define the Username Availability Cache file.
     $UsernameAvailabilityCacheFile = $RootPath.'Cache'.DIRECTORY_SEPARATOR.'UsernameAvailabilityCache-'.hash('sha256',$Salts[3].'USERNAMEAVAILABILITYCACHE').'.php';
-    
     // / Check that a user cache file exists. Create one if needed
     if (!file_exists($UsernameAvailabilityCacheFile)) { 
       $UsernameAvailabilityCacheCreated = generateUserAvailabilityCache($UsernameAvailabilityCacheFile);
       if (!$UsernameAvailabilityCacheCreated or !file_exists($UsernameAvailabilityCacheFile)) dieGracefully(21, 'Could not create a username availability cache file!', FALSE);
       else if ($Verbose) logEntry('Created a username availability cache file.', FALSE); }
-    
     // / Load the User Availability Cache file contents into memory.
     list ($UserAvailabilityCacheLoaded, $UACData) = loadUserAvailabilityCache($UsernameAvailabilityCacheFile);
     if (!$UserAvailabilityCacheLoaded) dieGracefully(22, 'Could not load the username availability cache file!', FALSE);
     else if ($Verbose) logEntry('Loaded the username availability cache file.', FALSE); 
-    
     // / Detect the hashed user agent and client IP.
     list ($HashedUserAgent, $ClientIP) = detectClientInfo();
-    
     // / Determine if the username availability request should be allowed or denied based on user agent & IP.
     list($IntegrityCheck, $UsernameAvailabilityPermissionGranted) = checkUserAvailabilityCache($UACData, $HashedUserAgent, $ClientIP);
     if (!$IntegrityCheck) dieGracefully(23, 'Could not validate the username availability cache file!', FALSE);
     else if ($Verbose) logEntry('Validated the username availability cache file.', FALSE); 
-    
     // / Log the results of the Username Availability Check.
     if ($UsernameAvailabilityPermissionGranted) if ($Verbose) logEntry('The username availability request has been APPROVED.', FALSE); 
     if (!$UsernameAvailabilityPermissionGranted) if ($Verbose) logEntry('The username availability request has been DENIED.', FALSE); 
-
     // / Check if backups are enabled by config.php & backup the User Availability Cache file if needed.
     if ($DataBackups && $BackupUsernameCheckCache) { 
       // / Load the data core to make backups possible.
@@ -233,12 +216,10 @@ function checkUserAvailability($desiredUsername, $UsernameAvailabilityResponseNe
       $BackupSuccess = backupFile('CACHE', $UsernameAvailabilityCacheFile);
       if (!$BackupSuccess) dieGracefully(19, 'Could not backup the usename availability cache file!', FALSE);
       else if ($Verbose) logEntry('Backed up the username availability cache file.', FALSE); }
-
     // / Update the Username Availability Cache with information about the current request.
     $UsernameAvailabilityCacheUpdated = updateUserAvailabilityCache($UsernameAvailabilityCacheFile, $UACData, $HashedUserAgent, $ClientIP);
     if (!$UsernameAvailabilityCacheUpdated) dieGracefully(24, 'Could not update the username availability cache file!', FALSE);
     else if ($Verbose) logEntry('Updated the username availability cache file.', FALSE); }
-  
   // / Perform the Username Availability Check only if permission has been granted to do so or the user is an administrator.
   if ($UsernameAvailabilityPermissionGranted or $UserIsAdmin) { 
   	$UsernameAvailabilityPermissionGranted = TRUE;
@@ -246,10 +227,8 @@ function checkUserAvailability($desiredUsername, $UsernameAvailabilityResponseNe
   	list ($ArrayCheck, $UsernameIsAvailable) = performUserAvailabilityCheck($desiredUsername);
     if (!$ArrayCheck) dieGracefully(25, 'Could not perform the username availability check!', FALSE);
     else if ($Verbose) logEntry('Performed the username availability check.', FALSE); }
-  
   // / Output the results of the Username Availability Request to the user.
   if ($UsernameAvailabilityResponseNeeded) respondUserAvailabilityRequest($desiredUsername, $UsernameAvailabilityPermissionGranted, $UsernameIsAvailable);
-
   // / Clean up unneeded memory.
   $desiredUsername = $UACData = $UsernameAvailabilityCacheExists = $UsernameAvailabilityCacheFile = $UsernameAvailabilityCacheCreated = $UserAvailabilityCacheLoaded = $IntegrityCheck = $UsernameAvailabilityCacheUpdated = $HashedUserAgent = $ClientIP = $BackupSuccess = NULL;
   unset($desiredUsername, $UACData, $UsernameAvailabilityCacheExists, $UsernameAvailabilityCacheFile, $UsernameAvailabilityCacheCreated, $UserAvailabilityCacheLoaded, $IntegrityCheck, $UsernameAvailabilityCacheUpdated, $HashedUserAgent, $ClientIP, $BackupSuccess); 
@@ -277,7 +256,7 @@ function addUser($DesiredUsername, $NewUserEmail, $NewUserPassword, $NewUserPass
   else dieGracefully(31, 'Could not validate supplied passwords!', FALSE);
   // / The following code verifies that required user directories & files are present & creates them if they are missing.
   list ($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir, $UserCacheExists, $UserCache, $UserCacheDir, $NotificationsFileExists, $NotificationsFile) = verifyUserEnvironment($UserID);
-  if (!$UserLogsExists or !$UserCacheExists or !$NotificationsFileExists) dieGracefully(38, 'Could not verify the user environment!', FALSE); 
+  if (!$UserLogsExists or !$UserCacheExists or !$NotificationsFileExists) dieGracefully(36, 'Could not verify the user environment!', FALSE); 
   else if ($Verbose) logEntry('Verified user environment.', FALSE); 
   // / Output the results of the Create Account process.
   if ($UserCreated) echo('APPROVED'.PHP_EOL);
@@ -317,10 +296,10 @@ function craftForgotUserEmail($userData, $ForgotUserEmailAddress) {
       if ($data === TRUE) $dataEcho = 'ENABLED';
       else $dataEcho = 'DISABLED'; 
       $accountList = $accountList.'<li>Username: <b>'.$key.'</b> | Status: <b>'.$dataEcho.'</b></li>'; } }
-  // / Craft the end of the email.
-  $emailFoot = '</ul> <br /><br />Please visit <a href=\''.$ApplicationURL.'\'>'.$ApplicationName.'</a> to login or create a new account.';
   // / Make sure the $accountList came out as expected, and replace it with a placeholder if it is still blank.
   if ($accountList == '') $accountList = '<li><b>No Accounts Found!</b></li>'; 
+  // / Craft the end of the email.
+  $emailFoot = '</ul> <br /><br />Please visit <a href=\''.$ApplicationURL.'\'>'.$ApplicationName.'</a> to login or create a new account.';
   // / Craft the entire email message from the components assembled above.
   $EmailData = $emailHead.$accountList.$emailFoot;
   // / Clean up unneeded memory.
@@ -335,18 +314,107 @@ function recoverUsername($ForgotUserEmailAddress) {
   $ownedAccounts = $emailCrafted = $EmailSent = FALSE;
   // / Gather account information.
   $ownedAccounts = gatherAccounts($ForgotUserEmailAddress);
-  if (!$ownedAccounts) dieGracefully(35, 'Could not gather a list of accounts for the supplied email address!', FALSE);
-  else if ($Verbose) logEntry('Gathered a list of accounts for the supplied email address.', FALSE); 
+  if ($Verbose) logEntry('Gathered a list of accounts for the supplied email address.', FALSE); 
   // / Craft a username recovery email message.
-  list ($emailCrafted, $emmailData) = craftForgotUserEmail($ownedAccounts, $ForgotUserEmailAddress);
-  if (!$ownedAccounts) dieGracefully(36, 'Could not craft a recovery email!', FALSE);
-  else if ($Verbose) logEntry('Crafted a recovery email.', FALSE); 
+  list ($emailCrafted, $emailData) = craftForgotUserEmail($ownedAccounts, $ForgotUserEmailAddress);
+  if ($Verbose) logEntry('Crafted a recovery email.', FALSE); 
   // / Send the recovery email.
-  if ($emailCrafted) $EmailSent = sendEmail($ForgotUserEmailAddress, $EmailFromName, $emmailData);
+  if ($emailCrafted) $EmailSent = sendEmail($ForgotUserEmailAddress, $EmailFromName, $emailData);
   // / Clean up unneeded memory.
   $ownedAccounts = $emailCrafted = $emailData = NULL;
   unset($ownedAccounts, $emailCrafted, $emailData);
   return $EmailSent; }
+
+// / A function to generate a cryptographically secure 8 digit recovery code.
+function generatePasswordRecoveryCode() { 
+  // / Set variables.
+  $RecoveryCode = random_int(10000000, 99999999);
+  return $RecoveryCode; } 
+
+// / A function to generate a password recovery cache file to a user's cache directory.
+function generatePasswordRecoveryCache($UserInput) { 
+  // / Set variables.
+  global $Users, $RawTime;
+  $UserFound = $RecoveyCacheCreated = $UserEmail = FALSE;
+  // / Iterate through the userlist 
+  foreach ($Users as $user) if ($UserInput === $user[1]) { 
+    $UserFound = TRUE;
+    $UserID = $user[0]; 
+    $UserEmail = $user[2];
+    break; }
+  // / Only create a recovery cache file if the specified user exists.
+  if ($UserFound) { 
+    // / Verify that the user environment exists so that we don't run into errors during creation of the recovery cache file.
+    list ($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir, $UserCacheExists, $UserCache, $UserCacheDir, $NotificationsFileExists, $NotificationsFile) = verifyUserEnvironment($UserID);
+    // / Detect some identifying information about the client making the request.
+    list ($hashedUserAgent, $clientIP) = detectClientInfo();
+    // / Generate a cryptographically secure recovery code.
+    $RecoveryCode = generatePasswordRecoveryCode();
+    // / Create a recovery cache file in the users cache directory.
+    $RecoveryCacheFile = $UserCahceDir.'RecoveryCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php';
+    // / Craft the contents of the recovery cache file in PHP syntax.
+    $RecoveryCacheData = '<?php $recCode = '.$RecoveryCode.'; $recTime = '.$RawTime.'; $recUA = '.$hashedUserAgent.'; $recIP = '.$clientIP.'; $recFailedAttempts = 0; $recSuccessAttempts = 0;'.PHP_EOL;
+    // / Check if a recovery cache file already exists & delete it.
+    if (file_exists($RecoveryCacheFile)) unlink($RecoveryCacheFile);
+    // / Make sure that any existing cache file was removed & create a new one.
+    if (!file_exists($RecoveryCacheFile)) $RecoveryCacheCreated = file_put_contents($RecoveryCacheFile, $RecoveryCacheData, FILE_APPEND); }
+  // / Clean up unneeded memory.
+  $user = $hashedUserAgent = $clientIP = NULL;
+  unset($user, $HashedUserAgent, $ClientIP);
+  return array($UserFound, $UserEmail, $RecoveyCacheCreated, $RecoveryCacheFile); }
+
+// / A function to create the email that will be sent to the user containing a recovery code for resetting their password.
+function craftForgotPasswordEmail($RecoveryCode, $UserInput) { 
+  // / Set variables.
+  global $Time, $ApplicationName, $ApplicationURL;
+  $EmailCrafted = $EmailData = FALSE;
+  // / Craft the beginning of the email.
+  $emailHead = 'Hello '.$ForgotUserEmailAddress.'! <br /><br />On '.$Time.' you requested assistance recovering your '.$ApplicationName.' account at <a href=\''.$ApplicationURL.'\'>'.$ApplicationURL.'</a>. <br /><br />Please enter the recovery code below when prompted to continue with the account recovery process. <br /><br /><ul>';
+  // / Craft the middle of the email with a bulleted (unordered) list containing the recovery code.
+  $emailMiddle = '<li>Recovery Code: <b>'.$RecoveryCode.'</b>'; 
+  // / Craft the end of the email.
+  $emailFoot = '</ul> <br /><br />Please visit <a href=\''.$ApplicationURL.'\'>'.$ApplicationName.'</a> to login or create a new account.';
+  // / Craft the entire email message from the components assembled above.
+  $EmailData = $emailHead.$emailMiddle.$emailFoot;
+  $EmailCrafted = TRUE;
+  // / Clean up unneeded memory.
+  $emailHead = $emailMiddle = $emailFoot = NULL;
+  unset($emailHead, $emailMiddle, $emailFoot);
+  return array($EmailCrafted, $EmailData); }
+
+// / A function to send an email containing a password recovery code to a username on file.
+function sendPasswordRecoveryCode($UserInput) { 
+  // / Set variables.
+  global $EmailFromName, $Verbose;
+  // / Generate a cryptographically secure recovery code.
+  $RecoveryCode = generatePasswordRecoveryCode();
+  // / Attempt to generate a password recovery cache file in the users cache directory.
+  list ($UserFound, $UserEmail, $RecoveyCacheCreated, $RecoveryCacheFile, $RecoveryCode) = generatePasswordRecoveryCache($UserInput);
+  // / If the user was found & the recovery cache was created then craft an recovery email and send it to the email address on file for the user. 
+  if ($UserFound && $RecoveryCacheCreated) { 
+    // / Craft a password recovery email message.
+    list ($emailCrafted, $emailData) = craftForgotPasswordEmail($RecoveryCode, $UserInput);
+    if ($Verbose) logEntry('Crafted a password recovery email.', FALSE); 
+    // / Send the recovery email.
+    $EmailSent = sendEmail($UserEmail, $EmailFromName, $emailData); }
+  // / If the user was not found we do not create a cache file but we also do not throw any errors that would give away information which usernames are taken.
+  else if ($Verbose) logEntry('Could not craft a password recovery email.', FALSE); 
+  // / Clean up unneeded memory.
+  $emailCrafted = $emailData = NULL;
+  unset($emailCrafted, $emailData);
+  return $EmailSent; } 
+
+// / A function to validate a password recovery cache against supplied credentials.
+function validatePasswordRecoveryCache($UserInput, $RecoveryCodeInput) { 
+
+return array($RecoveryCacheIsValid, $RecoveryCodeIsValid);
+}
+
+// / A function to reset a password using a recovery code.
+function recoverPassword($UserInput, $RecoveryCodeInput) { 
+  list($RecoveryCacheIsValid, $RecoveryCodeIsValid) = validatePasswordRecoveryCache();
+
+}
 
 // / A function to delete a user.
 // / Accepts an array as input. 

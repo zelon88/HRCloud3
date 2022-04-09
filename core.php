@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/7/2022
+Date: 4/8/2022
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -311,6 +311,12 @@ function checkVersionInfo() {
   if (isset($EngineVersion) && isset($EngineVersionInfo)) if ($EngineVersion === $EngineVersionInfo) $VersionsMatch = TRUE; 
   // / Return TRUE if the both version strings match. Return FALSE if the two versions strings do not match.
   return $VersionsMatch; }
+
+// / A function to detect information helpful for identifying a client.
+function detectClientInfo() { 
+  $HashedUserAgent = hash('sha256', $_SERVER['HTTP_USER_AGENT']);
+  $ClientIP = $_SERVER['REMOTE_ADDR'];
+ return array($HashedUserAgent, $ClientIP); }
 
 // / A function to determine if the supplied session is valid.
 function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken) { 
@@ -1045,7 +1051,7 @@ if ($GlobalsAreVerified) {
 
   // / The following code verifies that required user directories & files are present & creates them if they are missing.
   list ($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir, $UserCacheExists, $UserCache, $UserCacheDir, $NotificationsFileExists, $NotificationsFile) = verifyUserEnvironment($UserID);
-  if (!$UserLogsExists or !$UserCacheExists or !$NotificationsFileExists) dieGracefully(37, 'Could not verify the user environment!', FALSE); 
+  if (!$UserLogsExists or !$UserCacheExists or !$NotificationsFileExists) dieGracefully(35, 'Could not verify the user environment!', FALSE); 
   else if ($Verbose) logEntry('Verified user environment.', FALSE); }
 
 // / This code is performed when there was not enough information to authenticate the user.

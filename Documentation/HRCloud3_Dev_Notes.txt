@@ -1,6 +1,47 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+4/8/2022
+v0.9.4 - Working on forgot / recover password process.
+
+-I want the recoverPassword cache file to contain several important pieces of information.
+  -The timestamp of the request,
+  -The recovery code provided to the user,
+  -Unique user identifier.
+  -A counter, initialized to zero.
+-The recoverPassword proess should only be allowed to take place if:
+  -The same user device that made the request is the one that entered the recovery code (enable/disable in config.php).
+  -The user has not made more than 5 attempts to enter the recovery code correctly (set exact number of tries in config.php).
+  -The recovery code expires in 3 minutes (set number of seconds in config.php).
+  -The recovery ccode should expire after 2 correct guesses.
+    -One when the user checks that it is true to unveil the reset password UI.
+    -And again when they fill out the reset password UI and submit it to the core.
+    -After these two successful uses the file should be deleted so it cannot be reused.
+-The process will go;
+  -The user enters a username.
+  -The user selects Forgot Password button.
+  -The user clicks the "Send Recovery Code" button.
+  -This feature should allways return "approved" unless there was a technical email related problem.
+  -If this function returns an error just because the user email doesn't exist then this could be abused to enumerate the user list.
+  -The user checks their email and enters the code into our UI.
+  -If the code is corect a special modal opens where they can reset their password.
+  -They submit the recovery code again, along with new password information. 
+  -The core updates the password and deletes the cache file.
+  -The user still has to log in using the new password.
+    -Creating a special login process for this would be an attack vector I don't want to have to maintain.
+    -The engine has one authentication path. That is the only maintainable way to do authentication.
+-Moved detectUserInfo() function from adminCore.php to core.php.
+-Fixed typos in adminCore.php ($emmailData to $emailData).
+-Updated error messages.
+  -Removed ERROR 35 and replaced it with what used to be ERROR 39.
+  -Removed ERROR 35 and 36.
+  -Moved all errors above 36 down to fill in the gap.
+  -By removing some of these errors we now generate a recovery email for email addresses that have no accounts.
+  -This reduces confusion.
+  -This does not threaten to enumerate the user list.
+  -The errors were still useful during the development phase, so not a total loss.
+
+----------
 4/7/2022
 v0.9.3 - Working on Forgot ... everything ... process.
 

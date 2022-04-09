@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/7/2022
+Date: 4/8/2022
 <3 Open-Source
 
 This file is for processing requests from the UI & responses from the server.
@@ -101,7 +101,7 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
         setVisibility('passwordModal', 'none');
         changeContent('successModalHeaderText', 'Login Success');
         changeContent('successContainer', '<br /><p>Login Success! Please wait.</p><br />');
-        toggleVisibility('successModal');
+        setVisibility('successModal', 'block');
         setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
         changeValue('UserInputTokens', UserInput);
         changeValue('SessionID', SessionID);
@@ -123,7 +123,7 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
         toggleVisibility('passwordModal');
         changeContent('criticalModalHeaderText', 'Login Error');
         changeContent('criticalContainer', '<br /><p>Critical Login Error! Please try again.</p><br />');
-        toggleVisibility('criticalModal');
+        setVisibility('criticalModal', 'block');
         setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
 // / -----------------------------------------------------------------------------------
 
@@ -289,7 +289,7 @@ $('#createAccountFormNav').on('submit', function (createAccountAjax) {
           setVisibility('createAccountModal', 'none');
           changeContent('successModalHeaderText', 'Created Account Successfully');
           changeContent('successContainer', '<br /><p>Account Created Successfully! Please wait.</p><br />');
-          toggleVisibility('successModal');
+          setVisibility('successModal', 'block');
           setTimeout(function() { setVisibility('successModal', 'none'); }, 3000); }
         else { 
           changeContent('errorModalHeaderText', 'Account Creation Failed');
@@ -299,10 +299,9 @@ $('#createAccountFormNav').on('submit', function (createAccountAjax) {
           setVisibility('errorModal', 'block');
           setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
       error: function(createAccountResponse) {
-          toggleVisibility('passwordModal');
           changeContent('criticalModalHeaderText', 'Account Creation Critical Error!');
           changeContent('criticalContainer', '<br /><p>Account Creation Critical Error! Please try again later.</p><br />');
-          toggleVisibility('criticalModal');
+          setVisibility('criticalModal', 'block');
           setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); } 
     else { 
       outlineRed('RawNewUserPassword');
@@ -327,18 +326,17 @@ $('#forgotUsernameFormNav').on('submit', function (forgotUsernameAjax) {
         setVisibility('forgotUserModal', 'none');
         changeContent('successModalHeaderText', 'Recovery Email Sent Successfully');
         changeContent('successContainer', '<br /><p>Recovery Email Sent Successfully! Please check your email for further instructions.</p><br />');
-        toggleVisibility('successModal');
+        setVisibility('successModal', 'block');
         setTimeout(function() { setVisibility('successModal', 'none'); }, 3000); }
       else { 
         changeContent('errorModalHeaderText', 'Account Recovery Failed');
         changeContent('errorContainer', '<br /><p>Recovery Email Failed To Send! Please check your email address and try again.</p><br />');
         setVisibility('errorModal', 'block');
         setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
-    error: function(passwordResponse) {
-        toggleVisibility('passwordModal');
+    error: function(forgotUsernameResponse) {
         changeContent('criticalModalHeaderText', 'Account Recovery Critical Error');
         changeContent('criticalContainer', '<br /><p>Recovery Email Failed To Send! Please try again later.</p><br />');
-        toggleVisibility('criticalModal');
+        setVisibility('criticalModal', 'block');
         setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
 // / -----------------------------------------------------------------------------------
 

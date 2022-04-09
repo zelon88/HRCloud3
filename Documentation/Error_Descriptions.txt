@@ -701,37 +701,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 35, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not gather a list of accounts for the supplied email address!
-
-FILE
-  /adminCore.php
-
-LOG LEVEL
-  SYSTEM
-
-ERROR DESCRIPTION
-  The email supplied was invalid.
-  The email supplied does not have any accounts associated with it.
-  The user cache file has become corrupt.
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-ERROR MESSAGE
-  ERROR!!! 36, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not craft a recovery email!
-
-FILE
-  /adminCore.php
-
-LOG LEVEL
-  SYSTEM
-
-ERROR DESCRIPTION
-  The user list assembled for the supplied email address is malformed or corrupt.
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-ERROR MESSAGE
-  ERROR!!! 37, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not verify the user environment!
+  ERROR!!! 35, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not verify the user environment!
 
 FILE
   /core.php
@@ -750,7 +720,7 @@ ERROR DESCRIPTION
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 ERROR MESSAGE
-  ERROR!!! 38, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not verify the user environment!
+  ERROR!!! 36, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not verify the user environment!
 
 FILE
   /adminCore.php
@@ -766,3 +736,4 @@ ERROR DESCRIPTION
   This may be the result of incorrect user or group associations for the www-data user or group.
   This could be because HRCloud3 is running on an unsupported operating system or PHP version.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
