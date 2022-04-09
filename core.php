@@ -164,7 +164,7 @@ function verifyConnection() {
   // / Determine if the connection is encrypted.
   if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') $ConnectionIsSecure = TRUE; 
   // / Set the $ConnectionIsVerified flag depending on whether or not the connection should be allowed according to the settings defined in config.php.
-  if ($ForceHTTPS & $ConnectionIsSecure) $ConnectionIsVerified = TRUE;
+  if ($ForceHTTPS && $ConnectionIsSecure) $ConnectionIsVerified = TRUE;
   if (!$ForceHTTPS) $ConnectionIsVerified = TRUE;
   return array($ConnectionIsVerified, $ConnectionIsSecure);  }
 
@@ -192,7 +192,6 @@ function initializeVariables() {
   $ucItem = $ucCount = $key = NULL;
   unset($ucItem, $ucCount, $key);
   return array($InitializationComplete, $UserOptionCount); }
-
 
 // / A function to generate useful, consistent, and easily repeatable error messages.
 // / The $ErrorNumber should be an integer representing the unique error identifier.
@@ -355,7 +354,7 @@ function verifyGlobals() {
     list ($DesiredUsername, $variableIsSanitized) = sanitize($_POST['NewUserInput'], TRUE); }
   // / This code triggers the Forgot Username process / Username Recovery process.
   if (isset($_POST['RecoverAccount']) && isset($_POST['ForgotUserEmailInput'])) { 
-    list ($ForgotUserEmail, $variableIsSanitized) = sanitize($_POST['ForgotUserEmailInput'], TRUE);
+    list ($ForgotUserEmail, $variableIsSanitized) = sanitize($_POST['ForgotUserEmailInput'], FALSE);
     $ForgotUsernameRequest = TRUE; }
   // / This code triggers the New Account Request process.
   // / New Account Request processes are potentially hazardous as they require that the core handle & store a lot of user input.
@@ -366,16 +365,16 @@ function verifyGlobals() {
     $UsernameAvailabilityRequest = $NewAccountRequest = TRUE;
     $UsernameAvailabilityResponseNeeded = FALSE;
     list ($DesiredUsername, $variableIsSanitized) = sanitize($_POST['NewUserInput'], TRUE);
-    list ($NewUserEmail, $variableIsSanitized) = sanitize($_POST['NewUserEmail'], TRUE);
-    list ($AgreeToTerms, $variableIsSanitized) = sanitize($_POST['AgreeToTerms'], TRUE);
-    list ($NewUserPassword, $variableIsSanitized) = sanitize($_POST['NewUserPassword'], TRUE);
-    list ($NewUserPasswordConfirm, $variableIsSanitized) = sanitize($_POST['NewUserPasswordConfirm'], TRUE); }
+    list ($NewUserEmail, $variableIsSanitized) = sanitize($_POST['NewUserEmail'], FALSE);
+    list ($AgreeToTerms, $variableIsSanitized) = sanitize($_POST['AgreeToTerms'], FALSE);
+    list ($NewUserPassword, $variableIsSanitized) = sanitize($_POST['NewUserPassword'], FALSE);
+    list ($NewUserPasswordConfirm, $variableIsSanitized) = sanitize($_POST['NewUserPasswordConfirm'], FALSE); }
   // / This code triggers the authentication process.
   // / This code is performed when a user submits enough credentials & tokens to start a new session.
   if (isset($_POST['UserInput']) && isset($_POST['PasswordInput']) && isset($_POST['ClientTokenInput']) && !isset($_POST['SessionID'])) { 
     list ($UserInput, $variableIsSanitized) = sanitize($_POST['UserInput'], TRUE);
     $_SESSION['UserInput'] = $UserInput;
-    list ($PasswordInput, $VeriableIsSanitized) = sanitize($_POST['PasswordInput'], TRUE); 
+    list ($PasswordInput, $VeriableIsSanitized) = sanitize($_POST['PasswordInput'], FALSE); 
     $_SESSION['PasswordInput'] = $PasswordInput;
     list ($ClientTokenInput, $VeriableIsSanitized) = sanitize($_POST['ClientTokenInput'], TRUE); 
     $_SESSION['ClientTokenInput'] = $ClientTokenInput;
@@ -898,7 +897,7 @@ function loadDependency($dependency, $files) {
 // / Returns a boolean value 
 function sendEmail($address, $subject, $content) { 
   // / Set variables. 
-  global $PHPMailerLoaded, $EmailUseSMTP, $EmailFromAddress, $EmailFromName, $EmailSMTPRequireAuthentication, $Verbose, $EmailSendEncryption, $EmailSendEncryptionAutoTLS, $EmailSendEncryptionType;
+  global $PHPMailerLoaded, $EmailUseSMTP, $EmailFromAddress, $EmailFromName, $EmailSMTPRequireAuthentication, $Verbose, $EmailSendEncryption, $EmailSendEncryptionAutoTLS, $EmailSendEncryptionType, $EmailSMTPServer, $EmailSMTPPort, $EmailSMTPUsername, $EmailSMTPPassword;
   $phpMailerArray = array('src/PHPMailer.php', 'src/SMTP.php', 'src/Exception.php');
   $EmailSent = FALSE;
   $mailSMTPEncryptionType = 'none'; 
@@ -919,7 +918,7 @@ function sendEmail($address, $subject, $content) {
   $mail->isHTML(TRUE); 
   // / Define SMTP specific parameters for the email to be sent.
   if ($EmailUseSMTP) {
-    $mail->IsSMTP();
+    $mail->isSMTP();
     $mail->SMTPAuth = $EmailSMTPRequireAuthentication;
     $mail->Host = $EmailSMTPServer;
     $mail->Port = $EmailSMTPPort;
@@ -929,14 +928,39 @@ function sendEmail($address, $subject, $content) {
   try {
     $mail->Send();
     $EmailSent = TRUE;
-    if ($Verbose) logEntry('Email sent successfully.', FALSE); }
+    if ($Verbose) logEntry('PHPMailer returned the following: '.PHP_EOL.$mail->ErrorInfo, FALSE); }
   // / Catch any errors generated by PHPMailer and write them to the log.
   catch(Exception $exceptionInfo) { 
-    logEntry('PHPMailer returned the following error: '.$mail->ErrorInfo.', '.$exceptionInfo->getMessage(), FALSE); }
+    $EmailSent = FALSE; 
+    if ($Verbose) logEntry('PHPMailer returned the following error: '.PHP_EOL.$exceptionInfo->getMessage(), FALSE); }
+  // / Detect any errors that may have been output by PHPMailer that the exception handler didn't catch.
+  $errorArr = array('fail', 'invalid', 'denied', 'rejected', 'refused', 'could not instantiate');
+  foreach ($errorArr as $err) if (strpos(strtolower($mail->ErrorInfo), $err) !== FALSE) $EmailSent = FALSE;
   // / Clean up unneeded memory.
   $mailSMTPEncryptionType = $mail = $exceptionInfo = $phpMailerArray = NULL;
   unset($mailSMTPEncryptionType, $mail, $exceptionInfo, $phpMailerArray);
   return $EmailSent; } 
+
+// / A function to verify that the user environment is properly setup.
+// / Accepts a $UserID as input and creates a functional environment for that user.
+// / Returns an array fill of user specific environment variables.
+function verifyUserEnvironment($UserID) { 
+  // / Set variables.
+  global $Verbose;
+  // / This code generates a user log file if none exists. Useful for initializing new users logging-in for the first time.
+  // / This code also specifies the $UserDataDir which is a direct handle to the users subdirectory within the DATA library.
+  list ($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir) = generateUserLogs($UserID);
+  if (!$UserLogsExists) dieGracefully(11, 'Could not generate a user log file!', FALSE);
+  else if ($Verbose) logEntry('Verified user log file.', FALSE);
+  // / This code generates a user cache file if none exists. Useful for initializing new users logging-in for the first time.
+  list ($UserCacheExists, $UserCache, $UserCacheDir) = generateUserCache($UserID);
+  if (!$UserCacheExists) dieGracefully(12, 'Could not generate a user cache file!', TRUE);
+  else if ($Verbose) logEntry('Verified user cache file.', TRUE);
+  // / This code generates a user notifications file if none exists. Useful for initializing new users logging-in for the first time.
+  list ($NotificationsFileExists, $NotificationsFile) = generateNotificationsFile($UserID, $UserDataDir);
+  if (!$NotificationsFileExists) dieGracefully(13, 'Could not generate a user notifications file!', TRUE);
+  else if ($Verbose) logEntry('Verified user notifications file.', TRUE); 
+  return array($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir, $UserCacheExists, $UserCache, $UserCacheDir, $NotificationsFileExists, $NotificationsFile); }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -1007,6 +1031,7 @@ if ($GlobalsAreVerified) {
   if (!$TokensAreValid) dieGracefully(7, 'Invalid tokens!', FALSE);
   else if ($Verbose) logEntry('Generated tokens.', FALSE);
 
+  // / If the existing session cannot be verified, require authentication.
   // / Do not require authentication if the user has proven they are in the middle of a valid session.
   if (!$SessionIsVerified) { 
     // / This code validates credentials supplied by the user against the hashed ones stored on the server.
@@ -1018,21 +1043,10 @@ if ($GlobalsAreVerified) {
     else if ($Verbose) logEntry('Authenticated UserName '.$UserName.', UserID '.$UserID.', SessionID '.$SessionID.'.', FALSE); }
   else if ($Verbose) logEntry('Verified existing session.', FALSE);
 
-  // / This code generates a user log file if none exists. Useful for initializing new users logging-in for the first time.
-  // / This code also specifies the $UserDataDir which is a direct handle to the users subdirectory within the DATA library.
-  list ($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir) = generateUserLogs($UserID);
-  if (!$UserLogsExists) dieGracefully(11, 'Could not generate a user log file!', FALSE);
-  else if ($Verbose) logEntry('Verified user log file.', FALSE);
-
-  // / This code generates a user cache file if none exists. Useful for initializing new users logging-in for the first time.
-  list ($UserCacheExists, $UserCache, $UserCacheDir) = generateUserCache($UserID);
-  if (!$UserCacheExists) dieGracefully(12, 'Could not generate a user cache file!', TRUE);
-  else if ($Verbose) logEntry('Verified user cache file.', TRUE);
-
-  // / This code generates a user notifications file if none exists. Useful for initializing new users logging-in for the first time.
-  list ($NotificationsFileExists, $NotificationsFile) = generateNotificationsFile($UserID, $UserDataDir);
-  if (!$NotificationsFileExists) dieGracefully(13, 'Could not generate a user notifications file!', TRUE);
-  else if ($Verbose) logEntry('Verified user notifications file.', TRUE); }
+  // / The following code verifies that required user directories & files are present & creates them if they are missing.
+  list ($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir, $UserCacheExists, $UserCache, $UserCacheDir, $NotificationsFileExists, $NotificationsFile) = verifyUserEnvironment($UserID);
+  if (!$UserLogsExists or !$UserCacheExists or !$NotificationsFileExists) dieGracefully(37, 'Could not verify the user environment!', FALSE); 
+  else if ($Verbose) logEntry('Verified user environment.', FALSE); }
 
 // / This code is performed when there was not enough information to authenticate the user.
 else if ($Verbose) logEntry('Deferred authentication procedure.', FALSE);
@@ -1051,7 +1065,7 @@ if ($RequestTokens && !$SessionIsVerified) {
 // / This code returns keep alive tokens to the user.
 // / It is performed once all authentication processes are complete and a session has been created.
 if ($SessionIsVerified) { 
-  if ($Verbose) logEntry('A session has been verified.', FALSE); 
+  if ($Verbose) logEntry('Verified user session.', FALSE); 
 
   // / This code loads the user cache file containing the user specific settings configuration into memory.
   list ($UserOptions, $UserCacheExists) = loadUserCache();
@@ -1059,10 +1073,10 @@ if ($SessionIsVerified) {
   else if ($Verbose) logEntry('Loaded user cache file.', TRUE); 
 
   // / Return user name, sessionID, and client token when requested.
-  // / Used to continue an automatically expiring session.
+  // / Used to continue an existing session.
   echo($UserInput.','.$SessionID.','.$ClientToken.PHP_EOL); }
 
-// / This code is performed when a user submits an Username Availability Request.
+// / This code is performed when a user submits an Username Availability Request or New Account Request.
 // / Only approve  a Username Availability Request if the user is an administrator or user registration is enabled in config.php.
 if ($UsernameAvailabilityRequest) if ($DesiredUsername !== '') if ($UserIsAdmin or $AllowUserRegistration) { 
   if ($Verbose) logEntry('Initiating a username availability request.', FALSE); 
@@ -1110,6 +1124,15 @@ if ($ForgotUsernameRequest && $ForgotUserEmail !== '') {
   if (!in_array('ADMIN', $CoresLoaded)) list ($CoresLoaded, $CoreLoadedSuccessfully) = loadCores('ADMIN');
   if (!$CoreLoadedSuccessfully) dieGracefully(32, 'Could not load the admin core file (adminCore.php)!', FALSE);
   else if ($Verbose) logEntry('Loaded the admin core file.', FALSE); 
+  
+  // / Gather a list of accounts for the given username & send that information to the user in an email.
+  $UsernameRecoveryEmailSent = recoverUsername($ForgotUserEmail);
+  if (!$UsernameRecoveryEmailSent) dieGracefully(34, 'Could not send a username recovery email!', FALSE);
+  else if ($Verbose) logEntry('Sent a username recovery email.', FALSE); 
 
-}
+  // / Output a log entry detailing the end of the Forgot Username Request.
+  if ($Verbose) logEntry('The forgotten username request is complete.', FALSE);
+
+  // / Stop executing code.
+  die(); } 
 // / ----------------------------------------------------------------------------------

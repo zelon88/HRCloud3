@@ -145,8 +145,8 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
 <?php if ($AllowUserRegistration) { ?>
           <button type='button' id='createAccountButton' class='BUTTON_1' name='createAccountButton' onclick='toggleVisibility("loginModal"); toggleVisibility("createAccountModal"); setFocus("NewUserInput");' title='Create a new <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Create New Account</button>
 <?php } ?>
-          <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
-          <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
+          <button id='tosButton' class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton' class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
           <br />
         </div>
       </div>
@@ -170,11 +170,11 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
             <input type='hidden' id='recoverAccount' name='RecoverAccount' value='' required>
             <button id='submitButton' class='BUTTON_1' name='submitButton'  title='Proceed with account recovery.' style='margin:10px;'>Recover Account</button>
             <br />
-            <p id='checkResultsSuccess' class='animate' name='checkResultsSuccess' style='display:none; margin-top:10px;'>Thank you! If the email address you provided matches an account on file you will receive an email containing further information.!</p>
+            <p id='forgotUserResultsSuccess' class='animate' name='forgotUserResultsSuccess' style='display:none; margin-top:10px;'>Thank you! If the email address you provided matches an account on file you will receive an email containing further information.!</p>
             <hr />
           </form>
-          <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
-          <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
+          <button id='tosButton' class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton' class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
           <br />
         </div>
       </div>
@@ -203,8 +203,8 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
             <hr />
           </form>
           <button type='button' class='BUTTON_1' title='Recover an account with a forgotten password.' style='margin:10px;'>Forgot Password</button>
-          <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
-          <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
+          <button id='tosButton' class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton' class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
           <br />
         </div>
       </div>
@@ -228,8 +228,8 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
           <button id='logoutConfirmButton' onclick='logout();' class='BUTTON_1' title='Log out of your <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Confirm Logout</button>
           <br />
           <hr />
-          <button id='tosButton'class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
-          <button id='ppButton'class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
+          <button id='tosButton' class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton' class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
         </div>
       </div>
     </div>
@@ -252,9 +252,9 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
             <button id='checkButton' class='BUTTON_1' name='checkButton' onclick='checkAvailability(document.getElementById("NewUserInput").value);' title='Check username availability.' style='margin:10px;'>Check Username Availability</button>
             <input type='text' id='NewUserName' name='NewUserName' title='Your selected <?php echo $ApplicationName; ?> username.' value='' style='display:none; padding: 10px;' required disabled>
             <br />
+            <p id='checkResultsDenied' class='animate' name='checkResultsDenied' style='display:none; margin-top:10px;'>Sorry! You have exceeded the allowed number of username requests per client. <b>Please try again later</b>.</p>
             <p id='checkResultsSuccess' class='animate' name='checkResultsSuccess' style='display:none; margin-top:10px;'>Congratulations! The desired username is <b>available</b>!</p>
             <p id='checkResultsFailure' class='animate' name='checkResultsFailure' style='display:none; margin-top:10px;'>Sorry! The desired username is <b>not available</b>.</p>
-            <p id='checkResultsDenied' class='animate' name='checkResultsDenied' style='display:none; margin-top:10px;'>Sorry! You have exceeded the allowed number of username requests per client. <b>Please try again later</b>.</p>
             <div id='createAccountDetails' class='animate' name='createAccountDetails' style='display:none;'>
               <br />
               <input type='text' placeholder='Enter Your Email Address' id='NewUserEmail' name='NewUserEmail' title='Enter your email address.' style='padding: 10px;' required>

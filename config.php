@@ -240,7 +240,7 @@ $Libraries = array(
 // / The maximum USER_ID that can be added after initial setup is 999.
 // / If you add more than 999 users to the $Users array below USER_ID collisions will occur with users created via the UI. 
 $Users = array(
- 0 => array('0', 'zelon88', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'TRUE', 'TRUE'), // Default Passwords are all 'password'
+ 0 => array('0', 'zelon88', 'zelon88@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'TRUE', 'TRUE'), // Default Passwords are all 'password'
  1 => array('1', 'Nikki', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', 'TRUE'), 
  2 => array('2', 'Leo', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', 'TRUE'), 
  3 => array('3', 'Raph', 'test@gmail.com', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'FALSE', 'TRUE'), 
@@ -258,17 +258,27 @@ $AvailableCores = array('SETTINGS', 'ADMIN', 'CLOUD', 'COMPATIBILITY', 'SANITIZE
 // / Dependencies not specified here will not be allowed to run using the loadDependency() function.
 $AvailableDependencies = array('PHPMailer');
 
+// / --Email From Address--
+// / Set  $EmailFromAddress  to a the email address that emails from the server should appear to come from.
+// / This can be any arbitrary string value so long as it is properly formatted as an email address.
+$EmailFromAddress = 'Server@HonestRepair.net';
+
+// / --Email From Name--
+// / Set  $EmailFromAddress  to a the name of the mailbox that emails from the server should appear to come from.
+// / This can be any arbitrary string value.
+$EmailFromName = $ApplicationName.' Account Services';
+
 // / --Send Email Via SMTP--
 // / Determine whether or not to send emails via SMTP.
 // / If  $EmailUseSMTP  is set to  TRUE  the email will be sent using defined the  $EmailSMTP  variables specified in this configuration file.
 // / If  $EmailUseSMTP  is set to  FALSE  the recipients email domain will be queried & the email sent to the MX record for that domain, when possible.
 // / Sending emails without SMTP is possible, but not guaranteed to work for all clients in all situations.
 // / For the most reliable email delivery possible, set  $EmailUseSMTP  to  TRUE  and check all  $EmailSMTP  variables in this file for accuracy. 
-$EmailUseSMTP = FALSE;
+$EmailUseSMTP = TRUE;
 
 // / --SMTP Email Server URL--
 // / Only takes effect if Send Email Via SMTP is also enabled.
-$EmailSMTPServer = 'smtp.google.com';
+$EmailSMTPServer = 'smtp-relay.gmail.com';
 
 // / --SMTP Email Server Port--
 // / Set  $EmailSMTPPort  to the value that your SMTP provider is listening on for SMTP requests.
@@ -276,14 +286,14 @@ $EmailSMTPServer = 'smtp.google.com';
 // / This value may differ depending on whether or not encryption is enabled and what type of encryption is used.
 // / Must be an integer between 1 and 65535.
 // / Only takes effect if Send Email Via SMTP is also enabled.
-$EmailSMTPPort = 465;
+$EmailSMTPPort = 587;
 
 // / --SMTP Email Server Require Authentication--
 // / Set  $EmailSMTPRequireAuthentication  to  TRUE  if your email provider requires authentication to send emails via username & password.
 // / Set  $EmailSMTPRequireAuthentication  to  FALSE  if your email provider does not require authentication to send emails.
 // / When enabled; be sure to check the  $EmailSMTPUsername  &  $EmailSMTPPassword  for accuracy.
 // / Only takes effect if Send Email Via SMTP is also enabled.
-$EmailSMTPRequireAuthentication = TRUE;
+$EmailSMTPRequireAuthentication = FALSE;
 
 // / --SMTP Email Server Username--
 // / Set  $EmailSMTPUsername  to a valid email address mailbox at your mail provider that can be used for sending email via SMTP.
@@ -294,16 +304,6 @@ $EmailSMTPUsername = 'username@gmail.com';
 // / Set  $EmailSMTPUsername  to a valid email address mailbox at your mail provider that can be used for sending email via SMTP.
 // / Only takes effect if Send Email Via SMTP is also enabled.
 $EmailSMTPPassword = 'PlainTextSMTPPassword';
-
-// / --Email From Address--
-// / Set  $EmailFromAddress  to a the email address that emails from the server should appear to come from.
-// / This can be any arbitrary string value so long as it is properly formatted as an email address.
-$EmailFromAddress = 'Server@HonestRepair.net';
-
-// / --Email From Name--
-// / Set  $EmailFromAddress  to a the name of the mailbox that emails from the server should appear to come from.
-// / This can be any arbitrary string value.
-$EmailFromName = $ApplicationName.' Account Services';
 
 // / --Email Encryption--
 // / Set  $EmailSendEncryption  to  TRUE  if your email provider supports encrypted SMTP (SMTPS).

@@ -74,7 +74,6 @@ function checkUserAvailabilityCache($UACData, $HashedUserAgent, $ClientIP) {
       // / Verify that each element of the UACData array is also an array.
       if (!is_array($uacLine)) $subCheck = FALSE;
       else { 
-
         // / Determine if the current client is in the UACData entry (uacLine).
         if (in_array($HashedUserAgent, $uacLine) && in_array($ClientIP, $uacLine)) { 
           // / Gather the time of the currently selected request from the data entry.
@@ -160,6 +159,28 @@ function performUserAvailabilityCheck($desiredUsername) {
   unset($userName, $user, $desiredUsername); 
   return array($ArrayCheck, $UsernameIsAvailable); }
 
+// / A function to output the results of a completed Username Availability Request to the user.
+function respondUserAvailabilityRequest($desiredUsername, $UsernameAvailabilityPermissionGranted, $UsernameIsAvailable) { 
+  // / Set variables.
+  global $Verbose;
+  // / The following code is performed when the username availability request was approved.
+  if ($UsernameAvailabilityPermissionGranted) { 
+    // / The following code is performed when the username is available.
+    if ($UsernameIsAvailable) {
+      if ($Verbose) logEntry('The desired username is AVAILABLE.', FALSE);  
+      echo('AVAILABLE,'.$desiredUsername.PHP_EOL); }
+    // / The following code is performed when the username is not available.
+    if (!$UsernameIsAvailable) {
+      if ($Verbose) logEntry('The desired username is NOT AVAILABLE.', FALSE); 
+      echo('NOT AVAILABLE'.PHP_EOL); } } 
+  // / The following code is performed when the username availability request was denied.
+  else { 
+    if ($Verbose) logEntry('The username availability request cannot be performed at this time.', FALSE);
+    echo('DENIED'.PHP_EOL); } 
+  // / Clean up unneeded memory.
+  $desiredUsername = NULL;
+  unset($desiredUsername); }
+
 // / A function to check the availability of a username.
 // / 5 attempts in 1 minute, or 10 attempts in 5 minutes, or 15 attempts in 1 hour.
 // / One malicious automated client can burn 10 usernames in 2 minutes but then there is a 3 minute cooldown.
@@ -234,28 +255,6 @@ function checkUserAvailability($desiredUsername, $UsernameAvailabilityResponseNe
   unset($desiredUsername, $UACData, $UsernameAvailabilityCacheExists, $UsernameAvailabilityCacheFile, $UsernameAvailabilityCacheCreated, $UserAvailabilityCacheLoaded, $IntegrityCheck, $UsernameAvailabilityCacheUpdated, $HashedUserAgent, $ClientIP, $BackupSuccess); 
   return array($UsernameAvailabilityPermissionGranted, $UsernameIsAvailable); } 
 
-// / A function to output the results of a completed Username Availability Request to the user.
-function respondUserAvailabilityRequest($desiredUsername, $UsernameAvailabilityPermissionGranted, $UsernameIsAvailable) { 
-  // / Set variables.
-  global $Verbose;
-  // / The following code is performed when the username availability request was approved.
-  if ($UsernameAvailabilityPermissionGranted) { 
-    // / The following code is performed when the username is available.
-    if ($UsernameIsAvailable) {
-      if ($Verbose) logEntry('The desired username is AVAILABLE.', FALSE);  
-      echo('AVAILABLE,'.$desiredUsername.PHP_EOL); }
-    // / The following code is performed when the username is not available.
-    if (!$UsernameIsAvailable) {
-      if ($Verbose) logEntry('The desired username is NOT AVAILABLE.', FALSE); 
-      echo('NOT AVAILABLE'.PHP_EOL); } } 
-  // / The following code is performed when the username availability request was denied.
-  else { 
-    if ($Verbose) logEntry('The username availability request cannot be performed at this time.', FALSE);
-    echo('DENIED'.PHP_EOL); } 
-  // / Clean up unneeded memory.
-  $desiredUsername = NULL;
-  unset($desiredUsername); }
-
 // / A function to add a user.
 // / Accepts an array as input. 
 function addUser($DesiredUsername, $NewUserEmail, $NewUserPassword, $NewUserPasswordConfirm) { 
@@ -276,11 +275,15 @@ function addUser($DesiredUsername, $NewUserEmail, $NewUserPassword, $NewUserPass
       $Users[$UserID] = array($UserID, $DesiredUsername, $NewUserEmail, $NewUserPassword, FALSE); } 
     else dieGracefully(30, 'Could not update the cache file!', FALSE); }
   else dieGracefully(31, 'Could not validate supplied passwords!', FALSE);
+  // / The following code verifies that required user directories & files are present & creates them if they are missing.
+  list ($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir, $UserCacheExists, $UserCache, $UserCacheDir, $NotificationsFileExists, $NotificationsFile) = verifyUserEnvironment($UserID);
+  if (!$UserLogsExists or !$UserCacheExists or !$NotificationsFileExists) dieGracefully(38, 'Could not verify the user environment!', FALSE); 
+  else if ($Verbose) logEntry('Verified user environment.', FALSE); 
   // / Output the results of the Create Account process.
   if ($UserCreated) echo('APPROVED'.PHP_EOL);
   else echo('NOT APPROVED'.PHP_EOL);
-  $PasswordsMatch = $userNum = $newCacheLine = $cacheCheck = NULL;
-  unset($PasswordsMatch, $userNum, $newCacheLine, $cacheCheck);
+  $PasswordsMatch = $userNum = $newCacheLine = $cacheCheck = $userLogsExists = $userLogDir = $userLogFile = $userDataDir = $userCacheExist = $notificationsFileExists = $notificationsFile = NULL;
+  unset($PasswordsMatch, $userNum, $newCacheLine, $cacheCheck, $userLogsExists, $userLogDir, $userLogFile, $userDataDir, $userCacheExist, $notificationsFileExists, $notificationsFile);
   return array($UserCreated, $UserID, $Users); }
 
 // / A function to gather all accounts and statuses owned by a supplied email address.
@@ -290,9 +293,8 @@ function gatherAccounts($ForgotUserEmailAddress) {
   // / Set variables.
   global $Users;
   $ReturnArray = FALSE;
-  foreach ($Users as $user) { 
-    // / If the currently selected user account has the same email address as the one supplied add it to the ReturnArray().
-    if ($user[2] === $ForgotUserEmailAddress) $ReturnArray[$user[1]] = $user[5];
+  // / If the currently selected user account has the same email address as the one supplied add it to the ReturnArray().
+  foreach ($Users as $user) if ($user[2] === $ForgotUserEmailAddress) $ReturnArray[$user[1]] = $user[5]; 
   // / Clean up unneeded memory.
   $user = NULL;
   unset($user);
@@ -304,13 +306,17 @@ function craftForgotUserEmail($userData, $ForgotUserEmailAddress) {
   global $Time, $ApplicationName, $ApplicationURL;
   $EmailCrafted = $EmailData = FALSE;
   $accountList = '';
+  $dataEcho = 'DISABLED';
   // / Craft the beginning of the email.
   $emailHead = 'Hello '.$ForgotUserEmailAddress.'! <br /><br />On '.$Time.' you requested assistance recovering your '.$ApplicationName.' account at <a href=\''.$ApplicationURL.'\'>'.$ApplicationURL.'</a>. <br /><br />The following is a list of '.$ApplicationName.' accounts associated with this email address: <br /><br /><ul>';
   // / Craft the middle of the email with a bulleted (unordered) list of all accounts and statuses.
   if (is_array($userData)) { 
     $EmailCrafted = TRUE;
     // / Iterate through the userlist and gather all accounts & statuses for any account that matches the email address specified.
-    foreach ($userData as $key => $data) $accountList = $accountList.'<li>Username: <b>'.$key.'</b> | Status: <b>'.$data.'</b></li>'; } 
+    foreach ($userData as $key => $data) { 
+      if ($data === TRUE) $dataEcho = 'ENABLED';
+      else $dataEcho = 'DISABLED'; 
+      $accountList = $accountList.'<li>Username: <b>'.$key.'</b> | Status: <b>'.$dataEcho.'</b></li>'; } }
   // / Craft the end of the email.
   $emailFoot = '</ul> <br /><br />Please visit <a href=\''.$ApplicationURL.'\'>'.$ApplicationName.'</a> to login or create a new account.';
   // / Make sure the $accountList came out as expected, and replace it with a placeholder if it is still blank.
@@ -318,25 +324,29 @@ function craftForgotUserEmail($userData, $ForgotUserEmailAddress) {
   // / Craft the entire email message from the components assembled above.
   $EmailData = $emailHead.$accountList.$emailFoot;
   // / Clean up unneeded memory.
-  $accountList = $emailHead = $emailFoot = $key = $data = $userData = NULL;
-  unset($accountList, $emailHead, $emailFoot, $key, $data, $userData);
+  $accountList = $emailHead = $emailFoot = $key = $data = $dataEcho = $userData = NULL;
+  unset($accountList, $emailHead, $emailFoot, $key, $data, $dataEcho, $userData);
   return array($EmailCrafted, $EmailData); }
 
 // / A function to send an email containing usernames owned by a supplied email address.
-function recoverAccounts($ForgotUserEmailAddress) { 
+function recoverUsername($ForgotUserEmailAddress) { 
   // / Set variables.
-  global $EmailFromName;
+  global $EmailFromName, $Verbose;
   $ownedAccounts = $emailCrafted = $EmailSent = FALSE;
   // / Gather account information.
   $ownedAccounts = gatherAccounts($ForgotUserEmailAddress);
+  if (!$ownedAccounts) dieGracefully(35, 'Could not gather a list of accounts for the supplied email address!', FALSE);
+  else if ($Verbose) logEntry('Gathered a list of accounts for the supplied email address.', FALSE); 
   // / Craft a username recovery email message.
   list ($emailCrafted, $emmailData) = craftForgotUserEmail($ownedAccounts, $ForgotUserEmailAddress);
+  if (!$ownedAccounts) dieGracefully(36, 'Could not craft a recovery email!', FALSE);
+  else if ($Verbose) logEntry('Crafted a recovery email.', FALSE); 
+  // / Send the recovery email.
   if ($emailCrafted) $EmailSent = sendEmail($ForgotUserEmailAddress, $EmailFromName, $emmailData);
   // / Clean up unneeded memory.
   $ownedAccounts = $emailCrafted = $emailData = NULL;
   unset($ownedAccounts, $emailCrafted, $emailData);
   return $EmailSent; }
-
 
 // / A function to delete a user.
 // / Accepts an array as input. 

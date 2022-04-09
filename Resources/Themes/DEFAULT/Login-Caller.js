@@ -10,9 +10,7 @@ Author: Justin Grimes
 Date: 4/7/2022
 <3 Open-Source
 
-This file is for negotiating login requests & processing the response from the server.
-
-Also provides login related UI functionality.
+This file is for processing requests from the UI & responses from the server.
 */
 
 // / -----------------------------------------------------------------------------------
@@ -25,15 +23,6 @@ var ClientToken = false;
 var StayLoggedIn = false;
 var ActiveSLI = false;
 var SessionActive = false; 
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to test that JQuery is functional.
-// / To test JQuery, uncomment the following function & place an <a> element on a page where JQuery is called. 
-// / If JQuery is working the <a> element should slowly disappear when clicked.
-//$("a").click(function( event ) { 
-  //event.preventDefault();
-  //$(this).hide("slow"); });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -111,6 +100,7 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
         var ClientToken = responseArray[2];
         setVisibility('passwordModal', 'none');
         changeContent('successModalHeaderText', 'Login Success');
+        changeContent('successContainer', '<br /><p>Login Success! Please wait.</p><br />');
         toggleVisibility('successModal');
         setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
         changeValue('UserInputTokens', UserInput);
@@ -120,17 +110,19 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
         changeValue('StayLoggedIn', 'ENABLED');
         toggleVisibility('loginButton');
         toggleVisibility('logoutButton');
-        StayLoggedInCaller(); 
-        }
+        StayLoggedInCaller(); }
       else { 
         changeContent('errorModalHeaderText', 'Login Failed');
         document.getElementById('RawNewUserPassword').required = true;
         document.getElementById('RawNewUserPasswordConfirm').required = true;
+        changeContent('errorModalHeaderText', 'Login Failed');
+        changeContent('errorContainer', '<br /><p>Login Failed! Please try again.</p><br />');
         setVisibility('errorModal', 'block');
         setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
     error: function(passwordResponse) {
         toggleVisibility('passwordModal');
         changeContent('criticalModalHeaderText', 'Login Error');
+        changeContent('criticalContainer', '<br /><p>Critical Login Error! Please try again.</p><br />');
         toggleVisibility('criticalModal');
         setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
 // / -----------------------------------------------------------------------------------
@@ -184,14 +176,6 @@ function checkAvailability(desiredUsername) {
           NewUserInput: desiredUsername,
           CheckUserAvailability: 'ENABLED', },
         success: function(checkAvailabilityResponse) { 
-          if (checkAvailabilityResponse.includes('DENIED')) { 
-            setVisibility('checkResultsDenied', 'block'); 
-            setVisibility('checkResultsFailure', 'none'); 
-            setVisibility('checkResultsSuccess', 'none'); }
-          if (checkAvailabilityResponse.includes('NOT AVAILABLE')) { 
-            setVisibility('checkResultsDenied', 'none'); 
-            setVisibility('checkResultsFailure', 'block'); 
-            setVisibility('checkResultsSuccess', 'none'); }
           if (checkAvailabilityResponse.includes('AVAILABLE,')) {
             var responseArrayCAR = checkAvailabilityResponse.split(','); 
             var checkResults = responseArrayCAR[0];
@@ -204,9 +188,19 @@ function checkAvailability(desiredUsername) {
             setVisibility('checkButton', 'none'); 
             setVisibility('NewUserName', 'inline-block');
             changeValue('NewUserName', approvedUsername); 
-            setFocus('NewUserEmail'); } },
+            setFocus('NewUserEmail'); } 
+          if (checkAvailabilityResponse.includes('NOT AVAILABLE')) { 
+            setVisibility('checkResultsDenied', 'none'); 
+            setVisibility('checkResultsFailure', 'block'); 
+            setVisibility('checkResultsSuccess', 'none'); } 
+          if (checkAvailabilityResponse.includes('DENIED')) { 
+            setVisibility('checkResultsDenied', 'block'); 
+            setVisibility('checkResultsFailure', 'none'); 
+            setVisibility('checkResultsSuccess', 'none'); } },
         error: function(checkAvailabilityResponse) { 
-          toggleVisibility('checkResultsFailure'); } }); } }); } 
+          setVisibility('checkResultsDenied', 'none'); 
+          setVisibility('checkResultsFailure', 'block'); 
+          setVisibility('checkResultsSuccess', 'none'); } }); } }); } 
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -232,6 +226,7 @@ function logout() {
   toggleVisibility('logoutButton'); 
   toggleVisibility('loginButton'); 
   changeContent('successModalHeaderText', 'Logout Success');
+  changeContent('successContainer', '<br /><p>Logout Success! Please wait.</p><br />');
   setVisibility('successModal', 'block'); 
   setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
   changeValue('UserInputTokens', '');
@@ -252,14 +247,6 @@ function secureCreateAcccount(RawPassword) {
   clearInput('RawNewUserPassword');
   clearInput('RawNewUserPasswordConfirm'); 
   return(AccountPasswordInput); }
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to submit the Create Account form and process the results.
-// / Validates the input and hashes the password
-function createAccount() { 
-  var emailAddress = document.getElementById('NewUserEmail').value;
- }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -301,23 +288,25 @@ $('#createAccountFormNav').on('submit', function (createAccountAjax) {
         if (!accountCreatedError && createAccountResponse !== '' && createAccountResponse.includes('APPROVED')) { 
           setVisibility('createAccountModal', 'none');
           changeContent('successModalHeaderText', 'Created Account Successfully');
+          changeContent('successContainer', '<br /><p>Account Created Successfully! Please wait.</p><br />');
           toggleVisibility('successModal');
           setTimeout(function() { setVisibility('successModal', 'none'); }, 3000); }
         else { 
           changeContent('errorModalHeaderText', 'Account Creation Failed');
+          changeContent('errorContainer', '<br /><p>Account Creation Failed! Please try again later.</p><br />');
           document.getElementById('RawNewUserPassword').required = true;
           document.getElementById('RawNewUserPasswordConfirm').required = true;
           setVisibility('errorModal', 'block');
           setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
       error: function(createAccountResponse) {
           toggleVisibility('passwordModal');
-          changeContent('criticalModalHeaderText', 'Account Creation Critical Error');
+          changeContent('criticalModalHeaderText', 'Account Creation Critical Error!');
+          changeContent('criticalContainer', '<br /><p>Account Creation Critical Error! Please try again later.</p><br />');
           toggleVisibility('criticalModal');
           setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); } 
     else { 
       outlineRed('RawNewUserPassword');
-      outlineRed('RawNewUserPasswordConfirm');
-    } });
+      outlineRed('RawNewUserPasswordConfirm'); } });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -334,19 +323,37 @@ $('#forgotUsernameFormNav').on('submit', function (forgotUsernameAjax) {
     data: $(this).serialize(),
     success: function(forgotUsernameResponse) {
       var forgotUsernameCorrect = !forgotUsernameResponse.includes('ERROR!!!');
-      if (forgotUsernameCorrect && forgotUsernameResponse.includes('APPROVED')) { 
+      if (forgotUsernameCorrect) { 
         setVisibility('forgotUserModal', 'none');
         changeContent('successModalHeaderText', 'Recovery Email Sent Successfully');
+        changeContent('successContainer', '<br /><p>Recovery Email Sent Successfully! Please check your email for further instructions.</p><br />');
         toggleVisibility('successModal');
-        setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
-        }
+        setTimeout(function() { setVisibility('successModal', 'none'); }, 3000); }
       else { 
         changeContent('errorModalHeaderText', 'Account Recovery Failed');
+        changeContent('errorContainer', '<br /><p>Recovery Email Failed To Send! Please check your email address and try again.</p><br />');
         setVisibility('errorModal', 'block');
         setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
     error: function(passwordResponse) {
         toggleVisibility('passwordModal');
         changeContent('criticalModalHeaderText', 'Account Recovery Critical Error');
+        changeContent('criticalContainer', '<br /><p>Recovery Email Failed To Send! Please try again later.</p><br />');
         toggleVisibility('criticalModal');
         setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to close all open modals.
+function closeAllModals() { 
+  var elements = document.getElementsByClassName('modal'); 
+  for (i = 0; i < elements.length; i++) {
+    setVisibility(elements[i].id, 'none'); } }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to listen for key presses on the keyboard and perform specific actions when keystrokes are pressed.
+document.addEventListener('keyup', function(event) {
+  if (event.key === "Escape") { 
+    closeAllModals();
+    cancelAvailability(); } });
 // / -----------------------------------------------------------------------------------

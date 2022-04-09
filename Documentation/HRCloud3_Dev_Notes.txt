@@ -1,6 +1,43 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+4/7/2022
+v0.9.3 - Working on Forgot ... everything ... process.
+
+-Adjust SMTP / Email related config.php variables a bit.
+-Added ERROR 34!
+  -Could not send a Username Recovery Email.
+-Added ERROR 35!
+  -Could not gather a list of accounts for the supplied email address!
+-Added ERROR 36!
+  -Could not craft a recovery email!
+-Added ERROR 37!
+  -Could not verify the user environment! (core.php)
+-Added ERROR 38!
+  -Could not verify the user environment! (adminCore.php)
+-Continue developing the logic for sending emails & handling exceptions using PHPMailer dependency.
+-Added an event listener for keypresses (actually, keyup) in Login-Caller.js
+  -This can be used to handle keystrokes.
+  -Added 'Escape' key handler which closes all open modals.
+-I am thinking about how to do Forgot Password Requests.
+  -I think I want to have a modal with a text box for entering a recovery code, and a button for sending a recovery code email.
+  -Because the button to display Forgot Password is on the PasswordModal where we already know the username.
+  -If the user has a code or has just received their code, they can enter and submit it.
+  -If the user has not yet entered or received a code the button to send one is already visible.
+  -This method makes the features available to the user initially, and doesn't require a lot of JS to work.
+  -There aren't many moving pieces, which is a plus.
+  -We will need to generate a recoveryCache.php file of some sort to the user data directory.
+  -This will contain the time of the request and the recovery code.
+  -We need logic to generate and expire these recoveryCache.php files.
+-In order to make Recover Password work, we will need to create a cache file in the user data directory.
+  -That means that there is an edge case where a user could run into an error if they recover a password for an account that has never been logged in.
+  -The user data directory is created and/or validated on user authentication. 
+  -To fix this I took the code for creating a user dir, logs, cache, & notifications file out of the core.php logic section & wrapped it in a function.
+  -Now we can call this function whenever a user is authenticated & also in adminCore.php when a user is added.
+  -Any users added through the UI that have not logged in will still experience problems with this feature. 
+  -These problem users should be deleted to avoid problems. Maybe an "unactivated" user process will take shape someday.
+
+----------
 3/31/2022
 v0.9.2 - Working on Forgot Username process.
 

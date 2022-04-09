@@ -681,3 +681,88 @@ ERROR DESCRIPTION
   The  $ApplicationURL  in config.php is missing the 'https://'.
   The  $ApplicationURL  in config.php specifies an 'http://' prefix.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 34, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not send a Username Recovery Email!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The email was rejected by the receiving server.
+  If SMTP is enabled, check the SMTP connection details in config.php for accuracy.
+  If SMTP is disabled, the domain of the email address may be spoofed, unavailable, or defunct.
+  This could be the result of emails getting blocked by local firewall settings on the server or the network that the server is on.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 35, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not gather a list of accounts for the supplied email address!
+
+FILE
+  /adminCore.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The email supplied was invalid.
+  The email supplied does not have any accounts associated with it.
+  The user cache file has become corrupt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 36, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not craft a recovery email!
+
+FILE
+  /adminCore.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The user list assembled for the supplied email address is malformed or corrupt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 37, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not verify the user environment!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The user environment could not be verified and could not be created.
+  The code that causes this error is performed when a user is logging in.
+  The code that causes this error tries to create required user directories, files, & data.
+  This may be the result of incorrect file permission levels on the installation directory or adminCore.php file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 38, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not verify the user environment!
+
+FILE
+  /adminCore.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The user environment could not be verified and could not be created.
+  The code that causes this error is performed when a new user is created.
+  The code that causes this error tries to create required user directories, files, & data.
+  This may be the result of incorrect file permission levels on the installation directory or adminCore.php file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
