@@ -1,6 +1,31 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+4/10/2022
+v0.9.5 - Tidying up existing processes, fixing bugs.
+
+-Fixed a bug where the Create Account form would be unreachable after creating one account.
+-Added red outline to most form fields when they are empty and the form is submitted.
+-Added dynamic "require" attribute to certain text fields to enable default browser functionality when these are blank.
+  -Will eventually have to go through and consolidate the JS in login-caller.js. 
+  -Maybe move to a separate file & just leave AJAX in login-caller.js?
+-Added several "cancel" functions to Login-Caller.js for resetting form fields when a process is abandoned by the user.
+-Fixed new user account User ID collisions.
+-Fixed a bug in the way the PostConfigUser cache file was being written. 
+  -The array was malformed.
+-Existing cache files will need to be replaced.
+-Existing user accounts created through the UI must be discarded.
+  -It is a good thing this is a very early prototype and there aren't any other features yet.
+-Fixed a bug where the user cache was not being put into a subdirectory.
+  -The UserID was not being properly defined during existing sessions (continued sessions).
+  -Now the UserID is properly defined in verifyGlobals() by verifySession().
+  -An extra check was added to verifyUserEnvironment() to ensure that the UserID is valid before any filesystem operations are performed.
+  -Added ERROR 37!
+    -The UserID is not valid!
+-Started working on Forgot Password Modal.
+-Added functions for checking/unchecking checkboxes to HRC3-Lib.js.
+
+----------
 4/8/2022
 v0.9.4 - Working on forgot / recover password process.
 

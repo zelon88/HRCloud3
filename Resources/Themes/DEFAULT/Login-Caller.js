@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/8/2022
+Date: 4/10/2022
 <3 Open-Source
 
 This file is for processing requests from the UI & responses from the server.
@@ -36,10 +36,15 @@ function hashCreds(RawPassword) {
 // / -----------------------------------------------------------------------------------
 // / A function to perform the client-side encryption of the users password before they send it to the server.
 function secureLogin(RawPassword) {
-  var PasswordInput = hashCreds(RawPassword);
-  changeValue('PasswordInput', PasswordInput);  
-  document.getElementById('RawPassword').required = false;
-  clearInput('RawPassword');
+  var PasswordInput = '';
+  if (document.getElementById('RawPassword').value == '') { 
+    outlineRed('RawPassword'); }
+  if (document.getElementById('RawPassword').value !== '') { 
+    outlineNone('RawPassword');
+    var PasswordInput = hashCreds(RawPassword);
+    changeValue('PasswordInput', PasswordInput);  
+    document.getElementById('RawPassword').required = false;
+    clearInput('RawPassword'); }
   return(PasswordInput); }
 // / -----------------------------------------------------------------------------------
 
@@ -60,8 +65,9 @@ function StayLoggedInCaller() {
 // / This function hides the loginModal & replaces it with the passwordModal.
 // / This function also passes user input to hidden form fields so they can be transferred to passwordFormNav.
 $('#loginFormNav').on('submit', function (loginAjax) {
-  var UserInput = document.getElementById('UserInput').value;
   loginAjax.preventDefault();
+  outlineNone('UserInput');
+  var UserInput = document.getElementById('UserInput').value;
   $.ajax({
     type: 'POST',
     url: '/core.php',
@@ -72,6 +78,7 @@ $('#loginFormNav').on('submit', function (loginAjax) {
         var UserInput = responseArray[0];
         var ClientTokenInput = responseArray[1];
         toggleVisibility('loginModal');
+        cancelLogin();
         toggleVisibility('passwordModal');
         setFocus('RawPassword');
         changeValue('ClientTokenInput', ClientTokenInput); 
@@ -87,6 +94,7 @@ $('#loginFormNav').on('submit', function (loginAjax) {
 // / On any HTTP error; This function hides passwordModal & replaces it with the criticalModal for 5 seconds.
 $('#passwordFormNav').on('submit', function (passwordAjax) { 
   passwordAjax.preventDefault();
+  outlineNone('RawPassword');
   $.ajax({
     type: 'POST',
     url: '/core.php',
@@ -99,6 +107,7 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
         var SessionID = responseArray[1];
         var ClientToken = responseArray[2];
         setVisibility('passwordModal', 'none');
+        cancelPassword();
         changeContent('successModalHeaderText', 'Login Success');
         changeContent('successContainer', '<br /><p>Login Success! Please wait.</p><br />');
         setVisibility('successModal', 'block');
@@ -124,7 +133,8 @@ $('#passwordFormNav').on('submit', function (passwordAjax) {
         changeContent('criticalModalHeaderText', 'Login Error');
         changeContent('criticalContainer', '<br /><p>Critical Login Error! Please try again.</p><br />');
         setVisibility('criticalModal', 'block');
-        setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
+        setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); 
+  document.getElementById('RawPassword').required = true; });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -167,8 +177,12 @@ function StayLoggedInSender() {
 // / On HTTP & application success; This function will update the value of the NewUserName field.
 // / On any error; This function will display an error message under the NewUserInput field.
 function checkAvailability(desiredUsername) {
-  $(function () {
+  $(function () { 
+    if (desiredUsername == '') { 
+      outlineRed('NewUserInput'); }
     if (desiredUsername !== '') { 
+      outlineNone('NewUserInput');
+      document.getElementById('NewUserInput').required = false;
       $.ajax({
         type: 'POST',
         url: '/core.php',
@@ -200,13 +214,119 @@ function checkAvailability(desiredUsername) {
         error: function(checkAvailabilityResponse) { 
           setVisibility('checkResultsDenied', 'none'); 
           setVisibility('checkResultsFailure', 'block'); 
-          setVisibility('checkResultsSuccess', 'none'); } }); } }); } 
+          setVisibility('checkResultsSuccess', 'none'); } }); }
+      document.getElementById('NewUserInput').required = true; }); } 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to submit the Navigation Bar Create Account form with AJAX & update the UI elements.
+// / When this function is run the createAccount modal is being displayed.
+// / On HTTP & application success; This function hides createAccountModal & replaces it with the successModal for 3 seconds.
+// / On HTTP success & application error; This function hides createAccountModal & replaces it with the errorModal for 3 seconds.
+// / On any HTTP error; This function hides createAccountModal & replaces it with the criticalModal for 5 seconds.
+$('#createAccountFormNav').on('submit', function (createAccountAjax) { 
+  createAccountAjax.preventDefault();
+  outlineNone('RawNewUserPassword');
+  var rawNewUserPassword = document.getElementById('RawNewUserPassword').value;
+  var rawNewUserPasswordConfirm = document.getElementById('RawNewUserPasswordConfirm').value;
+  if (rawNewUserPassword === rawNewUserPasswordConfirm) { 
+    NewUserPassword = secureCreateAcccount(rawNewUserPassword); 
+    outlineNone('RawNewUserPassword');
+    outlineNone('RawNewUserPasswordConfirm');
+    $.ajax({
+      type: 'POST',
+      url: '/core.php',
+      data: $(this).serialize(),
+      success: function(createAccountResponse) { 
+        var accountCreatedError = createAccountResponse.includes('ERROR!!!');
+        if (!accountCreatedError && createAccountResponse !== '' && createAccountResponse.includes('APPROVED')) { 
+          setVisibility('createAccountModal', 'none');
+          cancelAvailability();
+          changeContent('successModalHeaderText', 'Created Account Successfully');
+          changeContent('successContainer', '<br /><p>Account Created Successfully! Please wait.</p><br />');
+          setVisibility('successModal', 'block');
+          setTimeout(function() { setVisibility('successModal', 'none'); }, 3000); }
+        else { 
+          changeContent('errorModalHeaderText', 'Account Creation Failed');
+          changeContent('errorContainer', '<br /><p>Account Creation Failed! Please try again later.</p><br />');
+          document.getElementById('RawNewUserPassword').required = true;
+          document.getElementById('RawNewUserPasswordConfirm').required = true;
+          setVisibility('errorModal', 'block');
+          setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
+      error: function(createAccountResponse) {
+        changeContent('criticalModalHeaderText', 'Account Creation Critical Error!');
+        changeContent('criticalContainer', '<br /><p>Account Creation Critical Error! Please try again later.</p><br />');
+        setVisibility('criticalModal', 'block');
+        setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); } 
+    else { 
+      outlineRed('RawNewUserPassword');
+      outlineRed('RawNewUserPasswordConfirm'); } });
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to submit the Navigation Bar forgot username form with AJAX & update the UI elements.
+// / When this function is run the forgotUserModal is being displayed.
+// / On HTTP & application success; This function hides forgotUserModal & replaces it with the successModal for 3 seconds.
+// / On HTTP success & application error; This function hides forgotUserModal & replaces it with the errorModal for 3 seconds.
+// / On any HTTP error; This function hides forgotUserModal & replaces it with the criticalModal for 5 seconds.
+$('#forgotUsernameFormNav').on('submit', function (forgotUsernameAjax) { 
+  forgotUsernameAjax.preventDefault();
+  outlineNone('ForgotUserEmailInput');
+  $.ajax({
+    type: 'POST',
+    url: '/core.php',
+    data: $(this).serialize(),
+    success: function(forgotUsernameResponse) {
+      var forgotUsernameCorrect = !forgotUsernameResponse.includes('ERROR!!!');
+      if (forgotUsernameCorrect) { 
+        cancelForgotUsername();
+        setVisibility('forgotUserModal', 'none');
+        changeContent('successModalHeaderText', 'Recovery Email Sent Successfully');
+        changeContent('successContainer', '<br /><p>Recovery Email Sent Successfully! Please check your email for further instructions.</p><br />');
+        setVisibility('successModal', 'block');
+        setTimeout(function() { setVisibility('successModal', 'none'); }, 3000); }
+      else { 
+        changeContent('errorModalHeaderText', 'Account Recovery Failed');
+        changeContent('errorContainer', '<br /><p>Recovery Email Failed To Send! Please check your email address and try again.</p><br />');
+        setVisibility('errorModal', 'block');
+        setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
+    error: function(forgotUsernameResponse) { 
+      changeContent('criticalModalHeaderText', 'Account Recovery Critical Error');
+      changeContent('criticalContainer', '<br /><p>Recovery Email Failed To Send! Please try again later.</p><br />');
+      setVisibility('criticalModal', 'block');
+      setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to reset the Forgot Username modal to defaults when the process is abandoned.
+// / Re-sets the UI elements so that the process restarts at the beginning.
+function cancelForgotUsername() { 
+  outlineNone('ForgotUserEmailInput');
+  clearInput('ForgotUserEmailInput'); } 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to reset the Username modal to defaults when the process is abandoned.
+// / Re-sets the UI elements so that the process restarts at the beginning.
+function cancelLogin() { 
+  outlineNone('UserInput');
+  clearInput('UserInput'); } 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to reset the Password modal to defaults when the process is abandoned.
+// / Re-sets the UI elements so that the process restarts at the beginning.
+function cancelPassword() { 
+  outlineNone('RawPassword');
+  clearInput('RawPassword'); } 
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
 // / A function to reset the Create Account modal to defaults when the process is abandoned.
 // / Re-sets the UI elements so that the process restarts at the beginning.
-function cancelAvailability() {
+function cancelAvailability() { 
+  document.getElementById('NewUserInput').required = true;
+  outlineNone('NewUserInput');
   setVisibility('checkResultsDenied', 'none');
   setVisibility('checkResultsFailure', 'none');
   setVisibility('checkResultsSuccess', 'none');
@@ -214,8 +334,12 @@ function cancelAvailability() {
   setVisibility('NewUserInput', 'inline-block');
   setVisibility('checkButton', 'inline-block'); 
   setVisibility('NewUserName', 'none');
-  changeValue('NewUserInput', '');
-  changeValue('NewUserName', ''); } 
+  clearInput('NewUserInput');
+  clearInput('NewUserEmail');
+  clearInput('RawNewUserPassword');
+  clearInput('RawNewUserPasswordConfirm'); 
+  uncheckCheckbox('AgreeToTerms');
+  clearInput('NewUserName'); } 
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -229,9 +353,9 @@ function logout() {
   changeContent('successContainer', '<br /><p>Logout Success! Please wait.</p><br />');
   setVisibility('successModal', 'block'); 
   setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
-  changeValue('UserInputTokens', '');
-  changeValue('SessionID', '');
-  changeValue('ClientToken', '');
+  clearInput('UserInputTokens');
+  clearInput('SessionID');
+  clearInput('ClientToken');
   changeValue('ActiveSLI', 'DISABLED');
   changeValue('StayLoggedIn', StayLoggedIn); }
 // / -----------------------------------------------------------------------------------
@@ -263,81 +387,6 @@ function openTOS(termsOfServiceFile) {
 function openPP(privacyPolicyFile) { 
   window.open('/' + privacyPolicyFile,'Privacy Policy','resizable,height=800,width=600'); 
   return false; }
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to submit the Navigation Bar Create Account form with AJAX & update the UI elements.
-// / When this function is run the createAccount modal is being displayed.
-// / On HTTP & application success; This function hides createAccountModal & replaces it with the successModal for 3 seconds.
-// / On HTTP success & application error; This function hides createAccountModal & replaces it with the errorModal for 3 seconds.
-// / On any HTTP error; This function hides createAccountModal & replaces it with the criticalModal for 5 seconds.
-$('#createAccountFormNav').on('submit', function (createAccountAjax) { 
-  var rawNewUserPassword = document.getElementById('RawNewUserPassword').value;
-  var rawNewUserPasswordConfirm = document.getElementById('RawNewUserPasswordConfirm').value;
-  if (rawNewUserPassword === rawNewUserPasswordConfirm) { 
-    NewUserPassword = secureCreateAcccount(rawNewUserPassword); 
-    outlineNone('RawNewUserPassword');
-    outlineNone('RawNewUserPasswordConfirm');
-    createAccountAjax.preventDefault();
-    $.ajax({
-      type: 'POST',
-      url: '/core.php',
-      data: $(this).serialize(),
-      success: function(createAccountResponse) {
-        var accountCreatedError = createAccountResponse.includes('ERROR!!!');
-        if (!accountCreatedError && createAccountResponse !== '' && createAccountResponse.includes('APPROVED')) { 
-          setVisibility('createAccountModal', 'none');
-          changeContent('successModalHeaderText', 'Created Account Successfully');
-          changeContent('successContainer', '<br /><p>Account Created Successfully! Please wait.</p><br />');
-          setVisibility('successModal', 'block');
-          setTimeout(function() { setVisibility('successModal', 'none'); }, 3000); }
-        else { 
-          changeContent('errorModalHeaderText', 'Account Creation Failed');
-          changeContent('errorContainer', '<br /><p>Account Creation Failed! Please try again later.</p><br />');
-          document.getElementById('RawNewUserPassword').required = true;
-          document.getElementById('RawNewUserPasswordConfirm').required = true;
-          setVisibility('errorModal', 'block');
-          setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
-      error: function(createAccountResponse) {
-          changeContent('criticalModalHeaderText', 'Account Creation Critical Error!');
-          changeContent('criticalContainer', '<br /><p>Account Creation Critical Error! Please try again later.</p><br />');
-          setVisibility('criticalModal', 'block');
-          setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); } 
-    else { 
-      outlineRed('RawNewUserPassword');
-      outlineRed('RawNewUserPasswordConfirm'); } });
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to submit the Navigation Bar forgot username form with AJAX & update the UI elements.
-// / When this function is run the forgotUserModal is being displayed.
-// / On HTTP & application success; This function hides forgotUserModal & replaces it with the successModal for 3 seconds.
-// / On HTTP success & application error; This function hides forgotUserModal & replaces it with the errorModal for 3 seconds.
-// / On any HTTP error; This function hides forgotUserModal & replaces it with the criticalModal for 5 seconds.
-$('#forgotUsernameFormNav').on('submit', function (forgotUsernameAjax) { 
-  forgotUsernameAjax.preventDefault();
-  $.ajax({
-    type: 'POST',
-    url: '/core.php',
-    data: $(this).serialize(),
-    success: function(forgotUsernameResponse) {
-      var forgotUsernameCorrect = !forgotUsernameResponse.includes('ERROR!!!');
-      if (forgotUsernameCorrect) { 
-        setVisibility('forgotUserModal', 'none');
-        changeContent('successModalHeaderText', 'Recovery Email Sent Successfully');
-        changeContent('successContainer', '<br /><p>Recovery Email Sent Successfully! Please check your email for further instructions.</p><br />');
-        setVisibility('successModal', 'block');
-        setTimeout(function() { setVisibility('successModal', 'none'); }, 3000); }
-      else { 
-        changeContent('errorModalHeaderText', 'Account Recovery Failed');
-        changeContent('errorContainer', '<br /><p>Recovery Email Failed To Send! Please check your email address and try again.</p><br />');
-        setVisibility('errorModal', 'block');
-        setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
-    error: function(forgotUsernameResponse) {
-        changeContent('criticalModalHeaderText', 'Account Recovery Critical Error');
-        changeContent('criticalContainer', '<br /><p>Recovery Email Failed To Send! Please try again later.</p><br />');
-        setVisibility('criticalModal', 'block');
-        setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------

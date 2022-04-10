@@ -9,7 +9,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 3/14/2022
+Date: 4/10/2022
 <3 Open-Source
 
 The Header file is for preparing an HTML document to contain the output of Diablo Engine.
@@ -129,7 +129,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         <div id='loginModalHeader' class='modalHeader' name='loginModalHeader'>
           <img id='avatarSmallLogin' class='avatar-small' name='avatarSmallLogin' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
           <a id='loginModalHeaderText' class='modalHeaderText' name='loginModalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Username</a>
-          <img id='closeButtonLogin' class='closeButton' name='closeButtonLogin' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='toggleVisibility("loginModal");'>
+          <img id='closeButtonLogin' class='closeButton' name='closeButtonLogin' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='cancelLogin(); toggleVisibility("loginModal");'>
           <img id='helpLogin' class='helpButton' name='helpLogin' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you already have an <?php echo $ApplicationName; ?> account and remember your username; type it into the text field then press the "Continue" button to proceed. If you do not remember your username; press the "Forgot Username" button and follow the instructions to recover your account. If you would like to create a new account; press the "Create Account" button. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.'>
         </div>
         <!-- Username Modal Message Container -->
@@ -137,13 +137,13 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
           <form id='loginFormNav' name='loginFormNav' method='POST' target='noredirect'>
             <input type='text' id='UserInput' class='textInput' name='UserInput' title='Enter your <?php echo $ApplicationName; ?> username.' placeholder='Enter Username' value='' required autofocus>
             <input type='hidden' id='requestTokens' name='RequestTokens' value='' required>
-            <button id='submitButton' class='BUTTON_1' name='submitButton'  title='Proceed with login.' style='margin:10px;'>Continue</button>
+            <button id='userSubmitButton' class='BUTTON_1' name='userSubmitButton' onclick='outlineAuto("UserInput");' title='Proceed with login.' style='margin:10px;'>Continue</button>
             <br />
             <hr />
           </form>
-          <button type='button' id='forgotUsernameButton' class='BUTTON_1' name='forgotUsernameButton' onclick='toggleVisibility("loginModal"); toggleVisibility("forgotUserModal"); setFocus("ForgotUserEmailInput");'  title='Recover an account with a forgotten username.' style='margin:10px;'>Forgot Username</button>
+          <button type='button' id='forgotUsernameButton' class='BUTTON_1' name='forgotUsernameButton' onclick='cancelLogin(); toggleVisibility("loginModal"); toggleVisibility("forgotUserModal"); setFocus("ForgotUserEmailInput");'  title='Recover an account with a forgotten username.' style='margin:10px;'>Forgot Username</button>
 <?php if ($AllowUserRegistration) { ?>
-          <button type='button' id='createAccountButton' class='BUTTON_1' name='createAccountButton' onclick='toggleVisibility("loginModal"); toggleVisibility("createAccountModal"); setFocus("NewUserInput");' title='Create a new <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Create New Account</button>
+          <button type='button' id='createAccountButton' class='BUTTON_1' name='createAccountButton' onclick='cancelLogin(); toggleVisibility("loginModal"); toggleVisibility("createAccountModal"); setFocus("NewUserInput");' title='Create a new <?php echo $ApplicationName; ?> account.' style='margin:10px;'>Create New Account</button>
 <?php } ?>
           <button id='tosButton' class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
           <button id='ppButton' class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
@@ -160,7 +160,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         <div id='forgotUserModalHeader' class='modalHeader' name='forgotUserModalHeader'>
           <img id='avatarSmallForgotUser' class='avatar-small' name='avatarSmallForgotUser' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
           <a id='forgotUserModalHeaderText' class='modalHeaderText' name='forgotUserModalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Account Email Address</a>
-          <img id='closeButtonForgotUser' class='closeButton' name='closeButtonForgotUser' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='toggleVisibility("forgotUserModal");'>
+          <img id='closeButtonForgotUser' class='closeButton' name='closeButtonForgotUser' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='cancelForgotUsername(); toggleVisibility("forgotUserModal");'>
           <img id='helpForgotUser' class='helpButton' name='helpForgotUser' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you already have an <?php echo $ApplicationName; ?> account and do not remember your username; type your email address into the text field then press the "Recover Account" button to proceed with account recovery.'>
         </div>
         <!-- Forgot Username Modal Message Container -->
@@ -168,9 +168,38 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
           <form id='forgotUsernameFormNav' name='forgotUsernameFormNav' method='POST' target='noredirect'>
             <input type='text' id='ForgotUserEmailInput' class='textInput' name='ForgotUserEmailInput' title='Enter your email address.' placeholder='Enter Your Email Address' value='' required autofocus>
             <input type='hidden' id='recoverAccount' name='RecoverAccount' value='' required>
-            <button id='submitButton' class='BUTTON_1' name='submitButton'  title='Proceed with account recovery.' style='margin:10px;'>Recover Account</button>
+            <button id='forgotUserSubmitButton' class='BUTTON_1' name='forgotUserSubmitButton' onclick='outlineAuto("ForgotUserEmailInput");' title='Proceed with account recovery.' style='margin:10px;'>Recover Account</button>
             <br />
             <p id='forgotUserResultsSuccess' class='animate' name='forgotUserResultsSuccess' style='display:none; margin-top:10px;'>Thank you! If the email address you provided matches an account on file you will receive an email containing further information.!</p>
+            <hr />
+          </form>
+          <button id='tosButton' class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton' class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
+          <br />
+        </div>
+      </div>
+    </div>
+
+    <!-- The Forgot Password Modal -->
+    <div id='forgotPasswordModal' class='modal' name='forgotPasswordModal'>
+      <!-- Forgot Username Modal Content. -->
+      <div id='forgotPasswordNav' class='modalContent animate' name='forgotPasswordNav'>
+        <!-- Forgot Username Modal Header -->
+        <div id='forgotPasswordModalHeader' class='modalHeader' name='forgotPasswordModalHeader'>
+          <img id='avatarSmallForgotPassword' class='avatar-small' name='avatarSmallForgotPassword' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
+          <a id='forgotPasswordModalHeaderText' class='modalHeaderText' name='forgotPasswordModalHeaderText'>Request & Enter Password Recovery Code</a>
+          <img id='closeButtonForgotPassword' class='closeButton' name='closeButtonForgotPassword' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='toggleVisibility("forgotPasswordModal");'>
+          <img id='helpForgotPassword' class='helpButton' name='helpForgotPassword' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you already have an <?php echo $ApplicationName; ?> account and do not remember your password; select the "Request Recovery Code" button and then check your email for an email from us containing an 8 digit recovery code. Enter that recovery code into text field then press the "Recover Account" button to proceed with account recovery.'>
+        </div>
+        <!-- Forgot Username Modal Message Container -->
+        <div id='forgotPasswordContainer' name='forgotPasswordContainer' style='text-align:center;'>
+          <form id='forgotPasswordFormNav' name='forgotPasswordFormNav' method='POST' target='noredirect'>
+            <input type='text' id='ForgotPasswordRecoveryCode' class='textInput' name='ForgotPasswordRecoveryCode' title='Enter your recovery code.' placeholder='Enter Your Recovery Code' value='' required autofocus>
+            <input type='hidden' id='recoverPasswordUsername' name='RecoverPasswordUsername' value='' required>
+            <input type='hidden' id='recoverPassword' name='RecoverPassword' value='' required>
+            <button id='forgotPasswordSubmitButton' class='BUTTON_1' name='forgotPasswordSubmitButton'  title='Proceed with account recovery.' style='margin:10px;'>Recover Account</button>
+            <br />
+            <p id='forgotPasswordResultsSuccess' class='animate' name='forgotPasswordResultsSuccess' style='display:none; margin-top:10px;'>Thank you! If the email address you provided matches an account on file you will receive an email containing further information.!</p>
             <hr />
           </form>
           <button id='tosButton' class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
@@ -188,7 +217,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         <div id='passwordModalHeader' class='modalHeader' name='passwordModalHeader'>
           <img id='avatarSmallPassword' class='avatar-small' name='avatarSmallPassword' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
           <a id='passwordModalHeaderText' class='modalHeaderText' name='passwordModalHeaderText'>Enter Your <?php echo $ApplicationName; ?> Password</a>
-          <img id='closeButtonPassword' class='closeButton' name='closeButtonPassword' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='toggleVisibility("passwordModal");'>
+          <img id='closeButtonPassword' class='closeButton' name='closeButtonPassword' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='cancelPassword(); toggleVisibility("passwordModal");'>
           <img id='helpPassword' class='helpButton' name='helpPassword' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you remember your <?php echo $ApplicationName; ?> password; type it into the text field then press the "Continue" button to proceed. If you do not remember your password; press the "Forgot Password" button and follow the instructions to recover your account. To close this window without taking any action; press the red "X" icon in the top-right corner of the window.'>
         </div>
         <!-- Password Modal Message Container -->
@@ -198,11 +227,11 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
             <input type='hidden' id='ClientTokenInput' name='ClientTokenInput' value='' required>
             <input type='hidden' id='PasswordInput' name='PasswordInput' value='' required>
             <input type='hidden' id='UserInputPassword' name='UserInput' value='' required>
-            <button id='submitButton' onclick='secureLogin(document.getElementById("RawPassword").value);' class='BUTTON_1' title='Proceed with login.' style='margin:10px;'>Continue</button>
+            <button id='passwordSubmitButton' onclick='secureLogin(document.getElementById("RawPassword").value);' class='BUTTON_1' title='Proceed with login.' style='margin:10px;'>Continue</button>
             <br />
             <hr />
           </form>
-          <button type='button' class='BUTTON_1' title='Recover an account with a forgotten password.' style='margin:10px;'>Forgot Password</button>
+          <button id='forgotPasswordButton' class='BUTTON_1' name='forgotPasswordButton' onclick='cancelPassword();' title='Recover an account with a forgotten password.' style='margin:10px;'>Forgot Password</button>
           <button id='tosButton' class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
           <button id='ppButton' class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
           <br />
@@ -233,6 +262,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         </div>
       </div>
     </div>
+
 <?php if ($AllowUserRegistration) { ?>
     <!-- The Create Account Modal -->
     <div id='createAccountModal' class='modal' name='createAccountModal'>
@@ -242,13 +272,13 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
         <div id='createAccountModalHeader' class='modalHeader' name='createAccountModalHeader'>
           <img id='avatarSmallLogin' class='avatar-small' name='avatarSmallLogin' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
           <a id='createModalHeaderText' class='modalHeaderText' name='createModalHeaderText'>Create A New Account</a>
-          <img id='closeButtonCreate' class='closeButton' name='closeButtonCreate' src='/Resources/Themes/DEFAULT/x24.png' onclick='toggleVisibility("createAccountModal"); cancelAvailability();' alt='Close' title='Close Window'>
+          <img id='closeButtonCreate' class='closeButton' name='closeButtonCreate' src='/Resources/Themes/DEFAULT/x24.png' onclick='cancelAvailability(); toggleVisibility("createAccountModal");' alt='Close' title='Close Window'>
           <img id='helpCreate' class='helpButton' name='helpCreate' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='Enter a desired username into the field, then press "Continue" to check if that username is available. Once you have entered an available username you will be able to complete the login process by entering your email address & desired password. To close this window; press the red "X" icon in the top-right corner of the window.'>
         </div>
         <!-- Create Account Modal Message Container -->
         <div id='createAccountContainer' name='createAccountContainer' style='text-align:center; display:block;'>
           <form id='createAccountFormNav' name='createAccountFormNav' method='POST' target='noredirect'>
-            <input type='text' placeholder='Enter Desired Username' id='NewUserInput' name='NewUserInput' title='Enter your desired <?php echo $ApplicationName; ?> username.' style='padding: 10px;'>
+            <input type='text' placeholder='Enter Desired Username' id='NewUserInput' name='NewUserInput' title='Enter your desired <?php echo $ApplicationName; ?> username.' style='padding: 10px;' required>
             <button id='checkButton' class='BUTTON_1' name='checkButton' onclick='checkAvailability(document.getElementById("NewUserInput").value);' title='Check username availability.' style='margin:10px;'>Check Username Availability</button>
             <input type='text' id='NewUserName' name='NewUserName' title='Your selected <?php echo $ApplicationName; ?> username.' value='' style='display:none; padding: 10px;' required disabled>
             <br />
@@ -267,7 +297,7 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
               <br />
               <input type='checkbox' id='AgreeToTerms' class='tosText' name='AgreeToTerms' title='You must agree to the Terms Of Service & Privacy Policy in order to create a new account.' value='AGREE' required>
               <label id='agreeToTermsLabel' class='tosText' name='agreeToTermsLabel' title='You must agree to the Terms Of Service & Privacy Policy in order to create a new account.' for='AgreeToTerms'> I agree to the Terms Of Service & Privacy Policy.</label>
-              <button id='createSubmitButton' class='BUTTON_1' name='createSubmitButton' onclick='createAccount();' title='Proceed with account creation.' style='margin:10px;'>Create Account</button>
+              <button id='createSubmitButton' class='BUTTON_1' name='createSubmitButton' title='Proceed with account creation.' style='margin:10px;'>Create Account</button>
               <br />
             </div>
           </form>

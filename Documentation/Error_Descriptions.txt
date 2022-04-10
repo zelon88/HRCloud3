@@ -737,3 +737,17 @@ ERROR DESCRIPTION
   This could be because HRCloud3 is running on an unsupported operating system or PHP version.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 37, <TIMESTAMP>, <REQUEST_IDENTIFIER>, The UserID is not valid!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The server is being fuzzed, improperly sandboxed, or scanned for vulnerabilities.
+  The core.php file, config.php file, or cache file is damaged or corrupt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

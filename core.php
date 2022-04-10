@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/8/2022
+Date: 4/10/2022
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -145,7 +145,7 @@ function verifyInstallation() {
   // / Create a unique identifier for the cache file.
   $CacheFile = $RootPath.'Cache'.DIRECTORY_SEPARATOR.'Cache-'.hash('sha256',$Salts[0].'CACHE').'.php';
   // / If no cache file exists yet (first run) we create one and write the $PostConfigUsers to it. 
-  if (!file_exists($CacheFile)) $cacheCheck = file_put_contents($CacheFile, '<?php'.PHP_EOL.'$PostConfigUsers = array();'.PHP_EOL);
+  if (!file_exists($CacheFile)) $cacheCheck = file_put_contents($CacheFile, '<?php'.PHP_EOL);
   // / Make sure all sanity checks passed.
   if ($dirCheck && $indexCheck && $logCheck && $cacheCheck) $InstallationIsVerified = TRUE;
   // / Clean up unneeded memory.
@@ -244,10 +244,8 @@ function loadCache() {
   global $Users, $CacheFile, $Salts;
   // / Load the cache file containing the rest of the users.
   require ($CacheFile);
-  // / Verify that required variables are present in the cache file.
-  if (!isset($PostConfigUsers)) $PostConfigUsers = array();
   // / Combine the hard coded users from the config file with the rest of the users from the cache file.
-  $Users = array_merge($PostConfigUsers, $Users);
+  if (isset($PostConfigUsers)) $Users = array_merge($PostConfigUsers, $Users);
   $CacheIsLoaded = TRUE;
   // / Return an array of all users as well as a boolean to tell us if the function succeeded.
   return array($Users, $CacheIsLoaded); }
@@ -331,6 +329,7 @@ function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClien
       // / If the username is found we stop iterating through the user list.
       if ($UserInput === $user[1]) { 
         // / Create a series of valid session IDs.
+        $UserID = $user[0];
         $SessionID = hash('sha256', $Minute.$Salts[0].$ClientTokenInput.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
         $oldSessionID = hash('sha256', $Minute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$ServerToken.$Salts[2].$user[1]);
         $oldSessionIDA = hash('sha256', $LastMinute.$Salts[0].$OldClientToken.$user[3].$Salts[1].$OldServerToken.$Salts[2].$user[1]);
@@ -342,7 +341,7 @@ function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClien
   // / Clean up unneeded memory.
   $user = $validSessionArray = $oldSessionID = $oldSessionIDA = NULL; 
   unset($user, $validSessionArray, $oldSessionID, $oldSessionIDA);
-  return array($SessionID, $SessionIsVerified); } 
+  return array($UserID, $SessionID, $SessionIsVerified); } 
 
 // / A function to validate and sanitize requried session and POST variables.
 function verifyGlobals() { 
@@ -398,7 +397,7 @@ function verifyGlobals() {
     list ($ClientTokenInput, $variableIsSanitized) = sanitize($_POST['ClientTokenInput'], TRUE);
     $_SESSION['ClientTokenInput'] = $ClientTokenInput;
     list ($ClientToken, $OldClientToken, $ServerToken, $OldServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $UserInput);
-    list ($SessionID, $SessionIsVerified) = verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken);
+    list ($UserID, $SessionID, $SessionIsVerified) = verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken);
     if ($SessionIsVerified) $_SESSION['SessionID'] = $SessionID;
     else $_POST['SessionID'] = $_SESSION['SessionID'] = $SessionID = $SessionIDInput = NULL; 
     $SessionType = 'POST';
@@ -545,7 +544,7 @@ function generateUserLogs($UserID) {
   // / Check that the DATA library is enabled & activated.
   list ($DataLibCheck, $DataLibrary) = libCheck('DATA');
   // / Check that the session is verified, the UserID is set, and the data library passed all checks.
-  if (isset($SessionIsVerified)) if ($SessionIsVerified) if (isset($UserID)) if ($UserID !== 'DEFAULT') if ($DataLibCheck) {
+  if (isset($UserID)) if ($UserID !== 'DEFAULT') if ($DataLibCheck) {
     // / Define the directory structure for the logs.
     // / The $LibrariesActive[] array is defined in config.php where the user was instructed specifically to include trailing slashes on all directories.
     $UserDataDir = $LibrariesActive[$DataLibrary][2].$UserID.DIRECTORY_SEPARATOR;
@@ -953,19 +952,25 @@ function sendEmail($address, $subject, $content) {
 function verifyUserEnvironment($UserID) { 
   // / Set variables.
   global $Verbose;
-  // / This code generates a user log file if none exists. Useful for initializing new users logging-in for the first time.
-  // / This code also specifies the $UserDataDir which is a direct handle to the users subdirectory within the DATA library.
-  list ($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir) = generateUserLogs($UserID);
-  if (!$UserLogsExists) dieGracefully(11, 'Could not generate a user log file!', FALSE);
-  else if ($Verbose) logEntry('Verified user log file.', FALSE);
-  // / This code generates a user cache file if none exists. Useful for initializing new users logging-in for the first time.
-  list ($UserCacheExists, $UserCache, $UserCacheDir) = generateUserCache($UserID);
-  if (!$UserCacheExists) dieGracefully(12, 'Could not generate a user cache file!', TRUE);
-  else if ($Verbose) logEntry('Verified user cache file.', TRUE);
-  // / This code generates a user notifications file if none exists. Useful for initializing new users logging-in for the first time.
-  list ($NotificationsFileExists, $NotificationsFile) = generateNotificationsFile($UserID, $UserDataDir);
-  if (!$NotificationsFileExists) dieGracefully(13, 'Could not generate a user notifications file!', TRUE);
-  else if ($Verbose) logEntry('Verified user notifications file.', TRUE); 
+  // / Make sure the $UserID is a number.
+  if (is_numeric($UserID)) { 
+    // / Make note of this $UserID in the logfile.
+    logEntry('Creating a user environment for UserID: '.$UserID.'.', TRUE);
+    // / This code generates a user log file if none exists. Useful for initializing new users logging-in for the first time.
+    // / This code also specifies the $UserDataDir which is a direct handle to the users subdirectory within the DATA library.
+    list ($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir) = generateUserLogs($UserID);
+    if (!$UserLogsExists) dieGracefully(11, 'Could not generate a user log file! ', FALSE);
+    else if ($Verbose) logEntry('Verified user log file.', FALSE);
+    // / This code generates a user cache file if none exists. Useful for initializing new users logging-in for the first time.
+    list ($UserCacheExists, $UserCache, $UserCacheDir) = generateUserCache($UserID);
+    if (!$UserCacheExists) dieGracefully(12, 'Could not generate a user cache file!', TRUE);
+    else if ($Verbose) logEntry('Verified user cache file.', TRUE);
+    // / This code generates a user notifications file if none exists. Useful for initializing new users logging-in for the first time.
+    list ($NotificationsFileExists, $NotificationsFile) = generateNotificationsFile($UserID, $UserDataDir);
+    if (!$NotificationsFileExists) dieGracefully(13, 'Could not generate a user notifications file!', TRUE);
+    else if ($Verbose) logEntry('Verified user notifications file.', TRUE); }
+  // / If the $UserID is not an integer it cannot be used to create a user environment.
+  else dieGracefully(37, 'The UserID is not valid!', FALSE);
   return array($UserLogsExists, $UserLogDir, $UserLogFile, $UserDataDir, $UserCacheExists, $UserCache, $UserCacheDir, $NotificationsFileExists, $NotificationsFile); }
 // / -----------------------------------------------------------------------------------
 

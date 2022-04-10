@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/8/2022
+Date: 4/10/2022
 <3 Open-Source
 
 The Admin Core handles admin related functions like adding/removing users & changing global settings.
@@ -238,15 +238,17 @@ function checkUserAvailability($desiredUsername, $UsernameAvailabilityResponseNe
 // / Accepts an array as input. 
 function addUser($DesiredUsername, $NewUserEmail, $NewUserPassword, $NewUserPasswordConfirm) { 
   // / Set variables.
-  global $Users, $CacheFile;
+  global $Users, $CacheFile, $Verbose;
   $UserCreated = $PasswordsMatch = $UserID = $newCacheLine = $cacheCheck = FALSE;
   $userNum = 1000;
   if ($NewUserPassword === $NewUserPasswordConfirm) if (is_string($NewUserPassword)) if (strlen($NewUserPassword) === 64) $PasswordsMatch = TRUE;
   if ($PasswordsMatch) { 
     logEntry('Password validation complete.', FALSE);
-    while (isset($Users[$userNum])) $userNum++; 
+    foreach ($Users as $user) { 
+      if ($user[0] < $userNum) continue;
+      if ($user[0] >= $userNum) $userNum = $user[0] + 1; }
     $UserID = $userNum;
-    $newCacheLine = '$PostConfigUsers['.$UserID.'] = array(\''.$UserID.'\',\''.$DesiredUsername.'\',\''.$NewUserEmail.'\',\''.$NewUserPassword.'\',FALSE,TRUE);'; 
+    $newCacheLine = '$PostConfigUsers = array(array(\''.$UserID.'\',\''.$DesiredUsername.'\',\''.$NewUserEmail.'\',\''.$NewUserPassword.'\',FALSE,TRUE));'; 
     $cacheCheck = file_put_contents($CacheFile, $newCacheLine.PHP_EOL, FILE_APPEND);
     if ($cacheCheck) { 
       logEntry('Inserted user data into existing cache file.', FALSE);
@@ -261,8 +263,8 @@ function addUser($DesiredUsername, $NewUserEmail, $NewUserPassword, $NewUserPass
   // / Output the results of the Create Account process.
   if ($UserCreated) echo('APPROVED'.PHP_EOL);
   else echo('NOT APPROVED'.PHP_EOL);
-  $PasswordsMatch = $userNum = $newCacheLine = $cacheCheck = $userLogsExists = $userLogDir = $userLogFile = $userDataDir = $userCacheExist = $notificationsFileExists = $notificationsFile = NULL;
-  unset($PasswordsMatch, $userNum, $newCacheLine, $cacheCheck, $userLogsExists, $userLogDir, $userLogFile, $userDataDir, $userCacheExist, $notificationsFileExists, $notificationsFile);
+  $PasswordsMatch = $userNum = $newCacheLine = $cacheCheck = $userLogsExists = $userLogDir = $userLogFile = $userDataDir = $userCacheExist = $notificationsFileExists = $notificationsFile = $user = NULL;
+  unset($PasswordsMatch, $userNum, $newCacheLine, $cacheCheck, $userLogsExists, $userLogDir, $userLogFile, $userDataDir, $userCacheExist, $notificationsFileExists, $notificationsFile, $user);
   return array($UserCreated, $UserID, $Users); }
 
 // / A function to gather all accounts and statuses owned by a supplied email address.
