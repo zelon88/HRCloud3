@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/10/2022
+Date: 4/11/2022
 <3 Open-Source
 
 This is the primary Core file for the Diablo Web Application Engine.
@@ -191,7 +191,7 @@ function initializeVariables() {
   // / Clean up unneeded memory.
   $ucItem = $ucCount = $key = NULL;
   unset($ucItem, $ucCount, $key);
-  return array($InitializationComplete, $UserOptionCount); }
+  return array($InitializationComplete, $UserOptionCount); } 
 
 // / A function to generate useful, consistent, and easily repeatable error messages.
 // / The $ErrorNumber should be an integer representing the unique error identifier.
@@ -316,6 +316,32 @@ function detectClientInfo() {
   $ClientIP = $_SERVER['REMOTE_ADDR'];
  return array($HashedUserAgent, $ClientIP); }
 
+// / A function to scan the userlist for a existence of a specific user based on Username or UserID.
+// / Set  $scanType  to either 'NAME' or 'ID' depending on the type of information you have available.
+function scanUsers($scanType, $Key) { 
+  global $Users;
+  $UserFound = $UserName = $UserID = $UserEmail = FALSE;
+  if ($scanType === 'NAME') { 
+    // / Iterate through the userlist 
+    foreach ($Users as $user) if ($Key === $user[1]) { 
+      $UserFound = TRUE;
+      $UserID = $user[0];
+      $UserName = $user[1];
+      $UserEmail = $user[2];
+      break; } }
+  if ($scanType === 'ID') { 
+    // / Iterate through the userlist 
+    foreach ($Users as $user) if ($Key === $user[0]) { 
+      $UserFound = TRUE;
+      $UserID = $user[0]; 
+      $UserName = $user[1];
+      $UserEmail = $user[2];
+      break; } } 
+  // / Clean up unneeded memory.
+  $scanType = $user = NULL;
+  unset($scanType, $user);
+  return array($UserFound, $UserID, $UserName, $UserEmail); }
+
 // / A function to determine if the supplied session is valid.
 function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClientToken, $ServerToken, $OldServerToken) { 
   // / Set variables. 
@@ -347,7 +373,7 @@ function verifySession($SessionIDInput, $UserInput, $ClientTokenInput, $OldClien
 function verifyGlobals() { 
   // / Set variables. 
   $variableIsSanitized = TRUE; 
-  $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = $UsernameAvailabilityRequest = $UsernameAvailabilityResponseNeeded = $NewAccountRequest = $NewUserEmail = $AgreeToTerms = $NewUserPassword = $NewUserPasswordConfirm = $ForgotUsernameRequest = FALSE;
+  $UserInput = $ClientTokenInput = $PasswordInput = $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = $UsernameAvailabilityRequest = $UsernameAvailabilityResponseNeeded = $NewAccountRequest = $NewUserEmail = $AgreeToTerms = $NewUserPassword = $NewUserPasswordConfirm = $ForgotUsernameRequest = $PasswordRecoveryRequest = $PasswordRecoveryResetRequest = $RecoveryCodeInput = FALSE;
   $UserDir = $DesiredUsername = $ForgotUserEmail = '';
   // / This code triggers the Username Availability Request process.
   // / Username Availability Requests are expensive for the server to perform.
@@ -374,6 +400,24 @@ function verifyGlobals() {
     list ($AgreeToTerms, $variableIsSanitized) = sanitize($_POST['AgreeToTerms'], FALSE);
     list ($NewUserPassword, $variableIsSanitized) = sanitize($_POST['NewUserPassword'], FALSE);
     list ($NewUserPasswordConfirm, $variableIsSanitized) = sanitize($_POST['NewUserPasswordConfirm'], FALSE); }
+  // / This code triggers the Forgot Password Request Recovery Code process.
+  // / Forgot Password Recovery Code Requests are potentially hazardous as they could be abused to brute force access to a user account.
+  // / They also send emails which could be abused or result in the server getting blacklisted by spam filters.
+  // / To prevent this from happening, requests for recovery codes are controlled using the same ClientToken process that the login process uses.
+  if (isset($_POST['RecoverPasswordRequest']) && isset($_POST['RecoverPasswordRequestUsername']) && isset($_POST['RecoverPasswordRequestClientToken'])) if ($_POST['RecoverPasswordRequestUsername'] !== '' && $_POST['RecoverPasswordRequestClientToken'] !== '') { 
+    $PasswordRecoveryRequest = TRUE;
+    list ($UserInput, $VeriableIsSanitized) = sanitize($_POST['RecoverPasswordRequestUsername'], TRUE);
+    list ($ClientTokenInput, $VeriableIsSanitized) = sanitize($_POST['RecoverPasswordRequestClientToken'], TRUE); }
+  // / This code triggers the Forgot Password Request Reset process.
+  // / Forgot Password Reset Requests are potentially hazardous as they could be abused to gain access to a user account.
+  // / To prevent this from happening, requests for recovery codes are controlled using the same ClientToken process that the login process uses.
+  // / Also, the user agent making the request must match the user agent and IP that initiated the request.
+  // / Also the request must be recent and the number of request attempts tracked.
+  if (isset($_POST['ForgotPassword']) && isset($_POST['ForgotPasswordRecoveryCode']) && isset($_POST['ForgotPasswordUsername']) && isset($_POST['ForgotPasswordRecoveryCode']) && isset($_POST['ForgotPasswordRequestClientToken'])) if ($_POST['ForgotPasswordUsername'] !== '' && $_POST['ForgotPasswordRequestClientToken'] !== '') { 
+    $PasswordRecoveryResetRequest = TRUE;
+    list ($UserInput, $VeriableIsSanitized) = sanitize($_POST['ForgotPasswordUsername'], TRUE);
+    list ($ClientTokenInput, $VeriableIsSanitized) = sanitize($_POST['ForgotPasswordRequestClientToken'], TRUE); 
+    list ($RecoveryCodeInput, $VeriableIsSanitized) = sanitize($_POST['ForgotPasswordRecoveryCode'], TRUE); }
   // / This code triggers the authentication process.
   // / This code is performed when a user submits enough credentials & tokens to start a new session.
   if (isset($_POST['UserInput']) && isset($_POST['PasswordInput']) && isset($_POST['ClientTokenInput']) && !isset($_POST['SessionID'])) { 
@@ -386,8 +430,6 @@ function verifyGlobals() {
     $SessionType = 'LOGIN';
     $UserID = 'DEFAULT';
     $GlobalsAreVerified = TRUE; }
-  // / When no authentication credentials are supplied all related variables are initialized to NULL.
-  else $UserInput = $ClientTokenInput = $PasswordInput = NULL;
   // / This code is performed when a user submits tokens and a session ID via POST request to continue an existing session.
   if (isset($_POST['UserInput']) && isset($_POST['SessionID']) && isset($_POST['ClientTokenInput'])) if ($_POST['UserInput'] !== '') { 
     list ($UserInput, $variableIsSanitized) = sanitize($_POST['UserInput'], TRUE);
@@ -417,7 +459,7 @@ function verifyGlobals() {
     $UserDir = $_SESSION['UserDir']; }
   // / Check that any sanitization operations that took place were completed successfully.
     if (!$variableIsSanitized) $SessionID = $GlobalsAreVerified = $RequestTokens = $SessionType = $SessionIsVerified = $UserID = $UsernameAvailabilityRequest = $UsernameAvailabilityResponseNeeded = $NewAccountRequest = $NewUserEmail = $AgreeToTerms = $NewUserPassword = $NewUserPasswordConfirm = FALSE;
-  return array($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $NewUserEmail, $AgreeToTerms, $NewUserPassword, $NewUserPasswordConfirm, $ForgotUsernameRequest, $ForgotUserEmail); }
+  return array($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $NewUserEmail, $AgreeToTerms, $NewUserPassword, $NewUserPasswordConfirm, $ForgotUsernameRequest, $ForgotUserEmail, $PasswordRecoveryRequest, $PasswordRecoveryResetRequest, $RecoveryCodeInput); }
 
 // / A function to throw a full screen login page when needed.
 function requireLogin() { 
@@ -483,7 +525,7 @@ function generateTokens($ClientTokenInput, $UserInput) {
   list ($userFound, $ClientToken) = getClientTokens($UserInput, FALSE);
   list ($oldUserFound, $OldClientToken) = getClientTokens($UserInput, TRUE);
   // / Compare the supplied tokens with the generated ones.
-  if ($ClientTokenInput === $ClientToken or $ClientTokenInput === $OldClientToken) if ($TokenIsValid && $userFound && $ClientToken !== '') $TokensAreValid = TRUE;
+  if ($ClientTokenInput === $ClientToken or $ClientTokenInput === $OldClientToken) if ($TokenIsValid && $userFound && $ClientToken) $TokensAreValid = TRUE;
   // / Free unneeded memory.
   $userFound = $oldUserFound = NULL;
   unset($userFound, $oldUserFound);
@@ -522,15 +564,15 @@ function authenticate($UserInput, $PasswordInput, $ClientToken, $ServerToken, $C
         else { 
           $PasswordIsCorrect = $AuthIsComplete = TRUE;
           $SessionIsVerified = $UserIsEnabled = FALSE; }
-        if ($PasswordIsCorrect) list ($userID, $UserInput, $PasswordInput, $sessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $sessionIsVerified, $usernameAvailabilityRequest, $desiredUsername, $usernameAvailabilityResponseNeeded, $newAccountRequest, $newUserEmail, $agreeToTerms, $newUserPassword, $newUserPasswordConfirm, $forgotUsernameRequest, $forgotUserEmail) = verifyGlobals();
+        if ($PasswordIsCorrect) list ($userID, $UserInput, $PasswordInput, $sessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $sessionIsVerified, $usernameAvailabilityRequest, $desiredUsername, $usernameAvailabilityResponseNeeded, $newAccountRequest, $newUserEmail, $agreeToTerms, $newUserPassword, $newUserPasswordConfirm, $forgotUsernameRequest, $forgotUserEmail, $passwordRecoveryRequest, $passwordRecoveryResetRequest, $recoveryCodeInput) = verifyGlobals();
         // / Here we grant the user their designated permissions.
         if (is_bool($user[4])) { 
           $UserIsAdmin = $user[4]; 
           // / Once we authenticate a user we no longer need to continue iterating through the user list, so we stop.
           break; } } } }
   // / Clean up unneeded memory.
-  $sessionIsVerified = $usernameAvailabilityRequest = $desiredUsername = $usernameAvailabilityResponseNeeded = $newAccountRequest = $newUserEmail = $agreeToTerms = $newUserPassword = $user = $userID = $newUserPasswordConfirm = $sessionID = $forgotUsernameRequest = $forgotUserEmail = NULL;
-  unset($sessionIsVerified, $usernameAvailabilityRequest, $desiredUsername, $usernameAvailabilityResponseNeeded, $newAccountRequest, $newUserEmail, $agreeToTerms, $newUserPassword, $user, $userID, $newUserPasswordConfirm, $sessionID, $forgotUsernameRequest, $forgotUserEmail);
+  $sessionIsVerified = $usernameAvailabilityRequest = $desiredUsername = $usernameAvailabilityResponseNeeded = $newAccountRequest = $newUserEmail = $agreeToTerms = $newUserPassword = $user = $userID = $newUserPasswordConfirm = $sessionID = $forgotUsernameRequest = $forgotUserEmail = $passwordRecoveryRequest = $passwordRecoveryResetRequest = $recoveryCodeInput = NULL;
+  unset($sessionIsVerified, $usernameAvailabilityRequest, $desiredUsername, $usernameAvailabilityResponseNeeded, $newAccountRequest, $newUserEmail, $agreeToTerms, $newUserPassword, $user, $userID, $newUserPasswordConfirm, $sessionID, $forgotUsernameRequest, $forgotUserEmail, $passwordRecoveryRequest, $passwordRecoveryResetRequest, $recoveryCodeInput);
   // / Cleanup sensitive memory only if is it not required to complete authentication.
   // / This code should only fire if the user login credentials were incorrect.
   if (!$PasswordIsCorrect && !$SessionIsVerified) cleanupSensitiveMemory();
@@ -1012,7 +1054,7 @@ else if ($Verbose) logEntry('Loaded cache file.', FALSE);
 
 // / This code takes in all required inputs to build a session and ensures they exist & are a valid type.
 // / If the globals cannot be verified, but the user is trying to login we will show them a login form.
-list ($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $NewUserEmail, $AgreeToTerms, $NewUserPassword, $NewUserPasswordConfirm, $ForgotUsernameRequest, $ForgotUserEmail) = verifyGlobals();
+list ($UserID, $UserInput, $PasswordInput, $SessionID, $ClientTokenInput, $UserDir, $RequestTokens, $GlobalsAreVerified, $SessionType, $SessionIsVerified, $UsernameAvailabilityRequest, $DesiredUsername, $UsernameAvailabilityResponseNeeded, $NewAccountRequest, $NewUserEmail, $AgreeToTerms, $NewUserPassword, $NewUserPasswordConfirm, $ForgotUsernameRequest, $ForgotUserEmail, $PasswordRecoveryRequest, $PasswordRecoveryResetRequest, $RecoveryCodeInput) = verifyGlobals();
 if (!$GlobalsAreVerified) if ($RequestTokens && $UserInput === NULL) requireLogin(); 
 else if ($Verbose) logEntry('Verified global variables.', FALSE);
 
@@ -1089,7 +1131,7 @@ if ($SessionIsVerified) {
 
 // / This code is performed when a user submits an Username Availability Request or New Account Request.
 // / Only approve  a Username Availability Request if the user is an administrator or user registration is enabled in config.php.
-if ($UsernameAvailabilityRequest) if ($DesiredUsername !== '') if ($UserIsAdmin or $AllowUserRegistration) { 
+if ($UsernameAvailabilityRequest && $DesiredUsername) if ($UserIsAdmin or $AllowUserRegistration) { 
   if ($Verbose) logEntry('Initiating a username availability request.', FALSE); 
 
   // / Load the admin core to make Username Availability Request proccessing possible.
@@ -1128,7 +1170,8 @@ if ($UsernameAvailabilityRequest) if ($DesiredUsername !== '') if ($UserIsAdmin 
       die(); } } }
 
 // / This code is performed when a user submits an Forgot Username Request.
-if ($ForgotUsernameRequest && $ForgotUserEmail !== '') { 
+// / This code sends the user a list of owned user accounts via email.
+if ($ForgotUsernameRequest && $ForgotUserEmail) { 
   if ($Verbose) logEntry('Initiating a forgotten username request.', FALSE); 
 
   // / Load the admin core to make Forgot Username Request proccessing possible.
@@ -1143,6 +1186,57 @@ if ($ForgotUsernameRequest && $ForgotUserEmail !== '') {
 
   // / Output a log entry detailing the end of the Forgot Username Request.
   if ($Verbose) logEntry('The forgotten username request is complete.', FALSE);
+
+  // / Stop executing code.
+  die(); } 
+
+// / This code is performed when a user submits an Forgot Password Request.
+// / This code sends the user Password Recovery codes via email.
+if ($PasswordRecoveryRequest && $UserInput && $ClientTokenInput) { 
+  if ($Verbose) logEntry('Initiating a forgotten password request.', FALSE); 
+
+  // / Validate the supplied tokens to ensure the request is valid.
+  list ($ClientToken, $OldClientToken, $ServerToken, $OldServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $UserInput);
+  if (!$TokensAreValid) dieGracefully(40, 'Invalid tokens!', FALSE);
+  else if ($Verbose) logEntry('Verified tokens.', FALSE); 
+
+  // / Load the admin core to make Forgot Password Request proccessing possible.
+  if (!in_array('ADMIN', $CoresLoaded)) list ($CoresLoaded, $CoreLoadedSuccessfully) = loadCores('ADMIN');
+  if (!$CoreLoadedSuccessfully) dieGracefully(38, 'Could not load the admin core file (adminCore.php)!', FALSE);
+  else if ($Verbose) logEntry('Loaded the admin core file.', FALSE); 
+  
+  // / Create a Recovery Code, save it to the users cache directory, then email the recovery code to the user.
+  $PasswordRecoveryEmailSent = sendPasswordRecoveryCode($UserInput);
+  if (!$PasswordRecoveryEmailSent) dieGracefully(39, 'Could not send a password recovery email!', FALSE);
+  else if ($Verbose) logEntry('Sent a password recovery email.', FALSE); 
+
+  // / Output a log entry detailing the end of the Forgot Username Request.
+  if ($Verbose) logEntry('The forgotten password request is complete.', FALSE);
+
+  // / Stop executing code.
+  die(); } 
+
+// / This code is performed when a user submits a Password Reset Request.
+if ($PasswordRecoveryResetRequest && $UserInput && $ClientTokenInput) { 
+  if ($Verbose) logEntry('Initiating a reset password request.', FALSE); 
+
+  // / Validate the supplied tokens to ensure the request is valid.
+  list ($ClientToken, $OldClientToken, $ServerToken, $OldServerToken, $TokensAreValid) = generateTokens($ClientTokenInput, $UserInput);
+  if (!$TokensAreValid) dieGracefully(41, 'Invalid tokens!', FALSE);
+  else if ($Verbose) logEntry('Verified tokens.', FALSE); 
+
+  // / Load the admin core to make Forgot Username Request proccessing possible.
+  if (!in_array('ADMIN', $CoresLoaded)) list ($CoresLoaded, $CoreLoadedSuccessfully) = loadCores('ADMIN');
+  if (!$CoreLoadedSuccessfully) dieGracefully(42, 'Could not load the admin core file (adminCore.php)!', FALSE);
+  else if ($Verbose) logEntry('Loaded the admin core file.', FALSE); 
+  
+  // / Gather a list of accounts for the given username & send that information to the user in an email.
+  //$PasswordRecoveryEmailSent = sendPasswordRecoveryCode($UserInput);
+  //if (!$PasswordRecoveryEmailSent) dieGracefully(39, 'Could not send a password recovery email!', FALSE);
+  //else if ($Verbose) logEntry('Sent a password recovery email.', FALSE); 
+
+  // / Output a log entry detailing the end of the Forgot Username Request.
+  if ($Verbose) logEntry('The password recovery request is complete.', FALSE);
 
   // / Stop executing code.
   die(); } 

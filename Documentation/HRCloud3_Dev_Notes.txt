@@ -1,6 +1,30 @@
 HRCLOUD3 DEV NOTES
 ----------
 
+4/11/2022
+v0.9.7 - Working on Password Recovery process.
+
+-Added ERROR 38!
+  -Could not load the admin core file fiile (adminCore.php)!
+  -There are multiple of these, but they all trigger for different reasons.
+  -Noting the error number is important in determining which block of code triggers this error text.
+-Added ERROR 39!
+  -Could not send a username recovery email!
+-Added ERROR 40!
+  -Invalid tokens!
+  -This fires when a user has supplied invalid ClientTokens to the Recover Password Request process.
+-Add scanUser() function for reliably performing scans of the userlist to look for simple matches.
+  -I realized this routine gets called a lot.
+  -This function isn't a one-size-fits-all replacement for iterating through users.
+  -This function is suitable for quick Username & UserID comparisons. 
+-Added ERROR 41!
+  -Invalid tokens!
+-Added ERROR 42!
+  -Could not load the admin core file fiile (adminCore.php)!
+-Almost done framing out the Reset Password portion in core and UI. 
+  -Have sone placeholder code commented out.
+
+----------
 4/10/2022
 v0.9.6 - Added Forgot Password modal.
 

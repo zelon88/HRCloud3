@@ -8,7 +8,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/10/2022
+Date: 4/11/2022
 <3 Open-Source
 
 The Admin Core handles admin related functions like adding/removing users & changing global settings.
@@ -336,14 +336,10 @@ function generatePasswordRecoveryCode() {
 // / A function to generate a password recovery cache file to a user's cache directory.
 function generatePasswordRecoveryCache($UserInput) { 
   // / Set variables.
-  global $Users, $RawTime;
+  global $RawTime, $Salts;
   $UserFound = $RecoveyCacheCreated = $UserEmail = FALSE;
-  // / Iterate through the userlist 
-  foreach ($Users as $user) if ($UserInput === $user[1]) { 
-    $UserFound = TRUE;
-    $UserID = $user[0]; 
-    $UserEmail = $user[2];
-    break; }
+  // / Scan the userlist for the specified username. 
+  list ($UserFound, $UserID, $userName, $UserEmail) = scanUsers('NAME', $UserInput);
   // / Only create a recovery cache file if the specified user exists.
   if ($UserFound) { 
     // / Verify that the user environment exists so that we don't run into errors during creation of the recovery cache file.
@@ -353,7 +349,7 @@ function generatePasswordRecoveryCache($UserInput) {
     // / Generate a cryptographically secure recovery code.
     $RecoveryCode = generatePasswordRecoveryCode();
     // / Create a recovery cache file in the users cache directory.
-    $RecoveryCacheFile = $UserCahceDir.'RecoveryCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php';
+    $RecoveryCacheFile = $UserCacheDir.'RecoveryCache-'.hash('sha256',$Salts[0].'CACHE'.$UserID).'.php';
     // / Craft the contents of the recovery cache file in PHP syntax.
     $RecoveryCacheData = '<?php $recCode = '.$RecoveryCode.'; $recTime = '.$RawTime.'; $recUA = '.$hashedUserAgent.'; $recIP = '.$clientIP.'; $recFailedAttempts = 0; $recSuccessAttempts = 0;'.PHP_EOL;
     // / Check if a recovery cache file already exists & delete it.
@@ -361,9 +357,9 @@ function generatePasswordRecoveryCache($UserInput) {
     // / Make sure that any existing cache file was removed & create a new one.
     if (!file_exists($RecoveryCacheFile)) $RecoveryCacheCreated = file_put_contents($RecoveryCacheFile, $RecoveryCacheData, FILE_APPEND); }
   // / Clean up unneeded memory.
-  $user = $hashedUserAgent = $clientIP = NULL;
-  unset($user, $HashedUserAgent, $ClientIP);
-  return array($UserFound, $UserEmail, $RecoveyCacheCreated, $RecoveryCacheFile); }
+  $user = $userName = $hashedUserAgent = $clientIP = NULL;
+  unset($user, $userName, $HashedUserAgent, $ClientIP);
+  return array($UserFound, $UserEmail, $RecoveyCacheCreated, $RecoveryCacheFile, $RecoveryCode); }
 
 // / A function to create the email that will be sent to the user containing a recovery code for resetting their password.
 function craftForgotPasswordEmail($RecoveryCode, $UserInput) { 
@@ -388,10 +384,11 @@ function craftForgotPasswordEmail($RecoveryCode, $UserInput) {
 function sendPasswordRecoveryCode($UserInput) { 
   // / Set variables.
   global $EmailFromName, $Verbose;
+  $EmailSent = $emailCrafted = $emailData = FALSE;
   // / Generate a cryptographically secure recovery code.
   $RecoveryCode = generatePasswordRecoveryCode();
   // / Attempt to generate a password recovery cache file in the users cache directory.
-  list ($UserFound, $UserEmail, $RecoveyCacheCreated, $RecoveryCacheFile, $RecoveryCode) = generatePasswordRecoveryCache($UserInput);
+  list ($UserFound, $UserEmail, $RecoveryCacheCreated, $RecoveryCacheFile, $RecoveryCode) = generatePasswordRecoveryCache($UserInput);
   // / If the user was found & the recovery cache was created then craft an recovery email and send it to the email address on file for the user. 
   if ($UserFound && $RecoveryCacheCreated) { 
     // / Craft a password recovery email message.
@@ -405,6 +402,10 @@ function sendPasswordRecoveryCode($UserInput) {
   $emailCrafted = $emailData = NULL;
   unset($emailCrafted, $emailData);
   return $EmailSent; } 
+
+function loadPasswordRecoveryCache($UserInput) { 
+
+}
 
 // / A function to validate a password recovery cache against supplied credentials.
 function validatePasswordRecoveryCache($UserInput, $RecoveryCodeInput) { 

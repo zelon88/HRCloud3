@@ -751,3 +751,90 @@ ERROR DESCRIPTION
   The server is being fuzzed, improperly sandboxed, or scanned for vulnerabilities.
   The core.php file, config.php file, or cache file is damaged or corrupt.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 38, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not load the admin core file fiile (adminCore.php)!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The adminCore.php file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
+  This may be the result of incorrect file permission levels on the installation directory or adminCore.php file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 39, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not send a password recovery email!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The adminCore.php file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
+  This may be the result of incorrect file permission levels on the installation directory or adminCore.php file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 40, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Invalid tokens!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The client supplied an invalid token.
+  The client supplied a malformed token.
+  The client supplied a token that is not yet valid.
+  The client supplied an expired token that is older than 120 seconds.
+  The token supplied by the user did not match the token the server was expecting.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 41, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Invalid tokens!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The client supplied an invalid token.
+  The client supplied a malformed token.
+  The client supplied a token that is not yet valid.
+  The client supplied an expired token that is older than 120 seconds.
+  The token supplied by the user did not match the token the server was expecting.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! 42, <TIMESTAMP>, <REQUEST_IDENTIFIER>, Could not load the admin core file fiile (adminCore.php)!
+
+FILE
+  /core.php
+
+LOG LEVEL
+  SYSTEM
+
+ERROR DESCRIPTION
+  The adminCore.php file located in the installation directory which is required for HRCloud3 to run is missing or unreachable.
+  This may be the result of incorrect file permission levels on the installation directory or adminCore.php file.
+  This may be the result of incorrect user or group associations for the www-data user or group.
+  This could be because HRCloud3 is running on an unsupported operating system or PHP version.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

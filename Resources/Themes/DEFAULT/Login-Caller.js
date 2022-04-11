@@ -7,7 +7,7 @@ Licensed Under GNU GPLv3
 https://www.gnu.org/licenses/gpl-3.0.html
 
 Author: Justin Grimes
-Date: 4/10/2022
+Date: 4/11/2022
 <3 Open-Source
 
 This file is for processing requests from the UI & responses from the server.
@@ -429,20 +429,51 @@ $('#forgotPasswordRequestFormNav').on('submit', function (forgotPasswordRequestA
     success: function(forgotPasswordRequestResponse) {
       var forgotPasswordRequestCorrect = !forgotPasswordRequestResponse.includes('ERROR!!!');
       if (forgotPasswordRequestCorrect) { 
-        cancelForgotPasswordRequest();
-        setVisibility('forgotPasswordModal', 'none');
         changeContent('successModalHeaderText', 'Recovery Email Sent Successfully');
         changeContent('successContainer', '<br /><p>Recovery Email Sent Successfully! Please check your email for further instructions.</p><br />');
         setVisibility('successModal', 'block');
         setTimeout(function() { setVisibility('successModal', 'none'); }, 3000); }
       else { 
         changeContent('errorModalHeaderText', 'Account Recovery Failed');
-        changeContent('errorContainer', '<br /><p>Recovery Email Failed To Send! Please check your email address and try again.</p><br />');
+        changeContent('errorContainer', '<br /><p>Recovery Email Failed To Send! Please check your username and try again.</p><br />');
         setVisibility('errorModal', 'block');
         setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
     error: function(forgotUsernameResponse) { 
       changeContent('criticalModalHeaderText', 'Account Recovery Critical Error');
       changeContent('criticalContainer', '<br /><p>Recovery Email Failed To Send! Please try again later.</p><br />');
       setVisibility('criticalModal', 'block');
+      setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to submit the Navigation Bar forgot password request form with AJAX & update the UI elements.
+// / When this function is run the forgotPasswordModal is being displayed.
+// / On HTTP & application success; This function hides forgotPasswordModal & replaces it with the successModal for 3 seconds.
+// / On HTTP success & application error; This function hides forgotPasswordModal & replaces it with the errorModal for 3 seconds.
+// / On any HTTP error; This function hides forgotPasswordModal & replaces it with the criticalModal for 5 seconds.
+$('#forgotPasswordRequestResetFormNav').on('submit', function (forgotPasswordRequestResetAjax) { 
+  forgotPasswordRequestResetAjax.preventDefault();
+  outlineNone('ForgotPasswordRecoveryCode');
+  $.ajax({
+    type: 'POST',
+    url: '/core.php',
+    data: $(this).serialize(),
+    success: function(forgotPasswordRequestResetResponse) {
+      var forgotPasswordRequestResetCorrect = !forgotPasswordRequestResetResponse.includes('ERROR!!!');
+      if (forgotPasswordRequestResetCorrect) { 
+        //setVisibility('forgotPasswordModal', 'none');
+        //changeContent('successModalHeaderText', 'Recovery Email Sent Successfully');
+        //changeContent('successContainer', '<br /><p>Recovery Email Sent Successfully! Please check your email for further instructions.</p><br />');
+        //setVisibility('successModal', 'block');
+        setTimeout(function() { setVisibility('successModal', 'none'); }, 3000); }
+      else { 
+        //changeContent('errorModalHeaderText', 'Account Recovery Failed');
+        //changeContent('errorContainer', '<br /><p>Recovery Email Failed To Send! Please check your username and try again.</p><br />');
+        //setVisibility('errorModal', 'block');
+        setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
+    error: function(forgotUsernameResponse) { 
+      //changeContent('criticalModalHeaderText', 'Account Recovery Critical Error');
+      //changeContent('criticalContainer', '<br /><p>Recovery Email Failed To Send! Please try again later.</p><br />');
+      //setVisibility('criticalModal', 'block');
       setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
 // / -----------------------------------------------------------------------------------
