@@ -2,6 +2,16 @@ HRCLOUD3 DEV NOTES
 ----------
 
 4/10/2022
+v0.9.6 - Added Forgot Password modal.
+
+-Added Forgot Password modal. 
+-Need to add core functionality.
+-By using the ClientToken generated in the username collection process we can make the auto-expiring requests.
+-We should still manually record and compare the timestamp of the request,
+-Added most UI functionality for the first portion of Forgot Password process. 
+
+----------
+4/10/2022
 v0.9.5 - Tidying up existing processes, fixing bugs.
 
 -Fixed a bug where the Create Account form would be unreachable after creating one account.

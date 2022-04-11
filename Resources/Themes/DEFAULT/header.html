@@ -180,35 +180,6 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
       </div>
     </div>
 
-    <!-- The Forgot Password Modal -->
-    <div id='forgotPasswordModal' class='modal' name='forgotPasswordModal'>
-      <!-- Forgot Username Modal Content. -->
-      <div id='forgotPasswordNav' class='modalContent animate' name='forgotPasswordNav'>
-        <!-- Forgot Username Modal Header -->
-        <div id='forgotPasswordModalHeader' class='modalHeader' name='forgotPasswordModalHeader'>
-          <img id='avatarSmallForgotPassword' class='avatar-small' name='avatarSmallForgotPassword' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
-          <a id='forgotPasswordModalHeaderText' class='modalHeaderText' name='forgotPasswordModalHeaderText'>Request & Enter Password Recovery Code</a>
-          <img id='closeButtonForgotPassword' class='closeButton' name='closeButtonForgotPassword' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='toggleVisibility("forgotPasswordModal");'>
-          <img id='helpForgotPassword' class='helpButton' name='helpForgotPassword' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you already have an <?php echo $ApplicationName; ?> account and do not remember your password; select the "Request Recovery Code" button and then check your email for an email from us containing an 8 digit recovery code. Enter that recovery code into text field then press the "Recover Account" button to proceed with account recovery.'>
-        </div>
-        <!-- Forgot Username Modal Message Container -->
-        <div id='forgotPasswordContainer' name='forgotPasswordContainer' style='text-align:center;'>
-          <form id='forgotPasswordFormNav' name='forgotPasswordFormNav' method='POST' target='noredirect'>
-            <input type='text' id='ForgotPasswordRecoveryCode' class='textInput' name='ForgotPasswordRecoveryCode' title='Enter your recovery code.' placeholder='Enter Your Recovery Code' value='' required autofocus>
-            <input type='hidden' id='recoverPasswordUsername' name='RecoverPasswordUsername' value='' required>
-            <input type='hidden' id='recoverPassword' name='RecoverPassword' value='' required>
-            <button id='forgotPasswordSubmitButton' class='BUTTON_1' name='forgotPasswordSubmitButton'  title='Proceed with account recovery.' style='margin:10px;'>Recover Account</button>
-            <br />
-            <p id='forgotPasswordResultsSuccess' class='animate' name='forgotPasswordResultsSuccess' style='display:none; margin-top:10px;'>Thank you! If the email address you provided matches an account on file you will receive an email containing further information.!</p>
-            <hr />
-          </form>
-          <button id='tosButton' class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
-          <button id='ppButton' class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
-          <br />
-        </div>
-      </div>
-    </div>
-
     <!-- The Password Modal -->
     <div id='passwordModal' class='modal' name='passwordModal'>
       <!-- Password Modal Content. -->
@@ -231,7 +202,43 @@ if (!isset($ConfigIsLoaded) and file_exists('../../../config.php')) include('../
             <br />
             <hr />
           </form>
-          <button id='forgotPasswordButton' class='BUTTON_1' name='forgotPasswordButton' onclick='cancelPassword();' title='Recover an account with a forgotten password.' style='margin:10px;'>Forgot Password</button>
+          <button id='forgotPasswordButton' class='BUTTON_1' name='forgotPasswordButton' onclick='cancelPassword(); toggleVisibility("passwordModal"); toggleVisibility("forgotPasswordModal"); changeValue("RecoverPasswordRequestClientToken", document.getElementById("ClientTokenInput").value); changeValue("RecoverPasswordRequestUsername", document.getElementById("UserInputPassword").value); changeValue("RecoverPasswordRequestUsername", document.getElementById("UserInputPassword").value);' title='Recover an account with a forgotten password.' style='margin:10px;'>Forgot Password</button>
+          <button id='tosButton' class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
+          <button id='ppButton' class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
+          <br />
+        </div>
+      </div>
+    </div>
+
+    <!-- The Forgot Password Modal -->
+    <div id='forgotPasswordModal' class='modal' name='forgotPasswordModal'>
+      <!-- Forgot Username Modal Content. -->
+      <div id='forgotPasswordNav' class='modalContent animate' name='forgotPasswordNav'>
+        <!-- Forgot Username Modal Header -->
+        <div id='forgotPasswordModalHeader' class='modalHeader' name='forgotPasswordModalHeader'>
+          <img id='avatarSmallForgotPassword' class='avatar-small' name='avatarSmallForgotPassword' src='/Resources/Themes/DEFAULT/placeholderAvatar.png' alt='Avatar' title='Avatar'>
+          <a id='forgotPasswordModalHeaderText' class='modalHeaderText' name='forgotPasswordModalHeaderText'>Request & Enter Password Recovery Code</a>
+          <img id='closeButtonForgotPassword' class='closeButton' name='closeButtonForgotPassword' src='/Resources/Themes/DEFAULT/x24.png' alt='Close' title='Close Window' onclick='cancelForgotPasswordRequest(); toggleVisibility("forgotPasswordModal");'>
+          <img id='helpForgotPassword' class='helpButton' name='helpForgotPassword' src='/Resources/Themes/DEFAULT/help24.png' alt='Help' title='If you already have an <?php echo $ApplicationName; ?> account and do not remember your password; select the "Request Recovery Code" button and then check your email for an email from us containing an 8 digit recovery code. Enter that recovery code into text field then press the "Recover Account" button to proceed with account recovery.'>
+        </div>
+        <!-- Forgot Username Modal Message Container -->
+        <div id='forgotPasswordContainer' name='forgotPasswordContainer' style='text-align:center;'>
+          <form id='forgotPasswordRequestFormNav' name='forgotPasswordRequestFormNav' method='POST' target='noredirect'>
+            <input type='hidden' id='RecoverPasswordRequest' name='RecoverPasswordRequest' value='' required>
+            <input type='hidden' id='RecoverPasswordRequestClientToken' name='RecoverPasswordRequestClientToken' value='' required>
+            <input type='hidden' id='RecoverPasswordRequestUsername' name='RecoverPasswordRequestUsername' value='' required>
+            <button id='forgotPasswordRequestButton' class='BUTTON_1' name='forgotPasswordRequestButton' title='Request a recovery code via email.' style='margin:10px;'>Request Recovery Code </button>
+            <br />
+          </form>
+          <form id='forgotPasswordFormNav' name='forgotPasswordFormNav' method='POST' target='noredirect'>
+            <input type='text' id='ForgotPasswordRecoveryCode' class='textInput' name='ForgotPasswordRecoveryCode' title='Enter your recovery code.' placeholder='Enter Your Recovery Code' value='' required autofocus>
+            <input type='hidden' id='RecoverPasswordUsername' name='RecoverPasswordUsername' value='' required>
+            <input type='hidden' id='RecoverPassword' name='RecoverPassword' value='' required>
+            <button id='forgotPasswordSubmitButton' class='BUTTON_1' name='forgotPasswordSubmitButton'  onclick='outlineAuto("ForgotPasswordRecoveryCode");' title='Proceed with account recovery.' style='margin:10px;'>Recover Account</button>
+            <br />
+            <p id='forgotPasswordResultsSuccess' class='animate' name='forgotPasswordResultsSuccess' style='display:none; margin-top:10px;'>Thank you! If the email address you provided matches an account on file you will receive an email containing further information.!</p>
+            <hr />
+          </form>
           <button id='tosButton' class='BUTTON_1' name='tosButton' onclick='openTOS("<?php echo $TermsOfServiceFile; ?>");' title='View Terms Of Service' style='margin:10px;'>Terms Of Service</button>
           <button id='ppButton' class='BUTTON_1' name='ppButton' onclick='openPP("<?php echo $PrivacyPolicyFile; ?>");' title='View Privacy Policy' style='margin:10px;'>Privacy Policy</button>
           <br />

@@ -34,6 +34,90 @@ function hashCreds(RawPassword) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
+// / A function to reset the Forgot Username modal to defaults when the process is abandoned.
+// / Re-sets the UI elements so that the process restarts at the beginning.
+function cancelForgotUsername() { 
+  outlineNone('ForgotUserEmailInput');
+  clearInput('ForgotUserEmailInput'); } 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to reset the Forgot Username modal to defaults when the process is abandoned.
+// / Re-sets the UI elements so that the process restarts at the beginning.
+function cancelForgotPasswordRequest() { 
+  outlineNone('ForgotPasswordRecoveryCode');
+  clearInput('ForgotPasswordRecoveryCode'); } 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to reset the Username modal to defaults when the process is abandoned.
+// / Re-sets the UI elements so that the process restarts at the beginning.
+function cancelLogin() { 
+  outlineNone('UserInput');
+  clearInput('UserInput'); } 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to reset the Password modal to defaults when the process is abandoned.
+// / Re-sets the UI elements so that the process restarts at the beginning.
+function cancelPassword() { 
+  outlineNone('RawPassword');
+  clearInput('RawPassword'); } 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to reset the Create Account modal to defaults when the process is abandoned.
+// / Re-sets the UI elements so that the process restarts at the beginning.
+function cancelAvailability() { 
+  document.getElementById('NewUserInput').required = true;
+  outlineNone('NewUserInput');
+  setVisibility('checkResultsDenied', 'none');
+  setVisibility('checkResultsFailure', 'none');
+  setVisibility('checkResultsSuccess', 'none');
+  setVisibility('createAccountDetails', 'none');
+  setVisibility('NewUserInput', 'inline-block');
+  setVisibility('checkButton', 'inline-block'); 
+  setVisibility('NewUserName', 'none');
+  clearInput('NewUserInput');
+  clearInput('NewUserEmail');
+  clearInput('RawNewUserPassword');
+  clearInput('RawNewUserPasswordConfirm'); 
+  uncheckCheckbox('AgreeToTerms');
+  clearInput('NewUserName'); } 
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to log the user out and destroy an existing session.
+// / Resets the UI to a state where a different user can log in.
+function logout() { 
+  toggleVisibility('logoutModal'); 
+  toggleVisibility('logoutButton'); 
+  toggleVisibility('loginButton'); 
+  changeContent('successModalHeaderText', 'Logout Success');
+  changeContent('successContainer', '<br /><p>Logout Success! Please wait.</p><br />');
+  setVisibility('successModal', 'block'); 
+  setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
+  clearInput('UserInputTokens');
+  clearInput('SessionID');
+  clearInput('ClientToken');
+  changeValue('ActiveSLI', 'DISABLED');
+  changeValue('StayLoggedIn', StayLoggedIn); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to perform the client-side encryption of the users password before they send it to the server during account creation.
+function secureCreateAcccount(RawPassword) {
+  var AccountPasswordInput = hashCreds(RawPassword);
+  changeValue('NewUserPassword', AccountPasswordInput); 
+  changeValue('NewUserPasswordConfirm', AccountPasswordInput);  
+  document.getElementById('RawNewUserPassword').required = false;
+  document.getElementById('RawNewUserPasswordConfirm').required = false;
+  clearInput('RawNewUserPassword');
+  clearInput('RawNewUserPasswordConfirm'); 
+  return(AccountPasswordInput); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
 // / A function to perform the client-side encryption of the users password before they send it to the server.
 function secureLogin(RawPassword) {
   var PasswordInput = '';
@@ -56,6 +140,38 @@ function StayLoggedInCaller() {
     setTimeout(function() { 
       StayLoggedInSender(); 
       StayLoggedInCaller(); }, StayLoggedInInterval); } }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to display the Terms Of Service file when a user clicks the tosButton.
+// / Opens the Terms Of Service file in a fixed window.
+function openTOS(termsOfServiceFile) { 
+  window.open('/' + termsOfServiceFile,'Terms Of Service','resizable,height=800,width=600'); 
+  return false; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to display the Privacy Policy file when a user clicks the tosButton.
+// / Opens the Terms Of Service file in a fixed window.
+function openPP(privacyPolicyFile) { 
+  window.open('/' + privacyPolicyFile,'Privacy Policy','resizable,height=800,width=600'); 
+  return false; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to close all open modals.
+function closeAllModals() { 
+  var elements = document.getElementsByClassName('modal'); 
+  for (i = 0; i < elements.length; i++) {
+    setVisibility(elements[i].id, 'none'); } }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to listen for key presses on the keyboard and perform specific actions when keystrokes are pressed.
+document.addEventListener('keyup', function(event) {
+  if (event.key === "Escape") { 
+    closeAllModals();
+    cancelAvailability(); } });
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -298,109 +414,35 @@ $('#forgotUsernameFormNav').on('submit', function (forgotUsernameAjax) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to reset the Forgot Username modal to defaults when the process is abandoned.
-// / Re-sets the UI elements so that the process restarts at the beginning.
-function cancelForgotUsername() { 
-  outlineNone('ForgotUserEmailInput');
-  clearInput('ForgotUserEmailInput'); } 
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to reset the Username modal to defaults when the process is abandoned.
-// / Re-sets the UI elements so that the process restarts at the beginning.
-function cancelLogin() { 
-  outlineNone('UserInput');
-  clearInput('UserInput'); } 
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to reset the Password modal to defaults when the process is abandoned.
-// / Re-sets the UI elements so that the process restarts at the beginning.
-function cancelPassword() { 
-  outlineNone('RawPassword');
-  clearInput('RawPassword'); } 
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to reset the Create Account modal to defaults when the process is abandoned.
-// / Re-sets the UI elements so that the process restarts at the beginning.
-function cancelAvailability() { 
-  document.getElementById('NewUserInput').required = true;
-  outlineNone('NewUserInput');
-  setVisibility('checkResultsDenied', 'none');
-  setVisibility('checkResultsFailure', 'none');
-  setVisibility('checkResultsSuccess', 'none');
-  setVisibility('createAccountDetails', 'none');
-  setVisibility('NewUserInput', 'inline-block');
-  setVisibility('checkButton', 'inline-block'); 
-  setVisibility('NewUserName', 'none');
-  clearInput('NewUserInput');
-  clearInput('NewUserEmail');
-  clearInput('RawNewUserPassword');
-  clearInput('RawNewUserPasswordConfirm'); 
-  uncheckCheckbox('AgreeToTerms');
-  clearInput('NewUserName'); } 
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to log the user out and destroy an existing session.
-// / Resets the UI to a state where a different user can log in.
-function logout() { 
-  toggleVisibility('logoutModal'); 
-  toggleVisibility('logoutButton'); 
-  toggleVisibility('loginButton'); 
-  changeContent('successModalHeaderText', 'Logout Success');
-  changeContent('successContainer', '<br /><p>Logout Success! Please wait.</p><br />');
-  setVisibility('successModal', 'block'); 
-  setTimeout(function() { setVisibility('successModal', 'none'); }, 3000);
-  clearInput('UserInputTokens');
-  clearInput('SessionID');
-  clearInput('ClientToken');
-  changeValue('ActiveSLI', 'DISABLED');
-  changeValue('StayLoggedIn', StayLoggedIn); }
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to perform the client-side encryption of the users password before they send it to the server during account creation.
-function secureCreateAcccount(RawPassword) {
-  var AccountPasswordInput = hashCreds(RawPassword);
-  changeValue('NewUserPassword', AccountPasswordInput); 
-  changeValue('NewUserPasswordConfirm', AccountPasswordInput);  
-  document.getElementById('RawNewUserPassword').required = false;
-  document.getElementById('RawNewUserPasswordConfirm').required = false;
-  clearInput('RawNewUserPassword');
-  clearInput('RawNewUserPasswordConfirm'); 
-  return(AccountPasswordInput); }
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to display the Terms Of Service file when a user clicks the tosButton.
-// / Opens the Terms Of Service file in a fixed window.
-function openTOS(termsOfServiceFile) { 
-  window.open('/' + termsOfServiceFile,'Terms Of Service','resizable,height=800,width=600'); 
-  return false; }
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to display the Privacy Policy file when a user clicks the tosButton.
-// / Opens the Terms Of Service file in a fixed window.
-function openPP(privacyPolicyFile) { 
-  window.open('/' + privacyPolicyFile,'Privacy Policy','resizable,height=800,width=600'); 
-  return false; }
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to close all open modals.
-function closeAllModals() { 
-  var elements = document.getElementsByClassName('modal'); 
-  for (i = 0; i < elements.length; i++) {
-    setVisibility(elements[i].id, 'none'); } }
-// / -----------------------------------------------------------------------------------
-
-// / -----------------------------------------------------------------------------------
-// / A function to listen for key presses on the keyboard and perform specific actions when keystrokes are pressed.
-document.addEventListener('keyup', function(event) {
-  if (event.key === "Escape") { 
-    closeAllModals();
-    cancelAvailability(); } });
+// / A function to submit the Navigation Bar forgot password request form with AJAX & update the UI elements.
+// / When this function is run the forgotPasswordModal is being displayed.
+// / On HTTP & application success; This function hides forgotPasswordModal & replaces it with the successModal for 3 seconds.
+// / On HTTP success & application error; This function hides forgotPasswordModal & replaces it with the errorModal for 3 seconds.
+// / On any HTTP error; This function hides forgotPasswordModal & replaces it with the criticalModal for 5 seconds.
+$('#forgotPasswordRequestFormNav').on('submit', function (forgotPasswordRequestAjax) { 
+  forgotPasswordRequestAjax.preventDefault();
+  outlineNone('ForgotPasswordRecoveryCode');
+  $.ajax({
+    type: 'POST',
+    url: '/core.php',
+    data: $(this).serialize(),
+    success: function(forgotPasswordRequestResponse) {
+      var forgotPasswordRequestCorrect = !forgotPasswordRequestResponse.includes('ERROR!!!');
+      if (forgotPasswordRequestCorrect) { 
+        cancelForgotPasswordRequest();
+        setVisibility('forgotPasswordModal', 'none');
+        changeContent('successModalHeaderText', 'Recovery Email Sent Successfully');
+        changeContent('successContainer', '<br /><p>Recovery Email Sent Successfully! Please check your email for further instructions.</p><br />');
+        setVisibility('successModal', 'block');
+        setTimeout(function() { setVisibility('successModal', 'none'); }, 3000); }
+      else { 
+        changeContent('errorModalHeaderText', 'Account Recovery Failed');
+        changeContent('errorContainer', '<br /><p>Recovery Email Failed To Send! Please check your email address and try again.</p><br />');
+        setVisibility('errorModal', 'block');
+        setTimeout(function() { setVisibility('errorModal', 'none'); }, 3000); } },
+    error: function(forgotUsernameResponse) { 
+      changeContent('criticalModalHeaderText', 'Account Recovery Critical Error');
+      changeContent('criticalContainer', '<br /><p>Recovery Email Failed To Send! Please try again later.</p><br />');
+      setVisibility('criticalModal', 'block');
+      setTimeout(function() { setVisibility('criticalModal', 'none'); }, 5000); } }); });
 // / -----------------------------------------------------------------------------------
