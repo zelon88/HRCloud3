@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v0.9.8.
+// / v0.9.9.
 // / HRCloud3's Engine settings, loaded after engineConfig.php, so anything it sets wins.
 // / A package ships a configuration with working defaults, & the thing being configured drops a file beside it that overrides what it needs, as Apache & PHP do.
 // / engineConfig.php belongs to the Engine & is replaced wholesale when a newer Engine arrives, while this file belongs to the application & survives that.
@@ -41,8 +41,8 @@ $EngineApplicationSlug = 'hrcloud3';
 
 // / -----------------------------------------------------------------------------------
 // / Which way work moves through this application.
-// / HRCloud3 serves no page yet & asks nothing privileged for permission, so no listening socket is opened at all.
-// / It moves to the Engine's default, 'requests-upward', when its web interface arrives & a request asks root for work.
+// / HRCloud3's pages ask nothing privileged for permission yet, so no listening socket is opened at all.
+// / It moves to the Engine's default, 'requests-upward', when a request first asks root for work.
 // / engineConfig.php says what each shape means.
 $EngineDispatchDirection = 'work-downward';
 // / -----------------------------------------------------------------------------------
@@ -71,6 +71,9 @@ $EngineApplicationArgumentHandler = '';
 // /   This application offers the Engine's accounts. An installation has them only where its
 // /   administrator leaves --Enable Authentication-- TRUE in config.php, which is HRCloud3's default.
 $EngineEnableAuthentication = TRUE;
+
+// /   The function that gives a page HRCloud3's own data, with the page's name. A page reads it & $EnginePageState, & no other global.
+$EnginePageDataProvider = 'applicationPageData';
 
 // /   HRCloud3 is in development, so a contract that leaves out a value the Engine cannot default stops it, with 31027.
 // /   Set this to FALSE before a release is called stable. See --Engine Strict Contract-- in engineConfig.php.
@@ -107,6 +110,29 @@ $EngineSettingDefaults = array(
 // / read, never required & never enumerated, however it got there. HRCloud3 accepts none yet.
 $EngineAcceptedPipelines = array();
 
+// / The pages HRCloud3 draws through the Engine's Page Core, each as the components it is drawn from, in order.
+// / Every interface in UI carries these, or takes them from Default, which every other inherits from & falls back to.
+// / engine is the page the Engine names, such as signing in, home is the App Launcher & settings is the user's own.
+// / See Documentation/ABOUT_PAGES.txt & Documentation/CREATING_INTERFACES.txt.
+$EnginePages = array(
+  'engine' => array('header.php', 'engineGui.php', 'footer.php'),
+  'home' => array('header.php', 'taskbar.php', 'launcherGui.php', 'footer.php'),
+  'settings' => array('header.php', 'taskbar.php', 'settingsGui.php', 'footer.php'));
+
+// / The files a page links, by the name a page reads each address under, & where each is inside an interface.
+// / An address names the interface the file was found in, so a browser's error in one names its interface.
+$EngineInterfaceAssets = array(
+  'Stylesheet' => 'Resources/CSS/HRCloud3.css',
+  'Library' => 'Resources/JS/HRC3-Functions.js',
+  'SignIn' => 'Resources/JS/HRC3-SignIn.js',
+  'SignInTimer' => 'Resources/JS/HRC3-SignInTimer.js',
+  'Icon' => 'Resources/Image/favicon.svg');
+
+// / The folder of the application whose static files a browser fetches, & the types those are.
+// / The hosted location holds a copy of each beside the loader, written by -fp as root, so the loader is the only PHP in the web root.
+$EngineHostedAssetFolders = array('UI');
+$EngineHostedAssetTypes = array('css', 'js', 'svg', 'png', 'ico', 'webp', 'woff2', 'html');
+
 // / Where each of this application's own pins reads its version from.
 // / php cloudCore.php --build --pins --write writes every pin from the files named here,
 // / so none of this application's pins is moved by hand. The kernel's & the Engine's are,
@@ -115,7 +141,9 @@ $EngineAcceptedPipelines = array();
 // / components live, so they are not listed.
 $EnginePinSources = array(
   'ConfigVersion' => 'Resources/Contract/config-template.php',
-  'DependsVersion' => 'Resources/Contract/depends.php');
+  'DependsVersion' => 'Resources/Contract/depends.php',
+  'InterfaceVersion' => 'UI/Default/uiVersionInfo.php',
+  'LanguageVersion' => 'UI/Default/Languages/en/languageStrings.php');
 
 // / Every location this application keeps on disk, by the setting that holds it, & its role.
 // / The role says what a location is. The Engine decides what that means for its owner & its
@@ -152,7 +180,7 @@ $EngineManagedLocations = array(
 // / in the data location, & the hosted location loses only what is a copy of one of them.
 // / Whatever else shares the folder a release was unpacked into is never taken along & never removed.
 // / See Documentation/ABOUT_MANAGED_LOCATIONS.txt.
-$EngineApplicationLayout = array('cloudCore.php', 'README.md', 'LICENSE', 'Documentation', 'Resources');
+$EngineApplicationLayout = array('cloudCore.php', 'README.md', 'LICENSE', 'Documentation', 'Resources', 'UI');
 
 // / The settings in config.php that each shared name reads, & the values the kernel & the Engine work
 // / out from them as they start. The shared layers ask for a value by a name that says nothing about
@@ -163,7 +191,9 @@ $EngineApplicationLayout = array('cloudCore.php', 'README.md', 'LICENSE', 'Docum
 // / No workflow setting is mapped, so this application has no workflows, whatever config.php holds.
 // / EnableAuthentication & every setting after it are the Authentication Core's & the Email Core's. AccountLocation & UserLocation are
 // / where accounts & users' files are kept. ApplicationTitle & ServerName are what an email calls this server, & ServerName is
-// / --Server URL-- as an administrator typed it.
+// / --Server URL-- as an administrator typed it. The four after EmailRecoveryBody are the emails a signed in user's own change of address or
+// / password sends, from v0.9.9.
+// / SupportedInterfaces & every setting after it are the Page Core's, from v0.9.9, & live in HRCloud3's own half of config.php.
 $EngineSettingNames = array(
   'HostedLocation' => 'HostedLoc',
   'ServerURL' => 'FullURL',
@@ -188,9 +218,23 @@ $EngineSettingNames = array(
   'EmailConfirmationBody' => 'EmailConfirmationBody',
   'EmailRecoverySubject' => 'EmailRecoverySubject',
   'EmailRecoveryBody' => 'EmailRecoveryBody',
+  'EmailAddressSubject' => 'EmailAddressSubject',
+  'EmailAddressBody' => 'EmailAddressBody',
+  'EmailNoticeSubject' => 'EmailNoticeSubject',
+  'EmailNoticeBody' => 'EmailNoticeBody',
   'AccountLocation' => 'AccountLoc',
   'UserLocation' => 'UserLoc',
   'ApplicationTitle' => 'ApplicationTitle',
-  'ServerName' => 'URL');
+  'ServerName' => 'URL',
+  'SupportedInterfaces' => 'SupportedInterfaces',
+  'DefaultInterface' => 'DefaultInterface',
+  'AllowUserSelectableInterface' => 'AllowUserSelectableInterface',
+  'SupportedLanguages' => 'SupportedLanguages',
+  'DefaultLanguage' => 'DefaultLanguage',
+  'AllowUserSelectableLanguage' => 'AllowUserSelectableLanguage',
+  'SupportedColors' => 'SupportedColors',
+  'DefaultColor' => 'DefaultColor',
+  'AllowUserSelectableColor' => 'AllowUserSelectableColor',
+  'MarkPageComponents' => 'MarkPageComponents');
 // / -----------------------------------------------------------------------------------
 ?>

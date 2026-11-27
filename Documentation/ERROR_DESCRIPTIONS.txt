@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
 
 FILE INFORMATION ...
-v3.9.7.
+v3.9.7ur.
 This plain text file contains descriptions of all the native error messages contained in or produced by the HRConvert2 Diablo engine.
 These descriptions should give administrators a starting point for debugging problems with HRConvert2 installations.
 Each section in this file contains information about a different error message. The first one is an example to demonstrate the structure of this file.
@@ -70,6 +70,7 @@ The Authentication Core reserves 43000 through 43019 & the Email Core 43100 thro
 The Data pipeline reserves 44000 through 44019, the LaTeX pipeline 45000 through 45019, the Trace pipeline 46000 through 46019,
 the Email pipeline 47000 through 47019 & the Markup pipeline 48000 through 48019, from v4.2.5.
 The Graph pipeline reserves 49000 through 49019, from v4.2.6.
+The Page Core reserves 51000 through 51019, from v4.3.4ur.
 
 <3 Open-Source
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -265,6 +266,15 @@ FILE
   /Resources/versionInfo.php
   /Resources/Contract/config-template.php
   /Resources/Contract/depends.php
+  /UI/Default/uiVersionInfo.php
+  /UI/Default/styleCore.php
+  /UI/Default/header.php
+  /UI/Default/taskbar.php
+  /UI/Default/launcherGui.php
+  /UI/Default/settingsGui.php
+  /UI/Default/engineGui.php
+  /UI/Default/footer.php
+  /UI/Default/Languages/en/languageStrings.php
 
 FATAL
   YES
@@ -274,7 +284,8 @@ LOGGED
 
 ERROR DESCRIPTION
   HRCloud3's error 2, from v0.9.8. A file of HRCloud3's own was requested directly, rather than read by cloudCore.php.
-  config.php is written from HRCloud3's half of the template, so it carries the same guard.
+  config.php is written from HRCloud3's half of the template, so it carries the same guard. From v0.9.9 every component &
+  language pack of an interface carries it too, because each is drawn by the Page Core & never asked for by a browser.
   Nothing is wrong. Something asked for a file it should not have.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -8987,11 +8998,13 @@ LOGGED
 
 ERROR DESCRIPTION
   From v4.2.0. This host has the mail program that PHP's sendmail_path names, & PHP's mail function reported failure when it
-  was handed an email. <PURPOSE> is confirm or recover. The address is never logged.
+  was handed an email. <PURPOSE> is confirm, recover, address or notice. The address is never logged.
   The mail transfer agent's own log says why, & is usually /var/log/mail.log. A mail program that exits with an error for every
   message, such as one with no relay configured, is the usual cause.
   Registering tells the user their code could not be sent. Sending a code again & recovering an account answer as they always
   do, so nobody learns whether an account exists.
+  From v4.2.0ur, asking to change an address tells the user the code could not be sent, & the account keeps its address. A notice
+  that could not be sent changes nothing, because the password or the address it reports was already changed.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -9017,6 +9030,7 @@ WARNINGS ABOUT ACCOUNTS
       many addresses at once. The limit is --Sign In Attempt Limit-- & the window --Sign In Attempt Window--.
       A visitor who reached it is told there were too many attempts. Many of these in a short time is somebody guessing.
     WARNING!!! The <PURPOSE> email for <USERNAME> was not sent, because the Email Core is not loaded. Confirming an address & recovering an account are impossible until it is restored.
+      <PURPOSE> is confirm, recover or address. address is from v4.2.3ur, & carries the code that confirms a new address.
       The Email Core is missing or does not report the version this application pins. Signing in with a correct password still
       works. Run  php convertCore.php -v  & read the Email Core line, then restore Resources/Engine/Cores/emailCore.php from the
       matching release. --config names it as a setting that contradicts another.
@@ -9041,6 +9055,22 @@ WARNINGS ABOUT ACCOUNTS
       From v4.2.3. A signed in user chose how long their files are kept, & their account could not be changed. They are told it
       could not be saved, & their files are kept as long as before. Run  sudo php convertCore.php -fp , which gives Accounts to
       the web server account. A full disk refuses it too.
+    WARNING!!! The password of <USERNAME> could not be changed, because their account could not be written.
+      From v4.2.3ur. A signed in user gave the password they have & a new one, & their account could not be changed. They are
+      told it could not be done right now, & the password they had still signs in. Run -fp as root, which gives Accounts to the
+      web server account. A full disk refuses it too.
+    WARNING!!! A code to change the address of <USERNAME> could not be kept, because the accounts folder could not be written.
+      From v4.2.3ur. A signed in user asked to change their address, & the code that confirms the new one could not be kept, so
+      none was sent. They are told it could not be done right now, & the account keeps its address. Run -fp as root.
+    WARNING!!! The address of <USERNAME> could not be changed, because their account could not be written.
+      From v4.2.3ur. The code was right & is spent, & the account could not be changed, so it keeps its address. The user is
+      told it could not be done right now, & asks for another code once -fp has been run as root.
+    WARNING!!! The notice email for <USERNAME> was not sent, because the Email Core is not loaded. Its owner was not told their account was changed.
+      From v4.2.3ur. A password or an address changed with the account's own password is reported to the owner by email, so a
+      change they did not make is noticed. The change was made regardless. Restore the Email Core, which -v names.
+    WARNING!!! A change to an account answered with an outcome no page names, so it is answered unavailable.
+      From v4.2.3ur. A change a signed in user asked for ended in an outcome the Engine never hands a page, which is a fault in
+      the Engine rather than in the request. The user is told it could not be done right now, & the log lines before it say what ran.
     WARNING!!! This page was sent without Cross-Origin-Opener-Policy, because something was written before its headers. A page of another site could reach the key a signed in tab holds.
       From v4.2.1. While accounts are on, every response carries the policy, so a page of another site can neither name a
       tab with a key of its own nor hold a tab & read its key. Something was printed before the Engine judged the request,
@@ -9904,6 +9934,146 @@ ERROR DESCRIPTION
 ERROR NUMBER RESERVATION
   49000 through 49019 are reserved for the Graph pipeline, & 49005 through 49019 are currently unused.
   49000 through 49004 are raised by the Graph pipeline, & are documented above.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! <TIMESTAMP>, <APPLICATION_NAME>-51000, <SESSION_IDENTIFIER>: No interface could be used, not even <INTERFACE>, so no page can be drawn!
+
+FILE
+  Resources/Engine/Cores/pageCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  From v4.3.4ur. The Page Core tried the interface the request asked for, --Default Interface-- & the base interface the
+  contract names, & none could be used. The warnings before this one say why each could not. The application answers the
+  request with status 503 & one sentence of plain text. Restore the base interface's folder from the release, then run -v &
+  read Installed interfaces. See Documentation/ABOUT_PAGES.txt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! <TIMESTAMP>, <APPLICATION_NAME>-51001, <SESSION_IDENTIFIER>: No language pack could be used in the interface <INTERFACE>, not even en, so no page can be drawn!
+
+FILE
+  Resources/Engine/Cores/pageCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  From v4.3.4ur. Neither the interface chosen nor the base it inherits from carries a pack for the language asked for,
+  --Default Language-- or English. English is the last rung, so a base interface must carry Languages/en/languageStrings.php.
+  The application answers the request with status 503 & one sentence of plain text. Restore the pack from the release.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! <TIMESTAMP>, <APPLICATION_NAME>-51002, <SESSION_IDENTIFIER>: A page named <PAGE> was asked for & the contract declares none by that name!
+
+FILE
+  Resources/Engine/Cores/pageCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  From v4.3.4ur. The application asked the Page Core to build a page its contract's $EnginePages does not name, or names
+  with a component list the Page Core left out with a warning. The application chooses the page, so this is a fault in the
+  application rather than in the request. Nothing is drawn, & the application answers with status 503.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! <TIMESTAMP>, <APPLICATION_NAME>-51003, <SESSION_IDENTIFIER>: A page was asked to be drawn before an interface & a language were chosen!
+
+FILE
+  Resources/Engine/Cores/pageCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  From v4.3.4ur. buildEnginePage() was called before preparePages() chose an interface & a language, or after it could not.
+  preparePages() cannot choose them only after error 51000 or 51001, or a warning that the Page Core's settings could not be
+  read whole, which come first. Where none of them did, the application called the two out of order.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR NUMBER RESERVATION
+  51000 through 51019 are reserved for the Page Core, & 51004 through 51019 are currently unused.
+  51000 through 51003 are raised by the Page Core, & are documented above.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+WARNINGS ABOUT PAGES
+  A warning carries no error number & never halts anything. Each says what happened & what was done about it.
+  Every one of these is from v4.3.4ur. Documentation/ABOUT_PAGES.txt says how a page is built.
+  The Page Core raises these, from Resources/Engine/Cores/pageCore.php.
+    WARNING!!! The page <PAGE> the contract declares is not a page name with a list of components, so it was left out.
+      $EnginePages names each page, 1 to 32 lower case letters, digits, dashes & underscores beginning with a letter, with the
+      component files it is drawn from, in order. A component is a .php file at the top of an interface folder. A page with any
+      component that is not is left out whole, & asking for it is error 51002. It is a fault in the application's contract.
+    WARNING!!! The asset <ASSET> the contract declares is not a name with a path inside an interface, so it was left out.
+      $EngineInterfaceAssets names each file a page links, such as its stylesheet, by a name of letters & digits & a path that
+      stays inside the interface folder. An asset left out is neither looked for nor linked. It is a fault in the contract.
+    WARNING!!! The Page Core could not read its settings whole, so no page can be drawn.
+      The settings the Page Core builds from the contract & config.php lack the base interface or English, which they are
+      built to hold, so this is a fault in the Page Core. The application answers with status 503. Report it with the log.
+    WARNING!!! An interface was named that cannot be a folder name, so it was not used.
+    WARNING!!! The interface <INTERFACE> could not be used, because it has no folder in <FOLDER>.
+    WARNING!!! The interface <INTERFACE> could not be used, because its uiVersionInfo.php declares no $InterfaceVersion.
+    WARNING!!! The interface <INTERFACE> reports version <VERSION> & this application requires <VERSION>. It was not used.
+    WARNING!!! The interface <INTERFACE> could not be used, because the interface it inherits from, <INTERFACE>, does not report the version this application requires.
+    WARNING!!! The interface <INTERFACE> could not be used, because its component <FILE_NAME> is in neither it nor <INTERFACE>.
+    WARNING!!! The interface <INTERFACE> could not be used, because its asset <FILE_NAME> is in neither it nor <INTERFACE>.
+    WARNING!!! The interface <INTERFACE> could not be used, because its styleCore.php offers no color.
+    WARNING!!! The interface <INTERFACE> could not be judged, so it was not used.
+      An interface is checked before a page is drawn with it. One that cannot be used is passed over & the next is tried, which
+      is --Default Interface--, then the base interface the contract names. A user who asked for it is never told, because they
+      cannot choose their way out of a broken interface, & the page is drawn with the next one.
+      An interface must report exactly the version the application requires, because an older or newer one may draw its pages
+      wrongly. One that inherits from the base takes every file it lacks from the base, so the base must report it too. A name
+      is 1 to 64 letters, digits & underscores. Correct the folder or the setting that names it, & run -v, which judges every
+      interface --Supported Interfaces-- offers.
+    WARNING!!! The interface <INTERFACE> carries no <LANGUAGE> language pack, so the next language was tried.
+      --Supported Languages-- offers a language that has no Languages/<LANGUAGE>/languageStrings.php in the interface or its base.
+      The page is drawn in --Default Language--, or else in English. -v counts the packs each interface carries.
+    WARNING!!! The language pack <LANGUAGE> reports version <VERSION> & this application requires <VERSION>. Any string it lacks is taken from the <LANGUAGE> pack.
+    WARNING!!! The language pack <LANGUAGE> reports version <VERSION> & this application requires <VERSION>, & no other pack is there to give a string it lacks.
+      A pack must report exactly the version the application requires. One that does not is used with this warning rather than
+      refused, because a page in the user's own language with a few strings missing is better than none. The next pack on the
+      ladder is loaded under it, so a string it lacks reads in that language. With no pack under it, a string it lacks is missing
+      from the page & PHP's own log names it.
+    WARNING!!! The default color <COLOR> is not one the interface <INTERFACE> offers, so <COLOR> is used.
+      --Default Color-- names a color the interface's styleCore.php does not offer, so the first color it offers is used.
+    WARNING!!! A page data provider named <FUNCTION> was declared & does not exist. The page <PAGE> is drawn without the application's data.
+      $EnginePageDataProvider names a function the application does not define, so $PageData is empty & the page shows none of
+      the application's values. It is a fault in the application.
+  The Engine raises this, from Resources/Engine/engine.php.
+    WARNING!!! A page was asked for & this application pins no Page Core, so no page can be drawn through it.
+      The application called loadPageCore() without declaring $RequiredPageCoreVersion, so the Page Core is not loaded & every
+      page it asks for is refused. It is a fault in the application.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -11441,9 +11611,9 @@ WARNINGS ABOUT THE STARTER
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 WARNINGS ABOUT HRCLOUD3
   A warning carries no error number & never halts anything. Each says what happened & what was done about it.
-  HRCloud3 raises these, from cloudCore.php. Each is from v0.9.8.
-    WARNING!!! A web request was refused, because HRCloud3 has no web interface yet.
-      HRCloud3 is being rebuilt on the HRProprietary Engine, & answers the command line only until its interface arrives. A request
-      that reaches cloudCore.php through a web server is answered with status 503 & one sentence of plain text, & nothing is admitted,
-      so no session folder is made & nothing is swept for it.
+  HRCloud3 raises these, from cloudCore.php.
+    WARNING!!! A page could not be drawn, so the visitor was told so in plain text. The warnings & errors before this one say why.
+      From v0.9.9. The Page Core could not be loaded, or could not choose an interface & a language, or could not build the page.
+      The visitor is answered with status 503 & one sentence of plain text, because a blank page tells nobody anything. Until
+      v0.9.9 every web request was refused with 503, because HRCloud3 had no interface yet.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------

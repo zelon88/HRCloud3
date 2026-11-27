@@ -1,0 +1,255 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRProprietary Engine, Copyright on 11/26/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
+
+FILE INFORMATION ...
+v4.3.4ur.
+This file documents the Page Core, which builds a page for a browser from the components of an interface. It describes what an
+interface holds, how one inherits from the base, how the interface, the language & the color of a page are chosen, how a page is
+built, & how a fault in a page is traced to the one file that caused it.
+The Page Core is new in v4.3.4ur, which HRCloud3 v0.9.9 added to the Engine. It is not yet part of the Engine's own releases.
+For the values an application names in its contract, see ABOUT_ENGINE_CONTRACT.txt. For each warning & error, see ERROR_DESCRIPTIONS.txt.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+What the Engine itself needs is Resources/Engine/depends.php, & --setup installs it with the application's own half. Run  php <entry point> -v  to see what an installation has.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Pages--
+
+THE CORE BUILDS NO MARKUP. AN INTERFACE DRAWS EVERY PAGE.
+The Page Core is Resources/Engine/Cores/pageCore.php. It chooses an interface, a language & a
+color for a request, works out which file of which interface each part of a page comes from, &
+requires those files in order. It writes no HTML of its own. An interface writes all of it.
+
+THE APPLICATION DECIDES WHICH PAGE, & THE PAGE CORE DECIDES HOW IT IS BUILT.
+The application reads & sanitizes the request, then hands the Page Core the interface, the language
+& the color the request asked for, & later the page to draw. The Page Core reads no request itself.
+
+A PAGE IS A LIST OF COMPONENTS. The contract names each page with the component files it is drawn
+from, in order, such as header.php, taskbar.php, settingsGui.php & footer.php. A component is one
+.php file at the top of an interface's folder, & one component appears in as many pages as name it.
+
+EVERY PART OF A PAGE HAS ONE FILE, & ONE PLACE TO LOOK FOR IT. A fault in a page is in one component,
+one language pack, the style file or one asset, & --Tracing A Fault To One File-- says which.
+
+The Page Core is optional, as every Core is. An application that pins no Page Core draws its pages
+itself, as HRConvert2 does, & loadPageCore() refuses it with a warning.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What An Interface Holds--
+
+AN INTERFACE IS A FOLDER IN THE INTERFACE FOLDER, which is $EngineInterfaceFolder in the contract
+& UI by default. Its name is its folder's name, 1 to 64 letters, digits & underscores.
+
+  uiVersionInfo.php            Declares $InterfaceVersion. Required.
+  styleCore.php                Sets $interfaceColors, the colors the interface offers, in order. Required.
+  <component>.php              Every component a page of the contract names.
+  Languages/<code>/            One folder for each language pack, holding languageStrings.php.
+  Resources/                   Every asset the contract names, such as a stylesheet, a script or an icon.
+  index.html                   The Engine's protection page, in every folder, as everywhere else.
+
+AN INTERFACE MUST REPORT EXACTLY THE VERSION THE APPLICATION REQUIRES. The application pins
+$RequiredInterfaceVersion, & an interface that reports another, or none, is not used, because an
+older or a newer one may draw the application's pages wrongly. A language pack is held to
+$RequiredLanguageVersion the same way, & one that does not match is used with a warning rather
+than refused. See --Language Packs--.
+
+A COMPONENT, A PACK & styleCore.php REFUSE TO RUN ON THEIR OWN. Each opens with the application's
+guard, which halts unless $CoreLoaded is TRUE, because each is drawn by the Page Core & never asked
+for by a browser. An asset is fetched by a browser & carries no guard.
+
+AN ASSET IS SERVED, & NOTHING ELSE IN AN INTERFACE IS. The Engine publishes the files an application
+names in $EngineHostedAssetFolders & $EngineHostedAssetTypes into the hosted location as -fp installs
+it, so a browser fetches a stylesheet, a script or an image from there, & never a component. Run -fp
+after adding or changing an interface, so its assets are published.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Inheriting From The Base--
+
+ONE LEVEL ONLY. Every interface inherits from the base interface the contract names, which is
+$EngineBaseInterface & Default by default. The base inherits from nothing.
+
+A FILE AN INTERFACE LACKS IS TAKEN FROM THE BASE. A component, a pack, styleCore.php or an asset
+is looked for in the interface first & in the base second, so an interface carries only the files it
+changes. One that changes the colors carries styleCore.php & its stylesheet, & nothing else.
+
+THE BASE IS ALSO THE FALLBACK, so it must carry every component, every asset & the English pack,
+& it must report the version the application requires. An interface whose base does not is not used.
+
+EACH FILE IS SERVED FROM THE FOLDER IT LIVES IN. An asset's address names the interface it was
+found in, UI/<interface>/<path>, so an error a browser reports in a script or a stylesheet names the
+layer it came from. Each address ends ?v= & the file's modification time, so a browser fetches a file
+again as soon as it changes & caches it until it does.
+
+Two levels would let one interface change another's change, & a fault could then be in any of three
+folders. One level keeps it to two.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Choosing The Interface, The Language & The Color--
+
+EACH IS A LADDER, & THE FIRST RUNG THAT CAN BE USED WINS.
+  Interface   The one the request asked for, then --Default Interface--, then the base.
+  Language    The one the request asked for, then --Default Language--, then English.
+  Color       The one the request asked for, then --Default Color--, then the first the interface offers.
+
+A REQUEST'S CHOICE IS A RUNG ONLY WHERE THE ADMINISTRATOR ALLOWS IT & OFFERS IT. The administrator
+offers interfaces, languages & colors with --Supported Interfaces--, --Supported Languages-- &
+--Supported Colors--, & lets users choose with --Allow User Selectable Interface--, --Allow User
+Selectable Language-- & --Allow User Selectable Color--. Each setting is the application's, read
+through $EngineSettingNames, so an application calls them what it likes. The base & English are
+always offered, because they are the last rungs. An empty list of colors offers every color the
+interface does.
+
+A REQUEST ASKING FOR WHAT IS NOT OFFERED IS PASSED OVER WITHOUT A WORD. Choosing is not an error.
+
+A RUNG THAT IS OFFERED & CANNOT BE USED IS A WARNING, & the next rung is tried. A user who asked for
+a broken interface sees the page drawn with the next one, because nobody can choose their way out
+of a broken interface. Only the last rung failing is an error, 51000 for the interface & 51001 for
+the language, & the application answers with status 503 & one sentence of plain text.
+
+THE PAGES OF ONE REQUEST SHARE ONE CHOICE. preparePages() chooses once, & every page buildEnginePage()
+draws in that request is drawn with what it chose.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Language Packs--
+
+A PACK IS Languages/<code>/languageStrings.php, in the interface or in the base. A code is two or
+three lower case letters, & may be followed by a dash & a region, such as pt-BR.
+
+EVERY STRING IS LOCAL TO ONE CALL. The Page Core requires a pack from inside buildEnginePage(), so
+every string is a variable of that function, which every component reads & nothing outside that call
+can. A string cannot leak into an unrelated part of the core, because no other part can see it.
+
+THE NEXT PACK ON THE LADDER IS LOADED FIRST, & THE CHOSEN PACK OVER IT. A pack that lacks a string
+therefore shows it in the next language, which is usually English, rather than nothing. A pack
+defines only what it translates. English is the last rung, so the base's English pack must define
+every string any page reads.
+
+A PACK DECLARES $LanguageVersion & $LanguageDirection, which is ltr or rtl. A component writes the
+direction into the page, & a stylesheet written with start & end rather than left & right is drawn
+the other way round for a language that reads right to left.
+
+A LANGUAGE NAMES ITSELF IN ITS OWN LANGUAGE. --Supported Languages-- maps each code to its endonym,
+such as fr to Français, so a user who landed on a language they cannot read still recognizes theirs.
+
+A PACK IS UTF-8 WITH NO BYTE ORDER MARK, because a byte order mark is output before any header.
+Simple logic is allowed in a pack where a language needs it, such as choosing a plural.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Building A Page--
+
+THE APPLICATION MAKES THREE CALLS.
+  loadPageCore()       The Engine's. It loads the Page Core the application pins with $RequiredPageCoreVersion,
+                       & returns whether it is active.
+  preparePages()       Accepts the interface, the language & the color the request asked for, & returns whether
+                       a page can be drawn & what it chose.
+  buildEnginePage()    Accepts the page, builds it & sends it, & returns whether it was built & a sanity check.
+
+A PAGE THE CONTRACT DOES NOT DECLARE IS ERROR 51002, & A PAGE ASKED FOR BEFORE preparePages() CHOSE IS
+51003. Neither draws anything, so the application can answer in plain text.
+
+BEFORE THE FIRST COMPONENT, THE PAGE CORE SETS WHAT EVERY COMPONENT READS.
+  $PageName           The page being drawn.
+  $PageData           What the function the contract names in $EnginePageDataProvider gave for this page.
+  $InterfaceToUse     The interface chosen, & $LanguageToUse & $ColorToUse the language & the color.
+  $InterfaceAssets    The address of each asset, keyed by the name the contract gives it.
+  $PageChoices        The interfaces, the languages, by code & endonym, & the colors a user may choose between.
+  $EnginePageState    What the Engine says about the request, as the Authentication Core sets it.
+A component reads these, the language strings & nothing else. It never reads a request, so what a
+page can show is decided by the application & by the Engine, & a component can be replaced without
+reading the core.
+
+A COMPONENT IS NOT A FUNCTION, so its own temporary variables are named for it, such as $footerHere,
+& are nulled & unset at its end. The Page Core's own variables begin pageCore, so no component can
+overwrite one by naming its own.
+
+THE PAGE ENGINEGUI.PHP DRAWS IS DECLARED LIKE ANY OTHER. Where the Engine's answer was page, the
+application hands buildEnginePage() the page the contract builds from engineGui.php, which draws the
+sign in pages. See ABOUT_AUTHENTICATION.txt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Tracing A Fault To One File--
+
+THE PROBLEM. A page is built from several files in two folders, & a fault in the HTML or a script
+the browser reports could be in any of them. The separation of components already narrows it to one
+file. These two make finding that file a matter of reading.
+
+WHERE $Verbose IS TRUE, EVERY PAGE IS LOGGED BEFORE IT IS DRAWN, as one Op-Act entry naming every
+file it is built from. A page that stops part way still names what it was being built from.
+
+  Built the settings page with the Page Core 4.3.4ur for HRCloud3 0.9.9. Interface Default 0.9.9,
+  language en 0.9.9, color blue. Components: header.php from Default 0.9.9 #d6581ecd0a0f, ...
+  Assets: Stylesheet from Default 0.9.9 #4329f1d45692, ...
+
+Each file is named with the interface it was found in, the version stamp in its header & its
+fingerprint, the first 12 hexadecimal digits of its SHA-256. Components come in the order they are
+drawn, then styleCore.php, the chosen pack & the pack under it. An interface that inherits says so,
+as Interface Mine 0.9.9 over Default 0.9.9.
+
+A STAMP SAYS WHICH VERSION A FILE WAS LAST CHANGED IN, & A FINGERPRINT SAYS WHETHER IT IS THE SAME
+BYTES. Two installations whose log lines differ only in one fingerprint differ only in that file. A
+file that was edited by hand keeps its stamp & changes its fingerprint. The stamp is the first line
+of a file's header holding nothing but a version & a full stop, inside a comment, & a file with none
+is named unstamped. Neither decides anything, so neither is a check.
+
+WHERE --Mark Page Components-- IS TRUE, EVERY COMPONENT IS MARKED IN THE PAGE ITSELF, by an HTML
+comment before it & after it, so a browser's view of the source shows which component wrote each
+line.
+
+  <!-- Page component begins: settingsGui.php from Default 0.9.9 #7999dd79ec03 -->
+  <!-- Page component ends: settingsGui.php -->
+
+A marker names a component exactly as the log does, so a marker found in a page is found in the log.
+It is off by default, because a page shows anybody which files it is built from while it is on. Turn
+it on to trace a fault, & off again.
+
+BY ELIMINATION. With --Enhanced Logging Verbosity-- on, read the line for the page that misbehaves.
+A script error a browser reports names its file & the interface folder it came from. A fault in the
+markup is between two markers. A fault that follows a language is in its pack. A fault that follows
+a color is in the style file or the stylesheet. A fault that appears only with one interface is in a
+file that interface carries itself, & the line names which those are.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What -v Reports--
+
+-v lists every interface --Supported Interfaces-- offers, under Installed interfaces, & says
+whether each could draw every page, with its version & what it inherits from. A failed one says
+why, as MISSING, a version that does not match, a component or an asset that is missing, or no color.
+Under Language packs, -v counts for each interface the packs --Supported Languages-- offers that it
+or its base carries at the version the application requires, & names each that fails. A failed row
+is counted with every other failure. -v draws nothing & logs nothing.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Why The Page Core Is Named For Pages--
+
+The Engine keeps interfaceCore & interfaceManager for a low level display server, a Wayland
+compositor, so a core that builds web pages needs a name of its own. The Engine already speaks of
+pages. The Authentication Core sets $EnginePageState, & answerEngineRequest() answers page where an
+application draws the page the Engine names. So the core that builds them is the Page Core.
+
+Interface keeps one meaning on every surface. It is a set of components an administrator selects or
+replaces. ENGINE_RECONCILIATION_HRCLOUD3.txt proposes displayCore & displayManager for the
+compositor, which is a display server, so neither word is asked to mean two things.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

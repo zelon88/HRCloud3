@@ -1,0 +1,200 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRCloud3, Copyright on 11/26/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
+
+FILE INFORMATION ...
+v0.9.9.
+This file describes HRCloud3's interfaces. What the Default interface holds, what each of its files does, the names its
+components & scripts share, & how to make an interface of your own, a color or a language pack.
+The Engine's Page Core builds every page from these files. ABOUT_PAGES.txt says how it chooses & builds, & this file says what
+HRCloud3 gives it to build with.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+The authoritative list of dependencies is Resources/Engine/depends.php & Resources/Contract/depends.php, the Engine's half & the application's, & nothing else. Run  php cloudCore.php -v  to see what this installation has.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About HRCloud3's Interfaces--
+
+Every interface is a folder in UI. Default is the base, so every other interface inherits from it &
+falls back to it, & it carries every file a page needs. From v0.9.9.
+
+cloudCore.php decides which page a request is drawn, & the Page Core builds it. A file in UI holds
+the markup, the strings, the colors & the scripts, & no logic of the core. cloudCore.php holds no
+markup.
+
+THE PAGES, AS Resources/Contract/app-engine-config.php DECLARES THEM.
+  engine      header.php, engineGui.php, footer.php            Signing in, & the pages around it.
+  home        header.php, taskbar.php, launcherGui.php, footer.php   The App Launcher.
+  settings    header.php, taskbar.php, settingsGui.php, footer.php   The user's account & appearance.
+
+THE ASSETS, BY THE NAME A COMPONENT READS THEM BY IN $InterfaceAssets.
+  Stylesheet    Resources/CSS/HRCloud3.css
+  Library       Resources/JS/HRC3-Functions.js
+  SignIn        Resources/JS/HRC3-SignIn.js
+  SignInTimer   Resources/JS/HRC3-SignInTimer.js
+  Icon          Resources/Image/favicon.svg
+
+The engine page is drawn wherever the Engine answers page, which is whenever a visitor must sign in.
+Every other request is drawn the page it asks for where HRCloud3 offers it, & home where it does not.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Files Of The Default Interface--
+
+  uiVersionInfo.php          $InterfaceVersion. It must be the version cloudCore.php pins.
+  styleCore.php              $interfaceColors, the colors the interface offers, in the order a user sees them.
+  header.php                 The document's head, the title, the icon, the stylesheet & the scripts, &
+                             the opening of the body. It writes the language, its direction & the color
+                             into the html element.
+  taskbar.php                The bar at the top of every page a user sees signed in, with a button for
+                             each page HRCloud3 offers & the account at its end.
+  launcherGui.php            Home, which is the App Launcher. No app is installed yet.
+  settingsGui.php            The account, changing its password & its address, & the appearance form.
+  engineGui.php              The sign in pages, which are sections of one page.
+  footer.php                 Starts the scripts with what the page supplies, & closes the body & the
+                             document.
+  Languages/en/              The English pack, which is the last rung of the language ladder.
+  Resources/CSS/             HRCloud3.css.
+  Resources/JS/              HRC3-Functions.js, HRC3-SignIn.js & HRC3-SignInTimer.js.
+  Resources/Image/           favicon.svg.
+
+A COMPONENT READS WHAT THE PAGE CORE SETS & THE LANGUAGE STRINGS, & NO REQUEST. $PageData is
+HRCloud3's, from applicationPageData() in cloudCore.php.
+  Application, Title & Version   HRCloud3's name, its title & its version.
+  EntryPoint                     cloudCore.php, where every form posts.
+  Tokens                         Token1 & Token2, which carry the session from page to page.
+  Pages                          The pages a user may go to, so the taskbar offers no other.
+  Resume                         The page the request asked for, or home. The sign in pages send a
+                                 visitor there once signed in, & a page that loads itself again goes there.
+
+EVERY STRING IS ESCAPED WHERE IT IS WRITTEN, with htmlspecialchars() for the page & json_encode()
+with JSON_HEX_TAG, JSON_HEX_AMP, JSON_HEX_APOS & JSON_HEX_QUOT for a script, so no value can close
+the element it is written into.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Scripts & The Names They Share With The Components--
+
+THE SCRIPTS ARE STATIC & HOLD NO STRING A USER READS. footer.php & engineGui.php hand each one the
+strings & values it needs when they start it, so a script never needs a language pack.
+
+HRC3-Functions.js IS THE LIBRARY. footer.php starts it as HRC3.start() with the endpoint, the
+tokens, the choices in use & the outcome messages.
+  data-hrc3-go='<page>'          A button that posts to the page, carrying the session & the interface,
+                                 the language & the color in use, so a user's choices follow them.
+  data-hrc3-action='<action>'    A form sent as one of the Engine's account actions, with the page's key,
+                                 never posted as a page. password, address & address-confirm.
+  data-hrc3-status               The element in such a form that says what the Engine answered.
+  hrc3AddressConfirm             The form for the code, shown once a code was sent.
+  hrc3CurrentAddress             Where the account's address is shown, & changed once it changes.
+
+HRC3-SignIn.js IS THE PAGE'S HALF OF SIGNING IN, & the Engine's Authentication Core is the server's.
+It was taken from HRConvert2 v4.3.4's HRC2-SignIn.js. footer.php starts it as HRC3SignIn.start()
+where accounts are on. It keeps the key in memory & in window.name, behind the prefix HRC3-SIGNIN:,
+& nowhere a browser keeps for a site, so HRCloud3 sets no cookie. It adds the key to every request
+the page sends cloudCore.php & to no other, & trades it on the timer. A page that loads without being
+signed in, with a key in its tab, trades it & loads itself again, as the page it was. See
+ABOUT_AUTHENTICATION.txt for why the key is held this way & what that defends against.
+  hrc3SignInBar                  The account's place in the taskbar, which says why a sign in ended.
+  hrc3SignOut & hrc3SignInLink   The buttons that sign out & that go to the sign in page.
+HRC3SignInPage, in the same file, is the sign in pages' behavior, & engineGui.php configures it.
+  data-hrc3-signin='<action>'    A form sent as one of the Engine's sign in actions.
+  data-hrc3-page='<section>'     A section of the sign in page. One is shown at a time.
+  data-hrc3-show='<section>'     A link that shows another section.
+  data-hrc3-home                 A link home without signing in, where anonymous visitors are allowed.
+  hrc3SignInMessage              Where the sign in page says what the Engine answered.
+
+HRC3-SignInTimer.js IS THE WORKER THE KEY IS TRADED ON, because a browser slows a hidden tab's own
+timers to once a minute. A page whose worker cannot start trades on its own timer instead.
+
+AN INTERFACE THAT REPLACES A COMPONENT KEEPS THESE NAMES, OR REPLACES THE SCRIPT THAT READS THEM TOO.
+They are the only contract between the markup & the scripts.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Making An Interface--
+
+AN INTERFACE CARRIES ONLY WHAT IT CHANGES.
+  1  Make a folder in UI, named with letters, digits & underscores, such as UI/Night.
+  2  Put a uiVersionInfo.php in it declaring the version HRCloud3 requires, which -v prints, &
+     beginning with the same guard every component of Default begins with.
+  3  Copy in only the files you change, at the same paths they have in Default. Every file you leave
+     out is taken from Default.
+  4  Add its name to --Supported Interfaces-- in config.php. --Default Interface-- may name it.
+  5  Run  sudo php cloudCore.php -fp , which publishes its stylesheet, scripts & images to the hosted
+     location, where a browser fetches them.
+  6  Run  php cloudCore.php -v  & read Installed interfaces & Language packs.
+
+An interface that changes only the look carries styleCore.php & Resources/CSS/HRCloud3.css. One
+that changes a page carries that page's component. One that needs a script of its own replaces the
+script at the same path, because a page links each asset by its path.
+
+UPGRADING HRCLOUD3 MEANS UPGRADING EVERY INTERFACE. An interface must report exactly the version
+HRCloud3 requires, & one that does not is passed over with a warning & Default is used. Compare the
+files you changed with the new Default's, then change the version in uiVersionInfo.php.
+
+TO TRACE A FAULT, turn on --Enhanced Logging Verbosity--, which HRCloud3 ships off, & read the line
+it logs for each page, which names the interface every file came from. Turn on --Mark Page
+Components-- to see each component in the page's source. ABOUT_PAGES.txt says how.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Colors--
+
+styleCore.php names the colors an interface offers in $interfaceColors, & the stylesheet draws each.
+Default offers blue, green, red, grey, orange, purple & dark.
+
+header.php writes the color into the html element as data-color, & HRCloud3.css gives each color a
+rule of its own that sets the same few custom properties, --hrc3-accent, --hrc3-page, --hrc3-card,
+--hrc3-text & the rest. Every other rule is drawn with them. A new color is a name in styleCore.php
+& one rule in the stylesheet. Its name is lower case letters & digits, & the language pack names it
+for a user in $TextColorNames.
+
+--Supported Colors-- offers some of them, & an empty list offers every one the interface does.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Language Packs--
+
+A PACK IS Languages/<code>/languageStrings.php. Default's English pack defines every string any page
+reads, & a pack for another language defines only what it translates. The English pack is loaded
+under it, so a string it lacks reads in English.
+
+  1  Copy UI/Default/Languages/en to UI/Default/Languages/<code>, or into your own interface.
+  2  Translate the strings, & set $LanguageDirection to rtl for a language that reads right to left.
+  3  Keep $LanguageVersion the version HRCloud3 requires.
+  4  Add the code & the language's own name for itself to --Supported Languages--, such as
+     'fr' => 'Français'.
+  5  Run  php cloudCore.php -v  & read Language packs.
+
+A pack is UTF-8 with no byte order mark. HRCloud3 is in English only until its strings settle.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What Settings Offers--
+
+A signed in user sees their username & address, & may change their password or their address with
+the password they have now. The address forms are drawn only where this server can send email. A
+password changed ends every sign in the account had, this one included. An address is changed once
+the code sent to the new one is entered. ABOUT_AUTHENTICATION.txt describes both.
+
+The appearance form offers the interfaces, the languages & the colors a user may choose between,
+each only where there is more than one to choose.
+
+The Engine also lets a signed in user choose how long their files are kept, & HRCloud3 does not offer
+it. HRCloud3 keeps a user's files until the user deletes them.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

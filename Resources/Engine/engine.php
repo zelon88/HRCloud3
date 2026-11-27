@@ -13,7 +13,7 @@
 // / that carries it.
 // /
 // / File Information ...
-// / v4.3.4.
+// / v4.3.4ur.
 // / The Engine. It provides the environment an application runs in.
 // / The application pins it exactly via $RequiredEngineVersion.
 // / Error block 35000 through 35019 is reserved. 35000 is the direct load guard every component shares, the kernel's included.
@@ -44,7 +44,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, The
 
 // / -----------------------------------------------------------------------------------
 // / The version of this Engine. Read by the application WITHOUT executing this file.
-$EngineVersion = 'v4.3.4';
+$EngineVersion = 'v4.3.4ur';
 // / -----------------------------------------------------------------------------------
 
 
@@ -507,8 +507,9 @@ function printReportSections($reportSections) {
 // / It was the application's showVersionInfo until v4.2.4. Without an Engine, the kernel's showKernelVersionReport prints a short report instead.
 function showVersionReport() {
   // / Set variables.
-  global $EngineActive, $Verbose, $DependsManifest, $KernelVersion, $ApacheUser, $RequiredKernelVersion, $RequiredEngineVersion, $ManagerSocketDir, $InstLoc, $HostedLoc, $ApplicationLoc, $ServerRootDir, $EngineApplicationVersion, $ConfigVersion, $RequiredConfigVersion, $RequiredSetupCoreVersion, $RequiredDependencyCoreVersion, $RequiredDependsVersion, $RequiredPipelineCoreVersion, $PipelineCoreActive, $ApplicationName, $DirSep, $Lol, $RunningInContainer, $RunningAsRoot, $CurrentUser, $EnableMemoryProtection, $EnableResourceAwareness, $RequireResourceAwareness, $ResourceAwarenessActive, $TotalResourceBudget, $ReserveResourcePercentage, $MaxConcurrentWorkers, $MaxExpectedRuntime, $ConvertTemp, $MaintainHTAccess, $EngineVersion, $HostArchitecture, $HostMachineString, $EnvironmentManagerMayRepair, $EnablePerConversionLimits, $Pipelines, $RequiredWorkflowCoreVersion, $RequiredAuthenticationCoreVersion, $RequiredEmailCoreVersion, $EnableAutoUpdates, $EngineReportProvider, $EngineSettingNames;
+  global $EngineActive, $Verbose, $DependsManifest, $KernelVersion, $ApacheUser, $RequiredKernelVersion, $RequiredEngineVersion, $ManagerSocketDir, $InstLoc, $HostedLoc, $ApplicationLoc, $ServerRootDir, $EngineApplicationVersion, $ConfigVersion, $RequiredConfigVersion, $RequiredSetupCoreVersion, $RequiredDependencyCoreVersion, $RequiredDependsVersion, $RequiredPipelineCoreVersion, $PipelineCoreActive, $ApplicationName, $DirSep, $Lol, $RunningInContainer, $RunningAsRoot, $CurrentUser, $EnableMemoryProtection, $EnableResourceAwareness, $RequireResourceAwareness, $ResourceAwarenessActive, $TotalResourceBudget, $ReserveResourcePercentage, $MaxConcurrentWorkers, $MaxExpectedRuntime, $ConvertTemp, $MaintainHTAccess, $EngineVersion, $HostArchitecture, $HostMachineString, $EnvironmentManagerMayRepair, $EnablePerConversionLimits, $Pipelines, $RequiredWorkflowCoreVersion, $RequiredAuthenticationCoreVersion, $RequiredEmailCoreVersion, $EnableAutoUpdates, $EngineReportProvider, $EngineSettingNames, $RequiredPageCoreVersion;
   $VersionInfoDisplayed = FALSE;
+  $pageCoreIsPinned = $pageCoreIsLoaded = FALSE;
   $reportFunction = $applicationVersion = $apacheConfigName = '';
   $reportSections = array();
   $pipelineIsOffered = FALSE;
@@ -545,6 +546,11 @@ function showVersionReport() {
   $reportFunction = (isset($EngineReportProvider) && is_string($EngineReportProvider)) ? trim($EngineReportProvider) : '';
   if ($reportFunction !== '' && function_exists($reportFunction)) $reportSections = array_merge($reportSections, (array)$reportFunction());
   else if ($reportFunction !== '') warningEntry('A report provider named '.$reportFunction.' was declared & does not exist. The report carries nothing of the application\'s own.');
+  // / An application that serves pages through the Page Core pins it, from HRCloud3 v0.9.9, & the Engine reports its interfaces & their language packs.
+  // / They come before the application's own sections, where a report provider placed its interfaces until then.
+  $pageCoreIsPinned = (isset($RequiredPageCoreVersion) && is_string($RequiredPageCoreVersion) && trim($RequiredPageCoreVersion) !== '');
+  if ($pageCoreIsPinned) list ($pageCoreIsLoaded) = loadPageCore();
+  if ($pageCoreIsLoaded && function_exists('pageCoreReportSections')) $reportSections['SectionsAfterSwitchedOff'] = array_merge(pageCoreReportSections(), (array)$reportSections['SectionsAfterSwitchedOff']);
   // / The application handed the Engine its version as it started.
   $applicationVersion = ltrim((string)$EngineApplicationVersion, 'vV');
   // / The launcher says whether a sandbox runs the application's own copy of bubblewrap, which is how a kernel restricting unprivileged namespaces is kept restricted.
@@ -583,6 +589,8 @@ function showVersionReport() {
     'Workflow Core' => array(readComponentVersion('Engine'.$DirSep.'Cores'.$DirSep.'workflowCore.php', 'WorkflowCoreVersion'), $RequiredWorkflowCoreVersion),
     'Authentication Core' => array(readComponentVersion('Engine'.$DirSep.'Cores'.$DirSep.'authenticationCore.php', 'AuthenticationCoreVersion'), $RequiredAuthenticationCoreVersion),
     'Email Core' => array(readComponentVersion('Engine'.$DirSep.'Cores'.$DirSep.'emailCore.php', 'EmailCoreVersion'), $RequiredEmailCoreVersion));
+  // / The Page Core is reported only where the application pins it, because an application that serves no pages needs none.
+  if ($pageCoreIsPinned) $componentChecks['Page Core'] = array(readComponentVersion('Engine'.$DirSep.'Cores'.$DirSep.'pageCore.php', 'PageCoreVersion'), $RequiredPageCoreVersion);
   foreach ($componentChecks as $componentName => $componentPair) {
     if (ltrim((string)$componentPair[0], 'vV') === ltrim((string)$componentPair[1], 'vV')) print('  '.str_pad($componentName, 28).'OK, '.ltrim((string)$componentPair[0], 'vV').$Lol);
     else {
@@ -805,7 +813,7 @@ function showVersionReport() {
   print($Lol);
   $VersionInfoDisplayed = TRUE;
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $engineManifestVersion, $acceptedEngineManifest, $reportFunction, $applicationVersion, $apacheConfigName, $reportSections, $listenerIsAsked, $secretRows, $secretRow, $secretGroupWasFound, $manifestEntry, $serviceEntry, $servicePath, $choiceIsPresent, $choiceVersion, $choiceStatus, $choiceOutput, $choicePath, $choiceOrigin, $sandboxLauncher, $treeIsServed, $pipelineKindCounts, $pipelineKindLabels, $pipelineKind, $pipelineKindCount, $pipelineRecord, $pipelineIsOffered, $pipelineName, $unmetRequirements, $manifestVersion, $disabledFeatures, $disabledFeature, $misplacedRoots, $hostedStatus, $hostedDetail, $setupVersion, $hostedWritten, $hostedRemoved, $setupIsAvailable, $scriptIsValid, $scriptStatus, $scriptDisplayStatus, $scriptDetail, $bwrapBinary, $listenerStatus, $listenerIsRunning, $socketMode, $componentChecks, $componentPair, $componentName, $failureCount, $maintainHtaccess, $apacheConfigIsInstalled, $dataIsProtected, $exposureStatus, $exposureDetail, $requiredProfiles, $launcherMakesUserNamespace, $identityIsOwn, $identityFlags, $identityReason, $eventCoreState, $eventCoreVersion, $eventCoreNotice, $acceptedEnvironmentCore, $environmentPinned, $environmentFound);
+  purgeSensitiveMemory($EnableMemoryProtection, $pageCoreIsPinned, $pageCoreIsLoaded, $engineManifestVersion, $acceptedEngineManifest, $reportFunction, $applicationVersion, $apacheConfigName, $reportSections, $listenerIsAsked, $secretRows, $secretRow, $secretGroupWasFound, $manifestEntry, $serviceEntry, $servicePath, $choiceIsPresent, $choiceVersion, $choiceStatus, $choiceOutput, $choicePath, $choiceOrigin, $sandboxLauncher, $treeIsServed, $pipelineKindCounts, $pipelineKindLabels, $pipelineKind, $pipelineKindCount, $pipelineRecord, $pipelineIsOffered, $pipelineName, $unmetRequirements, $manifestVersion, $disabledFeatures, $disabledFeature, $misplacedRoots, $hostedStatus, $hostedDetail, $setupVersion, $hostedWritten, $hostedRemoved, $setupIsAvailable, $scriptIsValid, $scriptStatus, $scriptDisplayStatus, $scriptDetail, $bwrapBinary, $listenerStatus, $listenerIsRunning, $socketMode, $componentChecks, $componentPair, $componentName, $failureCount, $maintainHtaccess, $apacheConfigIsInstalled, $dataIsProtected, $exposureStatus, $exposureDetail, $requiredProfiles, $launcherMakesUserNamespace, $identityIsOwn, $identityFlags, $identityReason, $eventCoreState, $eventCoreVersion, $eventCoreNotice, $acceptedEnvironmentCore, $environmentPinned, $environmentFound);
   return $VersionInfoDisplayed; }
 // / -----------------------------------------------------------------------------------
 // / A function to check that this host can actually do the work, without changing it.
@@ -2240,6 +2248,24 @@ function loadAuthenticationCores($loadWhenOff) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
+// / A function to load the Page Core, which builds a page for a browser from an interface's components, from HRCloud3 v0.9.9.
+// / Accepts nothing. Returns whether it is loaded.
+// / An application that serves pages pins it via $RequiredPageCoreVersion, as every Engine core is pinned, & calls this as it
+// / decides to draw a page. It is loaded once, & verifyCoreComponent() names what was refused & why.
+// / An application that pins none serves no page through it, & asking is a warning, because the application asked for a page.
+function loadPageCore() {
+  // / Set variables.
+  global $RequiredPageCoreVersion, $PageCoreActive, $EnableMemoryProtection;
+  $pageCoreVersion = '';
+  if (!isset($PageCoreActive) or !is_bool($PageCoreActive)) $PageCoreActive = FALSE;
+  if (!$PageCoreActive && isset($RequiredPageCoreVersion) && is_string($RequiredPageCoreVersion) && trim($RequiredPageCoreVersion) !== '') list ($PageCoreActive, $pageCoreVersion) = verifyCoreComponent('Page Core', 'Engine'.DIRECTORY_SEPARATOR.'Cores'.DIRECTORY_SEPARATOR.'pageCore.php', 'PageCoreVersion', (string)$RequiredPageCoreVersion);
+  else if (!$PageCoreActive) warningEntry('A page was asked for & this application pins no Page Core, so no page can be drawn through it.');
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $pageCoreVersion);
+  return array($PageCoreActive); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
 // / A function to make sure a folder an application keeps to itself is there, & is root's alone, from v4.3.1.
 // / Accepts the folder. Returns whether it is & the reason it is not, in that order.
 // / -fp makes each folder the contract gives the root-only role. One that is missing is made here, 0700, so a command run before
@@ -2893,9 +2919,9 @@ function writeProtectionPage($folderPath) {
 // / It was the application's until v4.2.4.
 function verifyRequiredDirs() {
   // / Set variables.
-  global $ConvertLoc, $RequiredDirs, $RequiredIndexes, $RequiredCleanupFolders, $Verbose, $PermissionLevels, $DirSep, $InstLoc, $EnableMemoryProtection;
+  global $ConvertLoc, $RequiredDirs, $RequiredIndexes, $RequiredCleanupFolders, $Verbose, $PermissionLevels, $DirSep, $InstLoc, $EnableMemoryProtection, $EngineManagedLocations;
   $DirectoriesVerified = $directoriesProtected = 0;
-  $locationIsProtected = $protectionWasWritten = $indexIsProtected = $indexWasWritten = FALSE;
+  $locationIsProtected = $protectionWasWritten = $indexIsProtected = $indexWasWritten = $servedRoleIsDeclared = FALSE;
   $protectionIsCurrent = $RequiredDirsExist = TRUE;
   $cleanupContents = array();
   $requiredDir = $requiredIndex = $requiredCleanupFolder = $cleanupEntry = $cleanupPath = '';
@@ -2942,7 +2968,10 @@ function verifyRequiredDirs() {
   // / Keep the DATA protection file correct on every request, beside the index files.
   // / It is the Engine's, & a request without an Engine was refused long before this line.
   // / A file that is not current does not stop a request, because the Engine has said why & the exposure check establishes whether it matters.
-  if (function_exists('maintainDataProtection')) $protectionIsCurrent = maintainDataProtection();
+  // / A contract that gives no location the served role has nothing to keep current, so its application is not warned on every page it draws.
+  // / One that gives a location the role & has it refused is still asked, so maintainDataProtection() still warns about it.
+  $servedRoleIsDeclared = (isset($EngineManagedLocations) && is_array($EngineManagedLocations) && in_array('served', $EngineManagedLocations, TRUE));
+  if ($servedRoleIsDeclared && function_exists('maintainDataProtection')) $protectionIsCurrent = maintainDataProtection();
   if (!$protectionIsCurrent && $Verbose) logEntry('The DATA protection file is not current. Run the -fp argument as root & read what it reports for DATA.');
   // / Clear the contents of each maintenance folder, then delete the folder itself.
   foreach ($RequiredCleanupFolders as $requiredCleanupFolder) {
@@ -2956,7 +2985,7 @@ function verifyRequiredDirs() {
     // / The folder itself is removed only once its contents are gone.
     @rmdir($requiredCleanupFolder); }
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $directoriesProtected, $locationIsProtected, $protectionWasWritten, $indexIsProtected, $indexWasWritten, $protectionIsCurrent, $allowedCleanupRoots, $requiredDir, $requiredIndex, $requiredCleanupFolder, $cleanupEntry, $cleanupPath, $cleanupContents);
+  purgeSensitiveMemory($EnableMemoryProtection, $directoriesProtected, $locationIsProtected, $protectionWasWritten, $indexIsProtected, $indexWasWritten, $protectionIsCurrent, $servedRoleIsDeclared, $allowedCleanupRoots, $requiredDir, $requiredIndex, $requiredCleanupFolder, $cleanupEntry, $cleanupPath, $cleanupContents);
   return array($RequiredDirsExist, $RequiredDirs, $DirectoriesVerified); }
 // / -----------------------------------------------------------------------------------
 
@@ -5591,6 +5620,11 @@ function engineConfigModel() {
       'EmailConfirmationBody' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Confirmation Body'),
       'EmailRecoverySubject' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Recovery Subject'),
       'EmailRecoveryBody' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Recovery Body'),
+      // / The emails a signed in user's own change of address or password sends, from HRCloud3 v0.9.9.
+      'EmailAddressSubject' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Address Subject'),
+      'EmailAddressBody' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Address Body'),
+      'EmailNoticeSubject' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Notice Subject'),
+      'EmailNoticeBody' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Notice Body'),
       'ThrowSandboxWarning' => array('Type' => 'bool', 'Depends' => '', 'Description' => 'Throw Sandbox Warning'),
       'StreamWatchTimeout' => array('Type' => 'int', 'Depends' => '', 'Description' => 'Stream Duration Timeout'),
       'StreamConnectionTimeout' => array('Type' => 'int', 'Depends' => '', 'Description' => 'Stream Connection Timeout'),
@@ -7298,7 +7332,7 @@ function listEnginePins() {
   $engineSources = $pinSources = $pinMatches = $pinMatch = array();
   $entryPath = $entryContents = $enginePath = $contractFile = $pinKey = $pinVersion = '';
   $engineSources = array('KernelVersion' => 'Resources/Kernel/kernel.php', 'EngineVersion' => 'Resources/Engine/engine.php', 'SetupCoreVersion' => 'Resources/Engine/Cores/setupCore.php',
-    'DependencyCoreVersion' => 'Resources/Engine/Cores/dependencyCore.php', 'PipelineCoreVersion' => 'Resources/Engine/Cores/pipelineCore.php', 'WorkflowCoreVersion' => 'Resources/Engine/Cores/workflowCore.php', 'AuthenticationCoreVersion' => 'Resources/Engine/Cores/authenticationCore.php', 'EmailCoreVersion' => 'Resources/Engine/Cores/emailCore.php', 'EventCoreVersion' => 'Resources/Engine/Cores/eventCore.php', 'ConfigScript' => 'Documentation/Build/'.engineApplicationSlug().'-setup.sh');
+    'DependencyCoreVersion' => 'Resources/Engine/Cores/dependencyCore.php', 'PipelineCoreVersion' => 'Resources/Engine/Cores/pipelineCore.php', 'WorkflowCoreVersion' => 'Resources/Engine/Cores/workflowCore.php', 'AuthenticationCoreVersion' => 'Resources/Engine/Cores/authenticationCore.php', 'EmailCoreVersion' => 'Resources/Engine/Cores/emailCore.php', 'EventCoreVersion' => 'Resources/Engine/Cores/eventCore.php', 'PageCoreVersion' => 'Resources/Engine/Cores/pageCore.php', 'ConfigScript' => 'Documentation/Build/'.engineApplicationSlug().'-setup.sh');
   $pinSources = array_merge((isset($EnginePinSources) && is_array($EnginePinSources)) ? $EnginePinSources : array(), $engineSources);
   $entryPath = $InstLoc.$DirSep.engineApplicationEntryPoint();
   $enginePath = $InstLoc.$DirSep.'Resources'.$DirSep.'Engine'.$DirSep.'engine.php';

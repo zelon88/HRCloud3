@@ -9,10 +9,10 @@
 // /
 // / Application information ...
 // / HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
-// / v0.9.8 is the rebuild's first step. It answers the Engine's commands & offers no web interface yet.
+// / It answers the Engine's commands, & draws its pages from the components of an interface through the Engine's Page Core.
 // /
 // / File information ...
-// / v0.9.8.
+// / v0.9.9.
 // / HRCloud3's entry point, begun from the HRProprietary Engine's Starter.
 // / It boots through the kernel as every application on the Engine does, & supplies only what the
 // / contract asks of an application: its pins, its name before config.php is read, its half of
@@ -41,23 +41,25 @@
 // / both against these pins, derives every location & reads the install secret. Every failure other
 // / than the secret halts there, because nothing downstream can run without a config file or against
 // / a mismatched component.
-// / An application that serves pages also pins its interfaces & its language packs, as
-// / $RequiredGuiVersion & $RequiredLanguageVersion. HRCloud3 has neither yet, so it pins neither.
+// / An application that serves pages also pins the Page Core, its interfaces & its language packs, as $RequiredPageCoreVersion,
+// / $RequiredInterfaceVersion & $RequiredLanguageVersion. An interface is an exact match, & a language pack is compared & warned about,
+// / because the Page Core loads it over a baseline pack string by string.
+// / A pin ending ur names an Engine component HRCloud3 changed, which Documentation/ENGINE_RECONCILIATION_HRCLOUD3.txt says how.
 function verifyInstallation() {
   // / Set variables.
-  global $HRCloud3Version, $EngineApplicationVersion, $RequiredConfigVersion, $RequiredSetupCoreVersion, $RequiredDependencyCoreVersion, $RequiredDependsVersion, $RequiredPipelineCoreVersion, $RequiredWorkflowCoreVersion, $RequiredAuthenticationCoreVersion, $RequiredEmailCoreVersion, $RequiredEventCoreVersion, $RequiredEngineVersion, $RequiredConfigScript, $RequiredSecretVersion, $CoreLoaded, $Version, $EnableMemoryProtection;
+  global $HRCloud3Version, $EngineApplicationVersion, $RequiredConfigVersion, $RequiredSetupCoreVersion, $RequiredDependencyCoreVersion, $RequiredDependsVersion, $RequiredPipelineCoreVersion, $RequiredWorkflowCoreVersion, $RequiredAuthenticationCoreVersion, $RequiredEmailCoreVersion, $RequiredEventCoreVersion, $RequiredEngineVersion, $RequiredConfigScript, $RequiredSecretVersion, $RequiredPageCoreVersion, $RequiredInterfaceVersion, $RequiredLanguageVersion, $CoreLoaded, $Version, $EnableMemoryProtection;
   $InstallationIsVerified = FALSE;
   $ConfigFile = '';
   // / Every file of this application's own refuses to run unless this is set, so it is set before the kernel reads one.
   $CoreLoaded = TRUE;
   // / This application's own version, which Resources/versionInfo.php must report as well.
   // / It is handed to the Engine here, where it is defined, so there is only ever one copy.
-  $HRCloud3Version = 'v0.9.8';
+  $HRCloud3Version = 'v0.9.9';
   $HRCloud3Version = ltrim($HRCloud3Version, 'vV');
   $EngineApplicationVersion = $HRCloud3Version;
   // / The oldest config.php this file accepts. A newer one carrying every setting it needs is fine.
   // / Raise it only when this application adds or removes a setting of its own, with $ConfigVersion in its half of the template.
-  $RequiredConfigVersion = 'v0.9.8';
+  $RequiredConfigVersion = 'v0.9.9';
   $RequiredConfigVersion = ltrim($RequiredConfigVersion, 'vV');
   // / Each Engine core, & this application's half of the dependency manifest, is an exact match.
   // / A component built for another release may not be called safely, so it is judged before it is loaded.
@@ -72,16 +74,23 @@ function verifyInstallation() {
   $RequiredPipelineCoreVersion = ltrim($RequiredPipelineCoreVersion, 'vV');
   $RequiredWorkflowCoreVersion = 'v4.3.1';
   $RequiredWorkflowCoreVersion = ltrim($RequiredWorkflowCoreVersion, 'vV');
-  $RequiredAuthenticationCoreVersion = 'v4.2.3';
+  $RequiredAuthenticationCoreVersion = 'v4.2.3ur';
   $RequiredAuthenticationCoreVersion = ltrim($RequiredAuthenticationCoreVersion, 'vV');
-  $RequiredEmailCoreVersion = 'v4.2.0';
+  $RequiredEmailCoreVersion = 'v4.2.0ur';
   $RequiredEmailCoreVersion = ltrim($RequiredEmailCoreVersion, 'vV');
   $RequiredEventCoreVersion = 'v4.3.1';
   $RequiredEventCoreVersion = ltrim($RequiredEventCoreVersion, 'vV');
+  $RequiredPageCoreVersion = 'v4.3.4ur';
+  $RequiredPageCoreVersion = ltrim($RequiredPageCoreVersion, 'vV');
+  // / Every interface, & every language pack, this release ships.
+  $RequiredInterfaceVersion = 'v0.9.9';
+  $RequiredInterfaceVersion = ltrim($RequiredInterfaceVersion, 'vV');
+  $RequiredLanguageVersion = 'v0.9.9';
+  $RequiredLanguageVersion = ltrim($RequiredLanguageVersion, 'vV');
   // / The Engine is an exact match as well. It is bundled with this application rather than installed
   // / beside it, so the pin & the file it points at are replaced together. The build runs inside the
   // / Engine & cannot write this pin, so it is moved by hand, with the version engine.php declares.
-  $RequiredEngineVersion = 'v4.3.4';
+  $RequiredEngineVersion = 'v4.3.4ur';
   $RequiredEngineVersion = ltrim($RequiredEngineVersion, 'vV');
   // / The bootstrap script & the install secret, each an exact match. The secret's is the format
   // / of a file the kernel writes, so no shipped file declares it & it is moved by hand.
@@ -99,26 +108,37 @@ function verifyInstallation() {
 
 // / -----------------------------------------------------------------------------------
 // / A function to verify that every input a request carries is properly sanitized.
-// / Accepts nothing. Returns a validity boolean & the two session tokens, in that order.
-// / A session's tokens are the only input HRCloud3 reads from a request yet, & the kernel derives a session's identity from them.
-// / A command line carries no token, so both are empty there & the kernel makes a pair.
+// / Accepts nothing. Returns a validity boolean, the two session tokens, & the page, interface, language & color asked for, in that order.
+// / A session's tokens are read from a form, & the kernel derives a session's identity from them. A command line carries no token,
+// / so both are empty there & the kernel makes a pair.
+// / The page, interface, language & color may ride in a form or in the address, so an address can be shared that opens in a
+// / language. Each is a name the Page Core holds to what is offered, so one that names nothing offered is simply not used.
+// / The account fields are the Authentication Core's own, which reads & checks each itself, so none is read here.
 // / An application reads each input it accepts here, through sanitize(), & nowhere else.
 function verifyInputs() {
   // / Set variables.
   global $EnableMemoryProtection;
   $InputsAreVerified = TRUE;
-  $Token1 = $Token2 = '';
+  $Token1 = $Token2 = $PageRequested = $InterfaceRequested = $LanguageRequested = $ColorRequested = '';
   $variableIsSanitized = array();
   $sanitizedCheck = FALSE;
   $checkIndex = 0;
   if (isset($_POST['Token1'])) list ($Token1, $variableIsSanitized[$checkIndex++]) = sanitize($_POST['Token1'], TRUE);
   if (isset($_POST['Token2'])) list ($Token2, $variableIsSanitized[$checkIndex++]) = sanitize($_POST['Token2'], TRUE);
+  if (isset($_POST['page']) && is_string($_POST['page'])) list ($PageRequested, $variableIsSanitized[$checkIndex++]) = sanitize($_POST['page'], TRUE);
+  else if (isset($_GET['page']) && is_string($_GET['page'])) list ($PageRequested, $variableIsSanitized[$checkIndex++]) = sanitize($_GET['page'], TRUE);
+  if (isset($_POST['interface']) && is_string($_POST['interface'])) list ($InterfaceRequested, $variableIsSanitized[$checkIndex++]) = sanitize($_POST['interface'], TRUE);
+  else if (isset($_GET['interface']) && is_string($_GET['interface'])) list ($InterfaceRequested, $variableIsSanitized[$checkIndex++]) = sanitize($_GET['interface'], TRUE);
+  if (isset($_POST['language']) && is_string($_POST['language'])) list ($LanguageRequested, $variableIsSanitized[$checkIndex++]) = sanitize($_POST['language'], TRUE);
+  else if (isset($_GET['language']) && is_string($_GET['language'])) list ($LanguageRequested, $variableIsSanitized[$checkIndex++]) = sanitize($_GET['language'], TRUE);
+  if (isset($_POST['color']) && is_string($_POST['color'])) list ($ColorRequested, $variableIsSanitized[$checkIndex++]) = sanitize($_POST['color'], TRUE);
+  else if (isset($_GET['color']) && is_string($_GET['color'])) list ($ColorRequested, $variableIsSanitized[$checkIndex++]) = sanitize($_GET['color'], TRUE);
   // / Check the list of error check results & see if any errors occurred.
   foreach ($variableIsSanitized as $sanitizedCheck) if (!$sanitizedCheck) $InputsAreVerified = FALSE;
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  // / $InputsAreVerified, $Token1 & $Token2 are not purged, because they are return values.
+  // / $InputsAreVerified, the tokens & the four names are not purged, because they are return values.
   purgeSensitiveMemory($EnableMemoryProtection, $variableIsSanitized, $sanitizedCheck, $checkIndex);
-  return array($InputsAreVerified, $Token1, $Token2); }
+  return array($InputsAreVerified, $Token1, $Token2, $PageRequested, $InterfaceRequested, $LanguageRequested, $ColorRequested); }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -143,7 +163,7 @@ function verifyGlobals() {
 // / This array changes when this application's half of the template, Resources/Contract/config-template.php, changes.
 // / A section the Engine's half shares is one section, & its name must match config.php exactly.
 // / Each variable carries its Type, the variable it Depends on, & the Description config.php gives it.
-// / HRCloud3 keeps no setting of its own yet, so its half holds only $ConfigVersion.
+// / HRCloud3's own settings say which interfaces, languages & colors are offered, which the Page Core reads through the contract's map.
 function applicationConfigModel() {
   // / Set variables.
   global $EnableMemoryProtection;
@@ -152,7 +172,18 @@ function applicationConfigModel() {
     // / $ConfigVersion is declared above the first section header, so it belongs to no section.
     // / It is modelled here as read only, so no reset & no edit touches it.
     'Unsectioned' => array('Writable' => FALSE, 'Variables' => array(
-      'ConfigVersion' => array('Type' => 'version', 'Depends' => '', 'Description' => 'Config Version. Read only. Raised by an update & by a repair.'))));
+      'ConfigVersion' => array('Type' => 'version', 'Depends' => '', 'Description' => 'Config Version. Read only. Raised by an update & by a repair.'))),
+    'Interface Information' => array('Writable' => TRUE, 'Variables' => array(
+      'SupportedInterfaces' => array('Type' => 'array', 'Default' => "array('Default')", 'Depends' => '', 'Description' => 'Supported Interfaces'),
+      'DefaultInterface' => array('Type' => 'string', 'Depends' => '', 'Description' => 'Default Interface'),
+      'AllowUserSelectableInterface' => array('Type' => 'bool', 'Depends' => '', 'Description' => 'Allow User Selectable Interface'),
+      'SupportedLanguages' => array('Type' => 'array', 'Default' => "array('en' => 'English')", 'Depends' => '', 'Description' => 'Supported Languages'),
+      'DefaultLanguage' => array('Type' => 'string', 'Depends' => '', 'Description' => 'Default Language'),
+      'AllowUserSelectableLanguage' => array('Type' => 'bool', 'Depends' => '', 'Description' => 'Allow User Selectable Language'),
+      'SupportedColors' => array('Type' => 'array', 'Default' => 'array()', 'Depends' => '', 'Description' => 'Supported Colors'),
+      'DefaultColor' => array('Type' => 'string', 'Depends' => '', 'Description' => 'Default Color'),
+      'AllowUserSelectableColor' => array('Type' => 'bool', 'Depends' => '', 'Description' => 'Allow User Selectable Color'),
+      'MarkPageComponents' => array('Type' => 'bool', 'Depends' => '', 'Description' => 'Mark Page Components'))));
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
   // / $ConfigModel is not purged, because it is the return value.
   purgeSensitiveMemory($EnableMemoryProtection);
@@ -166,16 +197,69 @@ function applicationConfigModel() {
 function applicationHelpInfo() {
   // / Set variables.
   $HelpInfo = array(
-    'Description' => 'A home-hosted cloud storage platform built on the HRProprietary Engine. This release is the rebuild\'s first step, & offers no web interface yet.',
+    'Description' => 'A home-hosted cloud storage platform built on the HRProprietary Engine.',
     'Arguments' => array(),
     'Sections' => array(
       'Documentation' => array(
         '  README.md                                   What HRCloud3 is, & where its rebuild stands.',
         '  Documentation/CHANGELOG.txt                 Every change made to HRCloud3, newest first.',
         '  Documentation/ABOUT_AUTHENTICATION.txt      Accounts, & the  --account  commands that manage them.',
+        '  Documentation/ABOUT_PAGES.txt               How a page is built from an interface, & what -v says of each.',
+        '  Documentation/CREATING_INTERFACES.txt       What an interface of HRCloud3\'s is, & how to make one.',
         '  Documentation/ERROR_DESCRIPTIONS.txt        Every warning & numbered error, its cause & its fix.')),
     'Address' => 'https://github.com/zelon88/HRCloud3');
   return $HelpInfo; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to give a page HRCloud3's own data, which the contract names in $EnginePageDataProvider.
+// / Accepts the page being drawn. Returns the values a page may show, keyed by name.
+// / A page reads these & $EnginePageState, & no other global, so what a page can show is decided here & by the Engine.
+// / The tokens carry the session from one page to the next, & the entry point is where every form posts.
+// / The pages a user may go to are named, so the taskbar draws no button for a page an administrator could not open.
+// / Resume is the page the request asked for, where HRCloud3 offers it, & home where it does not. A sign in page sends a visitor there
+// / once they are signed in, so an address naming the settings page still lands there after signing in.
+function applicationPageData($pageName) {
+  // / Set variables.
+  global $ApplicationName, $ApplicationTitle, $HRCloud3Version, $Token1, $Token2, $PageRequested, $EnableMemoryProtection;
+  $PageData = $pagesOffered = array();
+  $pagesOffered = array('home', 'settings');
+  $PageData = array('Application' => (string)$ApplicationName, 'Title' => (string)$ApplicationTitle, 'Version' => (string)$HRCloud3Version,
+    'EntryPoint' => 'cloudCore.php', 'Tokens' => array('Token1' => (string)$Token1, 'Token2' => (string)$Token2), 'Pages' => $pagesOffered,
+    'Resume' => (in_array($PageRequested, $pagesOffered, TRUE) ? (string)$PageRequested : 'home'));
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  // / $PageData is not purged, because it is the return value.
+  purgeSensitiveMemory($EnableMemoryProtection, $pagesOffered, $pageName);
+  return $PageData; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to decide which page a web request is drawn, & draw it.
+// / Accepts the page, interface, language & color the request asked for. Returns whether a page was drawn.
+// / The page the Engine names, such as signing in, wins over every other. Otherwise the page asked for is drawn where HRCloud3 offers
+// / it, & home where it does not, so an address naming a page that does not exist still lands somewhere useful.
+// / A page that cannot be drawn, because the Page Core, every interface or every language pack is unavailable, is answered in one
+// / sentence of plain text with status 503, because a visitor who is shown a blank page cannot say what went wrong. The log says why.
+function servePage($pageRequested, $interfaceRequested, $languageRequested, $colorRequested) {
+  // / Set variables.
+  global $EngineAnswer, $EnableMemoryProtection;
+  $PageWasDrawn = FALSE;
+  $pageCoreIsLoaded = $pagesAreReady = $pageIsJudged = FALSE;
+  $pageToDraw = $interfaceToUse = $languageToUse = $colorToUse = '';
+  list ($pageCoreIsLoaded) = loadPageCore();
+  if ($pageCoreIsLoaded) list ($pagesAreReady, $interfaceToUse, $languageToUse, $colorToUse) = preparePages($interfaceRequested, $languageRequested, $colorRequested);
+  if ($pagesAreReady) {
+    $pageToDraw = (isset($EngineAnswer) && $EngineAnswer === 'page') ? 'engine' : (in_array($pageRequested, array('home', 'settings'), TRUE) ? (string)$pageRequested : 'home');
+    list ($PageWasDrawn, $pageIsJudged) = buildEnginePage($pageToDraw); }
+  if (!$PageWasDrawn) {
+    warningEntry('A page could not be drawn, so the visitor was told so in plain text. The warnings & errors before this one say why.');
+    if (!headers_sent()) {
+      http_response_code(503);
+      header('Content-Type: text/plain; charset=utf-8'); }
+    print('HRCloud3 could not draw this page. Its administrator\'s log says why.'.PHP_EOL); }
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $pageCoreIsLoaded, $pagesAreReady, $pageIsJudged, $pageToDraw, $interfaceToUse, $languageToUse, $colorToUse, $pageRequested, $interfaceRequested, $languageRequested, $colorRequested);
+  return $PageWasDrawn; }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -227,7 +311,7 @@ list ($InstallationIsVerified, $ConfigFile, $Version, $CoreLoaded) = verifyInsta
 if (!$InstallationIsVerified) quickDie('Could not verify installation!', 5);
 
 // / The following code verifies that string inputs to the core are properly sanitized.
-list ($InputsAreVerified, $Token1, $Token2) = verifyInputs();
+list ($InputsAreVerified, $Token1, $Token2, $PageRequested, $InterfaceRequested, $LanguageRequested, $ColorRequested) = verifyInputs();
 if (!$InputsAreVerified) quickDie('Could not verify inputs!', 6);
 
 // / The following code verifies enough user information to generate a unique session identifier.
@@ -272,16 +356,14 @@ else if ($Verbose) logEntry('Verified globals.');
 // / handler & every other command to the Engine. It names this file in what it prints.
 list ($CommandLineHandled, $UserType, $CommandLineStatus) = runCommandLine(basename(__FILE__));
 
-// / HRCloud3 has no web interface yet, so a web request is refused in one sentence & served nothing.
-// / The refusal is a warning rather than an error, because a request this application handled correctly is not a fault.
-// / Nothing is admitted, so no session folder is made & nothing is swept for a request that is served nothing.
-// / 503 says the service is not available yet, which is true until the interface arrives.
-if (!$CommandLineHandled && $UserType === 'web') {
-  warningEntry('A web request was refused, because HRCloud3 has no web interface yet.');
-  if (!headers_sent()) {
-    http_response_code(503);
-    header('Content-Type: text/plain; charset=utf-8'); }
-  print('HRCloud3 is being rebuilt & offers no web interface yet. Run  php '.basename(__FILE__).' -h  on the server.'.PHP_EOL); }
+// / A web request is admitted by the kernel, which refuses root & every account but the web server's, & has the Engine prepare it.
+// / The Engine has answered it already where it was one of the Authentication Core's actions, & HRCloud3 draws nothing for one.
+// / Every other is drawn a page, & the Engine's finishWebRequest() ends it, after which nothing may be written.
+if (!$CommandLineHandled && $UserType === 'web' && admitWebRequest(basename(__FILE__))) {
+  if ($EngineAnswer !== 'answered') {
+    $PageWasDrawn = servePage($PageRequested, $InterfaceRequested, $LanguageRequested, $ColorRequested);
+    if ($PageWasDrawn && $Verbose) logEntry('Drew a page.'); }
+  $WebRequestIsFinished = finishWebRequest(); }
 
 // / Stop execution of the application, with the status a command line earned.
 // / A web request never sees a status, so it exits 0.

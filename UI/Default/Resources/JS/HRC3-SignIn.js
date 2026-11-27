@@ -1,0 +1,349 @@
+// / -----------------------------------------------------------------------------------
+// / COPYRIGHT INFORMATION ...
+// / HRCloud3, Copyright on 11/26/2026 by Justin Grimes, www.github.com/zelon88
+// /
+// / LICENSE INFORMATION ...
+// / This project is protected by the GNU GPLv3 Open-Source license.
+// / https://www.gnu.org/licenses/gpl-3.0.html
+// /
+// / FILE INFORMATION ...
+// / v0.9.9.
+// / The page's half of signing in. The server's half is the Engine's Authentication Core.
+// / It was taken from HRConvert2 v4.3.4's HRC2-SignIn.js, with its names changed & its endpoint & window.name prefix handed in by the
+// / page rather than written here. Saving how long files are kept moved to HRC3-Functions.js, with the rest of the settings page.
+// / See ENGINE_RECONCILIATION_HRCLOUD3.txt, which proposes this half becomes the Engine's.
+// / A signed in page holds a key in its memory & in window.name, & nowhere a browser keeps for a site, so no cookie is ever set.
+// / window.name belongs to the tab. It is never sent to a server, it survives a reload & a link followed in the same tab, & it goes
+// / when the tab closes. A browser clears it when the tab goes to another site or comes from one, because every page asks for a browsing
+// / context of its own with Cross-Origin-Opener-Policy, which a browser enforces over HTTPS & on localhost. Where it is not enforced, a
+// / page of another site could name the tab before sending it here, so a key the tab kept is taken up only as tabIsTrusted() says.
+// / The key rides on every request the page sends to its own endpoint, & is traded for a new one on a timer, which spends it.
+// / The timer runs in a worker where the browser has them, because a browser slows a hidden tab's own timers to once a minute.
+// / A page that loads without being signed in, with a key in window.name, trades it & loads again signed in. That is a reload.
+// / Every string the user reads is handed in by the page, because this file is static & cannot read a language pack.
+// /
+// / <3 Open-Source
+// / -----------------------------------------------------------------------------------
+
+var HRC3SignIn = {
+  endpoint: 'cloudCore.php',
+  prefix: 'HRC3-SIGNIN:',
+  key: '',
+  life: 30,
+  interval: 6,
+  signedIn: false,
+  waiting: null,
+  ticker: null,
+  worker: null,
+  hooked: false,
+  tokens: { Token1: '', Token2: '' },
+  onOutcome: null,
+
+  // / Read the key a page before this one left in the tab, or an empty string. A revival marker rides beside it.
+  stored: function () {
+    var held = String(window.name || '');
+    var found = held.indexOf(this.prefix) === 0 ? held.substring(this.prefix.length) : '';
+    return /^[a-f0-9]{96}(:R)?$/.test(found) ? found : '';
+  },
+
+  // / Say whether a key the tab kept may be taken up. On a secure page a browser enforcing Cross-Origin-Opener-Policy has cleared any name
+  // / a page of another site gave the tab, so it may. Over plain HTTP it is taken up only on a reload, on back or forward, or on a page
+  // / reached from one of this site's own pages, & never in a tab that came from a page of another site or that such a page still holds.
+  tabIsTrusted: function () {
+    var kind = '';
+    var entries = null;
+    var cameFrom = document.createElement('a');
+    var held = true;
+    if (window.isSecureContext) return true;
+    try { held = !!window.opener; } catch (thrown) { held = true; }
+    try { entries = (window.performance && typeof window.performance.getEntriesByType === 'function') ? window.performance.getEntriesByType('navigation') : null; } catch (thrown) { entries = null; }
+    if (entries && entries.length) kind = String(entries[0].type || '');
+    else if (window.performance && window.performance.navigation) kind = (window.performance.navigation.type === 1) ? 'reload' : ((window.performance.navigation.type === 2) ? 'back_forward' : 'navigate');
+    if (document.referrer) {
+      cameFrom.href = document.referrer;
+      return cameFrom.host === window.location.host;
+    }
+    return !held && (kind === 'reload' || kind === 'back_forward');
+  },
+
+  // / Keep the key in memory & in the tab, or forget it in both.
+  keep: function (key, reviving) {
+    this.key = key || '';
+    try { window.name = this.key ? this.prefix + this.key + (reviving ? ':R' : '') : ''; }
+    catch (thrown) { /* A tab that refuses window.name loses its key on a reload, & nothing else. */ }
+  },
+
+  // / Say whether a request goes to this page's own endpoint, which is the only place the key is ever sent.
+  ownsAddress: function (address) {
+    var resolver = document.createElement('a');
+    var name = '/' + String(this.endpoint).split('?')[0].split('/').pop();
+    resolver.href = String(address || '');
+    return resolver.host === window.location.host && resolver.pathname.slice(-name.length) === name;
+  },
+
+  // / Find the line of JSON an answer carries under SignIn.
+  readReply: function (replyText) {
+    var lines = String(replyText || '').split(/\r?\n/);
+    var index, parsed;
+    for (index = lines.length - 1; index >= 0; index--) {
+      try { parsed = JSON.parse(lines[index].trim()); }
+      catch (thrown) { parsed = null; }
+      if (parsed && typeof parsed === 'object' && parsed.SignIn && typeof parsed.SignIn === 'object') return parsed.SignIn;
+    }
+    return null;
+  },
+
+  // / Send one of the Engine's sign in actions & hand its answer back, or null when there is no answer this can read.
+  // / It never carries the key the hook below would add, because an action names the key it means itself.
+  ask: function (fields, onReply) {
+    var request = new XMLHttpRequest();
+    var body = 'Token1=' + encodeURIComponent(this.tokens.Token1 || '') + '&Token2=' + encodeURIComponent(this.tokens.Token2 || '');
+    var self = this;
+    var answered = false;
+    var answer = function (reply) { if (!answered) { answered = true; onReply(reply); } };
+    fields.forEach(function (field) { body += '&' + encodeURIComponent(field[0]) + '=' + encodeURIComponent(field[1]); });
+    request.hrc3Internal = true;
+    request.open('POST', this.endpoint, true);
+    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    request.timeout = 30000;
+    request.onload = function () { answer(request.status === 200 ? self.readReply(request.responseText) : null); };
+    request.onerror = function () { answer(null); };
+    request.ontimeout = function () { answer(null); };
+    request.send(body);
+  },
+
+  // / The key this page may present now, without the revival marker, or an empty string.
+  presentable: function () {
+    return String(this.key || '').replace(/:R$/, '');
+  },
+
+  // / Trade the key for a new one. Every caller waiting on a trade already under way is answered by that one.
+  exchange: function (onDone) {
+    var self = this;
+    if (this.waiting) { if (onDone) this.waiting.push(onDone); return; }
+    if (!this.key) { if (onDone) onDone(false); return; }
+    this.waiting = onDone ? [onDone] : [];
+    this.ask([['SignInAction', 'exchange'], ['SignInKey', this.presentable()]], function (reply) {
+      var waiters = self.waiting || [];
+      var traded = !!(reply && reply.Outcome === 'exchanged' && /^[a-f0-9]{96}$/.test(String(reply.Key || '')));
+      self.waiting = null;
+      // / No answer at all is a network that failed for a moment, & the key is kept for the next tick while it lives.
+      if (traded) self.keep(reply.Key, false);
+      else if (reply) self.end(reply.Outcome);
+      waiters.forEach(function (waiter) { waiter(traded); });
+    });
+  },
+
+  // / The sign in is over. The key is forgotten, the timer stops & the page is told why.
+  end: function (outcome) {
+    this.keep('', false);
+    this.signedIn = false;
+    if (this.ticker) { clearInterval(this.ticker); this.ticker = null; }
+    if (this.worker) { this.worker.postMessage(0); }
+    if (this.onOutcome) this.onOutcome(outcome || 'signed-out');
+  },
+
+  // / Start the timer, in a worker where there is one. A tab coming back into view trades at once.
+  // / A worker that cannot start, because its script could not be fetched or was refused, is replaced by the page's own timer, which a
+  // / hidden tab slows & never stops, so a page whose worker failed is still signed in while it is looked at.
+  tick: function (workerPath) {
+    var self = this;
+    var trade = function () { self.exchange(null); };
+    var fallBack = function () {
+      if (self.worker) { self.worker.terminate(); self.worker = null; }
+      if (!self.ticker && self.signedIn) self.ticker = setInterval(trade, self.interval * 1000);
+    };
+    try {
+      if (workerPath && typeof Worker !== 'undefined') {
+        this.worker = new Worker(workerPath);
+        this.worker.onmessage = trade;
+        this.worker.onerror = fallBack;
+        this.worker.postMessage(this.interval);
+      }
+    }
+    catch (thrown) { this.worker = null; }
+    if (!this.worker) fallBack();
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && self.key) trade(); });
+  },
+
+  // / Add the key to every request this page sends its endpoint, a form posted, a request a script sends & an upload alike.
+  // / A form waits for a trade already under way, so a page that is left carries the newest key.
+  hook: function () {
+    var self = this;
+    var opener = XMLHttpRequest.prototype.open;
+    var sender = XMLHttpRequest.prototype.send;
+    var submitter = HTMLFormElement.prototype.submit;
+    var stamp = function (form) {
+      var field = form.querySelector('input[name="SignInKey"]');
+      if (!self.key) { if (field) field.parentNode.removeChild(field); return; }
+      if (!field) { field = document.createElement('input'); field.type = 'hidden'; field.name = 'SignInKey'; form.appendChild(field); }
+      field.value = self.presentable();
+    };
+    if (this.hooked) return;
+    this.hooked = true;
+    XMLHttpRequest.prototype.open = function (method, address) { this.hrc3Address = address; return opener.apply(this, arguments); };
+    XMLHttpRequest.prototype.send = function (body) {
+      var key = self.presentable();
+      if (!this.hrc3Internal && key && self.ownsAddress(this.hrc3Address)) {
+        if (typeof FormData !== 'undefined' && body instanceof FormData) { if (!body.has || !body.has('SignInKey')) body.append('SignInKey', key); }
+        else if (typeof body === 'string') body = body + (body === '' ? '' : '&') + 'SignInKey=' + encodeURIComponent(key);
+      }
+      return sender.call(this, body);
+    };
+    HTMLFormElement.prototype.submit = function () { if (self.ownsAddress(this.action)) stamp(this); return submitter.call(this); };
+    document.addEventListener('submit', function (event) {
+      var form = event.target;
+      if (!form || !self.key || !self.ownsAddress(form.action)) return;
+      if (self.waiting) {
+        event.preventDefault();
+        self.waiting.push(function () { stamp(form); submitter.call(form); });
+        return;
+      }
+      stamp(form);
+    }, true);
+  },
+
+  // / Go to a page by posting to it, carrying the session, the key & any fields given.
+  go: function (address, fields) {
+    var form = document.createElement('form');
+    var all = [['Token1', this.tokens.Token1 || ''], ['Token2', this.tokens.Token2 || '']].concat(fields || []);
+    form.method = 'post';
+    form.action = address || this.endpoint;
+    form.style.display = 'none';
+    all.forEach(function (field) {
+      var input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = field[0];
+      input.value = field[1];
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+  },
+
+  // / Sign out, & go home without a key.
+  signOut: function (home) {
+    var self = this;
+    var key = this.presentable();
+    this.ask([['SignInAction', 'signout'], ['SignInKey', key]], function () { self.end('signed-out-quietly'); self.go(home, []); });
+  },
+
+  // / Begin, once the page has said whether it is signed in. options carries endpoint, prefix, signedIn, life, interval, tokens, workerPath,
+  // / home, here & notices. The bar's buttons are bound here, & a sign in that ends says why in the bar & goes home, where the server decides
+  // / what is shown. A page that is not signed in with a key in its tab trades it once & loads again, & gives up if it comes back unsigned.
+  // / here is the fields that draw this page again, so a page that loads again is the page the user was on.
+  start: function (options) {
+    var self = this;
+    var trusted, stored, home, notices, signOutButton, signInButton;
+    this.endpoint = options.endpoint || this.endpoint;
+    this.prefix = options.prefix || this.prefix;
+    trusted = this.tabIsTrusted();
+    stored = trusted ? this.stored() : '';
+    home = options.home || this.endpoint;
+    notices = options.notices || {};
+    signOutButton = document.getElementById('hrc3SignOut');
+    signInButton = document.getElementById('hrc3SignInLink');
+    if (signOutButton) signOutButton.addEventListener('click', function () { self.signOut(home); });
+    if (signInButton) signInButton.addEventListener('click', function () { self.go(home, [['SignInAction', 'page'], ['SignInPage', 'signin']]); });
+    if (!options.onOutcome) options.onOutcome = function (outcome) {
+      var bar = document.getElementById('hrc3SignInBar') || document.getElementById('hrc3SignInMessage');
+      if (outcome === 'signed-out-quietly') return;
+      if (bar) { bar.textContent = notices[outcome] || notices['signed-out'] || ''; bar.hidden = false; }
+      setTimeout(function () { self.go(home, []); }, 2500);
+    };
+    // / A key in a tab that may not be trusted is forgotten, so it can neither be taken up now nor found by a page loaded later.
+    if (!trusted && String(window.name || '').indexOf(this.prefix) === 0) this.keep('', false);
+    this.signedIn = !!options.signedIn;
+    this.life = Number(options.life) || 30;
+    this.interval = Number(options.interval) || 6;
+    this.tokens = options.tokens || this.tokens;
+    this.onOutcome = options.onOutcome || null;
+    this.key = stored;
+    this.hook();
+    if (this.signedIn && stored) {
+      this.keep(stored.replace(/:R$/, ''), false);
+      this.tick(options.workerPath);
+      this.exchange(null);
+    }
+    else if (!this.signedIn && stored && !/:R$/.test(stored)) {
+      this.keep(stored, false);
+      this.exchange(function (traded) {
+        if (!traded) return;
+        self.keep(self.key, true);
+        self.go(window.location.href, options.here || []);
+      });
+    }
+    else if (!this.signedIn && stored) this.keep('', false);
+  }
+};
+
+// / The sign in page's behavior. engineGui.php supplies the values, & this supplies what the forms do.
+// / Every form is sent by a script, so a key comes back to the page that asked for it & never travels in a page.
+var HRC3SignInPage = {
+  messages: {},
+  home: 'cloudCore.php',
+
+  // / Show one of the sections, & carry the username already typed into it.
+  show: function (page) {
+    var typed = '';
+    document.querySelectorAll('input[name="SignInUsername"]').forEach(function (field) { if (field.value) typed = field.value; });
+    document.querySelectorAll('[data-hrc3-page]').forEach(function (section) { section.hidden = (section.getAttribute('data-hrc3-page') !== page); });
+    document.querySelectorAll('[data-hrc3-page="' + page + '"] input[name="SignInUsername"]').forEach(function (field) { if (!field.value) field.value = typed; });
+  },
+
+  // / Say what happened, in the page's own language. An answer this cannot read says the server did not answer.
+  say: function (outcome) {
+    var box = document.getElementById('hrc3SignInMessage');
+    if (!box) return;
+    box.textContent = (outcome === '') ? '' : (this.messages[outcome] || this.messages['no-answer'] || '');
+    box.hidden = (box.textContent === '');
+  },
+
+  // / Act on what the Engine answered. A key goes into the tab & the page goes home with it.
+  answer: function (reply) {
+    var outcome = reply ? String(reply.Outcome || '') : 'no-answer';
+    if (outcome === 'signed-in' && reply && /^[a-f0-9]{96}$/.test(String(reply.Key || ''))) {
+      HRC3SignIn.keep(reply.Key, false);
+      HRC3SignIn.go(this.home, []);
+      return;
+    }
+    this.say(outcome);
+    if (outcome === 'registered-confirm') this.show('confirm');
+    else if (outcome === 'recovery-sent') this.show('reset');
+    else if (outcome === 'confirmed' || outcome === 'registered-ready' || outcome === 'reset-done') this.show('signin');
+  },
+
+  // / options carries page, home, tokens & messages.
+  configure: function (options) {
+    var self = this;
+    this.messages = options.messages || {};
+    this.home = options.home || this.home;
+    HRC3SignIn.tokens = options.tokens || HRC3SignIn.tokens;
+    document.querySelectorAll('form[data-hrc3-signin]').forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        var fields = [['SignInAction', form.getAttribute('data-hrc3-signin')]];
+        var button = form.querySelector('button[type="submit"]');
+        var typed = form.parentNode.querySelector('input[type="text"][name="SignInUsername"]');
+        event.preventDefault();
+        event.stopPropagation();
+        // / A form that only sends again carries the username typed into the form beside it.
+        form.querySelectorAll('input[type="hidden"][name="SignInUsername"]').forEach(function (input) { if (typed) input.value = typed.value; });
+        form.querySelectorAll('input[name^="SignIn"]').forEach(function (input) { fields.push([input.name, input.value]); });
+        if (button) button.disabled = true;
+        HRC3SignIn.ask(fields, function (reply) {
+          if (button) button.disabled = false;
+          form.querySelectorAll('input[type="password"]').forEach(function (input) { input.value = ''; });
+          self.answer(reply);
+        });
+      });
+    });
+    document.querySelectorAll('[data-hrc3-show]').forEach(function (link) {
+      link.addEventListener('click', function (event) { event.preventDefault(); self.say(''); self.show(link.getAttribute('data-hrc3-show')); });
+    });
+    document.querySelectorAll('[data-hrc3-home]').forEach(function (link) {
+      link.addEventListener('click', function (event) { event.preventDefault(); HRC3SignIn.go(self.home, []); });
+    });
+    this.show(options.page || 'signin');
+    if (options.notice) this.say(options.notice);
+  }
+};

@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.2.0.
+// / v4.2.0ur.
 // / The Email Core, one of the Engine's cores.
 // / It sends the emails the Authentication Core asks for, through the host's own mail system & nothing else.
 // / It never connects to a mail server itself, so it makes no third party connection of its own accord.
@@ -33,7 +33,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, A c
 
 // / -----------------------------------------------------------------------------------
 // / The version of this component. Read by the application without executing this file.
-$EmailCoreVersion = 'v4.2.0';
+$EmailCoreVersion = 'v4.2.0ur';
 // / -----------------------------------------------------------------------------------
 
 
@@ -43,23 +43,37 @@ $EmailCoreVersion = 'v4.2.0';
 // / Each text is the administrator's when config.php sets one, the contract's when it does not, & this core's own otherwise.
 // / This core's own text cannot be overwritten by configuration, so an email always has something to say.
 // / The sender is the administrator's, & an empty sender leaves the From line to the host's mail system.
+// / address confirms the new address a signed in user gave their account, & notice tells the owner of an account it was changed,
+// / from HRCloud3 v0.9.9. Each is layered as the first two are.
 function emailSettings() {
   // / Set variables.
-  global $EngineEmailConfirmationSubject, $EngineEmailConfirmationBody, $EngineEmailRecoverySubject, $EngineEmailRecoveryBody, $EnableMemoryProtection;
+  global $EngineEmailConfirmationSubject, $EngineEmailConfirmationBody, $EngineEmailRecoverySubject, $EngineEmailRecoveryBody, $EngineEmailAddressSubject, $EngineEmailAddressBody, $EngineEmailNoticeSubject, $EngineEmailNoticeBody, $EnableMemoryProtection;
   $EmailSettings = array();
   $defaultConfirmationSubject = '{APPLICATION}: confirm your account';
   $defaultConfirmationBody = "Hello {USERNAME},\n\nYour confirmation code for {APPLICATION} is {CODE}\n\nIt can be used for {MINUTES} minutes.\n";
   $defaultRecoverySubject = '{APPLICATION}: recover your account';
   $defaultRecoveryBody = "Hello {USERNAME},\n\nYour recovery code for {APPLICATION} is {CODE}\n\nIt can be used for {MINUTES} minutes.\n";
+  $defaultAddressSubject = '{APPLICATION}: confirm your new address';
+  $defaultAddressBody = "Hello {USERNAME},\n\nYour code to confirm this address for {APPLICATION} is {CODE}\n\nIt can be used for {MINUTES} minutes.\n";
+  $defaultNoticeSubject = '{APPLICATION}: your account was changed';
+  $defaultNoticeBody = "Hello {USERNAME},\n\n{CHANGE}\n";
   $contractConfirmationSubject = (isset($EngineEmailConfirmationSubject) && is_string($EngineEmailConfirmationSubject) && trim($EngineEmailConfirmationSubject) !== '') ? $EngineEmailConfirmationSubject : $defaultConfirmationSubject;
   $contractConfirmationBody = (isset($EngineEmailConfirmationBody) && is_string($EngineEmailConfirmationBody) && trim($EngineEmailConfirmationBody) !== '') ? $EngineEmailConfirmationBody : $defaultConfirmationBody;
   $contractRecoverySubject = (isset($EngineEmailRecoverySubject) && is_string($EngineEmailRecoverySubject) && trim($EngineEmailRecoverySubject) !== '') ? $EngineEmailRecoverySubject : $defaultRecoverySubject;
   $contractRecoveryBody = (isset($EngineEmailRecoveryBody) && is_string($EngineEmailRecoveryBody) && trim($EngineEmailRecoveryBody) !== '') ? $EngineEmailRecoveryBody : $defaultRecoveryBody;
+  $contractAddressSubject = (isset($EngineEmailAddressSubject) && is_string($EngineEmailAddressSubject) && trim($EngineEmailAddressSubject) !== '') ? $EngineEmailAddressSubject : $defaultAddressSubject;
+  $contractAddressBody = (isset($EngineEmailAddressBody) && is_string($EngineEmailAddressBody) && trim($EngineEmailAddressBody) !== '') ? $EngineEmailAddressBody : $defaultAddressBody;
+  $contractNoticeSubject = (isset($EngineEmailNoticeSubject) && is_string($EngineEmailNoticeSubject) && trim($EngineEmailNoticeSubject) !== '') ? $EngineEmailNoticeSubject : $defaultNoticeSubject;
+  $contractNoticeBody = (isset($EngineEmailNoticeBody) && is_string($EngineEmailNoticeBody) && trim($EngineEmailNoticeBody) !== '') ? $EngineEmailNoticeBody : $defaultNoticeBody;
   $administratorSender = applicationSetting('EmailSender', '');
   $administratorConfirmationSubject = applicationSetting('EmailConfirmationSubject', '');
   $administratorConfirmationBody = applicationSetting('EmailConfirmationBody', '');
   $administratorRecoverySubject = applicationSetting('EmailRecoverySubject', '');
   $administratorRecoveryBody = applicationSetting('EmailRecoveryBody', '');
+  $administratorAddressSubject = applicationSetting('EmailAddressSubject', '');
+  $administratorAddressBody = applicationSetting('EmailAddressBody', '');
+  $administratorNoticeSubject = applicationSetting('EmailNoticeSubject', '');
+  $administratorNoticeBody = applicationSetting('EmailNoticeBody', '');
   $EmailSettings = array(
     'Sender' => is_string($administratorSender) ? trim($administratorSender) : '',
     'confirm' => array(
@@ -67,9 +81,15 @@ function emailSettings() {
       'Body' => (is_string($administratorConfirmationBody) && trim($administratorConfirmationBody) !== '') ? $administratorConfirmationBody : $contractConfirmationBody),
     'recover' => array(
       'Subject' => (is_string($administratorRecoverySubject) && trim($administratorRecoverySubject) !== '') ? $administratorRecoverySubject : $contractRecoverySubject,
-      'Body' => (is_string($administratorRecoveryBody) && trim($administratorRecoveryBody) !== '') ? $administratorRecoveryBody : $contractRecoveryBody));
+      'Body' => (is_string($administratorRecoveryBody) && trim($administratorRecoveryBody) !== '') ? $administratorRecoveryBody : $contractRecoveryBody),
+    'address' => array(
+      'Subject' => (is_string($administratorAddressSubject) && trim($administratorAddressSubject) !== '') ? $administratorAddressSubject : $contractAddressSubject,
+      'Body' => (is_string($administratorAddressBody) && trim($administratorAddressBody) !== '') ? $administratorAddressBody : $contractAddressBody),
+    'notice' => array(
+      'Subject' => (is_string($administratorNoticeSubject) && trim($administratorNoticeSubject) !== '') ? $administratorNoticeSubject : $contractNoticeSubject,
+      'Body' => (is_string($administratorNoticeBody) && trim($administratorNoticeBody) !== '') ? $administratorNoticeBody : $contractNoticeBody));
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $defaultConfirmationSubject, $defaultConfirmationBody, $defaultRecoverySubject, $defaultRecoveryBody, $contractConfirmationSubject, $contractConfirmationBody, $contractRecoverySubject, $contractRecoveryBody, $administratorSender, $administratorConfirmationSubject, $administratorConfirmationBody, $administratorRecoverySubject, $administratorRecoveryBody);
+  purgeSensitiveMemory($EnableMemoryProtection, $defaultConfirmationSubject, $defaultConfirmationBody, $defaultRecoverySubject, $defaultRecoveryBody, $contractConfirmationSubject, $contractConfirmationBody, $contractRecoverySubject, $contractRecoveryBody, $administratorSender, $administratorConfirmationSubject, $administratorConfirmationBody, $administratorRecoverySubject, $administratorRecoveryBody, $defaultAddressSubject, $defaultAddressBody, $defaultNoticeSubject, $defaultNoticeBody, $contractAddressSubject, $contractAddressBody, $contractNoticeSubject, $contractNoticeBody, $administratorAddressSubject, $administratorAddressBody, $administratorNoticeSubject, $administratorNoticeBody);
   return $EmailSettings; }
 // / -----------------------------------------------------------------------------------
 
@@ -135,7 +155,7 @@ function renderEmailTemplate($templateText, $templateValues) {
 // / -----------------------------------------------------------------------------------
 // / A function to send one email through the host's mail system.
 // / Accepts the recipient, the purpose & the values its text names. Returns whether it was handed over & the reason it was not, in that order.
-// / The purpose is confirm or recover, & picks the subject & the text from emailSettings().
+// / The purpose is confirm, recover, address or notice, & picks the subject & the text from emailSettings().
 // / The email is plain text in UTF-8, & a subject that is not plain ASCII is encoded as MIME requires.
 // / A host that cannot send is a warning, because nothing is wrong with HRConvert2 & the administrator chose the host.
 // / A mail system that refuses an email it was handed is error 43100, because a person is now waiting for a code that will not come.

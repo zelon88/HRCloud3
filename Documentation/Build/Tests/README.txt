@@ -71,13 +71,17 @@ WHAT IS HERE.
   test_contract-cli.php              Strict contract mode: the six values, what sets one in a contract's text, & an Engine that
                                      does not start without one. Each code checker's check named strict, run as a program from
                                      folders the suite writes, must name exactly what the Engine names.
+  test_pages-cli.php                 The Page Core, from v4.3.4ur, against interfaces it writes: names, the contract's pages &
+                                     assets, the interface, language & color ladders, inheritance from the base, exact versions,
+                                     building a page, the provenance log, component markers & what -v reports.
 
 The library, both runners, test_events-cli.php & test_kernel-cli.php were HRProtect's, from its v0.0.7. test_events_load-cli.php
 is HRProtect's suite of that name for the Engine's copy of its functions. The rest are the Engine's own, from v4.3.1.
 test_install-cli.php is from v4.3.2. So are test_schedule-cli.php, the Engine's half of HRProtect's suite of that name, &
 test_quarantine-cli.php, HRProtect's suite of that name with a section of the Engine's own. test_starter-cli.php is the
 Engine's own, from v4.3.2. test_identity-cli.php is the Engine's own, from v4.3.3. test_depends-cli.php &
-test_contract-cli.php are the Engine's own, from v4.3.4.
+test_contract-cli.php are the Engine's own, from v4.3.4. test_pages-cli.php is the Engine's own, from v4.3.4ur, which HRCloud3
+v0.9.9 added with the Page Core, & no example of the kit carries a Page Core yet.
 
 
 WHAT HAS BEEN RUN.
@@ -121,8 +125,11 @@ HRCLOUD3'S OWN.
 
   test_hrcloud3-cli.php              HRCloud3's acceptance test, from v0.9.8. test_starter-cli.php held to HRCloud3's contract: it
                                      installs HRCloud3, runs --config --repair, -v, -h, an --app argument & -fp, manages an account
-                                     from --add to --remove, & runs strict contract mode. It installs, so it runs inside
-                                     contained-install.sh, from the root of the HRCloud3 tree.
+                                     from --add to --remove, & runs strict contract mode. From v0.9.9 it sends the loader web
+                                     requests through php-cgi as the web server account, with mail handed to a stand-in in the
+                                     scratch folder: the sign in page, signing in, home, settings, changing the address & the
+                                     password, the provenance log, the component markers & a base interface of the wrong version.
+                                     It installs, so it runs inside contained-install.sh, from the root of the HRCloud3 tree.
 
     cd /path/to/HRCloud3
     sudo bash Documentation/Build/Tests/contained-install.sh php Documentation/Build/Tests/test_hrcloud3-cli.php
@@ -130,8 +137,19 @@ HRCLOUD3'S OWN.
 test_starter-cli.php needs the kit's Starter, which HRCloud3 does not carry, so it is run from the kit. Every other suite is run from
 the root of the HRCloud3 tree, as the Starter's assembly runs them.
 
-From the root of the HRCloud3 v0.9.8 tree, with PHP 8.3.6 & bubblewrap 0.9.0:
+From the root of the HRCloud3 v0.9.9 tree, with PHP 8.3.6 & bubblewrap 0.9.0:
+  test_hrcloud3-cli.php              62 checks, every one passed, inside contained-install.sh. Ten planted faults, each failed it:
+                                     the served location guard in engine.php, a password change that ends no sign in, an address
+                                     change that sends no notice or sends its code to the old address, every sign in landing home,
+                                     a page that cannot be drawn answered 200, no hosted assets, a page with no stylesheet, no
+                                     provenance log & the settings page left out of the contract.
+  test_pages-cli.php                 54 checks, every one passed, inside contained.sh. Thirteen planted faults in the Page Core,
+                                     each failed it. Two of them, a newer interface accepted & a page built after preparePages()
+                                     could not choose, survived its first draft, which now holds a check for each. Its first run
+                                     found a language code ending in a line break accepted, because a pattern lacked D.
+  Every other suite but test_starter-cli.php passed as it does from the Starter's assembly, inside contained.sh, 1,220 checks.
+
+From the root of the HRCloud3 v0.9.8 tree:
   test_hrcloud3-cli.php              34 checks, every one passed, inside contained-install.sh. Four planted faults in the contract,
                                      each failed it: registration on by default, no UserLoc, Documentation left out of the layout
                                      & no AccountLocation.
-  Every other suite but test_starter-cli.php passed as it does from the Starter's assembly, inside contained.sh, 1,220 checks.

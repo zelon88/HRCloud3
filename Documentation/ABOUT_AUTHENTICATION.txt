@@ -10,9 +10,10 @@ APPLICATION INFORMATION ...
 The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
 
 FILE INFORMATION ...
-v4.2.0.
+v4.2.0ur.
 This file documents accounts. Signing in, the key a signed in page holds, registering, confirming an address, recovering an
-account, the files a signed in user keeps, the emails, the administrator's commands & the settings.
+account, changing a password or an address while signed in, the files a signed in user keeps, the emails, the administrator's
+commands & the settings.
 It describes the Authentication Core, the Email Core & the Authentication Manager, which are the Engine's, & the sign in pages
 of both interfaces. For the requests, see ABOUT_REST_API.txt. For the commands, see ABOUT_COMMAND_LINE_ARGUMENTS.txt.
 For what another application must supply, see ABOUT_ENGINE_CONTRACT.txt. For each warning & error, see ERROR_DESCRIPTIONS.txt.
@@ -165,6 +166,37 @@ reads its owner's email.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Changing A Password Or An Address While Signed In--
+
+From v4.2.3ur, which HRCloud3 v0.9.9 added. A signed in user changes their own password or address
+with the password their account has now, which is the one way anybody proves who they are. A page
+left signed in is not enough on its own, because the person at it may not be its owner.
+
+CHANGING THE PASSWORD. The page sends the password action with its key, SignInPassword & the
+new password in SignInNewPassword. A new password must be --Minimum Password Length-- characters
+or more. A wrong current password is counted as a failed sign in, for the account & for the
+request's address alike, so a page left signed in cannot be used to guess the password it was
+signed in with, & --Sign In Attempt Limit-- stops it as it stops signing in. A changed password
+ends every sign in the account had, the page that asked included, & the user signs in again with
+the new one. A notice is emailed to the account's address.
+
+CHANGING THE ADDRESS. The page sends the address action with its key, SignInPassword & the new
+address in SignInEmail. A code is emailed to the new address, & the account keeps the address it
+has until the code is entered with the address-confirm action & SignInCode, so an address nobody
+reads never replaces one somebody does. The code is good for --Recovery Code Lifetime-- seconds &
+five wrong tries, as a recovery code is. Each code sent counts as sending a confirmation again,
+so no page can send codes to addresses without end. Once the address is changed, a notice is
+emailed to the old one, where an owner whose password somebody else used still reads their email.
+
+A NOTICE CHANGES NOTHING. It is sent after the change is made, & one that could not be sent is a
+WARNING. Neither change touches the files the account keeps.
+
+The outcomes a page names are password-changed, address-code-sent, address-unsent &
+address-changed, beside the outcomes signing in already names. Any interface may offer both
+changes. HRCloud3's settings page does.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Too Many Attempts--
 
 Failures are counted for each kind of attempt & each address a request comes from. Where
@@ -252,13 +284,16 @@ AN EMAIL IS PLAIN TEXT IN UTF-8. A subject that is not plain ASCII is encoded as
 THE TEXT IS THE ENGINE'S, THEN THE APPLICATION'S, THEN THE ADMINISTRATOR'S.
 The Engine's defaults are in Resources/Engine/engineConfig.php, the application's contract may
 replace them, & the administrator's --Email Confirmation Subject--, --Email Confirmation Body--,
---Email Recovery Subject-- & --Email Recovery Body-- replace both. An empty setting keeps the one
-before it. Each may name these, written in braces.
+--Email Recovery Subject-- & --Email Recovery Body-- replace both. From v4.2.0ur so do
+--Email Address Subject-- & --Email Address Body--, for the code that confirms a new address, &
+--Email Notice Subject-- & --Email Notice Body--, for the notice that an account was changed. An
+empty setting keeps the one before it. Each may name these, written in braces.
   {APPLICATION}   The application's title, --Application Title String--.
   {USERNAME}      The account's username.
-  {CODE}          The code.
-  {MINUTES}       The minutes the code may be used for.
+  {CODE}          The code. A notice has none.
+  {MINUTES}       The minutes the code may be used for. A notice has none.
   {ADDRESS}       The address of this server.
+  {CHANGE}        In a notice only, the sentence that says what was changed.
 A name not in that list is left as it was written. A value can never add a header, because every
 line break is taken out of a subject & out of what a name stands for.
 
@@ -443,12 +478,4 @@ IT DOES NOT DEFEND AGAINST
   --Sign In Attempt Limit-- wrong passwords in every --Sign In Attempt Window--, because failures
   are counted for the account as well as for the address.
   Timing a recovery, because an email is handed to the mail system only for an account that exists.
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-----------------------------------------------------------------------------------------------------------------------------------------------------------------
---Not Yet--
-
-v4.2.0 is the first round of accounts, & v4.2.2 let an admin's page stage a workflow for every user.
-This is planned & is not in this version.
-  A user may change their own password or address while signed in.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------

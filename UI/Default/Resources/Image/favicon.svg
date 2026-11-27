@@ -1,0 +1,7 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>
+  <!-- v0.9.9. -->
+  <!-- The Default interface's icon: a cloud on a rounded square, drawn for HRCloud3. -->
+  <rect x='2' y='2' width='60' height='60' rx='14' fill='#2b303b'/>
+  <path d='M20 44h25a9 9 0 0 0 0-18 13 13 0 0 0-24.6-3.2A10.5 10.5 0 0 0 20 44z' fill='#8cc63f'/>
+  <path d='M24 44h21a9 9 0 0 0 1.6-17.85A13 13 0 0 1 24 44z' fill='#58b4f0'/>
+</svg>

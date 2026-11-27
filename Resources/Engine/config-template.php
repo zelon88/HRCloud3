@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.3.1.
+// / v4.3.1ur.
 // / THIS IS THE ENGINE'S HALF OF THE CONFIGURATION TEMPLATE, & everything below the marker is a
 // / real config.php fragment at the Engine's default values. Not a description of one.
 // / Every setting the kernel or the Engine reads is here, with its documentation, & nowhere else.
@@ -466,6 +466,32 @@ $EmailRecoverySubject = '';
 // /   Requires --Enable Authentication--.
 // /   Default is empty.
 $EmailRecoveryBody = '';
+// /  --Email Address Subject--
+// /   The subject of the email that confirms the new address a signed in user gave their
+// /   account. It is sent to the new address. Leave it empty for the one this release ships.
+// /   It may name the same five.
+// /   Requires --Enable Authentication--.
+// /   Default is empty.
+$EmailAddressSubject = '';
+// /  --Email Address Body--
+// /   The text of that email. Leave it empty for the one this release ships. It may name
+// /   the same five, & should name {CODE}.
+// /   Requires --Enable Authentication--.
+// /   Default is empty.
+$EmailAddressBody = '';
+// /  --Email Notice Subject--
+// /   The subject of the email that tells the owner of an account it was changed, sent when
+// /   a signed in user changes their password, & to the old address when they change their
+// /   address. Leave it empty for the one this release ships. It may name the same five.
+// /   Requires --Enable Authentication--.
+// /   Default is empty.
+$EmailNoticeSubject = '';
+// /  --Email Notice Body--
+// /   The text of that email. Leave it empty for the one this release ships. It may name
+// /   the same five & {CHANGE}, the sentence that says what was changed, & should name {CHANGE}.
+// /   Requires --Enable Authentication--.
+// /   Default is empty.
+$EmailNoticeBody = '';
 // / ------------------------------
 
 // / ------------------------------

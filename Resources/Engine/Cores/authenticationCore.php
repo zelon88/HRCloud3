@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.2.3.
+// / v4.2.3ur.
 // / The Authentication Core, one of the Engine's cores.
 // / It keeps accounts, signs users in & out, confirms an address, recovers an account & limits how often each may be tried.
 // / A signed in page holds a key in its memory & nowhere a browser keeps for a site, so no cookie is ever set.
@@ -17,6 +17,7 @@
 // / Each is read as text & never executed, & each is changed under a lock on the file itself.
 // / A signed in user's files are kept in a folder of their own below Users, which no sweep removes.
 // / A signed in user may choose how long their files are kept, from v4.2.3, & the Authentication Manager's sweep removes a file kept longer.
+// / A signed in user may change their own password & their own address, from HRCloud3 v0.9.9, with the password they have now.
 // / The Email Core sends each code. Without it, signing in with valid credentials still works, & every email that would
 // / have been sent & every incorrect password is a warning in the log.
 // / The application pins it exactly via $RequiredAuthenticationCoreVersion, & the Engine loads it where authentication is on.
@@ -38,7 +39,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, A c
 
 // / -----------------------------------------------------------------------------------
 // / The version of this component. Read by the application without executing this file.
-$AuthenticationCoreVersion = 'v4.2.3';
+$AuthenticationCoreVersion = 'v4.2.3ur';
 // / -----------------------------------------------------------------------------------
 
 
@@ -112,7 +113,7 @@ function authenticationInput($fieldName, $fieldKind) {
         if ($fieldKind === 'username' && accountUsernameIsUsable($cleanValue)) list ($InputValue, $InputIsUsable) = array($cleanValue, TRUE);
         else if ($fieldKind === 'code' && preg_match('/^[A-HJ-NP-Z2-9]{10}$/', strtoupper($cleanValue)) === 1) list ($InputValue, $InputIsUsable) = array(strtoupper($cleanValue), TRUE);
         else if ($fieldKind === 'key' && preg_match('/^[a-f0-9]{96}$/', $cleanValue) === 1) list ($InputValue, $InputIsUsable) = array($cleanValue, TRUE);
-        else if ($fieldKind === 'action' && in_array($cleanValue, array('signin', 'signout', 'register', 'confirm', 'resend', 'recover', 'reset', 'exchange', 'page', 'lifetime'), TRUE)) list ($InputValue, $InputIsUsable) = array($cleanValue, TRUE);
+        else if ($fieldKind === 'action' && in_array($cleanValue, array('signin', 'signout', 'register', 'confirm', 'resend', 'recover', 'reset', 'exchange', 'page', 'lifetime', 'password', 'address', 'address-confirm'), TRUE)) list ($InputValue, $InputIsUsable) = array($cleanValue, TRUE);
         else if ($fieldKind === 'page' && in_array($cleanValue, array('signin', 'register', 'confirm', 'recover', 'reset'), TRUE)) list ($InputValue, $InputIsUsable) = array($cleanValue, TRUE);
         else if ($fieldKind === 'lifetime' && preg_match('/^[0-9]{1,8}$/', $cleanValue) === 1 && in_array((int)$cleanValue, accountFileLifetimes(), TRUE)) list ($InputValue, $InputIsUsable) = array($cleanValue, TRUE); } } }
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
@@ -609,11 +610,12 @@ function accountByUsername($accountUsername) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to issue a code for an account, & keep only its hash.
-// / Accepts the account's record name, the purpose & how many seconds it may be used for. Returns whether it was kept & the code, in that order.
-// / The purpose is confirm or recover, & a new code replaces the account's last one for the same purpose.
+// / A function to keep a new code for an account, & only its hash, with anything the purpose must remember until it is used.
+// / Accepts the account's record name, the purpose, how many seconds it may be used for & what it must remember. Returns whether it was kept & the code, in that order.
+// / The purpose is confirm, recover or address, & a new code replaces the account's last one for the same purpose.
+// / address remembers the new address a signed in user asked for, from HRCloud3 v0.9.9, because the account keeps its old one until the code is used.
 // / A code is ten characters from 32 that cannot be mistaken for each other, so it carries 50 bits & is easy to type.
-function issueAccountCode($accountName, $codePurpose, $codeLifetime) {
+function keepAccountCode($accountName, $codePurpose, $codeLifetime, $codeMemory) {
   // / Set variables.
   global $EnableMemoryProtection;
   $CodeWasKept = FALSE;
@@ -625,28 +627,46 @@ function issueAccountCode($accountName, $codePurpose, $codeLifetime) {
   $codeRecord = array();
   $characterIndex = 0;
   list ($saltIsReady, $accountsSalt) = accountsSalt();
-  if ($saltIsReady && in_array($codePurpose, array('confirm', 'recover'), TRUE)) {
+  if ($saltIsReady && in_array($codePurpose, array('confirm', 'recover', 'address'), TRUE)) {
     for ($characterIndex = 0; $characterIndex < 10; $characterIndex++) $AccountCode .= $codeAlphabet[random_int(0, 31)];
     $codePath = authenticationRecordPath('Codes', accountRecordName($accountsSalt, 'code|'.$codePurpose, $accountName));
     list ($codeHandle, $codeWasRead, $codeRecord) = lockAuthenticationRecord($codePath, TRUE);
-    if (is_resource($codeHandle)) $CodeWasKept = saveAuthenticationRecord($codeHandle, array('Purpose' => $codePurpose, 'Account' => (string)$accountName, 'CodeHash' => hash('sha256', $accountsSalt.'|code|'.$AccountCode), 'Expires' => time() + (int)$codeLifetime, 'Tries' => 0)); }
+    if (is_resource($codeHandle)) $CodeWasKept = saveAuthenticationRecord($codeHandle, array('Purpose' => $codePurpose, 'Account' => (string)$accountName, 'CodeHash' => hash('sha256', $accountsSalt.'|code|'.$AccountCode), 'Expires' => time() + (int)$codeLifetime, 'Tries' => 0, 'Memory' => (string)$codeMemory)); }
   if (!$CodeWasKept) $AccountCode = '';
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $codeAlphabet, $saltIsReady, $codeWasRead, $accountsSalt, $codePath, $codeHandle, $codeRecord, $characterIndex, $accountName, $codePurpose, $codeLifetime);
+  purgeSensitiveMemory($EnableMemoryProtection, $codeAlphabet, $saltIsReady, $codeWasRead, $accountsSalt, $codePath, $codeHandle, $codeRecord, $characterIndex, $accountName, $codePurpose, $codeLifetime, $codeMemory);
   return array($CodeWasKept, $AccountCode); }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to check a code a user typed against the one kept for their account.
-// / Accepts the account's record name, the purpose & the code. Returns whether it was right & what was found, in that order.
+// / A function to issue a code for an account, & keep only its hash.
+// / Accepts the account's record name, the purpose & how many seconds it may be used for. Returns whether it was kept & the code, in that order.
+// / The purpose is confirm or recover, & a new code replaces the account's last one for the same purpose. keepAccountCode() keeps it.
+function issueAccountCode($accountName, $codePurpose, $codeLifetime) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $CodeWasKept = FALSE;
+  $AccountCode = '';
+  $noMemory = '';
+  if (in_array($codePurpose, array('confirm', 'recover'), TRUE)) list ($CodeWasKept, $AccountCode) = keepAccountCode($accountName, $codePurpose, $codeLifetime, $noMemory);
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $noMemory, $accountName, $codePurpose, $codeLifetime);
+  return array($CodeWasKept, $AccountCode); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to check a code a user typed against the one kept for their account, & hand back what the code remembered.
+// / Accepts the account's record name, the purpose & the code. Returns whether it was right, what was found & what it remembered, in that order.
 // / What was found is correct, wrong, expired or missing. A code is spent when it is right, & removed once it expires or has been tried five times.
 // / The fifth wrong try is answered as expired, because the code can no longer be used & the user must ask for another.
 // / Five tries of 50 bits each is a chance too small to matter, & the count of a request's failures stops anybody trying more codes.
-function checkAccountCode($accountName, $codePurpose, $accountCode) {
+// / What it remembered is handed back only for a code that was right, from HRCloud3 v0.9.9.
+function spendAccountCode($accountName, $codePurpose, $accountCode) {
   // / Set variables.
   global $EnableMemoryProtection;
   $CodeIsCorrect = FALSE;
   $CodeFinding = 'missing';
+  $CodeMemory = '';
   $saltIsReady = $codeWasRead = FALSE;
   $accountsSalt = $codePath = '';
   $codeHandle = NULL;
@@ -664,13 +684,29 @@ function checkAccountCode($accountName, $codePurpose, $accountCode) {
       $CodeFinding = 'expired'; }
     else if (hash_equals((string)$codeRecord['CodeHash'], hash('sha256', $accountsSalt.'|code|'.strtoupper((string)$accountCode)))) {
       removeAuthenticationRecord($codeHandle, $codePath);
-      list ($CodeIsCorrect, $CodeFinding) = array(TRUE, 'correct'); }
+      list ($CodeIsCorrect, $CodeFinding, $CodeMemory) = array(TRUE, 'correct', (string)($codeRecord['Memory'] ?? '')); }
     else {
       $codeRecord['Tries'] = (int)$codeRecord['Tries'] + 1;
       if ($codeRecord['Tries'] >= 5) list ($CodeFinding, $codeWasRead) = array('expired', removeAuthenticationRecord($codeHandle, $codePath));
       else list ($CodeFinding, $codeWasRead) = array('wrong', saveAuthenticationRecord($codeHandle, $codeRecord)); } }
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
   purgeSensitiveMemory($EnableMemoryProtection, $saltIsReady, $codeWasRead, $accountsSalt, $codePath, $codeHandle, $codeRecord, $accountName, $codePurpose, $accountCode);
+  return array($CodeIsCorrect, $CodeFinding, $CodeMemory); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to check a code a user typed against the one kept for their account.
+// / Accepts the account's record name, the purpose & the code. Returns whether it was right & what was found, in that order.
+// / What was found is correct, wrong, expired or missing, as spendAccountCode() finds it.
+function checkAccountCode($accountName, $codePurpose, $accountCode) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $CodeIsCorrect = FALSE;
+  $CodeFinding = 'missing';
+  $codeMemory = '';
+  list ($CodeIsCorrect, $CodeFinding, $codeMemory) = spendAccountCode($accountName, $codePurpose, $accountCode);
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $codeMemory, $accountName, $codePurpose, $accountCode);
   return array($CodeIsCorrect, $CodeFinding); }
 // / -----------------------------------------------------------------------------------
 
@@ -1120,6 +1156,177 @@ function setAccountFileLifetime($signInKey, $fileLifetime) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
+// / A function to tell the owner of an account it was changed, from HRCloud3 v0.9.9.
+// / Accepts the account, as it holds the address the notice goes to, & the sentence that says what was changed. Returns TRUE when it was handed to the mail system.
+// / A notice is how an owner learns of a change somebody else made with their password, so a notice that could not be sent is a warning.
+function sendAccountNotice($accountRecord, $noticeChange) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $NoticeWasSent = FALSE;
+  $authenticationSettings = array();
+  $sendReason = $accountUsername = '';
+  $authenticationSettings = authenticationSettings();
+  $accountUsername = (string)($accountRecord['Username'] ?? '');
+  if (!emailCoreIsLoaded()) warningEntry('The notice email for '.$accountUsername.' was not sent, because the Email Core is not loaded. Its owner was not told their account was changed.');
+  else list ($NoticeWasSent, $sendReason) = sendEngineEmail((string)($accountRecord['Email'] ?? ''), 'notice', array('APPLICATION' => $authenticationSettings['Title'], 'USERNAME' => $accountUsername, 'CHANGE' => (string)$noticeChange, 'ADDRESS' => $authenticationSettings['Address']));
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $authenticationSettings, $sendReason, $accountUsername, $accountRecord, $noticeChange);
+  return $NoticeWasSent; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to give a signed in user's account a new password, with the password it has now, from HRCloud3 v0.9.9.
+// / Accepts the key of the page asking, the password the account has now & the new one. Returns what happened, as one of the outcomes the page names.
+// / password-changed means the account holds the new password. Its generation moves on, so every sign in it had is over, this one included,
+// / & the user signs in again with the new password, by the one way anybody signs in. A notice goes to the account's address.
+// / The password it has now is checked as signing in checks it, & a wrong one is counted against the account & the request's address alike,
+// / so a page left signed in cannot be used to guess the password it was signed in with.
+// / Returns a sanity check, because it is longer than 35 lines.
+function changeAccountPassword($signInKey, $currentPassword, $newPassword) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $PasswordOutcome = 'signed-out';
+  $PasswordIsJudged = FALSE;
+  $authenticationSettings = $accountRecord = $lockedRecord = array();
+  $keyIsValid = $accountAllowed = $addressAllowed = $passwordIsCorrect = $recordWasRead = $noticeWasSent = FALSE;
+  $accountName = $signInId = $accountPath = $passwordHash = $passwordScheme = $accountUsername = '';
+  $accountHandle = NULL;
+  $accountFailures = $addressFailures = 0;
+  $authenticationSettings = authenticationSettings();
+  list ($keyIsValid, $accountRecord, $accountName, $signInId) = presentSignInKey($signInKey);
+  $accountUsername = (string)($accountRecord['Username'] ?? '');
+  if ($keyIsValid) {
+    list ($accountAllowed, $accountFailures) = attemptIsAllowed('signin', $accountName);
+    list ($addressAllowed, $addressFailures) = attemptIsAllowed('signin', requestAddress());
+    if (!$accountAllowed or !$addressAllowed) $PasswordOutcome = 'too-many';
+    else if (mb_strlen((string)$newPassword, 'UTF-8') < $authenticationSettings['MinimumPasswordLength']) $PasswordOutcome = 'password-short';
+    else {
+      $passwordIsCorrect = verifyAccountPassword($currentPassword, (string)($accountRecord['PasswordHash'] ?? ''), (string)($accountRecord['PasswordScheme'] ?? ''));
+      if (!$passwordIsCorrect) {
+        recordFailedAttempt('signin', $accountName);
+        recordFailedAttempt('signin', requestAddress());
+        $PasswordOutcome = 'credentials-wrong';
+        logEntry('An incorrect password was entered for '.$accountUsername.' to change its password.'); }
+      else {
+        $PasswordOutcome = 'unavailable';
+        list ($passwordHash, $passwordScheme) = hashAccountPassword($newPassword);
+        $accountPath = authenticationRecordPath('Users', $accountName);
+        list ($accountHandle, $recordWasRead, $lockedRecord) = lockAuthenticationRecord($accountPath, FALSE);
+        if ($recordWasRead && $passwordHash !== '') {
+          $lockedRecord['PasswordHash'] = $passwordHash;
+          $lockedRecord['PasswordScheme'] = $passwordScheme;
+          $lockedRecord['Generation'] = (int)($lockedRecord['Generation'] ?? 1) + 1;
+          if (saveAuthenticationRecord($accountHandle, $lockedRecord)) $PasswordOutcome = 'password-changed'; }
+        else releaseAuthenticationRecord($accountHandle);
+        if ($PasswordOutcome !== 'password-changed') warningEntry('The password of '.$accountUsername.' could not be changed, because their account could not be written.');
+        else {
+          forgetFailedAttempts('signin', $accountName);
+          logEntry('The account '.$accountUsername.' changed its own password, & every sign in made before it was ended.');
+          $noticeWasSent = sendAccountNotice($lockedRecord, 'The password of your account was changed, & every sign in made with the old one was ended.'); } } } }
+  // / Every outcome is one the page names, & a key that signs nobody in reaches none of the checks.
+  $PasswordIsJudged = in_array($PasswordOutcome, array('signed-out', 'too-many', 'password-short', 'credentials-wrong', 'password-changed', 'unavailable'), TRUE);
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $authenticationSettings, $accountRecord, $lockedRecord, $keyIsValid, $accountAllowed, $addressAllowed, $passwordIsCorrect, $recordWasRead, $noticeWasSent, $accountName, $signInId, $accountPath, $passwordHash, $passwordScheme, $accountUsername, $accountHandle, $accountFailures, $addressFailures, $signInKey, $currentPassword, $newPassword);
+  return array($PasswordOutcome, $PasswordIsJudged); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to begin changing a signed in user's address, with the password their account has now, from HRCloud3 v0.9.9.
+// / Accepts the key of the page asking, the password the account has now & the new address. Returns what happened, as one of the outcomes the page names.
+// / A code is sent to the new address, & the account keeps the address it has until the code is entered, so an address nobody reads
+// / never replaces one somebody does. address-code-sent means it was sent, & address-unsent that it could not be.
+// / The password is checked as signing in checks it, & every code sent is counted against the request's address, as sending a
+// / confirmation again is, so no page can send codes to addresses without end. A code may be used for --Recovery Code Lifetime--.
+// / Returns a sanity check, because it is longer than 35 lines.
+function requestAddressChange($signInKey, $currentPassword, $newAddress) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $AddressOutcome = 'signed-out';
+  $AddressIsJudged = FALSE;
+  $authenticationSettings = $accountRecord = array();
+  $keyIsValid = $accountAllowed = $addressAllowed = $sendAllowed = $passwordIsCorrect = $codeWasKept = $codeWasSent = FALSE;
+  $accountName = $signInId = $accountCode = $accountUsername = '';
+  $accountFailures = $addressFailures = $sendFailures = 0;
+  $authenticationSettings = authenticationSettings();
+  list ($keyIsValid, $accountRecord, $accountName, $signInId) = presentSignInKey($signInKey);
+  $accountUsername = (string)($accountRecord['Username'] ?? '');
+  if ($keyIsValid) {
+    list ($accountAllowed, $accountFailures) = attemptIsAllowed('signin', $accountName);
+    list ($addressAllowed, $addressFailures) = attemptIsAllowed('signin', requestAddress());
+    list ($sendAllowed, $sendFailures) = attemptIsAllowed('resend', requestAddress());
+    if (!$accountAllowed or !$addressAllowed or !$sendAllowed) $AddressOutcome = 'too-many';
+    else if (!accountAddressIsUsable($newAddress)) $AddressOutcome = 'email-invalid';
+    else {
+      $passwordIsCorrect = verifyAccountPassword($currentPassword, (string)($accountRecord['PasswordHash'] ?? ''), (string)($accountRecord['PasswordScheme'] ?? ''));
+      if (!$passwordIsCorrect) {
+        recordFailedAttempt('signin', $accountName);
+        recordFailedAttempt('signin', requestAddress());
+        $AddressOutcome = 'credentials-wrong';
+        logEntry('An incorrect password was entered for '.$accountUsername.' to change its address.'); }
+      else {
+        recordFailedAttempt('resend', requestAddress());
+        list ($codeWasKept, $accountCode) = keepAccountCode($accountName, 'address', $authenticationSettings['RecoveryLifetime'], (string)$newAddress);
+        if (!$codeWasKept) {
+          $AddressOutcome = 'unavailable';
+          warningEntry('A code to change the address of '.$accountUsername.' could not be kept, because the accounts folder could not be written.'); }
+        else {
+          $codeWasSent = sendAccountCode(array_merge($accountRecord, array('Email' => (string)$newAddress)), 'address', $accountCode, $authenticationSettings['RecoveryLifetime']);
+          $AddressOutcome = $codeWasSent ? 'address-code-sent' : 'address-unsent';
+          logEntry('The account '.$accountUsername.' asked to change its address. Outcome: '.$AddressOutcome.'.'); } } } }
+  // / Every outcome is one the page names.
+  $AddressIsJudged = in_array($AddressOutcome, array('signed-out', 'too-many', 'email-invalid', 'credentials-wrong', 'address-code-sent', 'address-unsent', 'unavailable'), TRUE);
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $authenticationSettings, $accountRecord, $keyIsValid, $accountAllowed, $addressAllowed, $sendAllowed, $passwordIsCorrect, $codeWasKept, $codeWasSent, $accountName, $signInId, $accountCode, $accountUsername, $accountFailures, $addressFailures, $sendFailures, $signInKey, $currentPassword, $newAddress);
+  return array($AddressOutcome, $AddressIsJudged); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to finish changing a signed in user's address with the code sent to the new one, from HRCloud3 v0.9.9.
+// / Accepts the key of the page asking & the code. Returns what happened, as one of the outcomes the page names.
+// / address-changed means the account holds the new address, & a notice went to the old one, so an owner whose password somebody
+// / else used learns of it where they still read their email. Every wrong code is counted against the request's address.
+// / Returns a sanity check, because it is longer than 35 lines.
+function confirmAddressChange($signInKey, $accountCode) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $ConfirmOutcome = 'signed-out';
+  $ConfirmIsJudged = FALSE;
+  $accountRecord = $lockedRecord = array();
+  $keyIsValid = $attemptIsAllowed = $codeIsCorrect = $recordWasRead = $noticeWasSent = FALSE;
+  $accountName = $signInId = $codeFinding = $newAddress = $oldAddress = $accountPath = $accountUsername = '';
+  $accountHandle = NULL;
+  $failuresCounted = 0;
+  list ($keyIsValid, $accountRecord, $accountName, $signInId) = presentSignInKey($signInKey);
+  $accountUsername = (string)($accountRecord['Username'] ?? '');
+  if ($keyIsValid) {
+    list ($attemptIsAllowed, $failuresCounted) = attemptIsAllowed('code', requestAddress());
+    if (!$attemptIsAllowed) $ConfirmOutcome = 'too-many';
+    else {
+      $ConfirmOutcome = 'code-wrong';
+      list ($codeIsCorrect, $codeFinding, $newAddress) = spendAccountCode($accountName, 'address', $accountCode);
+      if ($codeIsCorrect && accountAddressIsUsable($newAddress)) {
+        $ConfirmOutcome = 'unavailable';
+        $accountPath = authenticationRecordPath('Users', $accountName);
+        list ($accountHandle, $recordWasRead, $lockedRecord) = lockAuthenticationRecord($accountPath, FALSE);
+        if (!$recordWasRead) releaseAuthenticationRecord($accountHandle);
+        else {
+          $oldAddress = (string)($lockedRecord['Email'] ?? '');
+          $lockedRecord['Email'] = $newAddress;
+          if (saveAuthenticationRecord($accountHandle, $lockedRecord)) $ConfirmOutcome = 'address-changed'; }
+        if ($ConfirmOutcome !== 'address-changed') warningEntry('The address of '.$accountUsername.' could not be changed, because their account could not be written.');
+        else {
+          logEntry('The account '.$accountUsername.' changed its own address.');
+          $noticeWasSent = sendAccountNotice(array_merge($lockedRecord, array('Email' => $oldAddress)), 'The address of your account was changed, so emails for it no longer come to this address.'); } }
+      else if ($codeFinding === 'expired') $ConfirmOutcome = 'code-expired';
+      if ($ConfirmOutcome === 'code-wrong' or $ConfirmOutcome === 'code-expired') recordFailedAttempt('code', requestAddress()); } }
+  // / Every outcome is one the page names.
+  $ConfirmIsJudged = in_array($ConfirmOutcome, array('signed-out', 'too-many', 'code-wrong', 'code-expired', 'address-changed', 'unavailable'), TRUE);
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $accountRecord, $lockedRecord, $keyIsValid, $attemptIsAllowed, $codeIsCorrect, $recordWasRead, $noticeWasSent, $accountName, $signInId, $codeFinding, $newAddress, $oldAddress, $accountPath, $accountUsername, $accountHandle, $failuresCounted, $signInKey, $accountCode);
+  return array($ConfirmOutcome, $ConfirmIsJudged); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
 // / A function to name the folder a signed in user's files are kept in, & to make it the first time it is needed.
 // / Accepts the account. Returns whether the folder is there & its path with a separator at its end, in that order.
 // / The folder is named for the account's own random identifier, never for its username, so a path names nobody.
@@ -1150,14 +1357,17 @@ function accountFolderPath($accountRecord) {
 // / A field the action needs that cannot be used is answered as the matching failure, without anything being tried.
 // / An action that would tell a stranger whether a username exists answers the same either way.
 // / lifetime keeps how long a signed in user's files are kept, from v4.2.3, & is answered lifetime-invalid for a lifetime not offered.
+// / password, address & address-confirm change a signed in user's own password & address, from HRCloud3 v0.9.9. Each takes the page's key,
+// / & the first two take the password the account has now, so a page left signed in cannot change either alone.
+// / A sanity check a function hands back is consumed here. One that fails names its outcome unavailable, & is a warning.
 function answerAuthenticationAction($authenticationAction) {
   // / Set variables.
   global $EnableMemoryProtection;
   $AuthenticationReply = array();
   $authenticationSettings = array();
   $actionOutcome = $signInKey = '';
-  $accountUsername = $emailAddress = $accountPassword = $accountCode = $presentedKey = $fileLifetime = '';
-  $usernameIsUsable = $addressIsUsable = $passwordIsUsable = $codeIsUsable = $keyIsUsable = $lifetimeIsUsable = FALSE;
+  $accountUsername = $emailAddress = $accountPassword = $accountCode = $presentedKey = $fileLifetime = $newPassword = '';
+  $usernameIsUsable = $addressIsUsable = $passwordIsUsable = $codeIsUsable = $keyIsUsable = $lifetimeIsUsable = $newPasswordIsUsable = $outcomeIsJudged = $changeWasTried = FALSE;
   $authenticationSettings = authenticationSettings();
   list ($accountUsername, $usernameIsUsable) = authenticationInput('SignInUsername', 'username');
   list ($emailAddress, $addressIsUsable) = authenticationInput('SignInEmail', 'email');
@@ -1165,6 +1375,7 @@ function answerAuthenticationAction($authenticationAction) {
   list ($accountCode, $codeIsUsable) = authenticationInput('SignInCode', 'code');
   list ($presentedKey, $keyIsUsable) = authenticationInput('SignInKey', 'key');
   list ($fileLifetime, $lifetimeIsUsable) = authenticationInput('SignInFileLifetime', 'lifetime');
+  list ($newPassword, $newPasswordIsUsable) = authenticationInput('SignInNewPassword', 'password');
   if ($authenticationAction === 'signin') list ($actionOutcome, $signInKey) = ($usernameIsUsable && $passwordIsUsable) ? signInAccount($accountUsername, $accountPassword) : array('credentials-wrong', '');
   else if ($authenticationAction === 'exchange') list ($actionOutcome, $signInKey) = $keyIsUsable ? exchangeSignInKey($presentedKey) : array('signed-out', '');
   else if ($authenticationAction === 'signout') {
@@ -1186,10 +1397,34 @@ function answerAuthenticationAction($authenticationAction) {
     if (!$keyIsUsable) $actionOutcome = 'signed-out';
     else if (!$lifetimeIsUsable) $actionOutcome = 'lifetime-invalid';
     else $actionOutcome = setAccountFileLifetime($presentedKey, (int)$fileLifetime); }
+  else if ($authenticationAction === 'password') {
+    if (!$keyIsUsable) $actionOutcome = 'signed-out';
+    else if (!$passwordIsUsable) $actionOutcome = 'credentials-wrong';
+    else if (!$newPasswordIsUsable) $actionOutcome = 'password-short';
+    else {
+      $changeWasTried = TRUE;
+      list ($actionOutcome, $outcomeIsJudged) = changeAccountPassword($presentedKey, $accountPassword, $newPassword); } }
+  else if ($authenticationAction === 'address') {
+    if (!$keyIsUsable) $actionOutcome = 'signed-out';
+    else if (!$passwordIsUsable) $actionOutcome = 'credentials-wrong';
+    else if (!$addressIsUsable) $actionOutcome = 'email-invalid';
+    else {
+      $changeWasTried = TRUE;
+      list ($actionOutcome, $outcomeIsJudged) = requestAddressChange($presentedKey, $accountPassword, $emailAddress); } }
+  else if ($authenticationAction === 'address-confirm') {
+    if (!$keyIsUsable) $actionOutcome = 'signed-out';
+    else if (!$codeIsUsable) $actionOutcome = 'code-wrong';
+    else {
+      $changeWasTried = TRUE;
+      list ($actionOutcome, $outcomeIsJudged) = confirmAddressChange($presentedKey, $accountCode); } }
   else $actionOutcome = 'unavailable';
+  // / A change of password or address whose sanity check failed answered with an outcome the page cannot name.
+  if ($changeWasTried && !$outcomeIsJudged) {
+    warningEntry('A change to an account answered with an outcome no page names, so it is answered unavailable.');
+    $actionOutcome = 'unavailable'; }
   $AuthenticationReply = array('Outcome' => $actionOutcome, 'Key' => $signInKey, 'Life' => $authenticationSettings['KeyLifetime'], 'Interval' => $authenticationSettings['ExchangeInterval']);
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $authenticationSettings, $actionOutcome, $signInKey, $accountUsername, $emailAddress, $accountPassword, $accountCode, $presentedKey, $fileLifetime, $usernameIsUsable, $addressIsUsable, $passwordIsUsable, $codeIsUsable, $keyIsUsable, $lifetimeIsUsable, $authenticationAction);
+  purgeSensitiveMemory($EnableMemoryProtection, $authenticationSettings, $actionOutcome, $signInKey, $accountUsername, $emailAddress, $accountPassword, $accountCode, $presentedKey, $fileLifetime, $newPassword, $usernameIsUsable, $addressIsUsable, $passwordIsUsable, $codeIsUsable, $keyIsUsable, $lifetimeIsUsable, $newPasswordIsUsable, $outcomeIsJudged, $changeWasTried, $authenticationAction);
   return $AuthenticationReply; }
 // / -----------------------------------------------------------------------------------
 
@@ -1239,6 +1474,7 @@ function sendOpenerPolicy() {
 // / A request presenting a key that signs it in names its account in $SignedInAccount, & its files are kept in $SignedInFolder.
 // / $EnginePageState holds everything a page may show about it, & nothing a page could use to sign in.
 // / It holds FileLifetimes, the lifetimes a signed in user may choose for their files, & FileLifetime, the one their account holds, from v4.2.3.
+// / It holds Address, the address the signed in user's account keeps, from HRCloud3 v0.9.9.
 // / A visitor who must sign in where nobody can, because the accounts folder is missing, is error 43000. The page still says signing in is unavailable.
 // / Only a web request served as the web server account is judged. The command line signs nobody in.
 // / Every such request is sent Cross-Origin-Opener-Policy first, from v4.2.1, as sendOpenerPolicy() says why.
@@ -1258,7 +1494,7 @@ function adoptAuthenticationIdentity() {
     'AllowAnonymous' => $authenticationSettings['AllowAnonymous'], 'AllowRegistration' => $authenticationSettings['AllowRegistration'], 'RequireConfirmation' => $authenticationSettings['RequireConfirmation'],
     'EmailAvailable' => (emailCoreIsLoaded() && $emailIsAvailable), 'MinimumPasswordLength' => $authenticationSettings['MinimumPasswordLength'],
     'KeyLifetime' => $authenticationSettings['KeyLifetime'], 'ExchangeInterval' => $authenticationSettings['ExchangeInterval'],
-    'FileLifetimes' => accountFileLifetimes(), 'FileLifetime' => 0);
+    'FileLifetimes' => accountFileLifetimes(), 'FileLifetime' => 0, 'Address' => '');
   if ($authenticationSettings['Enabled'] && !$RunningFromCLI && (string)$CurrentUser === (string)$ApacheUser) {
     if (!sendOpenerPolicy()) warningEntry('This page was sent without Cross-Origin-Opener-Policy, because something was written before its headers. A page of another site could reach the key a signed in tab holds.');
     list ($saltIsReady, $accountsSalt) = accountsSalt();
@@ -1278,7 +1514,9 @@ function adoptAuthenticationIdentity() {
         $SignedInAccount = array('Name' => $accountName, 'Username' => (string)($accountRecord['Username'] ?? ''), 'Role' => (((string)($accountRecord['Role'] ?? '') === 'admin') ? 'admin' : 'user'), 'Folder' => (string)($accountRecord['Folder'] ?? ''), 'SignIn' => $signInId);
         $SignedInFolder = $folderPath;
         list ($EnginePageState['SignedIn'], $EnginePageState['Username'], $EnginePageState['Role']) = array(TRUE, $SignedInAccount['Username'], $SignedInAccount['Role']);
-        $EnginePageState['FileLifetime'] = in_array((int)($accountRecord['FileLifetime'] ?? 0), accountFileLifetimes(), TRUE) ? (int)($accountRecord['FileLifetime'] ?? 0) : 0; }
+        $EnginePageState['FileLifetime'] = in_array((int)($accountRecord['FileLifetime'] ?? 0), accountFileLifetimes(), TRUE) ? (int)($accountRecord['FileLifetime'] ?? 0) : 0;
+        // / The address the account keeps, so the signed in user's own page can show it, from HRCloud3 v0.9.9. It is never logged.
+        $EnginePageState['Address'] = (string)($accountRecord['Email'] ?? ''); }
       if (!$EnginePageState['SignedIn'] && $actionIsUsable && $pageIsUsable) list ($EnginePageState['Page'], $EngineAnswer) = array($requestedPage, 'page');
       else if (!$EnginePageState['SignedIn'] && !$authenticationSettings['AllowAnonymous']) list ($EnginePageState['Page'], $EngineAnswer) = array('signin', 'page');
       if (!$accountsAreAvailable && !$authenticationSettings['AllowAnonymous']) errorEntry('A visitor must sign in & nobody can, because the accounts folder or the users folder is missing or cannot be written. Run -fp as root!', 43000, FALSE); } }

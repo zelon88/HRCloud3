@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 
 FILE INFORMATION ...
-v0.9.8.
+v0.9.9.
 This plain text file records every difference between the HRProprietary Engine this application carries & the Engine as it is distributed, with the reason for each, so that each can be taken upstream or dropped deliberately.
 
 HARDWARE REQUIREMENTS ...
@@ -78,18 +78,78 @@ its own, WARNINGS ABOUT HRCLOUD3. The seven entries for the kernel's errors 3 to
 beside convertCore.php & app.php, because the kernel raises each from whichever entry point boots it.
 Build/Tests/README.txt gains a section naming test_hrcloud3-cli.php. Nothing of the Engine's was removed
 from any document.
+
+HRCloud3 v0.9.9 added UI/, its interfaces, & CREATING_INTERFACES.txt, which are its own. What it added to
+& changed in the Engine & the Engine's documents is entered below.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Changes To The Engine--
 
-None in v0.9.8. Every file of the Engine's is the kit's, byte for byte. Compare the tree against the
-kit to see that it is so.
+v0.9.8 changed nothing. v0.9.9 changes what follows. Every other file of the Engine's is the kit's, byte for
+byte, & keeps the kit's stamp, so comparing the tree against the kit shows exactly these.
 
-The Engine changes this application expects to propose are listed in the HRCloud3 planning record,
-& each is entered here in the build that makes it:
-  The sign in pages & their scripts, which are HRConvert2's today, as an interface of the Engine's own.
-  A signed in user changing their own password & address, which ABOUT_AUTHENTICATION.txt lists as Not Yet.
+THE PAGE CORE. NEW. Resources/Engine/Cores/pageCore.php, v4.3.4ur.
+  What. A Core that builds a page for a browser from the components of an interface, & holds no markup. The
+  contract names the interface folder, the base interface, each page with its components, each asset & a
+  page data provider. The administrator's choices are read through $EngineSettingNames. One level of
+  inheritance: a file an interface lacks is taken from the base. The interface, the language & the color
+  are each a ladder, & an interface must match $RequiredInterfaceVersion exactly. With $Verbose, every
+  page is logged with each file it was built from, its layer, its header stamp & a fingerprint, & a
+  setting marks each component in the page. -v reports every interface & language pack offered.
+  Why. Proposals 3 & 4 of the sign in note below, which Justin approved on 11/26/2026. The web specific
+  name is because the Engine keeps interfaceCore & interfaceManager for the Wayland compositor. Proposed for
+  canon: displayCore & displayManager for the compositor, which is a display server, so interface keeps
+  one meaning on every surface. The provenance log is Justin's ask, so a fault in a page built across
+  nested folders is found by elimination.
+  Errors. 51000 to 51019 are proposed for it. Canon numbers reach the 49000 block, & HRProtect proposes
+  50000 to 50019. 51000 to 51003 are raised.
+  The reference application. HRConvert2 pins no Page Core, so nothing changes for it. It could adopt it by
+  mapping SupportedInterfaces & the rest to its own settings & declaring its pages.
+  Seen working. test_pages-cli.php, new, 54 checks. test_hrcloud3-cli.php Part 8 drives it through php-cgi.
+
+engine.php, v4.3.4ur.
+  loadPageCore() loads the Page Core the application pins, & warns where one asks for a page & pins none.
+  -v reports the Page Core where it is pinned, & the Page Core's two sections. listEnginePins() names
+  PageCoreVersion. The configuration model gains the four email settings below.
+  verifyRequiredDirs() keeps the DATA protection file current only where the contract gives some location
+  the served role. FIXED AT ONCE, AS A FAULT ON EVERY PAGE. An application that draws pages & serves no
+  location was warned on every request that no served location is set, a warning nobody can act on.
+  HRCloud3 is the first application on the Engine to draw pages & serve nothing. The Starter refuses every
+  web request, & HRConvert2 serves DATA, so canon never met it. A contract that gives the role & has its
+  location refused is still warned.
+  The reference application. HRConvert2 gives ConvertTemp the served role, so it is unchanged.
+
+engineConfig.php, v4.3.4ur, & config-template.php, the Engine's half, v4.3.1ur.
+  The default texts of two new emails, & four settings for an administrator to replace them: --Email
+  Address Subject-- & --Email Address Body-- for the code that confirms a new address, & --Email Notice
+  Subject-- & --Email Notice Body-- for the notice that an account was changed, which may name {CHANGE}.
+  engineConfig.php also gives the five page values of the contract their defaults.
+
+emailCore.php, v4.2.0ur.
+  emailSettings() knows the address & notice purposes, layered as the others are.
+
+authenticationCore.php, v4.2.3ur.
+  What. A signed in user changes their own password or address, with the password they have now. Actions
+  password, address & address-confirm. A new address is confirmed with a code sent to it, & the account
+  keeps its address until then. A changed password ends every sign in. A notice goes to the account's
+  address after either. Wrong passwords count as failed sign ins, & every code sent counts as a resend.
+  How. New keepAccountCode() & spendAccountCode(), which remember a value with a code, & which
+  issueAccountCode() & checkAccountCode() now wrap with their signatures unchanged. New sendAccountNotice(),
+  changeAccountPassword(), requestAddressChange() & confirmAddressChange(). $EnginePageState gains Address.
+  Why. ABOUT_AUTHENTICATION.txt listed it as Not Yet, & encryption at the user level needs it, because a
+  password change must rewrap the user's key.
+  The reference application. Its interfaces offer none of the three actions, so nothing changes for it until
+  one does.
+  Seen working. test_hrcloud3-cli.php Part 8, & a browser driving HRCloud3's settings page.
+
+DOCUMENTS & TESTS.
+  New ABOUT_PAGES.txt, v4.3.4ur, & Build/Tests/test_pages-cli.php.
+  ABOUT_AUTHENTICATION.txt v4.2.0ur, ABOUT_COMPONENTS.txt v3.8.8ur, ABOUT_ENGINE_CONTRACT.txt v3.8.9ur &
+  ERROR_DESCRIPTIONS.txt v3.9.7ur describe the changes above. ERROR_DESCRIPTIONS.txt gains 51000 to 51003
+  & their reservation, WARNINGS ABOUT PAGES, five account warnings & the new purposes of 43100.
+
+STILL TO PROPOSE. Each is entered here in the build that makes it.
   Folders within a user's folder. Today it is flat, & the account sweep reads only its top.
   Libraries, as locations an administrator defines, each with a role.
   Encryption at rest, as a Core, with a way to serve a file that decrypts it as it is read.
@@ -99,6 +159,59 @@ The Engine changes this application expects to propose are listed in the HRCloud
 --What The Engine Assumes About An Application--
 
 Entered as each is met.
+
+THE SIGN IN PAGES ARE AN INTERFACE'S, & EVERY INTERFACE OF EVERY APPLICATION CARRIES ITS OWN COPY.
+Met planning the interface, after v0.9.8.
+FOR THE HRPROPRIETARY CONVERSATION TO LOOK INTO, WITH THE ENGINE THIS APPLICATION HANDS BACK.
+The Engine names a page, & the application's interface draws it, from engineGui.php, with $EnginePageState. That
+separation is right & is to be kept. The Engine draws no page, & an interface is a folder an administrator can replace.
+What no application can get from the kit is the interface half of accounts. It exists only in HRConvert2's interfaces.
+  engineGui.php                 The sign in, register, confirm, recover & reset sections, drawn from $EnginePageState.
+  HRC2-SignIn.js                The page's half of signing in. HRC2SignIn holds the key, trades it on the timer, keeps it
+                                in the tab & stamps every request the page sends. HRC2SignInPage switches the sections.
+  HRC2-SignInTimer.js           The worker the trade runs on.
+  $GuiAuthText1 to 53           The strings, in every language pack.
+HRConvert2 carries two copies, one in each interface, identical but for a comment in engineGui.php. HRCloud3 will
+carry a third, & every application that offers accounts another.
+HRC2SignIn is the client of the Authentication Core's protocol. It decides which key a tab may take up, when a key is
+traded, & which requests carry one. A fault in it is a fault in signing in, & a copy in each interface of each
+application is a copy that can drift from the Core it talks to. Its endpoint & its window.name prefix are written into
+it, as convertCore.php & HRC2-SIGNIN:, so a copy must be edited before another application can use it.
+Proposed, each keeping the Engine free of markup & strings:
+  1. The protocol half becomes the Engine's. A script holding HRC2SignIn's behaviour & nothing an interface shows, with
+     the endpoint & prefix handed in by the page, & the timer worker beside it. Each interface keeps engineGui.php, the
+     section switching, its stylesheet & its strings, so its look & its language stay its own.
+  2. The kit carries a reference interface, as it carries the Starter, holding header.php, footer.php, engineGui.php &
+     an English pack with the $GuiAuthText strings, for an application to copy & restyle.
+  3. The interface loader becomes Engine mechanism. HRConvert2's verifyGui(), verifyLanguage() & verifyColors(), & the
+     half of buildGUI() that loads a language pack over its baseline, are no more HRConvert2's than the sign in is.
+     The contract would name the files an interface must carry & the pages it draws, & the Engine would choose the
+     interface, check its version exactly, fall back to the default & load the language ladder. The Engine would still
+     hold no markup.
+  4. An interface may inherit from a base. HRConvert2's Default & Original share every script & every language pack
+     byte for byte, & differ in their style file, their stylesheet & 162 changed lines across six markup files. A
+     base interface holding what they share, & an interface holding only what it changes, would keep each a folder
+     that can replace anything, with nothing carried twice. A file an interface lacks would be taken from the base,
+     as a string a pack lacks is taken from the baseline pack today.
+Until one of these is canon, HRCloud3's interfaces carry their own copy of the interface half, taken from HRConvert2
+v4.3.4's Default interface with only its names changed, & say so in each file it took.
+Where it stands at v0.9.9. Proposals 3 & 4 are in this copy as the Page Core, above. HRC3-SignIn.js has the shape
+proposal 1 asks for, its endpoint & prefix handed in by the page, & is still carried by the interface. Proposals
+1 & 2 are left to the HRProprietary conversation.
+
+AN APPLICATION THAT DRAWS PAGES MAY SERVE NO LOCATION. Met in v0.9.9.
+The warning on every page is fixed in engine.php, above. Two quieter assumptions remain, in files left plain.
+-fp prints DATA Directory unchecked with a warning, & -v prints Live exposure UNVERIFIED, for an application
+whose contract gives no location the served role, where Not served would be true. And every web request
+makes the hosted DATA folder & its session folders, $ConvertTemp, which such an application never writes.
+Proposed: say Not served, & make the hosted DATA folder only for an application that serves it.
+
+THE FILE LIFETIME SWEEP REACHES EVERY PLAIN FILE AT THE TOP OF A USER'S FOLDER. Met in v0.9.9.
+The Engine lets a signed in user choose how long their files are kept, & the Authentication Manager removes
+any plain file at the top of their folder older than that. That fits a converter's output & not a cloud's
+library. HRCloud3's settings page does not offer it, so every account keeps the default, which keeps every
+file. The build that adds libraries keeps them out of the sweep's reach, or proposes a sweep scoped to the
+folders an application names.
 
 THE DOCUMENTATION CHECKER KNOWS ONLY THE EXAMPLE'S CODE. Met in v0.9.8.
 hrconvert2-doccheck.py reports 38 names in ERROR_DESCRIPTIONS.txt, labels & functions only HRConvert2's

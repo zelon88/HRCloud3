@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 
 FILE INFORMATION ...
-v0.9.8.
+v0.9.9.
 This file contains a list of itemized changes made in each iteration of the application.
 Entries from v0.9.7 down are the prototype's development notes, kept as they were written.
 
@@ -24,6 +24,21 @@ The authoritative list of dependencies is Resources/Engine/depends.php & Resourc
 <3 Open-Source
 -----------------------------------------------------------------------------------
 
+
+--------------------
+COMMIT 11/27/2026
+v0.9.9 - The first web interface, built by a new Engine core.
+
+-v0.9.9.
+-New UI/Default interface: the sign in pages, a taskbar, an empty App Launcher, settings, an English pack, seven colors & the HRC3- scripts.
+-New Page Core, Resources/Engine/Cores/pageCore.php (v4.3.4ur). It builds every page from an interface's components. Every interface inherits from Default.
+-With verbose logging on, each page is logged with the version & fingerprint of every file it was built from. --Mark Page Components-- marks each component in the page.
+-A signed in user can change their password or email address. Authentication Core v4.2.3ur & Email Core v4.2.0ur.
+-The Engine no longer warns on every page of an application that serves no location.
+-New interface settings in config.php. Errors 51000 to 51003 are the Page Core's.
+-HRCloud3 does not offer the Engine's file lifetime. A user's files are kept until they delete them.
+-New ABOUT_PAGES.txt & CREATING_INTERFACES.txt. New test_pages-cli.php. test_hrcloud3-cli.php sends the pages web requests.
+-ENGINE_RECONCILIATION_HRCLOUD3.txt lists every Engine change, notes that the sign in pages are an interface's & proposes displayCore & displayManager for the compositor.
 
 --------------------
 COMMIT 11/26/2026

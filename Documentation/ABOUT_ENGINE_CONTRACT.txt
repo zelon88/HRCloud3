@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
 
 FILE INFORMATION ...
-v3.8.9.
+v3.8.9ur.
 This plain text file is the contract between an application and the Engine it bundles.
 
 HARDWARE REQUIREMENTS ...
@@ -608,6 +608,28 @@ The Engine names the signed in user to the listener itself, through storageQuota
 workflow's worker through engineWorkerContext(), so the application changes nothing for a quota or a
 worker. An application also pins $RequiredAuthenticationCoreVersion & $RequiredEmailCoreVersion, as
 it pins every Engine core, & -v reports both. See ABOUT_AUTHENTICATION.txt.
+
+AN APPLICATION MAY HAVE THE ENGINE BUILD ITS PAGES, FROM v4.3.4ur.
+The Page Core builds a page for a browser from the components of an interface, & an application
+that uses it pins $RequiredPageCoreVersion, $RequiredInterfaceVersion & $RequiredLanguageVersion &
+names five values in its contract, each read with isset() & each with a default.
+  $EngineInterfaceFolder     The folder holding every interface, relative to the installation. UI.
+  $EngineBaseInterface       The interface every other inherits from & falls back to. Default.
+  $EnginePages               Each page by name, with the component files it is drawn from, in order.
+  $EngineInterfaceAssets     Each file a page links by name, such as Stylesheet, with its path inside
+                             an interface.
+  $EnginePageDataProvider    The function that gives a page the application's own values, which a
+                             component reads as $PageData. It accepts the page being drawn.
+The administrator's choice of interfaces, languages & colors is read through $EngineSettingNames,
+as SupportedInterfaces, DefaultInterface, AllowUserSelectableInterface, SupportedLanguages,
+DefaultLanguage, AllowUserSelectableLanguage, SupportedColors, DefaultColor, AllowUserSelectableColor
+& MarkPageComponents, so the application calls them what it likes. It makes three calls.
+  loadPageCore()               The Engine's. It loads the Page Core the application pins.
+  preparePages()               Chooses the interface, the language & the color a request is drawn with.
+  buildEnginePage()            Builds the page it is handed & sends it. Where the Engine's answer was
+                               page, the application hands it the page drawn from engineGui.php.
+-v reports every interface & language pack offered. See ABOUT_PAGES.txt. HRCloud3 is the first
+application that uses it, & names applicationPageData().
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
