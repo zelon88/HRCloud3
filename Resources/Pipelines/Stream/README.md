@@ -1,0 +1,38 @@
+# The Stream pipeline
+
+The Stream pipeline converts files. It accepts 6 input format(s) & produces 27 output format(s).
+
+This file is written by `Documentation/Build/hrconvert2-approvals.py --readme`.
+It is rewritten from the pipeline's own declarations & from the dependency manifest,
+so it cannot drift from either. Do not edit it by hand.
+
+## What it declares
+
+- **Version** v4.3.4
+- **Kind** conversion
+- **Family** Stream
+- **Entry point** convertStreams
+- **Subsystem** Audio, Video & Streams
+- **Available to** every surface
+- **Offered where** FFMPEG is installed
+
+## Formats
+
+**Accepts** m3u, m3u8, pls, mpd, asx, xspf
+
+**Produces** 3gp, mkv, avi, mp4, mpeg, wmv, mov, m4v, ogv, webm, flv, ts, mpg, mp3, aac, ogg, wma, mp2, flac, m4a, wav, oga, opus, aiff, au, ac3, mka
+
+## Dependencies
+
+- **Bubblewrap** (required, 0.4 or newer, LGPL-2.0). Isolates every conversion from the host & the network.
+- **Curl** (required, 7.0 or newer, curl). Fetches update packages & remote streams.
+- **FFMPEG** (optional, 6.1 or newer, LGPL-2.1). Converts audio, video, subtitles & captures streams.
+- **Procps** (optional, GPL-2.0-or-later). Says whether a worker is still running & counts the web server's workers. Without it a stream is taken to have finished as it starts.
+
+## Approval
+
+`DEPENDENCY_APPROVALS.txt` beside this file is the official record for every
+dependency listed above. It holds the approval status, the approval & expiry dates,
+& the audit answers. That record is authoritative & this README is a summary of it.
+
+The procedure behind it is `Documentation/ABOUT_DEPENDENCIES.txt`.

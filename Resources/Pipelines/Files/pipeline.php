@@ -1,0 +1,267 @@
+<?php
+// / -----------------------------------------------------------------------------------
+// / Copyright Information ...
+// / HRConvert2, Copyright on 9/8/2026 by Justin Grimes, www.github.com/zelon88
+// /
+// / License Information ...
+// / This project is protected by the GNU GPLv3 Open-Source license.
+// / https://www.gnu.org/licenses/gpl-3.0.html
+// /
+// / File Information ...
+// / v4.1.8.
+// / The Files pipeline. Operations on a file that do not care what is inside it.
+// /
+// / Every path arrives as an argument.
+// / Nothing here reads a session global, so any application can use it.
+// / Each function is handed the directory it may touch & refuses everything outside it.
+// /
+// / <3 Open-Source
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / A component may only be loaded by the core.
+if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRConvert2-2: This file cannot be loaded directly!');
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / A function to list the files in one directory.
+// / Accepts the directory.
+// / Returns whether it could be read & the plain file names found.
+// / It returns names only, never paths, so no caller can be handed a path from somewhere else.
+// / Directories & dot entries are omitted, & a caller walking a tree asks for each directory it enters.
+// / It filters nothing else, because which formats an application refuses is that application's policy.
+function listFilesInDirectory($permittedDirectory) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $DirectoryWasRead = FALSE;
+  $FileNames = array();
+  $resolvedDirectory = $candidateName = '';
+  $directoryEntries = array();
+  $resolvedDirectory = (string)@realpath((string)$permittedDirectory);
+  if ($resolvedDirectory === '' or !is_dir($resolvedDirectory)) warningEntry('A file listing was requested for a directory that does not resolve.');
+  else {
+    $directoryEntries = @scandir($resolvedDirectory);
+    if (!is_array($directoryEntries)) warningEntry('A directory resolved & could not be read. The permissions may not allow it.');
+    else {
+      $DirectoryWasRead = TRUE;
+      foreach ($directoryEntries as $candidateName) {
+        if ($candidateName === '.' or $candidateName === '..') continue;
+        if (is_dir($resolvedDirectory.DIRECTORY_SEPARATOR.$candidateName)) continue;
+        $FileNames[] = $candidateName; } } }
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $resolvedDirectory, $candidateName, $directoryEntries, $permittedDirectory);
+  return array($DirectoryWasRead, $FileNames); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to read the size & the modification time of files in one directory.
+// / Accepts the directory & the names to describe.
+// / Returns whether the directory could be read & a record for each name, keyed by the name, in that order.
+// / A record holds Size, in bytes, & Modified, as a Unix time.
+// / Every name is sanitized & resolved, & one that resolves outside the directory is left out, as for a removal.
+// / A name that is not a file is left out too, so a caller can tell a described file from one it asked about.
+// / Nothing is opened, so describing a file never reads what it holds.
+function describeFilesInDirectory($permittedDirectory, $namesToDescribe) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $DirectoryWasRead = FALSE;
+  $FileRecords = array();
+  $resolvedDirectory = $candidateName = $cleanName = $candidatePath = $resolvedPath = '';
+  $nameIsSanitized = FALSE;
+  $fileFacts = array();
+  $resolvedDirectory = (string)@realpath((string)$permittedDirectory);
+  if ($resolvedDirectory === '' or !is_dir($resolvedDirectory)) warningEntry('A file description was requested for a directory that does not resolve.');
+  else {
+    $DirectoryWasRead = TRUE;
+    foreach ((array)$namesToDescribe as $candidateName) {
+      // / The name the file before it was given is shredded first, as redeclare() would, because a list() cannot pass through redeclare().
+      purgeSensitiveMemory($EnableMemoryProtection, $cleanName);
+      list ($cleanName, $nameIsSanitized) = sanitize($candidateName, TRUE);
+      if (!$nameIsSanitized or !is_string($cleanName) or $cleanName === '' or $cleanName === '.' or $cleanName === '..') continue;
+      redeclare($candidatePath, $resolvedDirectory.DIRECTORY_SEPARATOR.$cleanName);
+      redeclare($resolvedPath, (string)@realpath($candidatePath));
+      // / A path that does not sit inside what the caller permitted is left out whatever it looks like.
+      if ($resolvedPath === '' or strpos($resolvedPath, $resolvedDirectory.DIRECTORY_SEPARATOR) !== 0 or !is_file($resolvedPath)) continue;
+      redeclare($fileFacts, @stat($resolvedPath));
+      if (is_array($fileFacts)) $FileRecords[$cleanName] = array('Size' => (int)$fileFacts['size'], 'Modified' => (int)$fileFacts['mtime']); } }
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $resolvedDirectory, $candidateName, $cleanName, $candidatePath, $resolvedPath, $nameIsSanitized, $fileFacts, $permittedDirectory, $namesToDescribe);
+  return array($DirectoryWasRead, $FileRecords); }
+// / -----------------------------------------------------------------------------------
+// / A function to place a file into one directory.
+// / Accepts the directory that may be written, the source path, the name to give it & the permissions to set.
+// / Returns whether it landed & the name it was given.
+// / The name is sanitized here & the destination is resolved, as for a removal.
+// / The caller controls the name & the content, so a name that traverses would write where nobody permitted.
+// / The source is not sanitized, because it is a file this application already knows the path of.
+// / An existing file of the same name is replaced.
+function placeFileInDirectory($permittedDirectory, $sourcePath, $destinationName, $permissionLevel) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $FileWasPlaced = FALSE;
+  $PlacedName = '';
+  $resolvedDirectory = $destinationPath = $resolvedDestination = '';
+  $nameIsSanitized = FALSE;
+  $resolvedDirectory = (string)@realpath((string)$permittedDirectory);
+  if ($resolvedDirectory === '' or !is_dir($resolvedDirectory)) warningEntry('A file placement was requested in a directory that does not resolve.');
+  else if (!is_file((string)$sourcePath) or !is_readable((string)$sourcePath)) warningEntry('A file placement named a source that is not a readable file.');
+  else {
+    list ($destinationName, $nameIsSanitized) = sanitize($destinationName, TRUE);
+    if (!$nameIsSanitized or !is_string($destinationName) or $destinationName === '' or $destinationName === '.' or $destinationName === '..') warningEntry('A file placement named something that could not be sanitized. It was refused.');
+    else {
+      $destinationPath = $resolvedDirectory.DIRECTORY_SEPARATOR.$destinationName;
+      // / The PARENT is resolved rather than the destination, because the destination does
+      // / not exist yet & realpath on a path that is not there returns nothing.
+      $resolvedDestination = (string)@realpath(dirname($destinationPath));
+      if ($resolvedDestination !== $resolvedDirectory) warningEntry('A file placement resolved outside the directory it was permitted. It was refused.');
+      else {
+        if (file_exists($destinationPath)) @unlink($destinationPath);
+        if (@copy((string)$sourcePath, $destinationPath)) {
+          @chmod($destinationPath, $permissionLevel);
+          $FileWasPlaced = TRUE;
+          $PlacedName = $destinationName; }
+        else warningEntry('A file could not be placed. The permissions or the disk may not allow it.'); } } }
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $resolvedDirectory, $destinationPath, $resolvedDestination, $nameIsSanitized, $permittedDirectory, $sourcePath, $destinationName, $permissionLevel);
+  return array($FileWasPlaced, $PlacedName); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to rename a file within one directory.
+// / Accepts the directory that may be touched, the file's name & the name to give it.
+// / Returns whether it was renamed & whether the new name was already taken, in that order.
+// / Both names are sanitized, & a name that changed under sanitizing is refused, as a name somebody built rather than picked.
+// / The file must be a plain file in the directory itself, reached through no link, as a file to remove must.
+// / A taken name is never written over. The file is linked to its new name, which fails rather than replaces when the name is taken, & its old name is removed after.
+// / A filesystem that cannot link falls back to a rename, once the new name is found to be free.
+// / Which name is free is the caller's to decide, so a taken name is reported, & no other name is tried here.
+function renameFileInDirectory($permittedDirectory, $currentName, $newName) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $FileWasRenamed = $NameWasTaken = FALSE;
+  $resolvedDirectory = $cleanCurrent = $cleanNew = $currentPath = $resolvedCurrent = $newPath = '';
+  $currentIsSanitized = $newIsSanitized = FALSE;
+  $resolvedDirectory = (string)@realpath((string)$permittedDirectory);
+  list ($cleanCurrent, $currentIsSanitized) = sanitize($currentName, TRUE);
+  list ($cleanNew, $newIsSanitized) = sanitize($newName, TRUE);
+  if ($resolvedDirectory === '' or !is_dir($resolvedDirectory)) warningEntry('A file rename was requested in a directory that does not resolve. Nothing was renamed.');
+  else if (!$currentIsSanitized or !$newIsSanitized or !is_string($cleanCurrent) or !is_string($cleanNew) or $cleanCurrent !== (string)$currentName or $cleanNew !== (string)$newName or in_array($cleanCurrent, array('', '.', '..'), TRUE) or in_array($cleanNew, array('', '.', '..'), TRUE)) warningEntry('A file rename named something that could not be sanitized. It was refused.');
+  else {
+    $currentPath = $resolvedDirectory.DIRECTORY_SEPARATOR.$cleanCurrent;
+    $resolvedCurrent = (string)@realpath($currentPath);
+    $newPath = $resolvedDirectory.DIRECTORY_SEPARATOR.$cleanNew;
+    clearstatcache(TRUE, $newPath);
+    if ($resolvedCurrent !== $currentPath or is_link($currentPath) or !is_file($currentPath)) warningEntry('A file rename named something that is not a file in the directory it was permitted. It was refused.');
+    else if (file_exists($newPath) or is_link($newPath)) $NameWasTaken = TRUE;
+    else if (@link($currentPath, $newPath)) {
+      if (@unlink($currentPath)) $FileWasRenamed = TRUE;
+      // / The file holds both names now, so the new one is taken away again, & a rename that cannot finish leaves the file as it was.
+      else {
+        @unlink($newPath);
+        warningEntry('A file could not be renamed. The permissions or the mount may not allow it.'); } }
+    else {
+      clearstatcache(TRUE, $newPath);
+      if (file_exists($newPath) or is_link($newPath)) $NameWasTaken = TRUE;
+      else if (@rename($currentPath, $newPath)) $FileWasRenamed = TRUE;
+      else warningEntry('A file could not be renamed. The permissions or the mount may not allow it.'); } }
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $resolvedDirectory, $cleanCurrent, $cleanNew, $currentPath, $resolvedCurrent, $newPath, $currentIsSanitized, $newIsSanitized, $permittedDirectory, $currentName, $newName);
+  return array($FileWasRenamed, $NameWasTaken); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to remove files from one directory.
+// / Accepts the directory that may be touched & the names to remove.
+// / Returns whether every removal succeeded, how many were attempted & how many went.
+// / A name that resolves outside the directory is refused rather than followed.
+// / Every name is sanitized & resolved, & the resolved path is compared against the resolved directory.
+// / A sanitized name can still traverse when the directory itself is a symlink.
+// / A name with nothing under it in this directory was never here, so it is passed over quietly & counts as attempted.
+// / deleteFiles() asks in the session & in the temporary folder, & a file is usually in only one of them.
+// / A link is never passed over that way, so a link leading anywhere is still resolved & refused.
+function removeFilesFromDirectory($permittedDirectory, $namesToRemove) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $RemovalComplete = TRUE;
+  $NamesAttempted = $NamesRemoved = 0;
+  $resolvedDirectory = $candidateName = $candidatePath = $resolvedPath = '';
+  $nameIsSanitized = FALSE;
+  $resolvedDirectory = (string)@realpath((string)$permittedDirectory);
+  if ($resolvedDirectory === '' or !is_dir($resolvedDirectory)) {
+    warningEntry('A file removal was requested in a directory that does not resolve. Nothing was removed.');
+    $RemovalComplete = FALSE; }
+  else {
+    if (!is_array($namesToRemove)) $namesToRemove = array($namesToRemove);
+    foreach ($namesToRemove as $candidateName) {
+      $NamesAttempted++;
+      list ($candidateName, $nameIsSanitized) = sanitize($candidateName, TRUE);
+      // / A name that changed under sanitizing is a name somebody built rather than picked.
+      if (!$nameIsSanitized or !is_string($candidateName) or $candidateName === '' or $candidateName === '.' or $candidateName === '..') {
+        warningEntry('A file removal named something that could not be sanitized. It was refused.');
+        $RemovalComplete = FALSE;
+        continue; }
+      $candidatePath = $resolvedDirectory.DIRECTORY_SEPARATOR.$candidateName;
+      clearstatcache(TRUE, $candidatePath);
+      if (!file_exists($candidatePath) && !is_link($candidatePath)) continue;
+      $resolvedPath = (string)@realpath($candidatePath);
+      // / The path is resolved & compared against the resolved directory. A path that does not sit
+      // / inside what the caller permitted is refused whatever it looks like.
+      if ($resolvedPath === '' or strpos($resolvedPath, $resolvedDirectory.DIRECTORY_SEPARATOR) !== 0) {
+        warningEntry('A file removal resolved outside the directory it was permitted. It was refused.');
+        $RemovalComplete = FALSE;
+        continue; }
+      if (!is_file($resolvedPath)) {
+        warningEntry('A file removal named something that is not a file. It was refused.');
+        $RemovalComplete = FALSE;
+        continue; }
+      if (@unlink($resolvedPath)) $NamesRemoved++;
+      else {
+        warningEntry('A file could not be removed. The permissions or the mount may not allow it.');
+        $RemovalComplete = FALSE; } } }
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $resolvedDirectory, $candidateName, $candidatePath, $resolvedPath, $nameIsSanitized, $permittedDirectory, $namesToRemove);
+  return array($RemovalComplete, $NamesAttempted, $NamesRemoved); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / The entry point the Pipeline Core calls.
+// / Accepts the operation, the directory that may be touched & the names it applies to.
+// / Returns whether it completed & a short description of what happened.
+// /
+// / One entry point & an operation name, rather than one entry point per operation. A
+// / pipeline declares a single entry point, & a file pipeline that could only delete would
+// / need a second pipeline to list.
+function operateOnFiles($requestedOperation, $permittedDirectory, $namesToOperateOn) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $OperationCompleted = FALSE;
+  $OperationSummary = '';
+  $namesAttempted = $namesRemoved = 0;
+  $listedNames = array();
+  $placedName = '';
+  $nameWasTaken = FALSE;
+  if ($requestedOperation === 'list') {
+    list ($OperationCompleted, $listedNames) = listFilesInDirectory($permittedDirectory);
+    $OperationSummary = 'Listed '.count($listedNames).' file(s).'; }
+  else if ($requestedOperation === 'place') {
+    // / place takes a source & a name where the others take a list, so the caller passes
+    // / them as the two entries of $namesToOperateOn rather than through a wider signature
+    // / that every other operation would have to ignore.
+    list ($OperationCompleted, $placedName) = placeFileInDirectory($permittedDirectory, isset($namesToOperateOn[0]) ? $namesToOperateOn[0] : '', isset($namesToOperateOn[1]) ? $namesToOperateOn[1] : '', 0644);
+    $OperationSummary = $OperationCompleted ? 'Placed '.$placedName.'.' : 'Nothing was placed.'; }
+  else if ($requestedOperation === 'rename') {
+    // / rename takes a name & the name to give it, which the caller passes as the two entries of $namesToOperateOn, as place does.
+    list ($OperationCompleted, $nameWasTaken) = renameFileInDirectory($permittedDirectory, isset($namesToOperateOn[0]) ? $namesToOperateOn[0] : '', isset($namesToOperateOn[1]) ? $namesToOperateOn[1] : '');
+    $OperationSummary = $OperationCompleted ? 'Renamed 1 file.' : ($nameWasTaken ? 'The new name is taken.' : 'Nothing was renamed.'); }
+  else if ($requestedOperation === 'remove') {
+    list ($OperationCompleted, $namesAttempted, $namesRemoved) = removeFilesFromDirectory($permittedDirectory, $namesToOperateOn);
+    $OperationSummary = 'Removed '.$namesRemoved.' of '.$namesAttempted.' file(s).'; }
+  else {
+    warningEntry('The Files pipeline was asked for an operation it does not have: '.(string)$requestedOperation.'.');
+    $OperationSummary = 'This pipeline does not have that operation.'; }
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $namesAttempted, $namesRemoved, $listedNames, $placedName, $nameWasTaken, $requestedOperation, $permittedDirectory, $namesToOperateOn);
+  return array($OperationCompleted, $OperationSummary); }
+// / -----------------------------------------------------------------------------------

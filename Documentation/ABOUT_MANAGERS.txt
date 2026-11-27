@@ -1,0 +1,247 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRProprietary Engine, Copyright on 9/3/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
+
+FILE INFORMATION ...
+v3.8.8.
+This plain text file describes the manager processes, what each one is responsible for, and why a manager is not the same thing as a Core.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+A manager requires PHP & a filesystem that supports unix sockets. Nothing else.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Cores & Managers Being Different Things--
+
+THE WORD MANAGER WAS OVERLOADED & THAT IS WHY THIS FILE EXISTS.
+
+A CORE IS A COMPONENT. IT IS A FILE.
+It owns a domain, it is called on demand, it runs inside the caller's process, it does its
+work & it returns. Setup Core owns installation. Dependency Core owns dependencies.
+Pipeline Core owns pipeline dispatch. A Core extends what the application can DO.
+See ABOUT_COMPONENTS.txt for how a Core is verified & loaded.
+
+A MANAGER IS A ROLE A PROCESS RUNS UNDER.
+It has a lifetime measured in days, a socket, a supervisor & a place in a budget. A manager
+extends WHEN & UNDER WHAT CONSTRAINTS work happens.
+Each role has a file of its own under Resources/Engine/Managers. The Engine pins all four in
+getAcceptedManagers & loadEngineManager loads one only in a process dispatched to that role,
+so a process running as one role never parses the other three.
+
+coreManager.php is the core-manager role, the listener, which starts & supervises the other
+three. It keeps the name for historical reasons. The roles are core-manager,
+resource-manager, worker-manager & request-manager.
+
+TWO FILES THERE ARE NOT ROLES. environmentManager.php is root's, & only root loads it.
+authenticationManager.php is a library of the Authentication Core's, from v4.2.0. The Engine pins
+it with the four roles, & any process of the web server account loads it when it needs it. The
+resource-manager loads it to keep a user's quota & to sweep accounts after it sweeps the data
+locations, a web request loads it to sweep accounts, & --account loads it to change one. It
+starts nothing & has no socket. See ABOUT_AUTHENTICATION.txt.
+
+THIS DISTINCTION WAS LOAD BEARING WHEN THIS MACHINERY BECAME A SHARED ENGINE.
+The managers are the part of this application that has nothing to do with converting files.
+A virus scanner dispatching workers wants sockets, budgets, worker tracking & supervision,
+& gets all four from the Engine unchanged. See ABOUT_ENGINE_CONTRACT.txt for what moved.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Four Roles--
+
+  core-manager      The listener. Started by -l or by a service unit. It owns the other
+                    three, restarts one that dies, routes every request to the role that
+                    answers it, & is the only one an operator starts.
+
+  resource-manager  Polls the host. Load average, memory, processor count, the web server
+                    account's user namespaces & the free space on every disk holding a data
+                    location. Calculates the budget every operation is granted from, grants &
+                    reclaims it, refuses a write a disk has no room for, keeps the worker
+                    registry & the session map, & finds a worker that has outlived its
+                    expected runtime. From v4.2.0 it refuses a write that would take a signed
+                    in user past their quota, & sweeps accounts.
+
+  worker-manager    Ends the worker it is told to end. It keeps no registry of its own & is
+                    the only role that acts on a process without negotiation.
+
+  request-manager   Owns the only socket a worker may address. It validates a worker's
+                    request & forwards it, so a budget request reaches the resource-manager
+                    without a worker ever addressing it. A worker may ask for a budget, return
+                    or extend one, ask which data location its session uses, & ask whether a
+                    write that takes no budget, such as an upload, may go ahead.
+
+A manager that is not running is not an error. Conversions run without resource awareness &
+every budget request is approved. --Require Resource Awareness-- inverts that for an
+operator who would rather refuse work than accept work they cannot account for.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About How They Talk--
+
+UNIX SOCKETS IN A DIRECTORY AT 0700, INSIDE THE DATA LOCATION.
+
+Every message is encrypted with AES-256-GCM under a key derived from the install secret,
+carries a random initialization vector & an authentication tag, & is base64 encoded for
+transport. A message also carries a timestamp, & one outside $ManagerMessageSkew seconds is
+refused.
+
+THE TIMESTAMP WINDOW IS NOT A REPLAY DEFENCE ON ITS OWN.
+A captured message can be replayed inside that window. The socket directory is 0700 & owned
+by the web server user, so the exposure is small, but the window bounds how long a captured
+message is useful rather than preventing it being used at all. This is worth knowing before
+anybody relies on it for something larger.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Startup Keys--
+
+A MANAGER PROVES IT WAS STARTED BY THIS CORE & NOT BY SOMEBODY ELSE.
+
+deriveStartupKey() draws a launch number at random & produces an HMAC over the install
+secret, a purpose, a short time bucket & that number, & the key is the number & the HMAC.
+validateStartupKey() accepts the current bucket or the one before it, because process launch
+is not instant. Every launch mints a key of its own, so a listener stopped & started again
+inside one bucket is not refused as a replay of itself, as it was until v4.1.9. A key without
+a launch number, as a listener an earlier release started mints until it is restarted, is
+still accepted.
+
+THE KEY TRAVELS IN THE ENVIRONMENT & NEVER ON THE COMMAND LINE.
+/proc/PID/cmdline is world readable. A key placed there is visible in ps to every local
+account for the whole life of the process, & a listener runs for days, so the key sat in
+plain view long after the ten second window that made it useful had closed.
+/proc/PID/environ is readable only by the owner. The child clears the variable the moment
+it reads it, so nothing the manager launches later inherits it.
+
+A KEY THAT CROSSED A PROCESS BOUNDARY IS SPENT WHEN IT VALIDATES.
+Time alone cannot make a leaked key dead. Whoever holds a copy validates it against the same
+clock this application does, so the window decides only how long they have & never whether
+they succeed. Spending the key is the part this application controls.
+
+A KEY DERIVED & CHECKED INSIDE ONE PROCESS IS NOT SPENT.
+It never left the process, so nobody else holds a copy to replay.
+
+THE LEDGER OF SPENT KEYS HAS A CEILING & IT IS WORTH KNOWING WHERE.
+It holds hashes rather than keys, so reading it grants nothing. It is read & written again
+under one lock, so managers spending their keys at the same moment each record theirs. It
+defends against a key that leaked. It does NOT defend against an account holding the install
+secret. Deleting the ledger un-spends a captured key, & the only accounts that can delete it
+are root & the web server user, both of which can already read the secret, root:www-data 0640,
+& mint a valid key directly.
+Losing the ledger to either of them costs nothing that was not already lost.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Worker Identity--
+
+A PROCESS IDENTIFIER ON ITS OWN DOES NOT IDENTIFY A PROCESS.
+
+The kernel reuses numbers. A worker that exited can have its number taken by something
+unrelated within the life of one conversion, & a manager acting on that number alone would
+terminate a process this application never started, as root.
+
+Registration records the kernel start time from field 22 of /proc/PID/stat beside the
+number. A new process occupying the same number necessarily started later, so the pair is
+an identity that cannot be inherited.
+
+  findStaleWorkers()        reports a reused number as exited rather than as overdue.
+  terminateWorkerProcess()  refuses to signal when the recorded start time does not match.
+
+A caller with no recorded identity passes zero, which skips the check. That is deliberate,
+so a caller holding only a number still behaves the way it always did.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Budget--
+
+A BUDGET IS A NUMBER OF COST UNITS, NOT A NUMBER OF WORKERS.
+
+resource-manager calculates it from the processor count, reduces it by a configured reserve
+share, & reduces it again by the pressure the host is under. It grants a token against what
+is left & takes it back when the work is finished or abandoned. request-manager only carries
+the request to it.
+
+A CONVERSION THAT IS REFUSED IS NOT A FAILURE. IT IS A DEFERRAL.
+The refusal says the machine is busy rather than that the file cannot be converted.
+
+TWO ARITHMETIC TRAPS ARE WORTH KNOWING ABOUT.
+
+  MemAvailable is absent on kernels before Linux 3.14 & in some container runtimes.
+  Calculating memory pressure regardless read the initialized zero as no memory available,
+  reported 100 percent pressure, drove the usable budget to zero, & refused every conversion
+  on the machine permanently with nothing in the log naming the cause. The percentage is
+  only calculated when the figure was actually read.
+
+  A reserve share above 100 percent reserved more than the whole budget & refused everything
+  in the same silent way. It is clamped, with a warning.
+
+Both are the same mistake. An absent signal read as a zero reading.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Supervising A Detached Worker--
+
+A CONVERSION THAT OUTLIVES THE REQUEST IS SUPERVISED BY THE CORE AFTER THE USER IS SERVED.
+
+A pipeline that launches such a process returns its identifier as the sixth value of the
+pipeline contract. convert() records it, convertFiles() treats the file as present rather
+than judging it by an output that does not exist yet, & the Engine's finishWebRequest() reaps
+it after the connection has closed. The main logic reaped it until v4.2.4.
+
+Streaming is the reference implementation & is no longer the only permitted user.
+$StreamWatchTimeout bounds supervision for every such pipeline.
+
+THE NAMES ARE HISTORICAL & ARE STAYING THAT WAY.
+$WaitForStream, $StreamPID, $StreamOutputPath, $StreamWatchTimeout & waitForStream() all
+carry streaming in their names because streaming was the first user of this path. Renaming
+$StreamWatchTimeout would silently reset that setting to a default on every installation in
+the world at the next update, & a supervision window quietly changing length is not a
+surprise worth handing anybody. Read them as saying worker wherever they say stream.
+
+See ABOUT_PIPELINE_COMPONENTS.txt, contract 5, before writing a pipeline that uses this.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Starting & Stopping--
+
+  php convertCore.php -l          Start the listener. It forks & returns.
+  php convertCore.php --status    Report what is running, & the budget.
+  php convertCore.php -k          Stop the listener & every manager it started.
+
+A container has no systemd, so the entrypoint starts the listener directly when the
+configuration asks for one. A bare metal installation uses a service unit, which Setup Core
+writes, so a service manager can watch the real process rather than a fork of it.
+
+The foreground entry point exists for that service unit. It does not fork & does not return,
+so systemd can restart it when it dies & report its true state.
+
+A STOP SIGNAL STOPS THE LISTENER AS -k DOES. systemctl stop sends TERM to the Core Manager alone,
+& the unit's KillMode=mixed kills whatever is left once it exits. The Core Manager answers TERM by
+sending each subordinate TERM & waiting for it to go, for up to twenty seconds, & kills one still
+running after that, so nothing is left for systemd to kill. Until v4.0.6 nothing answered TERM, &
+systemd killed the three subordinates on every stop. Where PHP cannot handle a signal, which needs
+pcntl, the Core Manager says so as it starts, & a stop kills the subordinates as it always did.
+
+EVERY MANAGER MOVES ON TO THE LOGFILE IT SHOULD BE WRITING, once a minute. A logfile is named for
+its date & moves on to the next once it reaches --Maximum Log File Size--, & a manager runs for
+weeks, so each loop asks the application through $EngineLogProvider. Until v4.0.6 a manager kept
+the logfile it started with, whatever the date & whatever its size.
+
+A WORKER AN APPLICATION STARTS FOR ITSELF IS NOT A MANAGER'S, FROM v4.3.1. startApplicationWorker()
+starts one of an application's own arguments as a process that outlives its command. No manager is
+told of it. It is in no manager's state, holds no token of the budget, & -k does not stop it.
+The managers run as the web server's account & track that account's work. A worker root starts
+does root's work, & root believes nothing that account can write, so such a worker is the
+application's to watch & to stop.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

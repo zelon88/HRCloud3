@@ -1,2 +1,0 @@
-<?php
-$UACData = array(array('','',''));

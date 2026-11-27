@@ -1,0 +1,106 @@
+<?php
+// / -----------------------------------------------------------------------------------
+// / Copyright Information ...
+// / HRConvert2, Copyright on 9/22/2026 by Justin Grimes, www.github.com/zelon88
+// /
+// / License Information ...
+// / This project is protected by the GNU GPLv3 Open-Source license.
+// / https://www.gnu.org/licenses/gpl-3.0.html
+// /
+// / Application Information ...
+// / This application is designed to provide a web-interface for converting file formats on
+// / a server for users of any web browser without authentication.
+// /
+// / File Information ...
+// / v4.2.8.
+// / This file declares what the Archive conversion pipeline is & what it can do.
+// / It is read by pipelineCore.php on every request & it must stay cheap.
+// / It assigns variables & does nothing else, with no functions, no logic & no output.
+// / Error block 13000, 13006 through 13011, 13013, 13014, 13105 through 13108 belongs to this pipeline.
+// / It also raises 39000 through 39003, which belong to the archiveExtraction.php shared module it extracts with.
+// / See Documentation/ABOUT_PIPELINE_COMPONENTS.txt for what each declaration means.
+// /
+// / <3 Open-Source
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / A component may only be loaded by the core.
+if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRConvert2-34000, A pipeline configuration cannot be loaded directly!'.PHP_EOL);
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / The version of this pipeline folder. Read without executing this file, then matched
+// / exactly against the pin in getAcceptedPipelines(). This version covers the whole
+// / folder, so pipeline.php beside it ships & moves with this file.
+$PipelineVersion = 'v4.2.8';
+
+// / What this pipeline is dispatched as. A conversion pipeline takes one file & returns
+// / the six value contract. An operation pipeline takes a selection & returns its own
+// / shape. An undeclared kind is a conversion pipeline.
+$PipelineKind = 'conversion';
+
+// / The family this implementation serves. The interface groups controls by this name.
+$PipelineFamily = 'Archive';
+
+// / The English fallback label. A language pack may translate it. Nothing breaks if none does.
+$PipelineDisplayName = 'Archive';
+
+// / Lower runs first when two implementations both claim a conversion.
+// / Archive sits LAST of the conversion families & only Stream is behind it. An archive
+// / extension is unambiguous, so it never competes, & anything that did compete should win.
+$PipelinePriority = 700;
+
+// / The function dispatch calls, whose name must be unique across every installed pipeline.
+// / It is defined in pipeline.php beside this file.
+$PipelineEntryPoint = 'convertArchives';
+
+// / The depends.php subsystem this pipeline needs. Dependency Core owns installation.
+// / This string must match a Subsystem name in depends.php exactly.
+// / Naming the subsystem rather than the package keeps one source of truth for the version.
+// / Its tools come from verifiedToolPath(), as the Archiver pipeline's do & as -v asks for them.
+$PipelineSubsystem = 'Archives';
+
+// / Shared modules this pipeline needs, loaded before its converter is loaded.
+// / archiveExtraction.php lists, extracts & measures an archive within the limits config.php sets, & the Extractor pipeline uses it too.
+$PipelineSharedModules = array('archiveExtraction.php');
+
+// / The request fields this pipeline actually reads.
+// / The output extension decides the target. Nothing else is read.
+$PipelineRequestFields = array('Extension');
+
+// / What this pipeline can read & what it can write.
+// / These lists are informational while $SupportedFormatDetectionType is hardcoded-only.
+// / config.php is authoritative in that mode, so an omission here cannot delete a
+// / conversion. They become authoritative in the detected modes.
+// / This is the only pipeline that rewrites its own output name.
+// / An extraction hands the user something named differently from what they asked for,
+// / which is exactly what the fifth value of the six value contract exists for. Every
+// / other pipeline returns the filename it was handed.
+// / rar is written by the RAR utility where it is installed, as config.php has long offered, from v4.2.8.
+// / The family reads what --Supported Dearchive Formats-- lists, from v4.2.8, so bz, the vhd & vdi disk images & the cbz & cbr comic
+// / archives it has long listed are read too.
+$Capabilities = array(
+  'Input' => array(
+    'zip', '7z', 'tar', 'gz', 'tgz', 'bz', 'bz2', 'tbz', 'xz', 'txz', 'rar', 'iso', 'vhd', 'vdi', 'cbz', 'cbr', 'cab', 'arj',
+    'lzh', 'lzma', 'z', 'cpio', 'deb', 'rpm', 'wim', 'dmg'),
+  'Output' => array(
+    'zip', '7z', 'tar', 'gz', 'tgz', 'bz2', 'xz', 'rar', 'iso', 'wim'));
+
+// / Pairs removed from the cross product above, written as 'input>output'.
+// / A conversion that produces the format it was handed is not a conversion. It unpacks an
+// / archive & repacks it into the same container, which costs time & gains the user nothing.
+// / tar to gz & gz to tar are NOT excluded. Compressing or decompressing a tarball is a real
+// / change & is one of the more common things anybody asks this family to do.
+// / rar & tgz are excluded from v4.2.8, because the family that serves a pair is asked before one that only claims it.
+$PipelineExclude = array(
+    'zip>zip', '7z>7z', 'tar>tar', 'gz>gz', 'tgz>tgz', 'bz2>bz2', 'xz>xz', 'rar>rar', 'iso>iso', 'wim>wim');
+
+// / The tools this pipeline cannot run without, by their names in depends.php, from v4.2.1.
+// / A pipeline is offered only where one tool of each entry is installed. An array in it names tools any one of which will do.
+// / 7-Zip reads every archive this pipeline converts, so nothing is converted without it.
+// / Each format it writes gates on its own tool as it runs, & one whose tool is missing is refused with its own error.
+$PipelineRequiredDependencies = array('7-Zip');
+// / -----------------------------------------------------------------------------------
+?>

@@ -1,0 +1,947 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRProprietary Engine, Copyright on 8/20/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
+
+FILE INFORMATION ...
+v3.7.8.
+This plain text file describes the command line arguments HRConvert2 accepts & how to use them.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+What the Engine itself needs is Resources/Engine/depends.php, & --setup installs it with the application's own half. Run  php <entry point> -v  to see what an installation has.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Command Line Arguments--
+
+HRConvert2 accepts input from the command line to provide administrative functionality & to
+support external scripting & automation.
+
+File conversions are NOT supported from the command line. Command line functionality exists
+for administrators who are maintaining, troubleshooting, or diagnosing a server.
+
+A command line invocation & a web request are mutually exclusive & always will be.
+An argument supplied on the command line disables the web interface & every conversion path
+for that invocation. The application handles the requested operation & then stops.
+Nothing falls through. An unrecognized argument displays help rather than serving a page.
+
+No session is created by a command line invocation & no user data is touched, except by the
+clean argument, which exists to touch exactly that.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--How To Use HRConvert2 From The Command Line--
+
+Begin each call with the following, substituting the path to your own installation.
+
+  sudo php /var/www/html/HRProprietary/HRConvert2/convertCore.php
+
+Then add the argument you want to use. For example.
+
+  sudo php /var/www/html/HRProprietary/HRConvert2/convertCore.php -v
+
+An argument that accepts a value takes it in either of two forms. Both are equivalent.
+
+  sudo php /var/www/html/HRProprietary/HRConvert2/convertCore.php -u=v3.6.7
+  sudo php /var/www/html/HRProprietary/HRConvert2/convertCore.php -u v3.6.7
+
+Arguments are case insensitive as of v3.9.9. -V, --CLEAN NOW & -U=V3.6.7 are the same as
+their lower case forms. A path or a name given to an option is passed exactly as typed.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--CLI User Account Considerations--
+
+HRConvert2 should be run as root when using the command line.
+
+Running as root does NOT leave anything the web server user cannot use. The data location is
+root's, & the session, cache, log & socket folders in it belong to the web server user. Root logs
+to a file of its own in Engine, which no other account can read. The install secret is kept in
+Secrets, belongs to root & is readable by the web server user's group & nobody else. Root never
+runs, reads as code, or works by name inside anything the web server user can change.
+See ABOUT_MANAGED_LOCATIONS.txt.
+
+ROOT RUNS NOTHING ANOTHER ACCOUNT COULD HAVE CHANGED. Every command run as root first reads
+the whole installation. Every name in it must belong to root & be writable by nobody else,
+no name may be a link, & every folder above it must pass the same test, /var/www/html
+included. A command that finds anything else stops with error 28008 & names what it found.
+Only the repairs run anyway, -fp, --setup & --config --repair, after a warning, because they
+are what give an installation to root. Every other account is unaffected.
+
+Running as a non root user is safe but limited. Any operation that would require write access
+the current user does not have will fail rather than partially complete. The filesystem is
+not left in a broken state. The version & help arguments work as any user.
+
+The install secret is root:www-data 0640, in a folder that is root:www-data 0750 & at the top of
+the data location, so a non root user who is not the web server user & is not in its group can
+read neither copy, & cannot even list Secrets. This is deliberate. That file derives every session
+identifier in the application. Any other account's command is given a secret of its own, in a
+folder of its own, even where that account is in the group, & so is the web server user's for
+anything but the listener's commands, -c & --status. -v names that row Per user secret.
+
+An administrator who modifies an HRConvert2 installation using external tools must leave
+every location the way -fp leaves it.
+
+  The installation        root:root, folders 0755, files 0644
+  The DATA folder in the  www-data:www-data 0700
+  hosted location
+  The data location       root:root 0755
+  Its Sessions, Cache,    www-data:www-data 0700
+  Logs & Sockets folders
+  Its Engine folder       root:root 0700
+  Its Secrets folder      root:www-data 0750
+  The install secret      root:www-data 0640, in Secrets & at the top
+  The backup              root:root 0700
+
+DO NOT GIVE THE INSTALLATION TO THE WEB SERVER USER.
+chown -R www-data was the documented repair until v4.0.1, & it let the web server user change
+code that root then runs. To correct anything, run -fp instead.
+
+  sudo php /var/www/html/HRProprietary/HRConvert2/convertCore.php -fp
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Supported Command Line Arguments--
+
+  -v, --version               Display version & dependency information.
+  -h, --help                  Display the built in help message.
+  --status                    Report listener, budget & data location state.
+  -c, --clean                 Sweep expired sessions from both data locations.
+  -c=<minutes>                Sweep sessions older than that many minutes.
+  -c=now                      Sweep every session regardless of age.
+  -u, --update                Update the application using the configured target.
+  -u=latest                   Update to the newest tagged release.
+  -u=edge                     Update to the current state of the master branch.
+  -u=v#.#.#                   Update to exactly that tagged release.
+  -fp, --fix-permissions      Correct ownership, permissions & policy files.
+  --run-environment-manager   Run one Environment Manager pass. It watches, & repairs only when allowed.
+  --rotate-secret             Replace the install secret with a new key. Every session ends.
+  --rotate-secret -y          The same, answered in advance.
+  -l, --listen                Start the resource listener.
+  -k, --kill                  Stop the resource listener.
+  -k <worker-id>              End one worker by budget token or process identifier.
+  --kill-all-workers          End every tracked conversion in progress.
+  --kill-every-worker         End every PHP process owned by the web server user.
+  -y, --yes                   Skip the confirmation prompt on the two above & on --rotate-secret.
+  --config <argument>         An entire suite of commands for configuring HRConvert2 installations.
+  --setup <argument>          An entire suite of commands for installing & managing HRConvert2 installations.
+  --pipeline <argument>       Inspect & verify the installed pipelines.
+  --workflow <argument>       List, check, export, install & remove workflows.
+  --account <argument>        List, add, confirm, disable, enable & remove accounts, set a role or a new password.
+  --build --pins              Check every version pin against what ships. A developer step.
+  --build --pins --write      Rewrite every version pin that differs from what ships.
+  --app<name>                 Handed to the application untouched. See --About --app.
+
+The -u, -fp, --run-environment-manager & --rotate-secret arguments require root.
+The -c argument requires root or the web server user, & root hands it to the web server user.
+The -l, -k, --kill-all-workers & --kill-every-worker arguments require root or the web server user.
+Root operates the listener through NONE of these itself. The listener runs as the web server
+user, records what it started in a folder that user owns, & is signalled from there, so root
+hands every one of them to that user, as it already did for -l. Root confirms the two that
+prompt, & --rotate-secret, at the terminal first. --status is relayed from that user for the
+same reason, & --rotate-secret stops & restarts the listener through it. See the sections below.
+Root refuses an installation another account could change, & only the repairs run on one.
+See --CLI User Account Considerations--.
+The -v, -h, --status & --pipeline arguments work when run as any user, & so do --workflow --list, --check & --export.
+--workflow --install, --install-staged & --remove require root.
+--workflow --discard-staged requires root or the web server user, & root hands it to the web server user.
+--account requires root or the web server user, & root hands it to the web server user.
+--build needs write access to the source tree & nothing more. It is the developer's build
+step. It rewrites source files, & an operator never has a reason to run it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Exit Status--
+
+Every command exits with a status a script can act on. As of v3.9.9.
+
+  0   The command did what was asked, or what it asks for was already true.
+  1   The command failed, found a fault, was refused or was declined. Every fatal error.
+  2   The arguments were not understood. Nothing was attempted.
+
+What it asks for being already true counts as success. -k with no listener running exits 0,
+because no listener is running afterwards & that is what was asked.
+
+A report exits 0 whatever it reports, because the report is the thing that was asked for.
+-v exits 0 with a missing or mismatched Engine, & --status exits 0 with the listener stopped.
+-v is the command that names a broken installation, so it is the one that must never fail
+to. --status needs the Engine to build its report, so without one it is refused & exits 1.
+
+A check exits 1 when it finds a fault. --setup --check-depends exits 1 when a REQUIRED
+dependency is missing or too old. An optional one costs a feature & does not fail the check.
+--pipeline --verify exits 1 when a pinned pipeline did not load.
+--workflow --list exits 1 when a workflow in either library, or the descriptions beside one, is not valid, --check
+when the file or the descriptions beside it are not, & --export when no valid workflow in either library has the
+identifier named.
+--build --pins exits 1 when a pin differs from what ships or cannot be built. With --write
+it exits 1 only when a pin could not be built or could not be written.
+
+Refusals exit 1. A command run as the wrong user, a command that needs an Engine that is
+missing or mismatched, & an answer of no at a confirmation prompt all do nothing & say so.
+
+Before v3.9.9 every command but one exited 0, whatever happened.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About   --config----
+
+Configures this installation without opening config.php in a text editor.
+
+Requires the Setup Core component. config.php has two halves, & so does the model of its settings.
+The Engine's is engineConfigModel() & HRConvert2's is applicationConfigModel() in convertCore.php,
+& every default is what Resources/Engine/config-template.php or Resources/Contract/config-template.php
+holds, or what the contract gives one of the Engine's settings in $EngineSettingDefaults.
+Requires root, except for a backup, which any account that can write the destination may take.
+
+  --config                                 Walk every section & queue changes. Nothing is written until the end.
+  --config --view                          Display every setting, its value, its default & what it depends on.
+  --config --repair                        Restore only the settings that are absent or unreadable.
+  --config --reset-all-defaults            Restore every setting this utility holds a default for.
+  --config --reset-default-section=<Name>  Restore one section.
+  --config --reset-default-variable=<Var>  Restore one setting.
+  --config --backup=<path>                 Copy config.php somewhere before changing anything.
+  -y, --yes                                Skip the confirmation prompt.
+
+Inside a section, the following commands are available.
+
+  show info                    Display the comment block for every variable in the section.
+  show comment block <Var>     Display the comment block for one variable, with its type & default.
+  show <Var>                   The same thing, typed shorter.
+  reset all                    Queue a reset of every variable in the section.
+  reset <Var>                  Queue a reset of one variable.
+  set <Var>                    Enter a new value for one variable.
+  done                         Keep everything as it is & move on. Pressing Enter does the same.
+
+NOTHING IS WRITTEN UNTIL EVERY SECTION HAS BEEN WALKED.
+Changes are collected & applied in a single write at the end, so an operator who changes their
+mind halfway has changed nothing. A timestamped backup is taken first, whether or not one was
+asked for. The new file is staged beside the original, checked with php -l, & only then moved
+into place, so a configuration that would not parse never reaches the installation.
+
+A SETTING THIS UTILITY DOES NOT KNOW IS STILL EDITABLE.
+It is reported as unaccounted, can be set by hand, & cannot be reset, because nothing in the
+model knows what it should be. This is how the utility survives a release that adds a setting
+before anybody updates the model.
+
+A RELEASE THAT ADDS A SETTING IS FOLLOWED BY  --config --repair.
+Every other command refuses with error 28000 while config.php lacks a setting the core reads,
+because a missing setting reads as nothing & silently changes what the application does.
+--config --repair adds each missing setting at the default the release ships, & changes no
+setting already there. Each goes at the end of its section, after the one before it, in the order
+the release lists them. -u does this as part of an update. After a drop in, run it before -fp.
+Once every setting is present it raises the file's stamp, $ConfigVersion, to the version the core
+requires. A stamp that is already that version or newer is left alone. With nothing missing & the
+stamp current it says so & succeeds, & asks nothing. A setting it cannot add, because the file has
+no section for it, is named, & the repair fails. A section this utility only displays, such as
+the format lists, is no exception, from v4.2.5. It is never reset, & a repair adds a setting
+missing from it, because adding one changes no value already there. Until v4.2.5 such a setting
+was neither added nor named, & the stamp was raised over the file still lacking it.
+
+EVERY COMMAND BUT A BACKUP BEGINS WITH WHAT THE FILE SAYS ABOUT ITSELF.
+Sections gives each section's count of settings. Settings that contradict each other names a
+setting whose value, because of another's, changes what the application does. --Require Resource
+Awareness-- TRUE with --Enable Resource Awareness-- FALSE is one, & refuses every request & every
+command but --config with error 31013. Settings with no effect names a setting the code does not
+read while the setting it depends on is off. A bool is off when it is FALSE, & an int at 0 or
+below, & the line names the value it has. A bool that is itself FALSE is not named, because a
+feature left off is not being ignored. Neither list blocks anything.
+The [needs ...] beside a default, & the needs line of show, say what a setting needs, as
+$Setting to be TRUE or $Setting above 0.
+From v4.1.7 a setting is said to need another only where the code reads it that way. The notes
+an earlier release printed for ten settings, & the one it printed the wrong way round, were not.
+
+NOTHING IS WRITTEN IF ANY SECTION FAILS VALIDATION.
+A section holding fewer than half, or more than one and a half times, the settings the model
+expects is treated as a parse failure rather than as a configuration problem. A file that cannot
+be read correctly cannot be edited safely, & a partial edit is worse than no edit.
+
+A section header in config.php is three dashes either side of the name. A variable label is two
+dashes indented by two spaces. Those two forms are what the parser relies on.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About   --setup----
+
+Installs, checks & audits everything this installation depends on.
+
+Requires the Dependency Core component & the dependency manifest. The two options that also
+configure & repair additionally require Setup Core.
+
+  --setup                                  List every option --setup accepts.
+  --setup --check-depends                  Report the state of every dependency. Needs root & no token.
+  --setup --install-depends                Install everything absent or too old, in manifest order.
+  --setup --update-depends                 Upgrade everything already installed. Installs nothing new.
+  --setup --uninstall-depends              Remove a subsystem. REQUIRES --subsystem.
+  --setup --output-supply-chain[=path]     Write a supply chain audit template.
+  --setup --install-service                Install the listener service & the Environment Manager timer.
+  --setup --install-complete               Install HRConvert2 & every dependency. Seven stages.
+  --setup --reinstall-existing             Reinstall this installation in place.
+  --setup --subsystem=<Name>               Restrict the operation to one subsystem.
+  -y, --yes                                Skip the confirmation prompt.
+
+EVERY OPTION ABOVE IS USED WITH --setup & NEVER ON ITS OWN.
+An option typed alone is not a command. The core recognizes it, names the command it belongs to
+& shows the correct invocation rather than reporting an unrecognized argument.
+
+--install-service ALSO WRITES THE TIMERS AN APPLICATION ASKS FOR, FROM v4.3.1.
+An application names a function in $EngineTimerProvider, & each command that function returns is
+given a service & a timer in /etc/systemd/system, as the Environment Manager is. No timer is
+enabled, & what enables each is printed. --install-complete writes them as well, & -fp writes
+again whichever are installed, so each names the installed copy & holds the calendar the
+configuration now asks for. A host without systemd is written none, & that is not a failure.
+An application that runs no listener has none to install, & from v4.3.1 the command does not exit
+1 for that. Until then it exited 1 wherever the listener was skipped, whatever else it wrote.
+
+READING NEEDS ROOT. WRITING NEEDS ROOT & A TOKEN.
+Every --setup option is root only, & is refused before it starts rather than partway through.
+This said reading needed no privileges until v3.9.9, & the code refused it all the same.
+--check-depends & --output-supply-chain read the machine & need nothing beyond root.
+Every operation that changes the machine requires root AND a token derived from the install
+secret, which proves the request arrived through convertCore.php rather than by another route.
+
+--uninstall-depends REFUSES TO RUN WITHOUT A SUBSYSTEM.
+Removing every dependency in the manifest would take PHP, Apache & the package manager with it,
+& leave a host that cannot be recovered without physical access. A dependency belonging to the
+Core subsystem, or a required part of the Sandbox subsystem, is never removed at all.
+
+--install-depends & --update-depends ALSO MAKE THE COPY OF BUBBLEWRAP EVERY SANDBOX RUNS.
+Where the kernel can restrict unprivileged namespaces, each copies the system's bubblewrap to
+/usr/local/libexec/hrconvert2/bwrap, which only root & the web server user's group may run,
+runs it as that user to prove it can, & installs the AppArmor profile attached to it, unless an
+account other than root could put a program at that path. --install-complete does the same, as
+it installs the dependencies first. A copy that already matches is left as it is, & a filter
+that does not cover the Sandbox subsystem leaves it alone. -fp never changes the copy, so run
+--update-depends after the system's bubblewrap is upgraded. -v says when it is.
+
+--install-depends & --update-depends ALSO BUILD WHAT A PACKAGE MANAGER CARRIES TOO OLD.
+An entry whose manifest declares a Fallback, as 7-Zip's does, is asked again once the package
+manager has run. Where the package manager's copy is missing or outside the window, the
+application builds its own from the source the Fallback pins, into
+/usr/local/libexec/hrconvert2/builds, & every part of the application runs that one. Ubuntu
+24.04 carries 7-Zip 23.01, & builds 26.06 this way. --update-depends takes an own build away once
+the package manager's copy answers inside the window, & builds it again where an update has moved
+the version pinned. --uninstall-depends takes it away with its package. Each of the three takes
+away what an interrupted run or a renamed entry left among the own builds. -fp never builds one.
+--check-depends & -v name an own build in service & where it is, & --check-depends says why one
+that is there is not used. See ABOUT_DEPENDENCIES.txt.
+
+--install-complete runs seven stages, in the order an installation actually depends on.
+
+  1  Dependencies.          Nothing below can be verified until the tools exist.
+  2  Data locations.        A policy cannot be written into a directory that is not there.
+  3  Permissions & policies. A converter cannot run until its policy permits it.
+  4  Configuration.         Written as a file the web server user has to read.
+  5  Listener service.      Generated from the configuration stage four settled.
+  6  Permissions again.     Stages four & five both write files.
+  7  Verification.          Reports what works rather than what was attempted.
+
+A stage that fails stops the ones after it. With -y nothing prompts & stage four keeps whatever
+config.php already declares, which for a fresh clone is the shipped defaults.
+
+The supply chain report is comma separated & opens in any spreadsheet. It carries one dependency
+per row with its licence, upstream source, purpose & detected version filled in, & eight columns
+left deliberately blank. Those columns are the audit.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About   --pipeline----
+
+Reports on the installed pipelines & checks that they are wired correctly.
+
+Requires the Pipeline Core component. Needs no privileges. It reads & reports & changes nothing.
+
+  --pipeline --list                        Every loaded pipeline with its kind, usage & version.
+  --pipeline --describe <Name>             One pipeline in full: kind, usage, entry point, what
+                                           it reads, what it writes & what it cannot run without.
+  --pipeline --verify                      Compare the pinned pipelines against those that loaded.
+  --pipeline --check-depends               Compare what each pipeline says it needs, & what it
+                                           cannot run without, against the dependency manifest.
+
+--verify is the one worth running after any change. A pipeline can be pinned, installed &
+syntactically valid & still never load, & nothing else reports it.
+--describe names what a pipeline cannot run without on its Needs line, & --check-depends says
+where each pipeline is offered, from v4.2.1. See ABOUT_PIPELINE_COMPONENTS.txt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About   --workflow----
+
+Lists, checks, exports, installs & removes workflows. See ABOUT_WORKFLOWS.txt.
+
+Requires the Workflow Core component. --list, --check & --export need no privileges & change nothing.
+
+  --workflow --list                        Every workflow in the shipped & the installed library,
+                                           whether it is usable, disabled or invalid, & why.
+  --workflow --check=<file>                Check a workflow file against this installation, & name
+                                           every problem with it. A valid workflow whose operation is
+                                           off here is named with each step that uses one.
+  --workflow --export=<id>                 Print a valid workflow from either library in canonical form,
+                                           the form a page exports & imports, & print nothing else, so
+                                           it can be written to a file with >.
+  --workflow --install=<file>              Check a workflow & install the text that was checked
+                                           into the installed library. Requires root.
+  --workflow --install-staged=<id>         Install a workflow an administrator staged from a page, as
+                                           --install installs a file, from v4.2.2. Requires root.
+  --workflow --discard-staged=<id>         Discard a workflow an administrator staged, & install
+                                           nothing, from v4.2.2. Root hands it to the web server user.
+  --workflow --remove=<id>                 Remove an installed workflow & its descriptions. Requires root.
+
+A workflow file is named for its identifier followed by -workflow.json, & it is installed under
+that name. --install never installs a file that does not check, & a file changed after the
+check cannot be installed, because what is written is the text that was checked. --remove never
+touches the shipped library. A workflow installed with the identifier of a shipped one takes its
+place, which is how one is replaced.
+From v4.2.2 a descriptions file beside the workflow file, named for its identifier followed by
+-descriptions.json, is checked & installed with it, & one that is not valid stops both. --list
+names the languages each workflow is described in, & prints what waits in Staged with the lines that
+install & discard it. See --Staging For Every User-- in ABOUT_WORKFLOWS.txt.
+
+--run-workflow <job> is not an operator command. It is how a workflow's worker is started, & a
+worker without the startup key for its job & its session refuses the job & does nothing.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About   --account----
+
+Lists & changes accounts, from v4.2.0. See ABOUT_AUTHENTICATION.txt.
+
+Requires the Authentication Core & the Authentication Manager. Each works while accounts are off,
+so an administrator may prepare accounts before turning them on.
+
+  --account --list                         Every account, its role, whether it is confirmed or
+                                           disabled, when it last signed in & its address.
+  --account --add <username> <address>     Add an account, confirmed, & show its new password once.
+  --account --confirm <username>           Confirm an account's address for it.
+  --account --disable <username>           Stop an account signing in, & end every sign in it has.
+  --account --enable <username>            Let a disabled account sign in again.
+  --account --admin <username>             Make an account an administrator's.
+  --account --user <username>              Make an account an ordinary user's.
+  --account --password <username>          Give an account a new password, show it once, & end
+                                           every sign in made with the old one.
+  --account --remove <username>            Remove an account & every file its user kept. Asks
+                                           first, naming the account, & -y answers yes.
+
+An action is written with two dashes, & every one but --list is followed by the username of an
+account. A command that is missing either says which, & shows the form to type. An action written
+with one dash, such as -add, is named with its two & is not run.
+
+Root hands every one of these to the web server user, which owns the accounts, so root never reads
+or writes one. Each change is logged as a WARNING where the web server logs. A password is shown
+once & is never written anywhere but as its hash. The command exits 0 when it did what was asked,
+& 1 when it did not.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About   --app----
+
+Arguments beginning --app belong to the application rather than to the Engine.
+
+The Engine answers every other argument documented here. Setup, configuration, the managers,
+the listener, the pipelines, repair, cleanup & updates are true of any application of this
+shape. The kernel reads the command line & answers -v & -h, printing the Engine's report & help
+where there is an Engine, & hands an argument that begins --app to the application untouched.
+The Engine takes no view on it. Until v4.2.4 the application read the command line & answered
+-v, -h & -u itself.
+The command is matched without regard to case like every other. Its values reach the
+application exactly as typed, because an application's values may be paths.
+
+A prefix is used rather than a list of names, so the Engine never has to ask the application
+what it accepts. Everything --app is the application's & everything else is not.
+
+HRConvert2 declares no --app argument yet. Any one given is refused with a message saying so.
+
+The application's handler sets the exit status, from v4.3.1. A handler that returns a whole number
+from 0 to 255 has set it. One that returns nothing has succeeded, & the command exits 0. One that
+returns anything else is reported as failed, with a warning, & the command exits 1. Until v4.3.1
+the command exited 0 whatever the handler returned.
+The first value is what follows the command, after an equal sign or as the next argument. The
+second is the argument after the first, whichever way the first was written.
+Nothing sanitizes a value before the application has it. The application calls sanitize()
+against a value that is a name, & sanitizePath(), which the kernel has from v4.3.1, against a
+value that is a path.
+
+The kernel hands over those two values & no more. An application that takes a flag as well
+reads the argument vector for it, sanitizes what it reads, & decides what a value typed after a
+flag means. An application has each flag typed last, & runs no command with a value typed after
+one, because that value would be in neither of the two & would be lost.
+
+An application may start one of these arguments as a worker, from v4.3.1. The Engine's
+startApplicationWorker() starts the entry point with one argument beginning --app & one value,
+as a process that outlives the command that started it. ABOUT_ENGINE_CONTRACT.txt says how.
+
+An application may put one of these arguments on a schedule, from v4.3.1. The function its
+contract names in $EngineTimerProvider says which & when, & --setup --install-service writes a
+systemd service & a timer for each. Nothing enables a timer. ABOUT_ENGINE_CONTRACT.txt says how.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About  -v  and  --version--
+
+Performs a comprehensive diagnostic of the installation.
+
+This is not an echo of a version number. It reports every component that carries a version,
+runs every dependency check the converters run, & reports the result of each one.
+
+It reports the following.
+
+  The core version, the configuration version & the version of each the core requires.
+  Every version pinned dependency & whether the installed one satisfies the minimum.
+  Whether the bubblewrap sandbox is functional, which every dependency command runs inside.
+  Every installed interface & whether its version matches what the core requires.
+  How many language packs in each interface match, & which ones do not.
+  Which conversion types are enabled in the configuration.
+  Each pipeline that is installed & not offered, NOT OFFERED, & what it cannot run without that
+  is not installed, from v4.2.1. One that is not offered is not a failure.
+
+The dependency checks are the identical checks the matching converter performs, so this
+answers whether an installation will actually work rather than what it is configured to do.
+A dependency that reports FAILED is missing, unidentifiable, or older than the minimum, & the
+conversion type that depends on it will refuse to run rather than fail in a confusing way.
+
+This argument works when run as any user. Where the kernel restricts unprivileged namespaces,
+only root & the web server user's group may run the copy of bubblewrap every sandbox runs, so
+an account that is neither reads the sandbox & the copy as not judged, & is told to run -v as
+root.
+
+ONLY THE WEB SERVER USER ASKS THE LISTENER. Its state is in a folder only that account can read,
+so -v run as root or as any other account reports the listener as NOT ASKED & names --status,
+which root hands to that account. Until v4.0.6 another account reported a running listener as
+STOPPED. The secret row is named for the secret it judges, so an account with a secret of its own
+reads Per user secret, where until v4.0.6 it read Install secret.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About  -h  and  --help--
+
+Displays the built in help message, which lists every supported argument & points at the
+documents in the Documentation folder that cover each subject in depth.
+
+An invocation with no argument at all also displays help, because running the web logic from
+a terminal would emit HTML to a shell & create a session for a user who does not exist.
+
+An unrecognized argument displays help as well, & writes a warning to the log.
+
+The help is the Engine's, from v4.2.4, & the application adds its own lines to it. Where the
+Engine cannot be loaded, -h lists only -v & -h & says that the Engine's commands are not listed
+because the Engine could not be loaded, & -v names the component that failed. Until v4.2.4 -h
+listed every command whether or not the Engine could run it.
+
+This argument works when run as any user.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About  -c  and  --clean--
+
+Sweeps expired sessions from the temporary location & from the data location.
+
+This sweep normally happens on every web request. This argument exists for the case where no
+web request is coming. A server taken out of service still holds user data until something
+sweeps it, & an administrator reclaiming disk should not have to wait for a visitor.
+
+Supplied with no value, the threshold in --File Deletion Age Threshold-- from config.php is used.
+Supplied with a whole number, that many minutes is used instead for this run only.
+Supplied with the word now, every session is swept regardless of age.
+
+  -c=now DELETES EVERY SESSION, INCLUDING SESSIONS THAT ARE CURRENTLY IN USE.
+  A user in the middle of a conversion loses their files. Use it deliberately.
+
+A value that is neither a whole number nor the word now is refused, & the configured default
+is used instead. A warning is written & a message is printed, so a typo cannot silently
+produce a sweep the administrator did not intend.
+
+Nothing outside a session directory is ever swept. The log directory, the LibreOffice
+profile & the update backup all live alongside the session directories & are protected by
+name. A location that is not one of the configured data locations is refused outright.
+
+THE WEB SERVER USER SWEEPS, EVEN WHEN ROOT ASKS. Every name in a session belongs to that
+user, which can swap any of them for a link between the moment it is examined & the moment
+it is removed. Root running the sweep itself would follow that link. Root hands the whole
+argument to the web server user instead, & prints what it reports. Until v4.0.1 root swept
+as itself.
+
+THE SWEEP TAKES ONLY WHAT THE WEB SERVER USER OWNS. A day or a session folder another account
+put in a data location is left where it is, because that user could never remove it, & -fp
+names it. Until v4.0.6 the sweep tried, failed on every pass, & said only that it had not
+completed cleanly.
+
+The temporary location is the whole DATA folder, from v4.0.1. Until then this argument &
+every web request were handed the session folder of the request making them, so no expired
+session in DATA was ever removed by either.
+
+This argument requires root or the web server user.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About  -u  and  --update--
+
+Replaces the application code with a release from the configured update source.
+
+An update is NEVER reachable from the web interface & never will be. Replacing application
+code requires write access to the installation directory, which is what shell access already
+implies & is the correct authorization for the operation. An HTTP endpoint protected by a
+secret would reduce that authorization to one guessable string.
+
+REQUIREMENTS.
+  $EnableAutoUpdates must be TRUE in config.php. The default is FALSE. Turn it on with --config,
+  by entering  set EnableAutoUpdates  in General Information, or in config.php itself. Until it
+  is on, -u changes nothing, exits 1 & names both ways, with this installation's own paths.
+  The server must be able to reach the update source. Many deliberately cannot.
+  The update runs as root. The folder holding the installation & the --Proprietary
+  Directory-- must belong to root & be writable by nobody else, or the update is refused
+  with ERROR 31023. An account that could write there could swap the installation for its
+  own between the two renames below, & root would run it.
+  Roughly twice the installed size must be free on the filesystem holding the installation.
+
+WHICH VERSION IS INSTALLED.
+  With no value supplied, --Automatic Update Target Version-- from config.php is used.
+  A value supplied on the command line overrides that setting for this run.
+
+  latest    The newest tagged release at the update source.
+  edge      The current state of the master branch. This is NOT a release. It carries
+            whatever version stamp master happens to hold, which may match no release.
+  v#.#.#    Exactly that tagged release.
+
+  A specific version that does not exist at the update source causes the update to FAIL.
+  There is no fallback. You cannot receive a version you did not ask for.
+  A partial version such as v3.6 is refused, because it names a series rather than a release.
+  An update to the version already installed is refused as unnecessary.
+
+WHAT HAPPENS TO THE CONFIGURATION.
+  The new release provides the file structure, the comments & the set of settings that exist.
+  The live installation provides the value of every setting that exists in both.
+  A setting that is new in the release keeps its new default.
+  A setting that was removed in the release is discarded.
+  A setting whose name was corrected is treated as a removal & an addition. No attempt is
+  made to guess that two differently spelled names mean the same thing.
+
+  ARRAY SETTINGS ARE NOT MERGED. They are reset to the new defaults.
+  An array cannot be rewritten without reformatting it, & a partial merge of a two hundred
+  element format list is worse than either version. Any array whose value differed from the
+  new default is NAMED at the end of the update so the change can be reapplied by hand.
+
+HOW THE REPLACEMENT IS PERFORMED.
+  The release is downloaded & unpacked in a private working folder beside the installation.
+  The configuration is merged there, before anything touches the installation.
+  The prepared release is moved next to the installation, on the same filesystem.
+  The live data directory is moved into it, so no session is lost.
+  The installation & the prepared release are then exchanged by two rename operations.
+  The new release's own -fp runs as the update finishes, so its locations get their roles.
+
+  A rename within one filesystem is atomic, so the installation directory is never half
+  populated. A web request arriving during the exchange sees either the old installation or
+  the new one. There is a very brief moment between the two renames during which a request
+  could fail, & a request that fails then will succeed on retry.
+
+  Conversions already in progress are unaffected. A running process holds open file handles
+  which remain valid across the rename, & the data directory moves with the installation.
+
+WHAT HAPPENS IF THE UPDATE FAILS.
+  Every failure before the exchange leaves the installation untouched.
+  After the exchange, the new installation is asked to report its own version as a separate
+  process. A core that cannot parse, cannot load its configuration, or cannot reach the
+  command line branch will not answer, & that is the condition this catches.
+  An installation that fails that check is rolled back automatically & the previous version
+  is restored. The log records what was attempted & why it failed.
+
+THE PREVIOUS VERSION.
+  After a successful update the previous installation is copied to --Backup Location-- from
+  config.php, which defaults to Last-Installed-Version inside the data location. The data
+  location is root's now, so the backup's folder is root's & the copy is kept. An update refuses
+  to keep a backup only where $BackupLoc has been pointed at a folder another account could
+  replace, & a WARNING says so there. See Documentation/ABOUT_MANAGED_LOCATIONS.txt.
+  It is held OUTSIDE the web root, because a stale core inside the web root would be a
+  second, older copy of the application answering requests.
+  It is protected from the session sweep & is NOT deleted on the delete threshold.
+  It holds exactly one previous version & is replaced by the next successful update.
+  The live data directory is excluded from it.
+
+DOCKER USERS SHOULD NOT USE THIS.
+  A container is disposable. Update it by pulling a new image, not by updating in place.
+  An in place update would be discarded by the next pull anyway.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About  --status--
+
+Reports what the resource listener is doing, & what this account is able to see of it.
+
+It reports the following.
+
+  The account this invocation is running as & whether it may operate the listener.
+  Whether resource awareness is enabled, & whether the component is available.
+  The socket directory, & whether this account can read it.
+  Whether the listener is running, & the process identifier of each manager.
+  The number of tracked workers & the remaining resource budget.
+  The number of sessions currently mapped to a data location.
+  When the last Environment Manager pass ran, what it found & when it last repaired.
+
+A STANDARD USER CANNOT READ THE SOCKET DIRECTORY & IS NOT ASKED.
+The directory is 0700 & belongs to the web server user, so a standard user could only ever see a
+listener that appears stopped, whether it is running or not. The listener row says NOT ASKED to
+such a user & leaves the listener's own rows out. Until v4.0.6 it said STOPPED, with a note that
+STOPPED might be wrong. Run it as root for the true picture.
+
+ROOT DOES NOT READ THE STATE ITSELF. It hands --status to the web server user & relays what
+that user saw, because the state file belongs to that user & root reads none of it. The report
+then names root as asking, & the web server user as answering. That is the true picture.
+
+This argument works when run as any user.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About  -fp  and  --fix-permissions--
+
+Corrects everything about an installation that root is required to correct.
+
+It performs the following.
+
+  Gives every managed location its role. The installation is root's, each data root is root's
+  with its sessions, cache, logs & sockets the web server user's, & the backup is root's alone.
+  See ABOUT_MANAGED_LOCATIONS.txt. A location counts as corrected only when its owner or mode
+  differed from its role, so a run straight after another corrects none. Until v4.0.6 every
+  location a role was applied to was counted, whether anything about it changed or not.
+  Moves each session an older release kept at the top of a data root into that root's Sessions
+  folder. Only a folder the web server user owns, named as the core names a session, is moved.
+  Every other folder there, & every name in Sessions that user does not own, is named & left,
+  because the sweep runs as that user & could never remove it. Until v4.0.6 every folder was
+  moved, so a release unpacked into a data root went into Sessions as root's. The capability
+  cache an older release left at the top of a data root is moved into Cache or removed.
+  Removes from the installation what an earlier release left there & no release ships, such as
+  the tree FFmpeg's build left in Documentation/Build/ffmpeg-build until v4.0.6, without
+  following anything in it. A link or a file with more than one name it does not know is named,
+  to be removed by hand before -fp is run again.
+  Installs the tree it runs from into Application in the data location, when that tree is not
+  the installed one, & hands over to the installed copy as it ends.
+  Writes the loader, the protection page & the static files into the hosted location, & removes
+  every copy of the application left there. Names a .git or .github folder a release left in it
+  & an .old installation an update left beside it, which the Apache configuration it writes
+  refuses, & removes none of them.
+  Removes the build environment & the development documentation when config.php asks for it.
+  Disables a bootstrap script that does not match this core, & enables one that matches again.
+  Installs or repairs the AppArmor profile named for the application, where the kernel can
+  restrict unprivileged namespaces. It is attached to the application's own copy of bubblewrap,
+  which every sandbox runs, & only where no account but root could put a program at that path.
+  One attached where that is no longer so is taken out. The copy is made only by
+  --setup --install-depends, --update-depends & --install-complete & as an update is installed,
+  & never by -fp run from the installed copy.
+  Never builds or removes the application's own build of a dependency, which only
+  --setup --install-depends, --update-depends & --uninstall-depends do.
+  Lifts that restriction only where bubblewrap refuses a sandbox twice & config.php permits it,
+  & never for an attempt cut short or to cover a copy that is missing or cannot be run, & holds
+  for the next boot only the kernel settings it changed. Where config.php forbids lifting it,
+  switches back on a restriction this application lifted.
+  Names a restriction an earlier release lifted that the application's own copy of bubblewrap
+  no longer needs lifted, & says how to put it back, but leaves it lifted, because by now other
+  programs on the host may rely on it. Names /etc/apparmor.d/bwrap where no package installed
+  it, which install guides before v3.8.0 asked for, & leaves it as it is.
+  Writes the listener's service unit, & the Environment Manager's where they are installed, for
+  the installed copy.
+  Puts back, as they were, the ImageMagick policy & the AppArmor additions an earlier release
+  wrote into the host. Each pipeline now carries its own policy into its sandbox.
+  Enables lingering & cgroup delegation for the web server user, when per conversion limits are on.
+  Lingering already on is left as it is.
+  Writes the PHP settings into the configuration folder of every PHP that is installed, & passes
+  over a folder a removed PHP left behind, which nothing reads.
+
+Every step is idempotent & is safe to run again.
+
+A policy file that was not written by this application is backed up with a timestamp before it is
+replaced. If the backup cannot be written, the original is left alone & the step is refused.
+
+RUN THIS ONCE AFTER UPDATING FROM v4.0.0.
+Until v4.0.1 this handed the installation & every data location to the web server user, &
+root then ran code that account could change. It now gives each location the role it needs,
+& an installation v4.0.0 left behind keeps the old ownership until it runs. That run also moves
+the installation out of the web root, into Application in the data location.
+
+A command run as root no longer leaves a logfile or a secret the web server user cannot use,
+so it no longer has to be followed by this. It is still the first thing to run when anything
+looks wrong.
+
+This argument requires root.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About  --run-environment-manager--
+
+Runs one Environment Manager pass & exits. The timer --setup --install-service writes runs it
+hourly once an administrator enables that timer, & an administrator may run it by hand. Until
+v4.0.6 only --setup --install-complete wrote that timer, so a host that installed its listener
+with --install-service had no timer, & the manager never ran there.
+
+  sudo php /var/www/html/HRProprietary/HRConvert2/convertCore.php --run-environment-manager
+
+It checks what -v checks, logs every problem as a warning, records what it found & prints it.
+IT CHANGES NOTHING unless --Environment Manager May Repair-- is TRUE in config.php. Then the first
+pass of a day that finds a problem runs the repair -fp runs, unattended. An unattended repair
+starts & enables no service, & rewrites the host configuration this application owns only when
+--Environment Manager May Rewrite Configs-- is TRUE. Every later pass that day only reports.
+
+What it found is kept in hrconvert2-environment.state at the top of the data location, readable by
+the web server user & written only by root, & --status reports the last pass. Every pass also
+removes root's own logfiles older than thirty days. One pass runs at a time, & one started beside
+another checks & changes nothing.
+
+It exits 0 when the pass completed, whatever it found, & 1 when it could not run.
+See ABOUT_ENVIRONMENT_MANAGER.txt.
+
+This argument requires root.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About  --rotate-secret--
+
+Replaces the install secret with a new key.
+
+EVERY SESSION ENDS. Every session folder, token & startup key derives from the secret, so a
+visitor is given a new session on their next visit & cannot reach their earlier files. Those
+folders stay where they are & expire on the delete threshold like any other.
+
+It asks before it does anything, & -y answers in advance.
+
+  sudo php /var/www/html/HRProprietary/HRConvert2/convertCore.php --rotate-secret
+  sudo php /var/www/html/HRProprietary/HRConvert2/convertCore.php --rotate-secret -y
+
+A running listener is stopped & started again, & root does neither. It asks the web server user
+whether a listener is running & stops it, BOTH before the secret is rewritten, so the stop is
+signed with the key on disk that the running listener still answers to. Root then rewrites the
+secret. The web server user starts the listener again, reading the new key from disk, through
+the service unit when one owns it. A listener that was not running is left stopped. It is never
+started as root.
+
+Run it once in every container started from an image built before v4.0.1. Each of those
+carries the secret its image was built with, & every container started from the image shares
+it. An image built from v4.0.1 onward ships no secret.
+
+A rotation that cannot write the new secret raises ERROR 31022, & the secret in place is left
+as it was.
+
+This argument requires root.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About  -l  and  --listen--
+
+Starts the resource listener, which is four processes that hold a resource budget, decide which
+data location each session uses & manage worker lifecycle.
+
+Resource awareness is optional & is enabled by default. With no listener running,
+HRConvert2 behaves exactly as it always has. Nothing is checked & nothing is refused.
+
+--Enable Resource Awareness-- must be TRUE in config.php before this will do anything.
+
+Started as root, the listener drops to the web server user before launching, so every socket it
+creates belongs to the account that has to reach them. A listener left running as root is
+unreachable by every web request.
+
+The listener records its own process identifier once it is up. This argument waits five seconds
+for that record & reports failure if it does not appear. The startup key is never printed & is
+never written to the log, so a failure points at the log rather than reproducing the command.
+
+The listener runs until it is stopped. It is normally started at boot by the service unit that
+--setup --install-service writes, or from a container entrypoint, rather than by hand.
+
+A STOP SIGNAL STOPS EVERY MANAGER, NOT ONLY THE FIRST. When the service is stopped, the Core
+Manager signals each manager it started, waits up to twenty seconds for them all to end, ends
+any still running, & only then ends itself. The managers are not its children by then, so until
+v4.0.6 it ended alone & the service manager killed the three it left behind.
+
+Root or the web server user can start the listener by hand, & every other account is refused.
+Both hold the install secret for this argument, which is what the startup key is derived from.
+
+This argument is refused to anyone but root or the web server user.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About  -k  and  --kill--
+
+Supplied with no value, stops the listener & every manager it started.
+
+Each manager is asked to stop first, given two seconds to unwind on its own, then signalled, then
+verified. A process is only reported as surviving after it has been checked several times, & a
+process that has ended but not yet been collected by its parent is not mistaken for a survivor.
+
+Supplied with a value, ends one worker. The value may be a budget token or a process identifier.
+
+  -k                          Stop the listener.
+  -k 12345                    End the worker running as process 12345.
+  -k a1b2c3d4e5f6             End the worker holding that budget token.
+
+A worker that is ended loses whatever it was converting. The user sees a failed conversion.
+
+Run as root, this is handed to the web server user, which reads its own listener state & signals
+its own processes. Root reads no state & signals nothing itself. The web server user on the
+command line runs it directly.
+
+This argument requires root or the web server user.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About  --kill-all-workers  and  --kill-every-worker--
+
+Two arguments that end conversions in bulk. Both prompt for confirmation. Both accept -y to skip
+the prompt, which exists for a script & not for convenience.
+
+  --kill-all-workers          Ends every TRACKED conversion.
+                              Every user mid conversion loses their files.
+                              Nothing outside HRConvert2 is touched.
+
+  --kill-every-worker         Ends EVERY PHP PROCESS owned by the web server user.
+                              This reaches other applications sharing this host.
+                              WordPress, OwnCloud & anything else running as that user lose
+                              every session in progress.
+
+--kill-every-worker exists for a server that has become unresponsive & must be recovered without
+a reboot. It is not a cleanup tool. Every manager process is excluded so the listener survives
+its own instruction.
+
+Neither argument is a substitute for the reaper, which ends workers that outlive their expected
+runtime automatically & without ending anything else.
+
+Run as root, both are confirmed at the terminal first & then handed to the web server user with
+the answer already given, because that user has no terminal to be asked at & owns the processes
+being ended. Root ends nothing itself.
+
+These arguments require root or the web server user.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Automation--
+
+Every argument is safe to run from cron or from an external orchestration tool.
+
+  A clean can be scheduled on a server that receives little or no web traffic.
+  A version check can be scheduled to confirm dependencies still satisfy their minimums
+  after an unattended package upgrade.
+  An update should be scheduled with care. It replaces application code, & a release that
+  does not suit a particular deployment will be installed as readily as one that does.
+  Pin an exact version in config.php on any server where that matters.
+
+Everything a command line invocation does is written to the log with the same three tiers a
+web request uses. Op-Act reports normal activity, WARNING reports something an administrator
+should know about, & ERROR reports a numbered failure documented in ERROR_DESCRIPTIONS.txt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Open Source--
+
+This application is open-source under the terms of the GPLv3 license, meaning anybody can obtain a copy and put it to use for personal or business use.
+If you modify this application and use it to make money or offer it to your users as a product, you MUST make the source code with your changes available.
+The ideal way to do this would be to fork the official zelon88/HRConvert2 repository on Github and make changes there.
+Alternatively you can submit a pull request and have your changes added to the official repository (with credit due to you, of course).
+By reciprocating changes & improvements with one another we can all enjoy the best, most capable and bug free version of HRConvert2.
+If you modify this codebase please consider making your changes public so everyone can benefit from them.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

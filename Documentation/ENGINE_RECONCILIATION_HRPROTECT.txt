@@ -1,0 +1,1131 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRProtect, Copyright on 11/16/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+This application scans the files on a server for threats, reports what it finds & keeps what it is told to keep in a quarantine only root can open.
+
+FILE INFORMATION ...
+v0.0.1.
+This plain text file records every difference between the HRProprietary Engine this application carries & the Engine as it is distributed, with the reason for each, so that each can be taken upstream or dropped deliberately.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+This file describes the Engine the application carries, which is the HRProprietary Engine v4.2.5, by what it changed in the Engine v4.2.4 its starter kit distributes. Run  php protectCore.php -v  to see what this installation has.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About This File--
+
+HRProtect carries its own copy of the HRProprietary Engine, as every application built on the
+Engine does. The Engine is maintained for every application, so a change made to this copy
+is a proposal to the Engine & not a private convenience.
+
+This file is the record of those proposals. Every change to a file the Engine distributes is
+entered here in the build that makes it, with what changed, why, what it does to the
+reference application & how to see that it works. Nothing is changed in the Engine that is
+not entered here.
+
+A change is written so that it could be applied to the Engine as it stands. It names no
+application, asks nothing of one that the contract does not already ask, & leaves the
+reference application behaving as it did.
+
+The baseline is the starter kit HRProprietary-Engine-v4.2.4. Its kernel & Engine report
+v4.2.4, with the Setup, Dependency, Pipeline & Workflow Cores at v4.2.4, the Authentication
+Core at v4.2.3 & the Email Core at v4.2.0.
+
+The Engine in this tree is v4.2.5. The maintainer gave it that version on 11/16/2026, with
+HRProtect v0.0.2. It is the kit's v4.2.4 with the twelve changes below & nothing else.
+
+HRProtect v0.0.3 changed no file of the Engine's. Its Event Core is a Core of HRProtect's own,
+in Resources/Cores, & everything it needed of the Engine was there already. What was met on the
+way is entered below, under what the Engine assumes about an application.
+
+HRProtect v0.0.4 changed no file of the Engine's either. It sets aside a scanner that is not
+working, & asks nothing of the Engine but runVirusScan() as it already answers.
+
+HRProtect v0.0.5 changed no file of the Engine's either. It says which of its parts are watching,
+from what the Engine already knows of a pipeline. What it could not learn from the Engine is
+entered below, under what the Engine assumes about an application.
+
+HRProtect v0.0.6 changed no file of the Engine's either. It mends its own Quarantine pipeline,
+which is v0.0.3, & moves the one line of its contract that accepts it.
+
+HRProtect v0.0.7 changed four files of the Engine's, which are engine.php, the Setup Core,
+engineConfig.php & the kernel. It put a scan on a schedule, & the Engine had no way for an
+application to have a timer written. Changes 10, 11 & 12 are what it changed, & the last of
+them is a comment.
+
+The maintainer holds the Engine at v4.2.5 until it has been reconciled with the Engine as it is
+distributed. Changes 8 through 12 were made after the Engine was given that version, so engine.php,
+the kernel & the Setup Core report v4.2.5 with them as they did without them. engineConfig.php was
+the kit's until Change 10, & reports v4.2.5 with it. A file of the Engine's is still told
+from the kit's by its version. Which build of HRProtect a change came with is said under the change.
+
+A component of the Engine reports the version it last changed in, as it does in the kit. So
+the five that changed report v4.2.5, & every other reports what the kit gave it.
+
+  The kernel                 v4.2.5     Changes 1, 2, 6, 7, 9 & 12.
+  The Engine                 v4.2.5     Changes 8, 10 & 11, & its own version, which is the release's.
+  The Setup Core             v4.2.5     Changes 3 & 10.
+  The Workflow Core          v4.2.5     Change 7.
+  The Engine's configuration v4.2.5     Change 10. engineConfig.php declares one more name, $EngineTimerProvider.
+  Every other Core           As the kit's. Dependency & Pipeline v4.2.4, Authentication v4.2.3, Email v4.2.0.
+  Every manager              As the kit's.
+  The Engine's settings      As the kit's, v4.2.4. No setting of config.php was added, removed or changed.
+  The Engine's manifest      As the kit's, v4.2.4. No dependency was added, removed or changed.
+
+The first build of HRProtect changed the Engine & left every version as the kit gave it,
+because a version is the maintainer's to give. For that one build a changed file reported the
+same version as the kit's file. No file does now. check_adoption.py fails where a file of the
+Engine's differs from the kit's & reports the kit's version, & where one reports a later
+version & is the kit's byte for byte.
+
+An application adds to a document of the Engine's & takes nothing from it. Every line of every
+document the kit distributes is in this tree, in the kit's order & as the kit wrote it. What
+HRProtect added is kept apart from the kit's lines, in files a script reads, so it is added
+again to a later kit's documents by running the script. A later section lists every addition.
+
+This file is the only document HRProtect wrote, other than its changelog, that names the
+reference application, which is HRConvert2.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What Differs From The Kit--
+
+Ten files of the Engine's code differ from the kit's. Every other file under Resources/Kernel,
+Resources/Engine & Documentation/Build is the kit's, byte for byte.
+
+  Resources/Kernel/kernel.php                        Changes 1, 2, 6, 7, 9 & 12. v4.2.5.
+  Resources/Engine/engine.php                        Changes 8, 10 & 11. v4.2.5.
+  Resources/Engine/engineConfig.php                  Change 10. v4.2.5.
+  Resources/Engine/Cores/setupCore.php               Changes 3 & 10. v4.2.5.
+  Resources/Engine/Cores/workflowCore.php            Change 7. v4.2.5.
+  Resources/Kernel/index.html                        Change 4.
+  Resources/Engine/index.html                        Change 4.
+  Resources/Engine/Cores/index.html                  Change 4.
+  Resources/Engine/Managers/index.html               Change 4.
+  Documentation/Build/hrconvert2-doccheck.py         Change 5.
+
+Eleven documents of the Engine's hold lines HRProtect added. No line of the kit's was removed
+from one or changed in one, & every other document is the kit's, byte for byte.
+
+  Documentation/ERROR_DESCRIPTIONS.txt               HRProtect's entries, its warnings, the kernel's two, the Setup Core's nine & seven FILE lines.
+  Documentation/CODING_CONVENTIONS.txt               Changes 6 & 10.
+  Documentation/CODING_CONVENTIONS.md                Changes 6 & 7.
+  Documentation/ABOUT_COMMAND_LINE_ARGUMENTS.txt     Changes 1, 8, 10 & 11, & HRProtect's ten commands.
+  Documentation/ABOUT_COMPONENTS.txt                 A Core of an application's own, from HRProtect v0.0.3.
+  Documentation/ABOUT_ENGINE_CONTRACT.txt            Changes 1, 8 & 10.
+  Documentation/ABOUT_MANAGED_LOCATIONS.txt          Changes 3 & 9.
+  Documentation/ABOUT_MANAGERS.txt                   Change 8.
+  Documentation/ABOUT_QUALITY_CONTROL.txt            Change 5.
+  Documentation/ABOUT_LOGGING.txt                    Changes 7, 8 & 9.
+  Documentation/DEVELOPMENT_NOTES.txt                Every change, & HRProtect's own sections.
+
+The kit's README.txt & its Example folder are not carried. The first describes the kit & the
+second is the reference application. Neither is part of the Engine an application carries.
+
+Nothing the kit distributes under Resources/Kernel, Resources/Engine or Documentation is
+missing from this tree, & no function of the kernel's or the Engine's changed its arguments.
+check_adoption.py, kept with HRProtect's tests, holds this section to the tree. It fails where
+a file differs that is not listed here, & where a file listed here does not differ.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Change 1, The Handler Of An Application Sets The Exit Status--
+
+What changed. runApplicationArgument() in the kernel hands an argument beginning --app to
+the function the contract names in $EngineApplicationArgumentHandler. It now exits with what
+that function returns. It also reads the second target from the right place.
+
+  A handler that returns a whole number from 0 to 255 has set the exit status.
+  A handler that returns nothing has succeeded, & the status is 0, as it always was.
+  A handler that returns anything else is reported as failed, with status 1 & a warning.
+
+  The second target is the argument after the first. Where the first was written after an
+  equal sign, as --app-scan=PATH, the second is one place earlier than where it was read.
+
+Why. The kernel discarded what the handler returned & always exited 0. A command line
+program is run by scripts, a script reads the status, & a scan that found a threat must be
+able to say so. The second target was read from the third argument whatever form the first
+took, so  --app-x=A B  lost B.
+
+Effect on the reference application. None. Its contract names no handler, & a handler that
+returns nothing still exits 0.
+
+How to see it. With a handler that returns 3,  php ENTRYPOINT --app-anything ; echo $?
+prints 3. HRProtect's end to end tests read every status its commands set, & run a scan
+written as  --app-scan=PATH all .
+
+What the Engine's documents say. ABOUT_COMMAND_LINE_ARGUMENTS.txt & ABOUT_ENGINE_CONTRACT.txt
+named the handler & said nothing of what it returns. Each gained a paragraph that does, &
+DEVELOPMENT_NOTES.txt an entry in --Kernel--. ENGINE_MIGRATION_STATUS.txt names the handler as
+well. It is the record of what each step of the migration did, so nothing was added to it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Change 2, A Folder Held By Entering It--
+
+What changed. A new function in the kernel, enterFolderWithoutFollowing(), beside the
+functions whose names end the same way. It makes a folder the working folder of the process
+by walking to it from the filesystem root one name at a time. It examines each name with
+lstat, refuses a link, enters the name & compares where it is with what it examined, by
+device & inode. It returns whether the process is in the folder & the reason it is not.
+
+Why. folderIsHeldForRoot() lets root work by name in a folder nothing but root can replace.
+An application that acts on files in folders other accounts own has no such folder. The
+working folder of a process is the folder itself & not a name, so a name inside it is
+reached without anything above it being looked up again.
+
+It was written in the Quarantine pipeline first. The scan needed it as well, & a function
+two components need belongs to neither, so it was moved to the kernel rather than copied.
+
+What it rests on. PHP hands lstat, stat, link, unlink, rename, mkdir, rmdir & scandir a
+relative name as it was written. It does not do that for fopen, which it hands a whole
+path. Both were measured with strace on PHP 8.3 & are written into the function's comment &
+into ABOUT_QUARANTINE.txt. A PHP built to run threads is refused.
+
+Effect on the reference application. None. Nothing in the Engine calls it.
+
+How to see it. The unit tests enter a real folder, & are refused a link, a file, a path
+holding dots, a relative path & a path holding a null byte.
+
+What the Engine's documents say. DEVELOPMENT_NOTES.txt gained an entry in --Kernel--, with
+what was measured.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Change 3, The Folders An Application Declares In The Data Location--
+
+What changed. provisionAndMigrateDataRoot() in the Setup Core makes the folders of the data
+location & names any other folder it finds at the top of it as one that does not belong.
+It now also makes every folder the contract declares directly below the data location, in
+$EngineManagedLocations, under a setting that is not one of the Engine's own. It knows the
+name of each from then on, so none is reported as a folder that does not belong.
+
+The Engine's own settings are listed in the function & are left out, so nothing the Engine
+already makes, or makes only when there is something to keep in it, as the backup is, is
+made any earlier than it was.
+
+Why. An application could declare a location & give it a role, & correctManagedLocations()
+would apply the role, but nothing made the folder. An application that made it itself was
+then told by every -fp to move it out of the data location.
+
+Effect on the reference application. None. Every location it declares directly below its
+data location is under one of the Engine's own settings. Its served location is in the
+hosted location & not in the data location.
+
+How to see it. HRProtect declares QuarantineLoc, ReportLoc & ScanWorkLoc with the root-only
+role. After -fp each exists, belongs to root, is 0700, & -fp warns of no folder.
+
+What the Engine's documents say. ABOUT_MANAGED_LOCATIONS.txt said every other folder at the
+top of a data location is named in a warning. It gained a paragraph below that one, &
+DEVELOPMENT_NOTES.txt an entry in --Managed Locations & Trust--.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Change 4, Protection Pages That Name No Application--
+
+What changed. The index.html in each of Resources/Kernel, Resources/Engine,
+Resources/Engine/Cores & Resources/Engine/Managers was a page titled for the reference
+application that sent a browser to /HRProprietary/HRConvert2/convertCore.php after five
+seconds. Each is now a page that names nothing & goes nowhere.
+
+Why. The Engine holds no application's name or entry point, & these four pages held both.
+In any other application they sent a visitor to an address that application does not have.
+
+Effect on the reference application. A browser that reaches one of those four folders is
+no longer sent to the application. Nothing links to them, & -fp installs them outside any
+folder a web server serves.
+
+How to see it. No index.html in the tree names an application.
+
+What the Engine's documents say. DEVELOPMENT_NOTES.txt gained an entry in --Engine--.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Change 5, The Names The Documents Of The Engine Cite--
+
+What changed. hrconvert2-doccheck.py holds every document to the rule that a function or a
+setting it names exists. It now has two more lists, REFERENCE_NAMES & REFERENCE_LABELS, for
+the functions & the settings of the reference application that the Engine's own documents
+cite. A name in either list passes, as a name in the lists it already had does.
+
+Why. The Engine's documents explain the Engine by what the reference application does with
+it. They name nineteen of its functions & fifteen of its settings, in fourteen documents. In
+the kit those names are defined by the Example folder. In an application built on the Engine
+nothing defines them, so the documents the kit distributes fail the kit's own check 114
+times, 54 of them in the error catalogue.
+
+The other course was to rewrite each of those documents. That takes from them, & an
+application takes nothing from a document of the Engine's. Two lists say why they pass.
+
+Effect on the reference application. None. Every name in the two lists is defined there.
+
+How to see it. A document that names a function nothing defines still fails. Taking a name
+out of either list brings its finding back.
+
+What the Engine's documents say. ABOUT_QUALITY_CONTROL.txt gained a paragraph in
+--About The Documentation Checker--, & DEVELOPMENT_NOTES.txt an entry.
+
+A better form, for the Engine to decide. The kit could write the two lists from its Example
+folder when it is built, so they are never kept by hand, or the Engine's documents could
+stop naming one application's functions.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Change 6, A Path Has A Sanitizer Of Its Own--
+
+What changed. A new function in the kernel, sanitizePath(), below sanitize(). It takes a path
+& whether to be strict, as sanitize() takes a value & whether to be strict, & returns the path
+& whether it was accepted. It removes nothing. A path is accepted whole & returned as it was
+given, or refused whole & returned empty.
+
+  It refuses a control character.
+  It refuses what PHP would open as a stream rather than a file. That is two or more letters,
+  digits, dots, plus signs or dashes before ://, such as phar://, & data: alone.
+  It refuses a path of PHP_MAXPATHLEN - 1 bytes or more, which PHP does not open.
+  Strict also refuses a path that is not absolute, & one holding a part that is a dot, two
+  dots or empty.
+
+Why. Rule 21 has every input sanitized before it is used. sanitize() removes what a name must
+not hold, & a path with a character removed names a different file, so a path could not go
+through it. The first build of HRProtect read a path raw & recorded that here, as something
+the Engine assumes. The maintainer keeps no exception to a rule, so the kernel gained what
+the rule needs & the exception went.
+
+Why a function & not a mode of sanitize(). The Environment Core defines a sanitize() of two
+arguments for when the kernel is not loaded. PHP ignores an argument a function does not
+declare, so a third argument would have been ignored there without a word, & the path would
+have been changed. The Engine's conventions say sanitizeString() is not a URL sanitizer &
+must not become one, & the same holds of a path. No signature changed.
+
+What it is not. It is not the boundary sanitize() is. A file may be named with a space, a
+quote or a dollar sign, so a path it accepted holds them still, & is quoted where it is
+handed to a shell & escaped where it is printed in a page. It does not resolve a path, follow
+a link or say that a path exists. It is not for a name read from a folder, which is not input
+& is used byte for byte.
+
+What was measured. On PHP 8.3, a wrapper was registered under each kind of name & a path that
+begins with it was opened. PHP reads two or more of those characters before :// as the name
+of a wrapper, in any case. Where no wrapper has that name it warns & opens the path as a
+file, & the function refuses the path all the same. It takes one letter before :// for a file
+name, & anything with ./ before it. It opens a path of PHP_MAXPATHLEN - 2 bytes & refuses one
+byte more without asking the system. The unit tests measure both again on the PHP they run
+on, & hold the function to what they measured.
+
+Effect on the reference application. None. Nothing in the Engine calls it, & sanitize() &
+sanitizeString() are the kit's, which a unit test compares.
+
+How HRProtect uses it. applicationArgumentHandler() calls it against both values the kernel
+hands over, & runs no command with a value it refused. resolveScanTarget() calls it against
+the path to scan, & runRestoreCommand() against the folder to put a file back in. Each is
+called without strict, & the path is resolved once afterwards, because an operator types a
+path from where they stand. Nothing in HRProtect reads an input raw.
+
+How to see it.  php protectCore.php --app-scan 'phar:///srv/x.phar'  exits 2 & scans nothing.
+A folder whose name holds a space, a bracket & .php is scanned as it is named.
+
+What the Engine's documents say. Rule 21 in CODING_CONVENTIONS.txt & CODING_CONVENTIONS.md
+now sends a path to sanitizePath(). The second also says, beside what it says of sanitize(),
+what sanitizePath() is & is not. DEVELOPMENT_NOTES.txt gained an entry in --Kernel--.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Change 7, Text Nobody Vetted Is Made Printable By The Kernel--
+
+What changed. A new function in the kernel, printableText(), below sanitizePath(). It takes
+text & whether to be strict, & returns the text with every control character shown as a
+question mark, C1 ones included. Text that is not UTF-8 has every byte outside printable
+ASCII replaced instead. Strict also cuts text longer than 1000 bytes, where a character ends,
+& ends it with three dots.
+
+printableWorkflowText() in the Workflow Core keeps its name & its argument. Its body is one
+call to printableText(), which it asks to cut nothing.
+
+Why. The name of a file, & what a tool prints about one, is chosen by whoever made the file. A
+line break in it forges a line of a log, & an escape sequence has a terminal obey it. The
+Engine had a function for this in the Workflow Core, for --workflow alone. HRProtect wrote it
+four more times, in its core & in each of its three pipelines, because a pipeline calls
+nothing of an application's & the kernel had none to call. Rule 20 allows a pattern twice.
+The first build recorded the four copies here, as something that could move into the Engine.
+The maintainer keeps no exception to a rule, so it moved.
+
+Why strict. Each of HRProtect's copies cut at 1000 bytes, because a line a scanner prints can
+be any length. The Workflow Core's never cut. One function serves both by being told, & what
+each prints did not change.
+
+Why it needs no extension. The copies cut with mb_strcut. mbstring is the Authentication
+Core's dependency, & the kernel runs before any dependency is checked. The kernel cuts at
+1000 bytes & takes back up to three, until what is left is whole characters.
+
+What it is not. It does not change what a caller does with the text. A name is still used
+byte for byte wherever the file is reached. It does not make composeLogEntry() safe by
+itself, which still writes an entry as it is handed it.
+
+Effect on the reference application. None in what it prints. printableWorkflowText() returns
+for every text what the kit's returned, which a unit test compares on four thousand samples.
+Handed an array, the kit's raised a PHP warning & printed the word Array, & it now prints
+nothing. The reference application's own pipelines are its own, & are not touched.
+
+How HRProtect uses it. The function that did this in protectCore.php is gone, & so is the
+one in each of the Quarantine, ClamAV & ScanCore pipelines. The changelog names the four.
+What called each calls printableText(), strictly. A unit test compares it with what the four
+did, on the same samples.
+
+How to see it. The end to end tests scan a file whose name holds a line break & an escape
+sequence. Neither reaches the terminal, the log or the report, as before.
+
+What the Engine's documents say. ABOUT_LOGGING.txt gained a section, CODING_CONVENTIONS.md a
+line under its boundaries, & DEVELOPMENT_NOTES.txt an entry in --Kernel--.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Change 8, An Application Starts A Worker Of Its Own--
+
+This change was made after the Engine was given v4.2.5, in the build that gave HRProtect a scan
+in the background. The Engine was v4.2.5 before it & is v4.2.5 with it.
+
+What changed. A new function in the Engine, startApplicationWorker(), above the functions that
+read a manager's state. It takes one argument beginning --app & one value. It starts the
+application's entry point with the two, through setsid -f, with /dev/null for its input, its
+output & its errors. It returns whether the worker was started & why it was not, & does not
+wait for the worker.
+
+  It starts nothing whose argument does not begin --app.
+  It hands over no value but letters, digits & dashes, 64 at most, beginning with a letter or a digit.
+  It finds setsid & php as the Workflow Core does, & says where it could not.
+
+Why. startWorkflowWorker() in the Workflow Core starts a PHP worker that outlives the request
+that started it, & only for a workflow. HRProtect's scan of a whole server is long work of its
+own & needed the same. Copying that function into the application would have put a second copy
+of one pattern in the tier that should not hold it. The Engine's own settings say what
+$EnginePerWorkerLogFiles is for, & name this case.
+
+Why it starts only an argument beginning --app. The kernel hands such an argument to the
+application's handler ahead of every command of the Engine's. So whatever calls this function,
+it starts nothing but the application's own handler. The Engine still reaches the application
+through contract names alone, which here are $EngineEntryPoint & $EngineApplicationArgumentHandler.
+
+Why the value is a name. Every account on a server can read a command line. An application that
+would hand a worker a path, or anything else it keeps to itself, writes it where only it can
+read & hands over the name of that.
+
+What it is not. It is not the managers'. No manager is told of the worker. It is in no manager's
+state, holds no token of the budget, & -k does not stop it. The managers run as the web server's
+account. HRProtect's worker is root's, that account cannot signal it, & root reads nothing that
+account can write. So the application that starts a worker watches it & stops it.
+
+A question for the Engine. Whether work root starts should hold a token of the budget is not
+decided here. requestConversionBudget() could be asked for advice, which a scan could not be
+refused by, or a manager root runs could grant it. Nothing in this change prevents either.
+
+Effect on the reference application. None. Nothing in the Engine calls the function, & the
+reference application declares no argument beginning --app.
+
+How HRProtect uses it. startDetachedScan() writes a job where only root can read, & starts
+--app-scan-worker with the name of the job. HRProtect's contract sets $EnginePerWorkerLogFiles
+TRUE, which is a setting the contract may give, & protectCore.php sets $LogWorkerIdentifier for
+that worker before verifyLogs() runs. The kernel already named a logfile for a worker, so no file
+of the Engine's changed for the log.
+
+How to see it. The unit tests start a real worker & read what it wrote down. It leads a session
+of its own, the process that started it is not its parent, its input & its output are /dev/null,
+& it was handed the argument, the value & nothing else. They are refused a worker for eight
+arguments that do not begin --app, & for thirteen values. The end to end tests start a scan in
+the background & find its identifier, & no path, in the list of processes.
+
+What the Engine's documents say. ABOUT_ENGINE_CONTRACT.txt gained a paragraph below the one about
+the handler, & ABOUT_COMMAND_LINE_ARGUMENTS.txt one in the section about --app. ABOUT_MANAGERS.txt
+gained one at the end of the section about starting & stopping, which says the worker is no
+manager's. ABOUT_LOGGING.txt said the Worker role waits for HRProtect, & gained a paragraph below
+that which says HRProtect uses it. DEVELOPMENT_NOTES.txt gained an entry in --Engine--.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Change 9, A File The Kernel Opens Is Not Handed To A Command--
+
+This change was made after the Engine was given v4.2.5, in the same build as Change 8. The kernel
+was v4.2.5 before it & is v4.2.5 with it.
+
+What changed. openFileWithoutFollowing() in the kernel opens a file in one of two modes, x for a
+file it creates & r+ for one that exists. Each is now followed by e, as xe & r+e. That has the
+system close the handle in any command the process goes on to run. Nothing else in the function
+changed, & its arguments & what it returns are as they were.
+
+Why. A process hands every file it holds open to each command it starts, & to whatever that
+command starts, unless the file was opened to be closed there. Root holds its logfile open through
+this function for as long as it runs, & holds a lock through it wherever it takes one. So every
+command root ran was handed root's logfile & root's locks.
+
+Most commands root runs are the system's own, & being handed a logfile changes nothing they do.
+HRProtect runs a scanner as root, in a sandbox, on files chosen by whoever wants to attack it. The
+sandbox shows the scanner one folder. Listing what a running scanner held open showed two things
+no folder had shown it, which were root's logfile & the lock that keeps two scans apart, each
+open for writing. A scanner that had been exploited could have written what it liked into root's
+log, cut the log short, or let the lock go. The sandbox is the boundary a hostile file is held
+behind, & these two went through it.
+
+How it was found. By listing /proc/PID/fd for a scanner while a scan ran, to see what a scan in
+the background handed its scanner. Nothing checked for it before. It has been so since HRProtect
+v0.0.1, & in the Engine for as long as root has held its logfile open.
+
+Why e & nothing more. PHP has no call that sets close on exec on a handle that is already open, so
+it is set where the file is opened. PHP sets O_CLOEXEC for e where the system has it, & ignores
+the letter where it has not, so nothing fails on a system without it. A command is never told the
+number of a handle, so no command could have been reading one.
+
+What it does not cover. A handle opened any other way is still handed on. Two stay open in a
+command HRProtect runs. One is standard error, which a command is meant to have. The other is the
+file PHP is running, which PHP opens itself & keeps open, for reading, & which every account may
+read. What a command reads from is not a handle the kernel opened either. sandboxCommand() leaves
+that to its caller, & a later section says what HRProtect does about it.
+
+Effect on the reference application. A command it runs is no longer handed a logfile or a lock
+that root holds open. Its web requests log by name & hold no handle, so nothing changes for a
+conversion a request runs. Nothing it does reads a handle it was not given.
+
+How to see it. The unit tests open a file through the function, in both modes, & list what a
+command the test then runs holds open. The file is not there, & a file opened without e is, which
+is what the check looks for. The end to end tests list what a running scanner holds open, for a
+scan in the background & for one in the foreground, & fail where it holds anything in the data
+location. To see it by hand, run a scan with ClamAV & list /proc/PID/fd for clamscan.
+
+What the Engine's documents say. ABOUT_MANAGED_LOCATIONS.txt gained a paragraph below what it says
+of guarding a name, & ABOUT_LOGGING.txt one below what it says of root's logfile.
+DEVELOPMENT_NOTES.txt gained an entry in --Kernel--.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Change 10, An Application Puts A Command Of Its Own On A Schedule--
+
+This change was made after the Engine was given v4.2.5, in the build that gave HRProtect a scan
+on a schedule, which is HRProtect v0.0.7. engine.php & the Setup Core were v4.2.5 before it & are
+v4.2.5 with it. engineConfig.php was the kit's, v4.2.4, & is v4.2.5 with it.
+
+What changed. Three files.
+
+  engineConfig.php declares one more name, $EngineTimerProvider, which is empty, with what a
+  provider returns written above it.
+
+  engine.php gained three functions below systemdIsUsable(). systemdUnitFolder() names
+  /etc/systemd/system. applicationTimerNameIsValid() says what a timer may be named, & every
+  function that puts a name into a path or a unit asks it. applicationTimerState() takes the
+  name of a timer & returns whether systemd could be asked, whether the timer is installed,
+  enabled & running, & when systemd runs it next. It runs systemctl is-enabled, is-active &
+  show, each of which only reads.
+  --setup --install-service calls the Setup Core's installApplicationTimers() once it has
+  installed the Environment Manager's timer, & -fp calls it once it has written the Environment
+  Manager's again. Each asks function_exists first.
+
+  The Setup Core gained six functions between installEnvironmentTimer() & runCompleteInstall(),
+  which calls the last of them in its fifth stage.
+
+    applicationCalendarIsReadable()   Holds a calendar to the characters one is made of, & has
+                                      systemd-analyze read it where that is installed.
+    examineApplicationTimer()         Holds one record to what a unit may be made of, & accepts
+                                      it or refuses it whole.
+    readApplicationTimers()           Calls the provider, has each record examined & returns
+                                      the ones that were accepted. Sixteen at most.
+    generateApplicationTimer()        Builds the service & the timer as text.
+    writeApplicationTimer()           Writes the two where they differ from what is installed,
+                                      through the kernel's writeFileWithoutFollowing().
+    installApplicationTimers()        Installs every timer, or writes again the ones that are
+                                      installed, & has systemd read its units again once.
+
+What a provider returns. A list keyed by the name of each timer. A name is lower case letters,
+digits & dashes, begins with a letter, is 32 characters at most, & is neither environment nor
+listener. Each timer is a list keyed by name.
+
+  Description   Letters, digits, spaces & , . & -  & 80 characters at most. It follows the
+                application's name in both units.
+  Argument      One word beginning --app-  so nothing but the application's own handler is run.
+  Calendar      As systemd writes one. One systemd cannot read falls back to daily, with a warning.
+  Document      Optional. The name of a file in Documentation.
+  Reach         confined or host.
+  Success       Optional. Eight exit statuses at most, from 1 to 255, that the unit calls a success.
+
+What is written. <slug>-<name>.service & <slug>-<name>.timer in /etc/systemd/system, root's & 0644.
+
+  The service is Type=oneshot & runs as root. It runs PHP, the entry point of the installed
+  copy & the one argument. It sets TimeoutStartSec=infinity, so a command runs for as long as
+  its work takes, & SuccessExitStatus where the record names one. Its [Install] section is
+  empty, as the Environment Manager's is, so only the timer starts it.
+
+  A confined unit carries NoNewPrivileges, PrivateTmp, ProtectHome & RestrictSUIDSGID, which
+  are the four the Environment Manager's unit sets to yes. A host unit carries none of them.
+
+  The timer holds OnCalendar, Persistent=true, RandomizedDelaySec=300 & WantedBy=timers.target,
+  as the Environment Manager's does.
+
+  Neither names a version, so a release that changes nothing of a timer leaves its units alone.
+
+Why. generateEnvironmentTimer() & installEnvironmentTimer() write one timer, for one command
+of the Engine's own. HRProtect needed the same for a scan. Copying the two into the application
+would have had an application write into /etc/systemd/system & run systemctl, which is the
+Setup Core's work, & would have been a second copy of one pattern, with a third to follow from
+the next application. A timer is data, as a sandbox profile is. So the contract carries it &
+the Engine writes it.
+
+Why every field is held & nothing is escaped. A unit is a file root's service manager obeys.
+A line break in a field is a directive. A percent sign & a dollar sign are where systemd begins
+a name of its own. So each field is held to characters none of which means anything to systemd,
+& a record with a field outside them is refused whole. The paths to PHP & to the application
+are held the same way as a unit is built, because a unit splits a line at a space, & they come
+from the host & from config.php.
+
+Why a calendar falls back & nothing else does. A subsystem that can fall back does so before
+it fails. A calendar is the one field an administrator's configuration usually supplies, &
+daily is a calendar systemd always reads. No other field has a default that could be right, so
+a record that is wrong anywhere else is a fault in the application, & is refused.
+
+Why nothing enables a timer. installEnvironmentTimer() takes whether to enable, & the Engine
+only ever hands it FALSE. The new function takes no such argument. A timer of an application's
+puts a root process on a schedule, & that is an administrator's to do, with systemctl, after
+running the command once by hand. What to run is printed.
+
+Why a reach. The Environment Manager's unit hides /home & gives its command a /tmp of its own.
+A scan told that /home is empty calls it clean. HRProtect's scan sandboxes each scanner itself,
+& what those directives do to a sandbox started inside the unit has not been run. So an
+application states its reach, & host means that no directive of the kind is written.
+
+Why warnings & no new error. Every number the kit uses is its maintainer's to give.
+installEnvironmentTimer() raises 32015 where its units cannot be written & 32017 where it is
+not root. The like of each is a warning here, & nine warnings in all are new. A unit that could
+not be written deserves a number beside 32015 once this is taken upstream. --setup
+--install-service exits 1 for it either way.
+
+What it does not do.
+
+  It does not enable, start, stop or restart anything. Where a unit is written it has systemd
+  read its units again, as refreshEnvironmentTimer() does, & where one is written again it
+  prints the restart that makes sure of a new calendar.
+
+  It does not remove a unit. A timer an application no longer asks for is left where it is,
+  enabled or not, & an administrator disables it & removes it. HRProtect has retired none.
+
+  It does not write a unit where either of the two is a link. An administrator masks a unit by
+  putting a link to /dev/null where it was, & writeFileWithoutFollowing() puts a file it writes
+  in the place of whatever held its name. So writing would take a mask away without a word.
+  Neither unit is written, the timer is failed & a warning says why. Links that lead to units
+  which are already as they should be need nothing written, & are left alone.
+
+  It writes no unit where systemd is not running.
+
+  It sets no limit on how long a command runs, so a command put on a schedule ends itself.
+
+What is not known. No unit this writes has been started by systemd in a test, because the
+build host has none running. The tests hold both units to the letter, & have systemd-analyze
+read the calendar & verify the units where it is installed. On the build host, where systemd
+255 is installed & not running, it read the calendars & faulted neither unit of HRProtect's.
+Three things want a host with systemd.
+
+  Whether  systemctl daemon-reload  alone moves a running timer to a new calendar, & whether
+  systemd then starts the command at once where the new calendar names a time since its last run.
+
+  What  systemctl show  prints for NextElapseUSecRealtime where a timer has no next run.
+  applicationTimerState() takes n/a, infinity, 0 & nothing at all for no time.
+
+  Whether a unit of the confined reach can run a command that sandboxes something itself.
+
+Effect on the reference application. None. It names no provider, so readApplicationTimers()
+returns no timer, nothing is printed & no unit is written. Its own two units are written by
+the functions that wrote them, which were not changed.
+
+How HRProtect uses it. The contract names applicationTimers(), which returns one timer, scan.
+It runs --app-scan-scheduled with the host reach, calls exit status 1 a success & takes its
+calendar from --Scheduled Scan Calendar--. scheduleCoverageRow() asks applicationTimerState()
+for the row --app-coverage shows.
+
+How to see it. The unit tests hand examineApplicationTimer() a record that is accepted, & the
+same record with one field wrong, for every field. They read both units to the letter for each
+reach. They install into a folder of their own with systemctl stood in for, & see a unit
+written, left alone & written again, & a unit that is a link left as it is. The end to end tests
+run --setup --install-service where systemd is not running, & see the timer skipped & the
+command exit 0.
+
+What the Engine's documents say. ABOUT_ENGINE_CONTRACT.txt gained a paragraph below the one
+about a worker. ABOUT_COMMAND_LINE_ARGUMENTS.txt gained one in the section about --app & one in
+the section about --setup. CODING_CONVENTIONS.txt gained two lines in what it says of the
+system files that are written. DEVELOPMENT_NOTES.txt gained an entry in --Engine--.
+ERROR_DESCRIPTIONS.txt gained a block of the nine warnings.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Change 11, An Application With No Listener Is Not Failed For Having None--
+
+This change was made after the Engine was given v4.2.5, in the same build as Change 10.
+engine.php was v4.2.5 before it & is v4.2.5 with it.
+
+What changed. One line of runEngineSetupCommand() in engine.php. --setup --install-service set
+its exit status to 1 wherever installListenerService() did not install the listener. It leaves
+the status alone now where the listener was skipped & --Enable Resource Awareness-- is off. The
+function gained $EnableResourceAwareness among its globals. Nothing else changed.
+
+Why. installListenerService() skips the listener for three reasons, & answers the same for
+each. Resource awareness is off, systemd is not running, or /etc/systemd/system is not there.
+The command took every skip for a failure. An application whose contract switches resource
+awareness off has no listener. For it the command could only exit 1, whatever else it wrote.
+Until Change 10 that mattered little, because the command wrote nothing else such an
+application needed. With Change 10 it is the command that writes an application's timers.
+
+Why only that skip. The command says of the Environment Manager's timer that a host without
+systemd skips it & that this is no failure. It says no such thing of the listener, so a
+listener that is wanted & cannot be installed fails the command as it did. Whether it should
+is the Engine's to decide.
+
+Effect on the reference application. None as it ships, with resource awareness on. Where an
+administrator has switched it off, --setup --install-service exits 0 & not 1 once it has
+written the Environment Manager's timer.
+
+How to see it. The end to end tests run --setup --install-service & it exits 0. The same check
+run against HRProtect v0.0.6 fails, with status 1.
+
+What the Engine's documents say. ABOUT_COMMAND_LINE_ARGUMENTS.txt says so in the paragraph
+Change 10 added to the section about --setup, & DEVELOPMENT_NOTES.txt gained an entry in --Engine--.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Change 12, The Kernel Says What PHP Was Measured To Do With A Path It Opens--
+
+This change was made after the Engine was given v4.2.5, in the same build as Change 10. The
+kernel was v4.2.5 before it & is v4.2.5 with it. No line of code changed.
+
+What changed. Three lines of the comment above enterFolderWithoutFollowing(), which Change 2
+added, are five now. They said that fopen() joins a relative name to the path of the working
+folder & opens the whole path, which looks every folder up again. They say now that PHP keeps
+where each path last led & opens that, that file_get_contents(), hash_file() &
+file_put_contents() do the same, & that only clearstatcache(TRUE) has PHP forget every path.
+
+Why. Change 2 measured what PHP hands the system, with strace, & read the rest off that.
+HRProtect v0.0.6 measured what a second open of one path reaches once a folder on the way has
+been swapped. PHP does not look again. It goes where the path last led. So the comment was
+right that fopen() does not act inside the folder held, & wrong about what it does instead.
+
+What it changes. Nothing that runs. What the comment concluded stands. A caller that opens a
+file in a folder held this way compares the open handle with what lstat showed it, & creates
+no file by name there. No caller relied on fopen() looking again.
+
+Effect on the reference application. None.
+
+How to see it. HRProtect's unit tests of the kernel measure it on the PHP that runs them. They
+open one path twice with a folder on the way swapped in between, & then again after
+clearstatcache(FALSE), after forgetting the file alone, after forgetting the folder alone &
+after clearstatcache(TRUE). Only the last reaches the folder that is there.
+
+What the Engine's documents say. DEVELOPMENT_NOTES.txt gained an entry in --Kernel--.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What Was Added To The Error Catalogue--
+
+ERROR_DESCRIPTIONS.txt is the kit's catalogue, whole. It documents 325 errors & holds twenty
+blocks of warnings & reservations, & every line of it is here, in its order. A script adds
+HRProtect's part to the kit's own copy, in four steps, & writes nothing where a line of the
+kit's would be missing from what it wrote.
+
+  1. Ten lines are added to the end of ADDITIONAL INFORMATION in the header. They say what
+     HRProtect added, that everything else is the Engine's as v4.2.4 distributed it, that
+     the Engine v4.2.5 raises no error v4.2.4 did not, where a scan in the background logs,
+     from v0.0.3 what HRProtect-50005 is, & from v0.0.7 that the Engine raises nine warnings
+     v4.2.4 did not.
+  2. Where a file of this tree raises an entry's number, & the entry names no file that does,
+     that file is added to the entry's FILE list. protectCore.php was added to seven entries,
+     <APPLICATION_NAME>-3 through <APPLICATION_NAME>-9. Nothing else in an entry changes.
+     What raises a number is decided by the tree's own documentation check, so the script &
+     the check cannot disagree.
+  3. HRProtect's three guards have entries of their own, as HRProtect-2, HRProtect-34000 &
+     HRProtect-35000. Each is added after the last entry of the same number, beside the
+     reference application's. The checks allow one number under two labels.
+  4. HRProtect's own block is added at the end, as errors 50000 through 50006, the
+     reservation of 50000 through 50999 & five blocks of warnings. Two more blocks of warnings
+     follow them, for what the Engine itself raises & the kit's catalogue does not hold.
+     The first documents the two the kernel raises for an argument beginning --app. One is the
+     kit's & was not in the kit's catalogue. The other is Change 1's.
+     The second, from HRProtect v0.0.7, documents the nine the Setup Core raises for a timer of
+     an application's own, which are Change 10's.
+
+Error 50005, from v0.0.3, is the guard of a Core of HRProtect's own. It is in HRProtect's block
+& not beside the Engine's guards, because no component of the Engine's is such a Core.
+The third block of warnings, from v0.0.3, is the two about the event record.
+Error 50006, from v0.0.4, is raised for scanning, as 50000 through 50004 are.
+The fourth block of warnings, from v0.0.5, is the six about coverage.
+The fifth, from v0.0.7, is the six about a scan on a schedule.
+
+An entry for a pipeline HRProtect does not carry is one HRProtect cannot raise. It stays,
+because it is the Engine's document.
+
+The entries for errors 502 & 18000 say what the reference application does when a scanner
+is missing. HRProtect's ClamAV & ScanCore pipelines raise both, & HRProtect then stops the
+scan with error 50001. Neither entry was changed. The entry for 50001 says so.
+
+No number changed value. Every number the kit uses is below 43120, & HRProtect's begin at 50000.
+
+The first build did otherwise. It kept 133 entries, left out 192 & reworded four, so that
+the catalogue held only what HRProtect could raise. The maintainer refused that, & the
+changelog records both.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What Was Added To The Engine's Documents--
+
+Ten documents other than the catalogue gained lines. Each addition is in
+engine_document_additions.txt, kept with HRProtect's tests, with the place it is added at.
+
+  CODING_CONVENTIONS.txt               Two lines below rule 21, which send a path to sanitizePath(). Two in
+                                       what it says of the system files that are written, on the units of
+                                       a command an application puts on a schedule.
+  CODING_CONVENTIONS.md                One line below rule 21, & two below the line about the boundary
+                                       sanitize() is. One says what sanitizePath() is & is not, & the
+                                       other what printableText() is for.
+  ABOUT_COMMAND_LINE_ARGUMENTS.txt     Five paragraphs at the end of the section about --app, on the exit
+                                       status, on what sanitizes a value, on a flag, on a worker & on a
+                                       schedule. Ten sections below it, one for each of HRProtect's commands.
+                                       One paragraph in the section about --setup, on the timers
+                                       --install-service writes & on an application with no listener.
+  ABOUT_COMPONENTS.txt                 One part at the end of the section about adding a component, on a
+                                       Core of an application's own, from HRProtect v0.0.3.
+  ABOUT_ENGINE_CONTRACT.txt            Three paragraphs below the one about the command line, on the exit
+                                       status, on a worker of an application's own & on a command it puts
+                                       on a schedule.
+  ABOUT_MANAGED_LOCATIONS.txt          One paragraph in the data-root role, on a folder the contract declares,
+                                       & one below what it says of guarding a name, on a handle.
+  ABOUT_QUALITY_CONTROL.txt            One paragraph at the end of the section about the documentation
+                                       checker, on the two lists.
+  ABOUT_MANAGERS.txt                   One paragraph at the end of the section about starting & stopping,
+                                       on a worker that is no manager's.
+  ABOUT_LOGGING.txt                    One paragraph below what it says of the Worker role, on HRProtect's
+                                       use of it, one below what it says of root's logfile, on a handle,
+                                       & one section at the end, on text nobody vetted.
+  DEVELOPMENT_NOTES.txt                Six entries at the end of --Kernel--, four at the end of --Engine--
+                                       & one at the end of --Managed Locations & Trust--. Six sections at
+                                       the end, which are --The Engine's Documents In An Application--,
+                                       --Scanning--, --Quarantine--, --Events--, --Coverage-- &
+                                       --A Scan On A Schedule--.
+
+An addition names a place by a whole line of the kit's, or by the title of a section. The
+script finds every place in the kit's own copy before it adds anything. It writes nothing
+where a place is not found exactly once, so a later kit that words a line differently stops
+the script rather than leaving an addition out.
+
+A sentence added to a document of the Engine's about a change to the Engine carries v4.2.5,
+as the sentences beside it carry the version they are true from. The first build's carried
+none, because the Engine had not been given a version for them.
+
+The header of each document is the kit's. It names the reference application, as it does in
+the kit.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What Was Taken From The Reference Application--
+
+Three things, from the public repository at its v4.2.3. Nothing is shared at run time, &
+neither application knows of the other.
+
+  Resources/Pipelines/ClamAV       Taken at pipeline v4.2.1. It is HRProtect's own now, at v0.0.1.
+  Resources/Pipelines/ScanCore     Taken at pipeline v4.2.3. It is HRProtect's own now, at v0.0.1.
+  Resources/ScanCore               ScanCore v1.9, which is a program of its own, carried unchanged
+                                   but for its two protection pages, which named the reference application.
+
+What changed in the two pipelines, & why.
+
+  Each reads a setting through applicationSetting() & the contract's $EngineSettingNames,
+  rather than from a global of the reference application's, so it names no application's setting.
+
+  Each writes to the folder the contract maps to ScannerScratchFolder, rather than to a
+  session's temporary folder, because a scan root runs has no session.
+
+  Each returns a verdict for every path it was handed, as a fourth value, & a path it could
+  not scan is incomplete rather than absent. HRProtect acts on that verdict & on nothing else.
+
+  The ClamAV pipeline returned no verdict for a path. It returns one now, as the ScanCore pipeline did.
+
+  A warning names what it is about in plain words, rather than by a label of the reference
+  application's configuration.
+
+The Quarantine pipeline is new. It was written to be handed its folder & to read no
+setting, so the reference application could carry it as it is.
+
+The reference application's approval records for these pipelines were not taken. Each is
+its maintainer's audit of a dependency for another use, & the tool that writes one is not
+in the kit. HRProtect has none yet.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--A Fault Found In The Reference Application--
+
+The ScanCore pipeline of the reference application, at v4.2.3, hands ScanCore its switches
+joined together. It builds  -r  then adds  v  where ScanCore's verbosity is on &  d  where
+its debugging is on, which gives -rv, -rd or -rvd.
+
+ScanCore reads a switch whole. It knows -r, -v & -d, & matches -rv to none of them.
+
+Measured against ScanCore v1.9, with a folder holding one file & a folder holding another.
+
+  -r      Scanned 2 files in 2 folders.
+  -rv     Scanned 1 file in 1 folder.
+
+So with verbosity on, which is the reference application's default, a folder handed to
+ScanCore is not scanned below its top, & nothing says so.
+
+HRProtect's pipeline hands each switch over on its own. The same correction belongs in the
+reference application, where scanWithScanCore() builds the command.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What The Engine Assumes About An Application--
+
+HRProtect is the first application on the Engine that serves no page, runs as root at a
+terminal & converts nothing. Each of these was met while building it. None was changed,
+because each is a decision about the Engine & not a fault that stops this application.
+
+One that was listed here in the first build is a change now. sanitize() could not be handed
+a path, & Change 6 gave the kernel a function that can.
+
+It is served by a web server.
+  -fp publishes a loader & a DATA folder under the document root, writes an Apache
+  configuration & a PHP configuration, & reports a Hosted location & a Data directory in -v.
+  It does all of this for an application that serves nothing. HRProtect's loader answers a
+  browser with one sentence. A security tool with no web interface would rather publish
+  nothing. The contract has no way to say an application is not served.
+
+  -v warns that the exposure check could not run because no served location is set, & reports
+  Live exposure as UNVERIFIED, for the same reason.
+
+  verifyCodeIsTrustedByRoot() & repairInstallation() name the DATA folder themselves.
+
+It converts.
+  The Pipeline Core logs that it verified a number of conversion pipelines, & limitCommand()
+  that a conversion runs unlimited, whatever kind of pipeline ran. Error 34001 & the Listener
+  notes in the help speak of conversions.
+
+  A Workflows folder is made in the data location of every application.
+
+It has a listener, accounts & workflows.
+  The help lists the listener's, the accounts' & the workflows' commands for an application
+  that has switched all three off.
+
+  --setup --install-service exited 1 for an application with no listener, until Change 11.
+  -fp still prints a Listener service section for one, which says the listener was skipped.
+
+It installs the configuration a release carries.
+  handOverToApplication() installs a whole tree, config.php included, & keeps the installation
+  it replaced in the backup location. So a later release begins from the settings it ships, &
+  whatever an administrator had set is in the backup & not in use.
+  For HRProtect, from v0.0.7, that empties --Scheduled Scan Paths-- & leaves the timer enabled.
+  A schedule then scans nothing, & nobody switched it off. HRProtect says so four ways, as a
+  part that is unable, a unit that failed, a warning & an event, & its documents say to set the
+  paths again.
+  An update carries the settings forward, through mergeConfigFile(). An installation of a whole
+  tree could do the same & then repair what the new release added. Nothing was changed here,
+  because what an installation carries forward is the Engine's to decide.
+  mergeConfigFile() carries text & no array, which is why HRProtect keeps its paths as text.
+
+It is run by the web server account.
+  verifySystemdRun() builds the web server account's environment & asks that account's user
+  manager for a scope, whoever runs it. Run by root it is expected to fall through to a
+  system scope & then warn that this account holds manage-units, which is always true of
+  root. This could not be run here, because the build host has no systemd.
+  HRProtect therefore ships with --Enable Per Conversion Limits-- FALSE. What is to be proven,
+  on a host with systemd, is that a scope is made for a command root runs, that the warning
+  is not raised for root, & that a scanner killed by its ceiling is reported as incomplete.
+
+  A command line that is not a web request logs that file operations are disabled, on every command.
+
+  The managers run as that account. Root reads none of their state & they cannot signal a
+  process of root's. So work root starts is given no budget, is on no manager's list & is not
+  stopped by -k. HRProtect's scan in the background is such work. Change 8 says what it does
+  instead, & what is left for the Engine to decide.
+
+Its files carry the reference application's name.
+  The Engine's code holds no application's name. Its comments do, & two names it gives
+  files are short for it.
+  environmentCore.php names HRConvert2 14 times, setupCore.php 6, engine.php 5,
+  pipelineCore.php twice, in a header that is the reference application's own, & three other
+  cores once each. engine.php names a file .hrc2-url-downloads & a temporary file hrc2run.
+
+  The two checkers are named for the reference application, & so is every document.
+
+It trusts what it logs.
+  composeLogEntry() writes an entry as it is handed it. A file's name holding a line break
+  would forge a line. The kernel has printableText() from v4.2.5, by Change 7, & HRProtect
+  passes every name through it first. An application that logs a name it did not choose
+  still has to know to do the same, & ABOUT_LOGGING.txt now says so.
+
+It hands a sandboxed command more than its files.
+  A command sandboxCommand() wraps reads from whatever the process that runs it reads from. At a
+  terminal that is the terminal. HRProtect's two scanner pipelines give their command /dev/null,
+  from v0.0.2. The Engine could do the same for every sandboxed command, once it is known that no
+  pipeline of the reference application feeds its tool that way.
+  The sandbox passes on the environment of the process that runs it, with what it sets itself
+  laid over it. A tool root runs in a sandbox is given root's environment. It can send what it
+  reads there nowhere, & HRProtect changed nothing here.
+  Until Change 9 it was also handed every file root held open through the kernel.
+
+It is told an owner by name.
+  changeOwnerWithoutFollowing() takes an account's name, & PHP reads a number written as
+  text as a name. A file whose owner has no name on the host cannot be given back to it.
+  The Quarantine pipeline puts such a file back as root's & says what it was.
+
+Its Cores are the Engine's.
+  ABOUT_COMPONENTS.txt counts seven Cores, has a new one made in Resources/Engine/Cores & has it
+  listed in showVersionReport(). HRProtect's Event Core, from v0.0.3, is a Core of the
+  application's own. No file of the Engine's changed for it. verifyCoreComponent() takes a path
+  relative to Resources, $EnginePinSources names the file a pin is about, & the function named
+  in $EngineReportProvider reports it.
+  Two things the Engine does not have for such a Core. One is a guard number, so HRProtect
+  numbered its own, 50005. The other is a place in -v beside the Engine's components, so the
+  Event Core is a row in HRProtect's own section of the report.
+
+It makes printable what a terminal would obey, & no more.
+  printableText() keeps every character that is not a control. U+202E, which turns the text
+  after it around, is not one, & neither is any other character that changes how a line is
+  drawn. A name holding one is shown as it was written. HRProtect keeps the bytes of a path
+  beside its printable form, & prints an event as JSON, where such a character is an escape.
+  Whether printableText() should take such characters out is the Engine's to decide.
+
+It says why a pipeline was refused in the log, & nowhere else.
+  enumeratePipelines() keeps the pipelines it verified in $Pipelines. One it refused is not
+  there, & the reason is a warning. An application that reports on its own parts cannot ask why.
+  HRProtect's pipelineCoverageRow(), from v0.0.5, reads the version of such a pipeline again, with
+  the kernel's readComponentVersion(), to tell one that is not installed from one that is
+  another version. A pipeline of the right version that was refused for what it declares is
+  reported as refused, & the administrator is sent to the log.
+  A record of each refusal beside $Pipelines, with its reason, would let an application say it.
+
+It keeps a pipeline whose code is missing.
+  validatePipelineDeclarations() notes whether pipeline.php exists & keeps the pipeline either
+  way, because an entry point may be defined elsewhere. loadPipelineCore() finds out at the
+  first dispatch, with error 34002. For a conversion that is a request that fails. For a
+  quarantine it is an infected file that is left where it is. HRProtect's --app-coverage --probe
+  calls loadPipelineCore() for every pipeline that is no scanner, so it is found beforehand.
+
+It runs the first pipeline that provides a scanner.
+  scannerPipelineFolder() returns the first verified pipeline of a family, & runVirusScan() runs
+  that one. A second pipeline of the same family is verified, listed & never run, & nothing
+  says so. HRProtect reports such a pipeline as off, with the reason. Nothing HRProtect ships
+  shares a family.
+
+It tells one filesystem from another by its device number.
+  removeTreeWithoutFollowing() does not go into a folder on another device. A filesystem
+  mounted a second time inside a tree has the device number of the tree, & would be gone into.
+  Nothing HRProtect removes is a tree anything is mounted in, so nothing was changed.
+  The kernel's own list of mounts tells the two apart, & filesystemKindOf() in protectCore.php
+  already reads it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What Could Move Into The Engine--
+
+Seven things HRProtect holds that are not about scanning. None was moved, because one user
+is not yet a reason. The last of them is repeated more often than rule 20 allows, in the kernel
+as well as here, & is entered for that reason.
+
+  Copying an open handle into a new file.
+    copyHandleToNewFile() in the Quarantine pipeline & stageFileForScan() in protectCore.php
+    each copy from a handle already compared with what was examined, into a name that must
+    not exist. It belongs beside readFileWithoutFollowing().
+
+  The Quarantine pipeline itself.
+    It reads no setting & is handed its folder, so another application could carry it unchanged.
+
+  Knowing a process after the server has restarted.
+    readScanState() knows a scan by its process & by when the kernel says the process started,
+    which the Engine's readProcessStartTime() reports, & by the boot, which
+    currentBootIdentifier() reads. The Engine knows a worker by the first two. Both begin again
+    when the server does, which matters to any state that outlives a restart.
+
+  Holding a message to its entry in the catalogue.
+    check_messages.php, kept with HRProtect's tests, fails where a warning or an error HRProtect's
+    own code logs has no line in ERROR_DESCRIPTIONS.txt it could have written, & where a warning
+    HRProtect documents has no call that could write it. The Engine's checks hold an error to its
+    number & a warning to nothing. It reads only an application's own files, because the
+    Engine's catalogue has not been held to it.
+
+  The Event Core.
+    From v0.0.3. It keeps a record of what an application did & found, & knows nothing of
+    scanning. It reads two things of the application's, the folder the record is kept in & the
+    version an event is stamped with, & its guard names HRProtect. An application that watches
+    anything has events to keep. ABOUT_EVENTS.txt describes it.
+
+  Leaving an ignored signal ignored.
+    watchForScanSignals() handles TERM, INT & HUP for a scan, & leaves alone one the process was
+    started ignoring, by reading the kernel's own list. The Core Manager handles TERM without
+    that, because nothing starts a manager under nohup.
+
+  Saying whether an open handle is of the file that was examined.
+    From v0.0.3. eventHandleIsOfPath() in the Event Core takes what fstat() said of a handle &
+    what lstat() said of its path, & says whether the two are one plain file, by device & inode.
+    The kernel makes that comparison where it stands in openFileWithoutFollowing(),
+    readFileWithoutFollowing() & writeInstallSecretAsRoot(), & makes it of a folder in
+    enterFolderWithoutFollowing() & removeTreeWithoutFollowing(). stageFileForScan() in
+    protectCore.php makes it & the Quarantine pipeline makes it twice. That is more often than
+    rule 20 allows.
+    It is a function in the Event Core because nothing written where it stands can be tested.
+    A test would have to swap a name at the one moment between the two calls. Handed the two
+    answers, a function is tested with answers a test made up. No file of the Engine's was
+    changed for it, so the kernel & the rest still compare where they stand.
+
+A third was listed here in the first build, the function that makes text safe to print. It
+was repeated four times, which rule 20 does not allow, & is Change 7 now.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Bringing This Application To A Later Engine--
+
+  1. Replace Resources/Kernel, Resources/Engine, Documentation/Build & every document the kit
+     distributes with the later kit's.
+  2. For each change above, see whether the later Engine has it. Where it has, there is
+     nothing to do & its entry here is closed. Where it has not, apply it again & keep the entry.
+  3. Run adopt.sh, kept with HRProtect's tests, against the later kit. It adds HRProtect's
+     lines to the later kit's documents & to its catalogue. Where it stops, the later kit
+     changed a line HRProtect added below. Read both, & move the addition.
+  4. Move the pins in verifyInstallation() & the kernel pin in the main logic of
+     protectCore.php to what the later Engine reports.  php protectCore.php --build --pins
+     names every pin that differs, & exits 0 where none does.
+  5. Run the three checks, check_adoption.py, the unit tests, the mutation run & the end to
+     end tests.
+
+A change that was taken upstream is closed by saying so under its title, with the version
+that took it. An entry is never removed, because this file is the record.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Taking This Engine To Another Application--
+
+The Engine v4.2.5 is two folders, Resources/Kernel & Resources/Engine. They replace another
+application's whole, as the kit says an Engine is upgraded.
+
+  1. Copy both folders over the other application's.
+  2. Move four of its pins to v4.2.5. They are $RequiredKernelVersion, $RequiredEngineVersion,
+     $RequiredSetupCoreVersion & $RequiredWorkflowCoreVersion. No other pin moves.
+  3. Nothing is added to config.php & nothing to the manifest, so neither --config --repair
+     nor --setup has anything new to do.
+  4. Take Documentation/Build/hrconvert2-doccheck.py as well, which is Change 5. In the
+     reference application every name in its two new lists is defined, so the lists change
+     nothing there.
+  5. The lines added to the Engine's documents are in engine_document_additions.txt, each with
+     the place it goes. Those about HRProtect's own commands, its scan & its quarantine are
+     HRProtect's, & stay here.
+
+What each change does to the reference application is said under the change. None changes
+what it does. Change 4 stops four protection pages sending a browser to its entry point.
+
+The Engine was v4.2.5 before Change 8 & is v4.2.5 with it. An application that took this Engine
+before Change 8 has an engine.php without startApplicationWorker(), which reports the same
+version. It takes the two folders again, & no pin moves.
+
+The same holds for Changes 10, 11 & 12. An application that took this Engine before them has no
+applicationTimerState() & a Setup Core that writes no timer for it, under the same versions.
+It takes the two folders again, & no pin moves. engineConfig.php is the one file that tells the
+two apart by its version, which was v4.2.4 before Change 10 & is v4.2.5 with it. No pin reads it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

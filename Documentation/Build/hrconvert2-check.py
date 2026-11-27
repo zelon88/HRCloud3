@@ -1,0 +1,1859 @@
+#!/usr/bin/env python3
+# / -----------------------------------------------------------------------------------
+# / Copyright Information ...
+# / HRConvert2, Copyright on 9/4/2026 by Justin Grimes, www.github.com/zelon88
+# /
+# / License Information ...
+# / This project is protected by the GNU GPLv3 Open-Source license.
+# / https://www.gnu.org/licenses/gpl-3.0.html
+# /
+# / Application Information ...
+# / This application is designed to provide a web-interface for converting file formats
+# / on a server for users of any web browser without authentication.
+# /
+# / File Information ...
+# / v4.2.4.
+# / This file checks the source for faults a human reading it will not reliably see.
+# /
+# / Run it from the installation root, beside the application's entry point, convertCore.php for HRConvert2.
+# / The entry point & the application's configuration model are read from its contract, Resources/Contract/app-engine-config.php,
+# / as $EngineEntryPoint & $EngineConfigModelProvider, so another application's tree is checked unchanged.
+# /   python3 Documentation/Build/hrconvert2-check.py
+# /
+# / It exits zero when every check passes, one when any of them does not & two when it was
+# / asked something it could not answer, so a build pipeline can call it without reading
+# / the output.
+# /   python3 Documentation/Build/hrconvert2-check.py --quiet
+# /
+# / Neither this tool nor its Bash twin ever writes to a file. They report & nothing else.
+# / A change to the code is always a separate act, & this tool is what to run after it.
+# /
+# / --fail-on names the kinds that decide the exit code, for a hook that nobody reads.
+# /   python3 Documentation/Build/hrconvert2-check.py --quiet --fail-on syntax,balance,return,config,duplicate,order,undefined
+# /
+# / Every check has a name & can be run on its own, which is what to do while fixing one.
+# /   python3 Documentation/Build/hrconvert2-check.py --list
+# /   python3 Documentation/Build/hrconvert2-check.py --only pins
+# /
+# / ScanCore is checked with everything else, because it is HRProprietary software & has no
+# / tooling of its own yet. --no-scancore leaves Resources/ScanCore out of every check.
+# /   python3 Documentation/Build/hrconvert2-check.py --no-scancore
+# /
+# / Run --list for every check. Each one is described above the function that performs it,
+# / & each description says what it CANNOT see as well as what it can.
+# /
+# / Why this exists.
+# / Every check below but two was written after a fault reached a running installation, &
+# / ABOUT_QUALITY_CONTROL.txt names the two.
+# / A convention nobody can verify is only taste. Every one of these is a convention this
+# / project already had, turned into something a machine decides rather than something a
+# / reader is trusted to notice.
+# / None of them are hypothetical & none of them were caught by reading the code.
+# / A syntax error, a call to a component that has not loaded yet & a variable that was
+# / renamed in one place are all invisible to careful reading & obvious to a parser.
+# /
+# / What it does NOT do.
+# / It does not run the application & it does not test behaviour.
+# / A conversion that produces the wrong file passes every check here.
+# / It is a net for one class of fault rather than a test suite.
+# /
+# / Hardware Requirements ...
+# / This application requires at least a Raspberry Pi Model B+ or greater.
+# / This application will run on just about any x86 or x64 computer.
+# /
+# / A note on where this lives.
+# / Documentation/Build is inside the web root & is served like anything else there.
+# / A python file has no handler configured, so a web server hands back its source rather
+# / than running it. Nothing here is secret & the project is open source, so that is untidy
+# / rather than dangerous, & it is still worth the index.html every other directory in this
+# / project carries. Copy one in from any neighbouring folder rather than writing a new one.
+# / --Delete Build Environment-- in config.php leaves this directory where it is, because the
+# / application reads other scripts in it as it runs. It removes the Dockerfile & a Build folder
+# / in the installation root.
+# /
+# / Dependency Requirements ...
+# / This file requires Python 3. The syntax check additionally requires the php binary &
+# / is skipped with a notice when it is not installed.
+# /
+# / <3 Open-Source
+# / -----------------------------------------------------------------------------------
+
+import glob
+import os
+import re
+import subprocess
+import sys
+
+# / The bundled ScanCore program, relative to the installation root. It runs as a process of
+# / its own & is a different program from the ScanCore pipeline, which is application code.
+SCANCORE_FOLDER = os.path.join('Resources', 'ScanCore') + os.sep
+# / Whether ScanCore is checked. It is unless --no-scancore says otherwise. Set by main.
+INCLUDE_SCANCORE = True
+# / A finding whose message names a file in the bundled ScanCore program.
+SCANCORE_MESSAGE = re.compile(r'Resources[/\\]ScanCore[/\\]|\bScanCore(?:_Config)?\.php\b')
+# / The application's entry point & the function that models its half of config.php, read from its contract by main.
+# / They begin as the Engine's defaults for an application that declares neither, app.php & no model.
+ENTRY_POINT = 'app.php'
+CONFIG_MODEL = ''
+
+
+# / -----------------------------------------------------------------------------------
+# / A function to read the application's entry point & configuration model from its contract.
+# / Accepts the installation root. Returns the entry point's file name & the model's function name, in that order.
+# / The contract is read as text & never executed, as every component is. Until v4.2.4 every check that read the
+# / application named convertCore.php & applicationConfigModel(), so another application had to edit this file first.
+# / A contract that names neither leaves the Engine's defaults, which is what the Engine assumes of such an application.
+def contract_names(root):
+    contract = os.path.join(root, 'Resources', 'Contract', 'app-engine-config.php')
+    text = open(contract, encoding='utf-8', errors='replace').read() if os.path.exists(contract) else ''
+    entry = re.search(r"^\$EngineEntryPoint\s*=\s*'([^']+)'\s*;", text, re.M)
+    model = re.search(r"^\$EngineConfigModelProvider\s*=\s*'([^']*)'\s*;", text, re.M)
+    return (os.path.basename(entry.group(1).strip()) if entry else 'app.php', model.group(1).strip() if model else '')
+
+
+# / -----------------------------------------------------------------------------------
+# / A function to find every PHP file this project owns.
+# / Accepts the installation root. Returns a sorted list of paths.
+# / Only the directories this project writes are searched.
+# / A pipeline somebody else installed is still checked, because it is still loaded.
+def project_files(root):
+    found = []
+    for base, dirs, files in os.walk(root):
+        # / Nothing under a version control directory or a data location is source.
+        dirs[:] = [d for d in dirs if d not in ('.git', 'DATA', 'Logs', 'node_modules')]
+        for name in files:
+            if name.endswith('.php'):
+                found.append(os.path.join(base, name))
+    # / A build tool is a harness rather than application code & is never linted.
+    # / They define stubs with the same names as real functions, take deliberately terse
+    # / parameters & exit in more than one place, all of which is correct for a test & wrong
+    # / for the application. Linting them buries the findings that matter.
+    found = [f for f in found if os.path.join('Documentation', 'Build') not in f]
+    if not INCLUDE_SCANCORE:
+        found = [f for f in found if not os.path.relpath(f, root).startswith(SCANCORE_FOLDER)]
+    return sorted(found)
+
+
+# / -----------------------------------------------------------------------------------
+# / A function to blank every comment & string literal in one whole file.
+# / Accepts the file text. Returns the text with every literal emptied & every line still
+# / on the line it started on, so a reported line number is still the real one.
+# /
+# / This reads the WHOLE FILE rather than one line at a time & the difference matters.
+# / A string in PHP may run across several lines, & a per line reader treats the rest of
+# / that string as code. Generated code inside a string is the worst case, because it looks
+# / exactly like the thing being searched for.
+# / A cache file this project writes contains the text  if (!isset($CoreLoaded))  inside a
+# / string, & a per line reader reported it as a variable read that was never declared.
+# /
+# / Heredoc & nowdoc are not handled & this project does not use them. A file that starts
+# / using one will produce noise here rather than silence, which is the safer failure.
+def strip_file_literals(text):
+    output = []
+    quote = None
+    comment = None
+    index = 0
+    length = len(text)
+    while index < length:
+        character = text[index]
+        # / A newline ends a line comment & is always kept, so line numbers survive.
+        if character == '\n':
+            comment = None if comment == 'line' else comment
+            output.append('\n')
+            index += 1
+            continue
+        if comment == 'line':
+            output.append(' ')
+            index += 1
+            continue
+        if comment == 'block':
+            if text.startswith('*/', index):
+                comment = None
+                output.append('  ')
+                index += 2
+                continue
+            output.append(' ')
+            index += 1
+            continue
+        if quote is None:
+            if text.startswith('//', index) or character == '#':
+                comment = 'line'
+                output.append(' ')
+                index += 1
+                continue
+            if text.startswith('/*', index):
+                comment = 'block'
+                output.append('  ')
+                index += 2
+                continue
+            if character in '"\'':
+                quote = character
+                output.append(character)
+                output.append(character)
+                index += 1
+                continue
+            output.append(character)
+            index += 1
+            continue
+        # / Inside a string. A backslash escapes whatever follows it, including the quote.
+        if character == '\\' and index + 1 < length:
+            if text[index + 1] == '\n':
+                output.append('\n')
+            else:
+                output.append(' ')
+            index += 2
+            continue
+        if character == quote:
+            quote = None
+        output.append(' ')
+        index += 1
+    return ''.join(output)
+
+
+# / -----------------------------------------------------------------------------------
+# / A function to read one file & return its lines with every literal already blanked.
+# / Accepts the path. Returns the original lines & the blanked lines, in that order.
+# / Every check reads through here, so a literal is stripped once per file rather than
+# / once per check, & every check sees the same thing.
+def read_source(path):
+    text = open(path, encoding='utf-8').read()
+    return text.split('\n'), strip_file_literals(text).split('\n')
+
+
+# / -----------------------------------------------------------------------------------
+# / A function to read every function in one file & where it begins & ends.
+# / Accepts the lines of the file. Returns a dictionary of name to a record.
+# / A function is found by a line beginning with the keyword, because this project
+# / declares every function at the top level & never nests one inside another.
+def read_functions(original, blanked):
+    functions = {}
+    for index, line in enumerate(blanked):
+        if not line.startswith('function '):
+            continue
+        name = line.split('(')[0][9:]
+        depth = 0
+        end = index
+        while True:
+            depth += blanked[end].count('{') - blanked[end].count('}')
+            if depth == 0 and end > index:
+                break
+            end += 1
+            if end >= len(blanked):
+                break
+        # / The blanked body is what every check reasons about & the original is what a
+        # / report quotes, so a message shows what an author wrote rather than a line with
+        # / the strings taken out of it.
+        functions[name] = {
+            'start': index,
+            'end': end,
+            'signature': blanked[index],
+            'body': blanked[index:end + 1],
+            'original': original[index:end + 1]}
+    return functions
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK ONE. The php binary parses every file.
+# / A syntax error is the cheapest fault to find & the one most often introduced by a
+# / scripted edit that matched the wrong text.
+# / This is skipped rather than failed when php is not installed, because a machine
+# / without it can still run every other check here.
+def check_syntax(files, report):
+    if subprocess.call(['which', 'php'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
+        report('SKIP', 'php is not installed, so the syntax check did not run.')
+        return 0
+    faults = 0
+    for path in files:
+        result = subprocess.run(['php', '-l', path], capture_output=True, text=True)
+        if result.returncode != 0:
+            report('SYNTAX', path + ': ' + result.stdout.strip().split('\n')[0])
+            faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK TWO. Every delimiter closes.
+# / php -l finds this too & this runs anyway, because it runs without php installed & it
+# / reports which delimiter rather than only which line.
+def check_balance(files, report):
+    faults = 0
+    for path in files:
+        counts = {'{': 0, '(': 0, '[': 0}
+        closing = {'}': '{', ')': '(', ']': '['}
+        original, blanked = read_source(path)
+        for line in blanked:
+            for character in line:
+                if character in counts:
+                    counts[character] += 1
+                elif character in closing:
+                    counts[closing[character]] -= 1
+        for opener, count in counts.items():
+            if count != 0:
+                report('BALANCE', path + ': ' + opener + ' is out by ' + str(count))
+                faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK THREE. Nothing calls a component before that component is loaded.
+# / This is the check that matters most & the one a human reading the file cannot do.
+# /
+# / A component is verified & loaded at a known line in the main logic. Anything the main
+# / logic calls before that line must not reach a function the component defines.
+# / The reach is followed through the call graph rather than read off the call itself,
+# / because the fault is never in the obvious place.
+# /
+# / A real example. verifyGlobals is called before the Engine loads. It calls
+# / requestConvertLoc, which calls resolveDataLocation, which the Engine defines.
+# / Reading the call sites showed nothing, because requestConvertLoc is DEFINED early in
+# / the file. It RUNS late. That difference produced a fatal on the first request.
+def check_call_order(root, report):
+    core_path = os.path.join(root, ENTRY_POINT)
+    if not os.path.exists(core_path):
+        report('SKIP', ENTRY_POINT + ' was not found, so the call order check did not run.')
+        return 0
+    original, lines = read_source(core_path)
+    functions = read_functions(original, lines)
+
+    # / Which component file defines which function.
+    defined_by = {}
+    for base, dirs, files in os.walk(os.path.join(root, 'Resources')):
+        dirs[:] = [d for d in dirs if d not in ('.git',)]
+        for name in files:
+            if not name.endswith('.php'):
+                continue
+            body = open(os.path.join(base, name), encoding='utf-8').read()
+            for match in re.finditer(r'^function (\w+)\(', body, re.M):
+                defined_by[match.group(1)] = name
+
+    # / Where the main logic loads each component. Only a top level load counts, because a
+    # / load inside a function happens whenever that function is called.
+    # / The kernel's loadEngine() loads the Engine & has it start, from v4.2.4, so every file of the Engine's is
+    # / taken to load where the main logic calls it, & nothing of the Engine's may be reached before that line.
+    loaded_at = {}
+    engine_files = []
+    for base, dirs, files in os.walk(os.path.join(root, 'Resources', 'Engine')):
+        engine_files.extend(name for name in files if name.endswith('.php'))
+    for index, line in enumerate(lines):
+        if line.startswith('list (') and 'verifyCoreComponent(' in line:
+            match = re.search(r"'([A-Za-z]+\.php)'", line)
+            if match:
+                loaded_at[match.group(1)] = index
+        if line.startswith('list (') and re.search(r'\bloadEngine\s*\(', line):
+            for name in engine_files:
+                loaded_at.setdefault(name, index)
+
+    def calls_made(name):
+        if name not in functions:
+            return set()
+        text = '\n'.join(functions[name]['body'])
+        return set(re.findall(r'\b([a-z][A-Za-z0-9_]*)\s*\(', text))
+
+    # / The transitive closure of what a function reaches, memoized because the graph is
+    # / large & a function is reached from many places.
+    reached = {}
+
+    def reach(name, seen=None):
+        if name in reached:
+            return reached[name]
+        seen = seen or set()
+        if name in seen or name not in functions:
+            return set()
+        seen = seen | {name}
+        found = set()
+        for called in calls_made(name):
+            found.add(called)
+            found |= reach(called, seen)
+        reached[name] = found
+        return found
+
+    faults = 0
+    for index, line in enumerate(lines):
+        # / Only a top level statement is main logic. A definition & an indented line are
+        # / both inside something that has not necessarily run yet.
+        if line.startswith('function ') or line.startswith(' ') or line.startswith('//') or not line.strip():
+            continue
+        for called in re.findall(r'\b([a-z][A-Za-z0-9_]*)\s*\(', line):
+            for target in {called} | reach(called):
+                if target in defined_by and defined_by[target] in loaded_at:
+                    if loaded_at[defined_by[target]] > index:
+                        report('ORDER', 'line ' + str(index + 1) + ': ' + called
+                               + '() reaches ' + target + '() in ' + defined_by[target]
+                               + ', which loads at line ' + str(loaded_at[defined_by[target]] + 1))
+                        faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK FOUR. Every variable a function reads exists.
+# / A variable that is read & is neither a parameter, nor declared global, nor assigned
+# / anywhere inside the function does not exist when it is read.
+# /
+# / This is the shape of a parameter renamed in the body but not in the signature, which
+# / is valid PHP & fatal at runtime. It is also the shape of a global somebody forgot to
+# / declare, which is a warning rather than a fatal & corrupts an AJAX reply.
+# /
+# / Two patterns produce a finding that is not a fault & are worth knowing about.
+# / A reference in a foreach, written as  foreach ($x as &$y), assigns $y by reference.
+# / A catch block binds its exception to a variable that nothing appears to assign.
+# / A file brought in with require may assign variables into the calling scope, which is
+# / how a GUI supplies its button codes.
+# / Neither is visible to a parser reading one function, so both are reported.
+def check_undefined_reads(files, report):
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        for name, record in read_functions(original, blanked).items():
+            signature = record['signature']
+            # / Only the text between the signature's parentheses is a parameter list.
+            # / Taking everything after the first parenthesis meant that a function written
+            # / on one line had its whole body read as its parameters, so every variable in
+            # / it counted as declared & the check could not fail on such a function.
+            depth = 0
+            start = signature.index('(')
+            finish = start
+            for position in range(start, len(signature)):
+                if signature[position] == '(':
+                    depth += 1
+                elif signature[position] == ')':
+                    depth -= 1
+                    if depth == 0:
+                        finish = position
+                        break
+            # / Every name between the parentheses is a parameter, including one with a
+            # / default. An earlier version stopped at the equals sign & then reported the
+            # / optional parameter as an undefined read in its own function.
+            parameters = set(re.findall(r'\$(\w+)', signature[start:finish]))
+            declared = set()
+            assigned = set()
+            used = set()
+            # / A declaration may run over several lines, so it is read from the whole body
+            # / rather than line by line. Reading one line at a time saw the first line of a
+            # / long declaration & reported every name below it as undeclared, which once
+            # / led to production code being reformatted to suit this tool rather than the
+            # / tool being taught to read it.
+            for found in re.finditer(r'\bglobal\s+([^;]+);', '\n'.join(record['body'])):
+                declared |= set(re.findall(r'\$(\w+)', found.group(1)))
+            # / The WHOLE body is read, including the signature line. Skipping it hid a
+            # / function written entirely on one line, because that line was the only line
+            # / & removing it left nothing at all to examine.
+            # / The signature contributes only its parameters, which are subtracted below.
+            for line in record['body']:
+                for found in re.finditer(r'\$(\w+)\s*=(?!=)', line):
+                    assigned.add(found.group(1))
+                for found in re.finditer(r'list\s*\(([^)]*)\)\s*=', line):
+                    assigned |= set(re.findall(r'\$(\w+)', found.group(1)))
+                # / A foreach assigns its key & its value, by value or by reference.
+                for found in re.finditer(r'as\s+&?\$(\w+)\s*(?:=>\s*&?\$(\w+))?', line):
+                    assigned.add(found.group(1))
+                    if found.group(2):
+                        assigned.add(found.group(2))
+                # / An anonymous function declares parameters of its own, & a use clause
+                # / imports names from the enclosing scope. Both are declarations that occur
+                # / in the middle of a line rather than at the top of a function.
+                for found in re.finditer(r'function\s*\(([^)]*)\)(?:\s*use\s*\(([^)]*)\))?', line):
+                    assigned |= set(re.findall(r'\$(\w+)', found.group(1) or ''))
+                    assigned |= set(re.findall(r'\$(\w+)', found.group(2) or ''))
+                # / A catch block binds its exception to a variable.
+                for found in re.finditer(r'catch\s*\([^)]*\$(\w+)\s*\)', line):
+                    assigned.add(found.group(1))
+                # / preg_match & exec fill their later arguments by reference.
+                if 'preg_match' in line or 'exec(' in line:
+                    for found in re.finditer(r',\s*\$(\w+)\s*[,)]', line):
+                        assigned.add(found.group(1))
+                used |= set(re.findall(r'\$(\w+)', line))
+            superglobals = {'GLOBALS', 'this', '_SERVER', '_GET', '_POST', '_FILES', '_ENV', '_COOKIE', '_SESSION'}
+            for variable in sorted(used - declared - assigned - parameters - superglobals):
+                report('UNDEFINED', path + ':' + str(record['start'] + 1) + ' ' + name
+                       + '() reads $' + variable + ', which is not a parameter, a declared global or assigned')
+                faults += 1
+            # / A SECOND PASS, because the one above is flow insensitive. It asks whether a name is
+            # / assigned anywhere, so a variable assigned only inside an if passes even when it is read
+            # / outside that if, & is therefore unset whenever the if does not run. That is how
+            # / $entryIsBlocked reached a release: it was set to TRUE inside two gates & read after them.
+            # / A local is reported only when every assignment sits deeper than the body & some direct
+            # / read sits shallower. unset, isset & empty never warn on an unset name, & a value handed
+            # / to purgeSensitiveMemory is passed by reference, so none of those counts as a read.
+            body_lines = [text for text in record['body'][1:] if text.strip() and not text.strip().startswith(('// /', '#'))]
+            if body_lines:
+                indent = lambda text: len(text) - len(text.lstrip())
+                base = min(indent(text) for text in body_lines)
+                places = {}
+                reads = {}
+                for text in body_lines:
+                    if text.strip().startswith(('global ', 'purgeSensitiveMemory(', 'unset(')):
+                        continue
+                    here = indent(text)
+                    for found in re.finditer(r'\$(\w+)\s*=(?!=)', text):
+                        places.setdefault(found.group(1), []).append(here)
+                    for found in re.finditer(r'list\s*\(([^)]*)\)\s*=', text):
+                        for listed in re.findall(r'\$(\w+)', found.group(1)):
+                            places.setdefault(listed, []).append(here)
+                    for found in re.finditer(r'as\s+&?\$(\w+)\s*(?:=>\s*&?\$(\w+))?', text):
+                        places.setdefault(found.group(1), []).append(here)
+                        if found.group(2):
+                            places.setdefault(found.group(2), []).append(here)
+                    quiet = re.sub(r'\b(?:isset|empty)\s*\([^)]*\)', '', text)
+                    for found in re.finditer(r'\$(\w+)', quiet):
+                        reads.setdefault(found.group(1), []).append(here)
+                for variable, depths in sorted(places.items()):
+                    if variable in parameters or variable in declared or variable in superglobals:
+                        continue
+                    if min(depths) <= base:
+                        continue
+                    if any(depth < min(depths) for depth in reads.get(variable, [])):
+                        report('UNDEFINED', path + ':' + str(record['start'] + 1) + ' ' + name + '() assigns $' + variable
+                               + ' only inside a block & reads it outside that block, so it can be read unset. Initialize it before the first branch')
+                        faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / THE STRAY FILES CHECK. Nothing ships that is not part of the application.
+def check_stray_files(root, report):
+    # / A tree that ships is a tree somebody unpacks over their installation, so anything in
+    # / it that is not part of the application lands on their disk.
+    # / A .git directory shipped in three archives before anybody noticed. It was empty & it
+    # / was still wrong, because unpacking it over a real repository is a mess nobody asked
+    # / for. Editor leftovers & backups are the same class of accident.
+    # / This is a build check rather than a code check. It says nothing about whether the
+    # / application is correct & everything about whether the box is packed properly.
+    import os
+    faults = 0
+    unwanted_dirs = ('.git', '.svn', '.hg', '__pycache__', '.idea', '.vscode')
+    unwanted_suffix = ('.bak', '.orig', '.rej', '.swp', '~', '.pyc')
+    unwanted_names = ('.DS_Store', 'Thumbs.db', 'core')
+    for walked, dirs, names in os.walk(root):
+        for directory in list(dirs):
+            if directory in unwanted_dirs:
+                report('STRAY', os.path.join(walked, directory) + ' does not belong in a shipped tree')
+                faults += 1
+                dirs.remove(directory)
+        for name in names:
+            if name in unwanted_names or name.endswith(unwanted_suffix):
+                report('STRAY', os.path.join(walked, name) + ' does not belong in a shipped tree')
+                faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / THE LOGO CHECK. The Engine's own logo is the file the Engine was distributed with, from v4.3.1.
+def check_engine_logo(root, report):
+    # / The logo is Resources/Engine/UI/HRProprietary_logo.png. An application adds a logo of its own beside it
+    # / & never removes it or writes over it, so it is held to the hash buildProtectionPage() holds in engine.php.
+    # / The protection page shows it only where it is that file, & this says so before an installation does.
+    # / The Bash tool checks the same shapes. The two must agree.
+    import hashlib
+    import os
+    import re
+    faults = 0
+    engine_path = os.path.join(root, 'Resources', 'Engine', 'engine.php')
+    logo_path = os.path.join(root, 'Resources', 'Engine', 'UI', 'HRProprietary_logo.png')
+    if os.path.isfile(engine_path):
+        declared = re.search(r"^\s*\$engineLogoSha256 = '([0-9a-f]{64})';$", open(engine_path, encoding='utf-8').read(), re.M)
+        if declared is None:
+            report('LOGO', 'Resources/Engine/engine.php holds no $engineLogoSha256, so the Engine\'s logo cannot be held to it')
+            faults += 1
+        elif os.path.islink(logo_path) or not os.path.isfile(logo_path):
+            report('LOGO', 'Resources/Engine/UI/HRProprietary_logo.png is missing or is a link. An application adds a logo beside it & never removes it')
+            faults += 1
+        elif hashlib.sha256(open(logo_path, 'rb').read()).hexdigest() != declared.group(1):
+            report('LOGO', 'Resources/Engine/UI/HRProprietary_logo.png is not the file the Engine was distributed with. An application never writes over it')
+            faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / THE SPACING CHECK. Separators & blank lines follow the house shape.
+def check_file_spacing(files, report):
+    # / The shape this project writes, measured from the files that were never edited by a
+    # / tool rather than decided here.
+    # / A separator is 88 characters. Two in a row is one separator written twice.
+    # / A separator that opens a block is followed by what it introduces. One that closes a
+    # / block is followed by one blank line. Between functions that is one blank line exactly.
+    # / At most two blank lines anywhere. Three or more is an edit that removed something &
+    # / left its gap behind.
+    # / None of this changes behaviour, which is exactly why it drifts. A person reading a
+    # / diff sees the change they were looking for & not the blank line that came with it.
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        run = 0
+        for index, line in enumerate(original):
+            stripped = line.strip()
+            if stripped == '':
+                run += 1
+                if run == 3:
+                    report('SPACING', path + ':' + str(index - 1) + ' three or more blank lines in a row')
+                    faults += 1
+                continue
+            run = 0
+            if not stripped.startswith('// / -') and not stripped.startswith('# / -'):
+                continue
+            # / Take the body by removing the comment marker from the front, not by
+            # / splitting on a separator that also appears inside the marker itself.
+            body = stripped[5:] if stripped.startswith('// / ') else stripped[4:]
+            if body == '' or set(body) - set('-'):
+                continue
+            if index + 1 < len(original) and original[index + 1].strip() == stripped:
+                report('SPACING', path + ':' + str(index + 1) + ' the same separator is written twice')
+                faults += 1
+            # / A separator followed by a blank line was ALSO checked here & the rule was
+            # / removed, which is worth recording so nobody adds it back.
+            # / A separator that OPENS a block is followed by what it introduces. One that
+            # / CLOSES a block is followed by a blank line & is correct. Nothing in the text
+            # / of the line says which it is, so the rule fired on roughly a hundred & seventy
+            # / correct closing separators across files nobody had touched.
+            # / A check that is wrong that often teaches an operator to ignore the whole
+            # / category, which costs more than the fault it was looking for.
+        # / Between functions, two separators take exactly one blank line between them.
+        # / This judges the GAP between two separators, never a lone separator, so it cannot
+        # / repeat the fault described above: a gap has one correct answer & a lone separator
+        # / does not. On a correct tree it reports nothing.
+        # / The preamble is not inspected. Two blank lines between the header, the load guard &
+        # / the first function is this project's layout, so the check starts at the separator
+        # / that opens the first function.
+        is_rule = lambda text: text.strip().startswith('// / -') and text.strip()[5:] != '' and not (set(text.strip()[5:]) - set('-'))
+        first = next((number for number, text in enumerate(original) if re.match(r'function \w+\(', text)), None)
+        if first is not None:
+            begin = first
+            while begin > 0 and original[begin - 1].strip().startswith('// /') and not is_rule(original[begin - 1]): begin -= 1
+            if begin > 0 and is_rule(original[begin - 1]): begin -= 1
+            for number in range(begin, len(original)):
+                if not is_rule(original[number]): continue
+                following = number + 1
+                while following < len(original) and original[following].strip() == '': following += 1
+                if following < len(original) and is_rule(original[following]) and following - number - 1 >= 2:
+                    report('SPACING', path + ':' + str(number + 1) + ' leave exactly one blank line between these two separators, they sit between functions')
+                    faults += 1
+
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK FIVE. No comment line is entirely capitals.
+# / Convention nineteen. A comment that needs shouting is a comment describing something
+# / too important to be a comment. A capitalised word inside a sentence is fine & is not
+# / reported, because emphasis is not shouting.
+def check_comment_case(files, report):
+    faults = 0
+    for path in files:
+        # / This reads the ORIGINAL rather than the blanked source, because a comment is
+        # / exactly what the blanked source has removed.
+        original, blanked = read_source(path)
+        for index, line in enumerate(original):
+            stripped = line.strip()
+            if not stripped.startswith('// /'):
+                continue
+            body = stripped[4:].strip()
+            if len(body) < 12:
+                continue
+            # / A file header LABEL is structure rather than shouting, & every file in this
+            # / project carries the same six. They end in an ellipsis, which is what tells them
+            # / apart from a sentence somebody wrote in capitals.
+            # / The UI tree writes them in capitals & the core writes them in title case, so
+            # / linting the UI reported five thousand findings that were all the same six lines
+            # / repeated across seventy eight language packs.
+            if body.rstrip().endswith('...'):
+                continue
+            letters = [c for c in body if c.isalpha()]
+            if letters and all(c.isupper() for c in letters):
+                report('CAPS', path + ':' + str(index + 1) + ' ' + body[:60])
+                faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK SIX. Every cleanup at a return carries the comment that belongs with it.
+# / The comment is how a reader knows the cleanup is deliberate rather than copied, & a
+# / cleanup without it reads as noise the next person is tempted to delete.
+def check_purge_comment(files, report):
+    wanted = 'Manually clean up sensitive memory'
+    faults = 0
+    for path in files:
+        # / The call is found in the blanked source & the comment above it in the original,
+        # / because one is code & the other is not.
+        original, blanked = read_source(path)
+        lines = original
+        for index, line in enumerate(blanked):
+            if 'purgeSensitiveMemory(' not in line:
+                continue
+            if index + 1 >= len(lines) or not lines[index + 1].strip().startswith('return'):
+                continue
+            found = False
+            back = index - 1
+            while back >= 0 and lines[back].strip().startswith('// /'):
+                if wanted in lines[back]:
+                    found = True
+                back -= 1
+            if not found:
+                report('PURGE', path + ':' + str(index + 1) + ' a cleanup before a return carries no comment')
+                faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK SEVEN. Every function has one exit.
+# / Convention. A single exit is what makes a cleanup at the return reliable, & it is what
+# / made moving thirteen conversion families out of the core a mechanical operation.
+# / Three functions are exempt & each is exempt for a stated reason.
+# / Every return counts, wherever it sits on its line. Until v4.0.1 only a return that began a
+# / line was counted, so a one line if ending in a return passed, & one Engine function had three
+# / exits. A one line closure is removed first, because the return inside it is the closure's.
+def check_single_exit(files, report):
+    exempt = {'quickDie', 'closeClientConnection', 'mergeConfigFile'}
+    closure = re.compile(r'\bfunction\s*\([^()]*\)\s*(?:use\s*\([^()]*\)\s*)?\{[^{}]*\}')
+    keyword = re.compile(r'(?<![\w$>])return\b')
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        for name, record in read_functions(original, blanked).items():
+            if name in exempt:
+                continue
+            returns = sum(len(keyword.findall(closure.sub('', x))) for x in record['body'])
+            if returns != 1:
+                report('EXIT', path + ':' + str(record['start'] + 1) + ' ' + name
+                       + '() has ' + str(returns) + ' return statements')
+                faults += 1
+    return faults
+
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK EIGHT. The Engine never calls application code.
+# / The Engine may call the kernel, because the kernel is byte identical in every
+# / application & calling it couples the Engine to none of them. The kernel is
+# / Resources/Kernel/kernel.php & its function list is read from there. It may not call anything
+# / only this application has, because an Engine that does is an Engine that works for
+# / exactly one application & the whole point of extracting it is gone.
+# /
+# / A violation is almost never deliberate. It happens when a function is moved & the
+# / helpers it quietly depended on are not moved with it, which is invisible while both
+# / files are loaded in the same request & fatal the moment somebody else bundles the
+# / Engine on its own.
+# /
+# / A finding here is a job that is not finished rather than a mistake. The named function
+# / either moves too or the value it produces becomes a parameter.
+def check_engine_independence(root, report):
+    core_path = os.path.join(root, ENTRY_POINT)
+    engine_dir = os.path.join(root, 'Resources', 'Engine')
+    if not os.path.exists(core_path) or not os.path.isdir(engine_dir):
+        report('SKIP', 'no Engine directory was found, so the independence check did not run.')
+        return 0
+    # / Every function only the application defines.
+    application = set(re.findall(r'^function (\w+)\(', open(core_path, encoding='utf-8').read(), re.M))
+    # / The kernel is whatever Resources/Kernel/kernel.php defines, read from that file
+    # / rather than written down here. A list kept here was a second definition of the
+    # / kernel & by v3.9.9 it disagreed with the contract document & with the code, naming 14
+    # / functions against 8 & 21. The file cannot disagree with itself.
+    # / A missing kernel file is a fault rather than a skip. Without it nothing the Engine
+    # / calls can be judged, & a check that passes because it could not look is worse than
+    # / one that says so.
+    kernel_path = os.path.join(root, 'Resources', 'Kernel', 'kernel.php')
+    if not os.path.exists(kernel_path):
+        report('CONTRACT', 'Resources/Kernel/kernel.php is missing, so the Engine cannot be judged against the kernel. Restore the kernel file from the release.')
+        return 1
+    kernel = set(re.findall(r'^function (\w+)\(', open(kernel_path, encoding='utf-8').read(), re.M))
+    engine = {}
+    for base, dirs, files in os.walk(engine_dir):
+        for name in files:
+            if not name.endswith('.php'):
+                continue
+            for match in re.finditer(r'^function (\w+)\(', open(os.path.join(base, name), encoding='utf-8').read(), re.M):
+                engine[match.group(1)] = name
+    faults = 0
+    seen = set()
+    for base, dirs, files in os.walk(engine_dir):
+        for name in sorted(files):
+            if not name.endswith('.php'):
+                continue
+            original, blanked = read_source(os.path.join(base, name))
+            for index, line in enumerate(blanked):
+                for called in re.findall(r'\b([a-z][A-Za-z0-9_]*)\s*\(', line):
+                    if called in engine or called in kernel:
+                        continue
+                    if called in application and (name, called) not in seen:
+                        seen.add((name, called))
+                        report('CONTRACT', name + ':' + str(index + 1) + ' calls ' + called
+                               + '(), which only the application defines')
+                        faults += 1
+    return faults
+
+# / -----------------------------------------------------------------------------------
+# / CHECK NINETEEN. The kernel calls only itself, PHP & the Engine behind a guard.
+# / Question three of ABOUT_ENGINE_CONTRACT.txt, enforced rather than remembered. Five
+# / functions went into the Engine & came back before this check existed, & every one of them
+# / passed the other three questions cleanly.
+# / The kernel is identical in every application, so calling anything another file in this
+# / tree defines is a fault, whichever file that is. A call into the application ties the
+# / kernel to one application. A call into Pipeline Core ties it to a component that loads
+# / after it. The old rule only looked at the application file & would have missed the second.
+# / The kernel runs before the Engine loads & must keep running when the Engine cannot, so a
+# / call into the Engine is allowed only where the same function asks function_exists first.
+def check_kernel_independence(root, files, report):
+    kernel_path = os.path.join(root, 'Resources', 'Kernel', 'kernel.php')
+    if not os.path.exists(kernel_path):
+        report('KERNEL', 'Resources/Kernel/kernel.php is missing. Every application loads it first, so restore it from the release.')
+        return 1
+    engine_dir = os.path.abspath(os.path.join(root, 'Resources', 'Engine')) + os.sep
+    # / Every function defined anywhere else in the tree, & the file that defines it.
+    owner = {}
+    for path in files:
+        if os.path.abspath(path) == os.path.abspath(kernel_path):
+            continue
+        for match in re.finditer(r'^function (\w+)\(', open(path, encoding='utf-8').read(), re.M):
+            owner.setdefault(match.group(1), path)
+    original, blanked = read_source(kernel_path)
+    kernel_functions = read_functions(original, blanked)
+    # / Code outside every function runs the moment the file loads, so it is checked too, as
+    # / one more body with nothing guarding it.
+    inside = set()
+    for record in kernel_functions.values():
+        inside.update(range(record['start'], record['end'] + 1))
+    scopes = dict(kernel_functions)
+    scopes['file scope'] = {
+        'start': 0,
+        'body': [line if index not in inside else '' for index, line in enumerate(blanked)],
+        'original': [line if index not in inside else '' for index, line in enumerate(original)]}
+    faults = 0
+    for name, record in scopes.items():
+        source = '\n'.join(record['original'])
+        seen = set()
+        for offset, line in enumerate(record['body']):
+            if line.startswith('function '):
+                continue
+            for called in re.findall(r'\b([a-z][A-Za-z0-9_]*)\s*\(', line):
+                if called in kernel_functions or called not in owner or called in seen:
+                    continue
+                seen.add(called)
+                where = owner[called]
+                line_number = record['start'] + offset + 1
+                if os.path.abspath(where).startswith(engine_dir):
+                    if re.search(r"function_exists\s*\(\s*'" + re.escape(called) + r"'\s*\)", source):
+                        continue
+                    report('KERNEL', 'kernel.php:' + str(line_number) + ' ' + name + ' calls ' + called
+                           + '(), which the Engine defines, without a guard. Wrap it in  if (function_exists(\'' + called
+                           + '\'))  so the kernel still runs when the Engine cannot load.')
+                else:
+                    report('KERNEL', 'kernel.php:' + str(line_number) + ' ' + name + ' calls ' + called + '(), which '
+                           + os.path.relpath(where, root) + ' defines. The kernel may call only itself, PHP & a guarded Engine. Move '
+                           + called + ' into the kernel if every application needs it, or pass in the value it produces.')
+                faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK NINE. No function is defined twice.
+# / PHP has no function overloading, so a second definition of the same name is a fatal
+# / the moment both files load. It is the normal result of moving a function & leaving the
+# / original behind, which is invisible until the two files meet in one request.
+# / Names are matched within one program. ScanCore runs as a process of its own, so a name
+# / it shares with this application never meets it in one request & is not a duplicate.
+def check_duplicate_functions(files, report):
+    seen = {}
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        for index, line in enumerate(blanked):
+            if not line.startswith('function '):
+                continue
+            name = line.split('(')[0][9:]
+            key = (program_of(path), name)
+            if key in seen:
+                report('DUPLICATE', name + '() is defined in ' + os.path.basename(seen[key])
+                       + ' and again in ' + os.path.basename(path) + ':' + str(index + 1))
+                faults += 1
+            else:
+                seen[key] = path
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK TEN. Every version pin matches the file it points at.
+# / A component declares its own version & the thing loading it declares the version it
+# / requires. The two drifting apart is how a correct component gets refused at boot & how
+# / a stale one gets accepted.
+# / Both directions are checked. A pin naming a version nothing ships is as wrong as a file
+# / shipping a version nothing asks for.
+# /
+# / WHAT THIS CANNOT SEE.
+# / A pin whose component is not installed is skipped rather than reported, & that is a
+# / limitation rather than a decision. Config, the GUI, the language pack & the install
+# / secret are all pinned here & none of them is a component with a version constant, so a
+# / missing match cannot be told apart from a component that was never meant to have one.
+# / A component genuinely absent from the tree is therefore silent here. The call order
+# / check & the application itself both report that at load time instead.
+def check_version_pins(root, report):
+    core_path = os.path.join(root, ENTRY_POINT)
+    if not os.path.exists(core_path):
+        report('SKIP', ENTRY_POINT + ' was not found, so the version pin check did not run.')
+        return 0
+    core = open(core_path, encoding='utf-8').read()
+    faults = 0
+    # / A component is pinned as $RequiredNameVersion & declares $NameVersion.
+    for match in re.finditer(r"\$Required(\w+?)Version\s*=\s*'v?([0-9.]+(?:u?r)?)'", core):
+        component = match.group(1)
+        pinned = match.group(2)
+        # / EVERY FILE THAT DECLARES THE VERSION IS COMPARED, & each one that differs is named, as the
+        # / shell does. ScanCore is a program of its own & its configuration declares its own
+        # / $ConfigVersion, so it is not read for this application's pins. Until v4.0.6 the last file
+        # / the filesystem listed answered alone, so the same tree passed on one disk & reported
+        # / ScanCore's version on another.
+        # / A pin with nothing to point at is not reported. Config, the GUI, the language
+        # / pack & the install secret are all pinned here & none of them lives in Resources
+        # / as a component with a version constant of its own.
+        for base, dirs, files in os.walk(os.path.join(root, 'Resources')):
+            dirs.sort()
+            if (os.path.relpath(base, root) + os.sep).startswith(SCANCORE_FOLDER):
+                dirs[:] = []
+                continue
+            for name in sorted(files):
+                if not name.endswith('.php'):
+                    continue
+                body = open(os.path.join(base, name), encoding='utf-8').read()
+                found = re.search(r"\$" + component + r"Version\s*=\s*'v?([0-9.]+(?:u?r)?)'", body)
+                if found and found.group(1) != pinned:
+                    report('PIN', component + ' is pinned at ' + pinned + ' & ' + name
+                           + ' declares ' + found.group(1))
+                    faults += 1
+    # / A manager is pinned by the Engine rather than by the application, & so is the Engine's half of the dependency
+    # / manifest, from v4.2.4, which declares $EngineDependsVersion in Resources/Engine/depends.php, & the Environment
+    # / Core, from v4.3.1, which declares $EnvironmentCoreVersion in Resources/Engine/Cores/environmentCore.php.
+    engine_path = os.path.join(root, 'Resources', 'Engine', 'engine.php')
+    if os.path.exists(engine_path):
+        for match in re.finditer(r"'(\w+\.php)'\s*=>\s*'v?([0-9.]+(?:u?r)?)'", open(engine_path, encoding='utf-8').read()):
+            if match.group(1) == 'depends.php':
+                manager_path, declaration = os.path.join(root, 'Resources', 'Engine', 'depends.php'), 'EngineDependsVersion'
+            elif match.group(1) == 'environmentCore.php':
+                manager_path, declaration = os.path.join(root, 'Resources', 'Engine', 'Cores', 'environmentCore.php'), 'EnvironmentCoreVersion'
+            else:
+                manager_path, declaration = os.path.join(root, 'Resources', 'Engine', 'Managers', match.group(1)), 'ManagerVersion'
+            if not os.path.exists(manager_path):
+                report('PIN', 'the Engine pins ' + match.group(1) + ' & ' + os.path.relpath(manager_path, root) + ' is not installed')
+                faults += 1
+                continue
+            found = re.search(r"\$" + declaration + r"\s*=\s*'v?([0-9.]+(?:u?r)?)'", open(manager_path, encoding='utf-8').read())
+            if not found:
+                report('PIN', match.group(1) + ' reports no version & an unknown build cannot be cleared')
+                faults += 1
+            elif found.group(1) != match.group(2):
+                report('PIN', match.group(1) + ' is pinned at ' + match.group(2)
+                       + ' & declares ' + found.group(1))
+                faults += 1
+    # / The bootstrap script is pinned by $RequiredConfigScript & declares SCRIPT_VERSION.
+    # / Its name does not follow the pattern above, so it was never checked, & it drifted from
+    # / v3.9.3 onward. -fp disables a script that does not match, so a stale pin disables the
+    # / installer every release ships.
+    script_pin = re.search(r"\$RequiredConfigScript\s*=\s*'v?([0-9.]+(?:u?r)?)'", core)
+    scripts = glob.glob(os.path.join(root, 'Documentation', 'Build', '*-setup.sh'))
+    if script_pin and scripts:
+        found = re.search(r'^SCRIPT_VERSION="v?([0-9.]+(?:u?r)?)"', open(scripts[0], encoding='utf-8').read(), re.M)
+        if not found:
+            report('PIN', os.path.basename(scripts[0]) + ' declares no SCRIPT_VERSION & an unknown build cannot be cleared')
+            faults += 1
+        elif found.group(1) != script_pin.group(1):
+            report('PIN', 'the bootstrap script is pinned at ' + script_pin.group(1) + ' & '
+                   + os.path.basename(scripts[0]) + ' declares ' + found.group(1)
+                   + '. Set $RequiredConfigScript in ' + ENTRY_POINT + ' to match.')
+            faults += 1
+    # / A pipeline is pinned in the contract's $EngineAcceptedPipelines & declares $PipelineVersion, & a shared
+    # / module is pinned in $EngineAcceptedSharedModules & declares $SharedModuleVersion, from v4.3.1. The
+    # / Pipeline Core refuses a pipeline whose pin differs, so until v4.3.1 a stale pin passed both checkers &
+    # / was refused at boot. Pipelines are traded between applications, which is how a pin drifts.
+    contract_path = os.path.join(root, 'Resources', 'Contract', 'app-engine-config.php')
+    contract = open(contract_path, encoding='utf-8').read() if os.path.exists(contract_path) else ''
+    for list_name, declaration in (('EngineAcceptedPipelines', 'PipelineVersion'), ('EngineAcceptedSharedModules', 'SharedModuleVersion')):
+        listed = re.search(r'^\$' + list_name + r'\s*=\s*array\((.*?)\);', contract, re.S | re.M)
+        for pin in re.finditer(r"'([\w.]+)'\s*=>\s*'v?([0-9.]+(?:u?r)?)'", listed.group(1) if listed else ''):
+            if declaration == 'PipelineVersion':
+                declaring = os.path.join(root, 'Resources', 'Pipelines', pin.group(1), 'pipelineConfig.php')
+            else:
+                declaring = os.path.join(root, 'Resources', 'Pipelines', 'Shared', pin.group(1))
+            if not os.path.isfile(declaring):
+                report('PIN', 'the contract pins ' + pin.group(1) + ' & ' + os.path.relpath(declaring, root) + ' is not installed')
+                faults += 1
+                continue
+            found = re.search(r"^\s*\$" + declaration + r"\s*=\s*'v?([0-9.]+(?:u?r)?)'", open(declaring, encoding='utf-8').read(), re.M)
+            if not found:
+                report('PIN', os.path.relpath(declaring, root) + ' declares no $' + declaration + ' & an unknown build cannot be cleared')
+                faults += 1
+            elif found.group(1) != pin.group(2):
+                report('PIN', pin.group(1) + ' is pinned at ' + pin.group(2) + ' & declares ' + found.group(1))
+                faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK ELEVEN. Every error number raised is documented.
+# / Convention seventeen. An operator who reads a number in a log & finds nothing about it
+# / has been handed a number instead of an answer.
+# / The reverse is not reported. A documented number nothing raises any more is history
+# / rather than a fault, & the numbers in this project are never reassigned.
+def check_error_numbers(root, files, report):
+    catalog_path = os.path.join(root, 'Documentation', 'ERROR_DESCRIPTIONS.txt')
+    if not os.path.exists(catalog_path):
+        report('SKIP', 'ERROR_DESCRIPTIONS.txt was not found, so the error number check did not run.')
+        return 0
+    catalog = open(catalog_path, encoding='utf-8', errors='replace').read()
+    # / Only a real entry counts. An earlier version accepted any number appearing anywhere
+    # / in the catalog, which meant a file permission written as 0700 & a year written as
+    # / 2020 both counted as documented error numbers. An error numbered 2020 would have
+    # / passed silently, which is the one thing this check exists to prevent.
+    documented = set(re.findall(r'APPLICATION_NAME>-(\d{1,5})', catalog))
+    faults = 0
+    reported = set()
+    for path in files:
+        original, blanked = read_source(path)
+        # / The whole file is searched rather than each line, because a call may be written
+        # / across several lines & a per line search sees only the fragment on each one.
+        # / The line number is recovered from the offset so a report still points somewhere.
+        text = '\n'.join(blanked)
+        for match in re.finditer(r'(?:errorEntry|quickDie)\s*\([^;]*?,\s*(\d{1,5})\s*[,)]', text):
+            number = match.group(1)
+            if number in documented or number in reported:
+                continue
+            reported.add(number)
+            line_number = text.count('\n', 0, match.start()) + 1
+            report('ERRNO', os.path.basename(path) + ':' + str(line_number)
+                   + ' raises error ' + number + ', which ERROR_DESCRIPTIONS.txt does not document')
+            faults += 1
+        # / A halt that happens before logging exists is a plain die with its number inside
+        # / the message, & the blanked source has every message taken out, so those were
+        # / invisible here until v3.9.9. The ORIGINAL is searched for them instead.
+        # / Two such numbers had never been documented when this was added.
+        # / A component prefix such as Engine or Kernel is documented literally. The
+        # / application's own prefix is documented as <APPLICATION_NAME>, so the number alone
+        # / is accepted for it. Numbers are never reassigned, so that cannot hide a clash.
+        source = '\n'.join(original)
+        # / The quote may be escaped, because a guard written into a GENERATED file is a string
+        # / inside a string. Dependency Core writes one into its capability cache, & an earlier
+        # / version of this pattern did not see it.
+        # / A halt that must report failure prints its message & then exits with a status,
+        # / because a die carrying a message exits with status zero. So print is searched too,
+        # / or moving a halt to the correct exit status would hide its number from this check.
+        for match in re.finditer(r'\b(?:die|exit|print)\s*\(\s*\\?[\'"]ERROR!!! ([A-Za-z0-9]+)-(\d{1,5})\b', source):
+            label = match.group(1) + '-' + match.group(2)
+            if label in reported:
+                continue
+            if match.group(2) in documented or re.search(re.escape(label) + r'\b', catalog):
+                continue
+            reported.add(label)
+            line_number = source.count('\n', 0, match.start()) + 1
+            report('ERRNO', os.path.basename(path) + ':' + str(line_number) + ' halts with ' + label
+                   + ', which ERROR_DESCRIPTIONS.txt does not document. Add an entry for it there.')
+            faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK TWELVE. Every component refuses to be loaded directly.
+# / A component reached by a web server without an application around it must not run.
+# / The guard is one line & its absence is silent, which is the worst combination.
+def check_component_guard(root, report):
+    faults = 0
+    for base, dirs, files in os.walk(os.path.join(root, 'Resources')):
+        for name in sorted(files):
+            if not name.endswith('.php'):
+                continue
+            path = os.path.join(base, name)
+            relative = os.path.relpath(path, root)
+            if relative.startswith(SCANCORE_FOLDER) and not INCLUDE_SCANCORE:
+                continue
+            original, blanked = read_source(path)
+            body = '\n'.join(blanked)
+            # / ScanCore is a program of its own & never sets $CoreLoaded. Its guard is a
+            # / refusal to run anywhere except a command line, so that is what it is held to.
+            # / The literal is blanked, so the comparison is found in the blanked source & the
+            # / word cli is read from the original line it sits on.
+            if relative.startswith(SCANCORE_FOLDER):
+                refuses_web = any(re.search(r'\bPHP_SAPI\s*!==?', line) and "'cli'" in original[index]
+                                  for index, line in enumerate(blanked))
+                if refuses_web and re.search(r'\b(die|exit)\s*\(', body):
+                    continue
+            # / The BLANKED source is read rather than the file, so a comment mentioning the
+            # / guard does not count as having one. An earlier version tested the raw text &
+            # / a file whose only mention was in a comment passed.
+            # / Both halves are required. The name alone appears in a comment or a message,
+            # / & a die alone is any other refusal. Together they are the guard.
+            # / A file with no functions & no logic is a manifest or a configuration, & it
+            # / is guarded for the same reason, so everything under Resources is checked.
+            # / The name is matched whole. A substring test passed a file whose guard read
+            # / $CoreLoadedX, which is a different variable that is never set & therefore
+            # / a guard that can never fire.
+            # / The kernel is the one component that cannot use $CoreLoaded, because it loads
+            # / before anything sets it. It also defines quickDie & verifyCoreComponent, so both
+            # / halves this check looks for appear in it whether it has a guard or not. It
+            # / passed with its guard deleted, which is how this exception was found.
+            # / Its guard counts the included files & must run before the first function is
+            # / defined, so that exact shape is what it is held to.
+            if os.path.relpath(path, root) == os.path.join('Resources', 'Kernel', 'kernel.php'):
+                first_function = next((index for index, line in enumerate(blanked) if line.startswith('function ')), len(blanked))
+                kernel_guard = r'count\s*\(\s*get_included_files\s*\(\s*\)\s*\)\s*<\s*2\s*\)\s*(?:die|exit)\s*\('
+                if not any(re.search(kernel_guard, line) for line in blanked[:first_function]):
+                    report('GUARD', os.path.relpath(path, root)
+                           + ' has no guard before its first function. Add  if (count(get_included_files()) < 2) die(...);  above the first function.')
+                    faults += 1
+                continue
+            if not re.search(r'\$CoreLoaded\b', body) or not re.search(r'\b(die|exit)\s*\(', body):
+                report('GUARD', os.path.relpath(path, root)
+                       + ' has no $CoreLoaded guard & would run if reached directly')
+                faults += 1
+    return faults
+
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK THIRTEEN. Every setting the two configuration templates hold is modelled, & is held once.
+# / config.php has two halves, the Engine's & the application's, & each has a template & a model.
+# /   The Engine's       Resources/Engine/config-template.php & engineConfigModel() in Resources/Engine/engine.php.
+# /   The application's  Resources/Contract/config-template.php & the model its contract names in $EngineConfigModelProvider,
+# /                      in its entry point. For HRConvert2 that is applicationConfigModel() in convertCore.php.
+# / The kernel reads the names in the two templates to know which settings config.php must hold &
+# / which become globals, & the configuration utility repairs & resets only what a model holds.
+# / So a setting in a template & in no model is required & can never be repaired, & an installation
+# / missing it is refused until it is added by hand. A modelled setting in no template is one a
+# / repair cannot add, because the default it would write is in no template.
+# / A name in both templates is assigned twice in a generated config.php, & PHP takes the second.
+# / Until v4.2.4 this check compared the list verifyConfigVersion() kept against the global
+# / declaration where verifyInstallation() loaded config.php. Neither exists any more, because the
+# / kernel reads the names from the templates, so the places that have to agree are each template & its model.
+# / A default the contract gives in $EngineSettingDefaults is applied to the Engine's settings alone, in a generated
+# / config.php & in a reset, so a default named for any other setting is never written & is reported.
+# / A model is read by pattern, as one entry per line beginning with its name in quotes. The defaults are read the same way,
+# / as one entry per line indented by two spaces, which is how the contract writes them.
+def check_config_globals(root, report):
+    halves = (
+        ('the Engine\'s', os.path.join(root, 'Resources', 'Engine', 'config-template.php'), os.path.join(root, 'Resources', 'Engine', 'engine.php'), 'engineConfigModel'),
+        ('the application\'s', os.path.join(root, 'Resources', 'Contract', 'config-template.php'), os.path.join(root, ENTRY_POINT), CONFIG_MODEL))
+    faults = 0
+    held = {}
+    for half, template, source, function in halves:
+        if not os.path.exists(template) or not os.path.exists(source):
+            report('CONFIG', template + ' or ' + source + ' is missing, so ' + half + ' half of config.php cannot be judged. Restore it from the release')
+            faults += 1
+            continue
+        template_names = set(re.findall(r'^\$([A-Z]\w*)\s*=', open(template, encoding='utf-8').read(), re.M))
+        original, blanked = read_source(source)
+        record = read_functions(original, blanked).get(function)
+        if record is None:
+            report('CONFIG', (function + '() was not found in ' + source if function else 'the contract names no $EngineConfigModelProvider') + ', so ' + half + ' settings are modelled nowhere')
+            faults += 1
+            continue
+        model_names = set(re.findall(r"^\s*'([A-Za-z_]\w*)' => array\('Type'", '\n'.join(record['original']), re.M))
+        for name in sorted(template_names - model_names):
+            report('CONFIG', '$' + name + ' is in ' + os.path.relpath(template, root) + ' & not in ' + function + '(), so config.php must hold it & no repair can add it')
+            faults += 1
+        for name in sorted(model_names - template_names):
+            report('CONFIG', '$' + name + ' is in ' + function + '() & not in ' + os.path.relpath(template, root) + ', so a repair has no default to write for it')
+            faults += 1
+        for name in template_names:
+            held.setdefault(name, []).append(half)
+    for name in sorted(held):
+        if len(held[name]) > 1:
+            report('CONFIG', '$' + name + ' is in both halves of the configuration template, so a generated config.php assigns it twice. Give it one home')
+            faults += 1
+    contract = os.path.join(root, 'Resources', 'Contract', 'app-engine-config.php')
+    if os.path.exists(contract):
+        defaults = re.search(r'^\$EngineSettingDefaults\s*=\s*array\((.*?)\);\s*$', open(contract, encoding='utf-8').read(), re.M | re.S)
+        for name in (re.findall(r"^  '([A-Za-z_]\w*)'\s*=>", defaults.group(1), re.M) if defaults else []):
+            if 'the Engine\'s' not in held.get(name, []):
+                report('CONFIG', '$EngineSettingDefaults gives $' + name + ' a default & it is not one of the Engine\'s settings, so the default is never written. Give it in that setting\'s own template')
+                faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK FOURTEEN. Every lowercase local is destroyed before the function returns.
+# / Convention five. A lowercase variable is initialized in the function that uses it &
+# / destroyed by purgeSensitiveMemory() before that function returns, or by an explicit
+# / unset. A local that is neither is a value left in memory after the code that needed it
+# / has finished, which is the exposure the convention exists to close.
+# /
+# / This is the check that was missing when six new locals had to be found & purged by
+# / hand across three functions, & it would have found all six.
+# /
+# / WHAT COUNTS AS A LOCAL.
+# / Every lowercase-first variable the function assigns, takes as a parameter, binds in a
+# / foreach, or receives by reference from preg_match or exec. Uppercase-first names are
+# / globals or return values & are exempt by convention three.
+# /
+# / WHAT COUNTS AS DESTROYED.
+# / Appearing in any purgeSensitiveMemory() call in the function, or in any unset() call.
+# / The kernel functions that purgeSensitiveMemory itself depends on clean up by hand with
+# / unset, because calling the purge from inside them would recurse.
+# /
+# / WHAT THIS CANNOT SEE.
+# / A function with no purge call & no unset at all is reported once as a whole rather than
+# / once per local, because it has not adopted the convention rather than missed a name.
+# / A closure parameter is local to the closure & is reported here if it is not purged,
+# / which is usually a false positive worth an exemption rather than a fix.
+# / A static local is a cache that persists across calls by design & is not reported.
+def check_locals_purged(files, report):
+    # / quickDie never returns, so nothing after it runs & nothing it holds outlives it.
+    # / purgeSensitiveMemory cannot call itself & cleans up by hand. quickDie never returns.
+    # / redeclare's whole purpose is to shred the caller's variable through a reference &
+    # / then write a new value into it. Both of those look like faults to the checks here &
+    # / neither is. Obeying either instruction empties every string built through it, which
+    # / is how a settings link rendered with no path at all & every change gave a 404.
+    exempt = {'quickDie', 'purgeSensitiveMemory', 'redeclare'}
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        for name, record in read_functions(original, blanked).items():
+            if name in exempt:
+                continue
+            body = '\n'.join(record['body'])
+            signature = record['signature']
+            depth = 0
+            start = signature.index('(')
+            finish = start
+            for position in range(start, len(signature)):
+                if signature[position] == '(':
+                    depth += 1
+                elif signature[position] == ')':
+                    depth -= 1
+                    if depth == 0:
+                        finish = position
+                        break
+            locals_found = set(re.findall(r'\$([a-z]\w*)', signature[start:finish]))
+            for line in record['body'][1:]:
+                for found in re.finditer(r'\$([a-z]\w*)\s*=(?!=)', line):
+                    locals_found.add(found.group(1))
+                for found in re.finditer(r'list\s*\(([^)]*)\)\s*=', line):
+                    locals_found |= set(re.findall(r'\$([a-z]\w*)', found.group(1)))
+                for found in re.finditer(r'as\s+&?\$([a-z]\w*)\s*(?:=>\s*&?\$([a-z]\w*))?', line):
+                    locals_found.add(found.group(1))
+                    if found.group(2):
+                        locals_found.add(found.group(2))
+                if 'preg_match' in line or 'exec(' in line:
+                    for found in re.finditer(r',\s*\$([a-z]\w*)\s*[,)]', line):
+                        locals_found.add(found.group(1))
+                for found in re.finditer(r'catch\s*\([^)]*\$([a-z]\w*)\s*\)', line):
+                    locals_found.add(found.group(1))
+            # / A static local persists across calls by design. It is a cache rather than a
+            # / value that outlived its use, & purging it would defeat the reason it exists.
+            for found in re.finditer(r'\bstatic\s+\$([a-z]\w*)', body):
+                locals_found.discard(found.group(1))
+            # / A value the function returns must NOT be purged, whatever case it is written
+            # / in. purgeSensitiveMemory takes by reference, so purging a return value returns
+            # / NULL. Obeying this check without that exemption broke eighteen functions in
+            # / one pass, which is why the exemption is here rather than in a reader's head.
+            for found in re.finditer(r'\breturn\s+(?:array\s*\()?([^;]+);', body):
+                locals_found -= set(re.findall(r'\$([a-z]\w*)', found.group(1)))
+            # / A parameter taken by reference IS the caller's variable. Purging it destroys
+            # / the caller's copy, so a function that purged its &$workerRegistry parameter
+            # / wiped the worker registry on every call. Never demand one be purged.
+            locals_found -= set(re.findall(r'&\$([a-z]\w*)', signature[start:finish]))
+            # / A purge written as  if (!purgeSensitiveMemory(...))  consumes its own check &
+            # / counts as a purge. A version that looked only for the bare call missed it &
+            # / added a second, redundant purge beneath the one that was already there.
+            destroyed = set()
+            for found in re.finditer(r'purgeSensitiveMemory\s*\(([^;{]*)\)', body):
+                destroyed |= set(re.findall(r'\$([a-z]\w*)', found.group(1)))
+            for found in re.finditer(r'\bunset\s*\(([^;]*)\)\s*;', body):
+                destroyed |= set(re.findall(r'\$([a-z]\w*)', found.group(1)))
+            # / A function that purges nothing at all is a different finding from one that
+            # / purges most things. The first is reported once.
+            if not destroyed:
+                if locals_found:
+                    report('LOCALS', os.path.basename(path) + ':' + str(record['start'] + 1) + ' '
+                           + name + '() holds ' + str(len(locals_found)) + ' local(s) & destroys none of them'
+                           + '. Add a purgeSensitiveMemory() call naming each one before the return')
+                    faults += 1
+                continue
+            for variable in sorted(locals_found - destroyed):
+                report('LOCALS', os.path.basename(path) + ':' + str(record['start'] + 1) + ' '
+                       + name + '() never destroys $' + variable
+                       + '. Add it to the purgeSensitiveMemory() call before the return')
+                faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK FIFTEEN. Every comment is a complete sentence.
+# / Convention twelve. A comment is written in complete sentences with proper punctuation.
+# / A comment that trails off is a comment somebody stopped writing, & the next reader
+# / cannot tell whether the thought was finished.
+# / A line ending in a period, a question mark, an exclamation mark, a colon, or a closing
+# / quote after one of those is complete. A line that is continued on the next comment line
+# / is judged as part of that line rather than on its own, so a sentence may wrap.
+# / A table row inside a comment, aligned with spaces, is not a sentence & is not reported.
+def check_comment_sentences(files, report):
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        lines = original
+        # / Consecutive comment lines are one block, & the block is judged by its last line.
+        # / A sentence may wrap across several lines & a wrapped line is not a fault, so
+        # / judging every line reported four hundred wrapped sentences & no real one.
+        # / A block whose LAST line trails off is a thought somebody stopped writing.
+        index = 0
+        while index < len(lines):
+            stripped = lines[index].strip()
+            if not stripped.startswith('// /') or stripped[4:].strip().startswith('---'):
+                index += 1
+                continue
+            block_start = index
+            while index < len(lines) and lines[index].strip().startswith('// /') and not lines[index].strip()[4:].strip().startswith('---'):
+                index += 1
+            block = [lines[k].strip()[4:].strip() for k in range(block_start, index)]
+            # / A php close tag riding on the end of the last comment line is not part of the
+            # / sentence. A template writes  // / ...text. ?>  & the tag made every one of those
+            # / blocks look unterminated.
+            block = [re.sub(r'\s*\?>\s*$', '', b) for b in block]
+            block = [b for b in block if b != '']
+            if not block:
+                continue
+            last = block[-1]
+            # / A header line, a URL, a table row & a bare label are not prose.
+            if re.search(r'https?://|Copyright|<3 Open|\S {2,}\S', last) or re.match(r'^[A-Z][A-Za-z ]+\.\.\.', last):
+                continue
+            # / A comment that is entirely a QUOTED STRING is a label rather than prose.
+            # / A language pack comments every string with its English original in quotes, so
+            # / linting the UI reported five thousand of them for not being sentences.
+            # / They are not sentences & are not meant to be.
+            if (last.startswith(chr(39)) and last.endswith(chr(39))) or (last.startswith('"') and last.endswith('"')):
+                continue
+            if re.search(r'[.!?:]["\')]*$', last):
+                continue
+            report('SENTENCE', os.path.basename(path) + ':' + str(block_start + 1 + len(block) - 1)
+                   + ' this comment block trails off. End its last line with a period: ' + last[:45])
+            faults += 1
+    return faults
+
+# / -----------------------------------------------------------------------------------
+# / CHECK SIXTEEN. No function parameter or return has a generic name.
+# / Convention fourteen. A name like $a or $f says nothing to a reader & a signature is the
+# / first thing a reader sees. Two characters or fewer, or a bare type word, is reported.
+def check_generic_names(files, report):
+    generic = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'i', 'j', 'k', 'n', 'p', 'q', 'r', 's', 't', 'v', 'x', 'y', 'z',
+               'arr', 'array', 'str', 'string', 'int', 'num', 'val', 'value', 'var', 'obj', 'data', 'tmp', 'temp', 'foo', 'bar'}
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        for name, record in read_functions(original, blanked).items():
+            signature = record['signature']
+            inside = signature[signature.index('(') + 1:signature.rindex(')')] if ')' in signature else ''
+            for parameter in re.findall(r'\$(\w+)', inside):
+                if parameter.lower() in generic or len(parameter) <= 2:
+                    report('NAME', os.path.basename(path) + ':' + str(record['start'] + 1) + ' ' + name
+                           + '() takes $' + parameter + '. Rename it to say what it holds')
+                    faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK SEVENTEEN. No function destroys a value it is about to return.
+# / purgeSensitiveMemory takes its arguments by reference & sets each to NULL, so a name
+# / that appears in the purge call & then in the return is returned as nothing.
+# / This is the fault the locals check can cause when it is obeyed without thought. It said
+# / a lowercase parameter was never destroyed, the parameter was added to the purge, & the
+# / parameter was also the return value. Eighteen functions were broken in one pass,
+# / including every conversion pipeline, & the first symptom was a fatal three functions
+# / away from any of them.
+# / A return value is exempt from convention five BECAUSE it is returned, & the locals check
+# / now knows that. This check is the backstop for a purge added by hand.
+def check_return_not_purged(files, report):
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        text = '\n'.join(blanked)
+        for found in re.finditer(r'purgeSensitiveMemory\s*\(([^;]*)\);\s*\n\s*return\s+(?:array\s*\()?([^;]+)', text):
+            purged = set(re.findall(r'\$(\w+)', found.group(1)))
+            returned = set(re.findall(r'\$(\w+)', found.group(2)))
+            line = text.count('\n', 0, found.start(2)) + 1
+            for name in sorted(purged & returned):
+                report('RETURN', os.path.basename(path) + ':' + str(line) + ' $' + name
+                       + ' is purged & then returned, so it is returned as NULL. Remove it from the purge call')
+                faults += 1
+        # / A by-reference parameter purged anywhere in its function destroys the caller's
+        # / variable, whether or not it is returned.
+        for name, record in read_functions(original, blanked).items():
+            # / redeclare shreds the caller's variable on purpose. See the locals check.
+            if name == 'redeclare':
+                continue
+            signature = record['signature']
+            body = '\n'.join(record['body'])
+            # / A value that is purged & then ASSIGNED to something is the same fault as one
+            # / that is purged & then returned. purgeSensitiveMemory writes NULL through a
+            # / reference, so whatever it touched is NULL by the time it is stored.
+            # / redeclare() purged its $newValue & then assigned it to the caller's variable,
+            # / which silently emptied every string built through it. The interface that used
+            # / it rendered links with no path at all & every settings change gave a 404.
+            for found in re.finditer(r'purgeSensitiveMemory\s*\(([^;]*)\);\s*\n(?:\s*//[^\n]*\n)*\s*\$(\w+)\s*=\s*\$(\w+)\s*;', body):
+                if found.group(3) in set(re.findall(r'\$(\w+)', found.group(1))):
+                    report('RETURN', os.path.basename(path) + ':' + str(record['start'] + 1) + ' ' + name
+                           + '() purges $' + found.group(3) + ' & then assigns it to $' + found.group(2)
+                           + ', so NULL is stored. Purge the variable being overwritten instead')
+                    faults += 1
+            refs = set(re.findall(r'&\$(\w+)', signature[signature.index('('):]))
+            if not refs:
+                continue
+            for found in re.finditer(r'purgeSensitiveMemory\s*\(([^;]*)\)', '\n'.join(record['body'])):
+                for hit in sorted(refs & set(re.findall(r'\$(\w+)', found.group(1)))):
+                    report('RETURN', os.path.basename(path) + ':' + str(record['start'] + 1) + ' ' + name
+                           + '() purges &$' + hit + ', which is the caller\'s variable. Remove it from the purge call')
+                    faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK EIGHTEEN. Every call supplies the arguments its function requires.
+# / PHP raises an ArgumentCountError at runtime & not before, so a call left behind when a
+# / signature grew is invisible until somebody exercises that exact path.
+# /
+# / This found two. cleanFiles() gained a second argument naming the roots it may clean
+# / under, & two pipelines still called it with one. The missing argument made the call
+# / refuse silently, the temporary sources were never removed, & the pipeline then reported
+# / a failure on a conversion that had already succeeded.
+# / Both were in pipelines that were not present when the signature changed, which is the
+# / normal way this happens.
+# /
+# / A variadic parameter written as ...$name absorbs everything after it, so a function
+# / declaring one has no maximum & its required count stops at the parameter before.
+# / A parameter with a default is optional & is not counted as required.
+def check_argument_counts(files, report):
+    signatures = {}
+    for path in files:
+        original, blanked = read_source(path)
+        for found in re.finditer(r'^function (\w+)\(([^)]*)\)', '\n'.join(blanked), re.M):
+            parameters = [p for p in found.group(2).split(',') if p.strip()]
+            required = 0
+            for parameter in parameters:
+                if '=' in parameter or '...' in parameter:
+                    break
+                required += 1
+            signatures[found.group(1)] = (required, os.path.basename(path))
+    # / A construct that looks like a call & is not one.
+    language = {'array', 'isset', 'unset', 'list', 'empty', 'echo', 'print', 'return', 'if',
+                'for', 'foreach', 'while', 'switch', 'catch', 'function', 'use', 'match'}
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        text = '\n'.join(blanked)
+        for found in re.finditer(r'\b([a-z]\w*)\s*\(([^();]*)\)', text):
+            name = found.group(1)
+            if name in language or name not in signatures:
+                continue
+            required, where = signatures[name]
+            supplied = len([a for a in found.group(2).split(',') if a.strip()])
+            if supplied < required:
+                line = text.count('\n', 0, found.start()) + 1
+                report('ARGS', os.path.basename(path) + ':' + str(line) + ' ' + name
+                       + '() is called with ' + str(supplied) + ' argument(s) & requires '
+                       + str(required) + '. Its signature is in ' + where)
+                faults += 1
+    return faults
+
+# / -----------------------------------------------------------------------------------
+# / CHECK TWENTY. A function that returns a pair is never assigned whole to one variable.
+# / sandboxCommand returns whether a command may run & the command, & four callers took the
+# / pair as the command for several releases. The shell was asked to run a program called
+# / Array. ClamAV reported every file clean, ScanCore reported every file infected & no
+# / stream was ever fetched. PHP converts an array to a string with a warning & carries on,
+# / so nothing stopped it.
+# / A pair is a function whose every return is array( with more than one element. A call
+# / that is indexed where it is made, such as name()[0], takes one element on purpose & is
+# / not reported.
+# / ScanCore is a program of its own & defines its own sanitize(), which returns one value.
+# / Functions are therefore matched within one program, ScanCore or everything else.
+# / Only Resources/ScanCore is ScanCore. The ScanCore pipeline is application code & loads
+# / into this application's process. An earlier test matched any folder named ScanCore &
+# / counted the pipeline as part of the scanner.
+def program_of(path):
+    return 'scancore' if os.sep + SCANCORE_FOLDER in path else 'application'
+
+def returns_pair(body):
+    returned = re.findall(r'\breturn\s+(.*?);', body)
+    if not returned:
+        return False
+    for value in returned:
+        if not value.startswith('array('):
+            return False
+        depth = 0
+        commas = 0
+        for character in value[len('array('):]:
+            if character in '([':
+                depth += 1
+            elif character in ')]':
+                if depth == 0:
+                    break
+                depth -= 1
+            elif character == ',' and depth == 0:
+                commas += 1
+        if commas < 1:
+            return False
+    return True
+
+def check_pairs_destructured(files, report):
+    pairs = {}
+    for path in files:
+        original, blanked = read_source(path)
+        text = '\n'.join(blanked)
+        for found in re.finditer(r'^function (\w+)\(', text, re.M):
+            opening = text.find('{', found.end())
+            if opening < 0:
+                continue
+            depth = 0
+            closing = opening
+            while closing < len(text):
+                if text[closing] == '{':
+                    depth += 1
+                elif text[closing] == '}':
+                    depth -= 1
+                    if depth == 0:
+                        break
+                closing += 1
+            if returns_pair(text[opening:closing]):
+                pairs[(program_of(path), found.group(1))] = os.path.basename(path)
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        text = '\n'.join(blanked)
+        for found in re.finditer(r'(?<![\w>:])\$\w+\s*=\s*([a-zA-Z_]\w*)\s*\(', text):
+            name = found.group(1)
+            if (program_of(path), name) not in pairs:
+                continue
+            # / Walk to the call's closing parenthesis & see whether it is indexed there.
+            depth = 0
+            position = found.end() - 1
+            while position < len(text):
+                if text[position] == '(':
+                    depth += 1
+                elif text[position] == ')':
+                    depth -= 1
+                    if depth == 0:
+                        break
+                position += 1
+            if text[position + 1:position + 2] == '[':
+                continue
+            line = text.count('\n', 0, found.start()) + 1
+            report('PAIRS', os.path.basename(path) + ':' + str(line) + ' assigns the pair ' + name
+                   + '() returns to one variable. Take it with list (), as its other callers do. '
+                   + 'It is defined in ' + pairs[(program_of(path), name)])
+            faults += 1
+    return faults
+
+# / -----------------------------------------------------------------------------------
+# / CHECK TWENTY ONE. Every function opens with a separator & a preface & closes with one.
+# / The shape is a separator, the comment describing the function, the function, & a
+# / separator on the line after its closing line. A reader finds functions by that shape.
+# / The spacing check never saw a MISSING separator, because it judges the gap between two
+# / separators & a missing one leaves no gap to judge. Fourteen functions across four files
+# / had lost an opening separator before this check existed, & every one was found by eye.
+# / It reads only functions declared at the start of a line, which is every function in
+# / this project except describeEnvironment() in environmentCore.php, which sits inside an if
+# / & is indented, so it is skipped rather than misread.
+# / It cannot tell a preface that describes the function from a comment that does not. The
+# / sentence check reads what the comment says. This one reads where it is.
+def check_function_frame(files, report):
+    separator = '// / ' + '-' * 83
+    is_rule = lambda text: text.strip().startswith('// / -') and text.strip()[5:] != '' and not (set(text.strip()[5:]) - set('-'))
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        for name, record in read_functions(original, blanked).items():
+            start = record['start']
+            end = record['end']
+            above = start - 1
+            while above >= 0 and original[above].strip().startswith('// /') and not is_rule(original[above]):
+                above -= 1
+            if above == start - 1:
+                report('FRAME', path + ':' + str(start + 1) + ' ' + name + '() has no comment above it. Write one '
+                       + 'beginning "A function to", between its opening separator & the function line')
+                faults += 1
+            elif above < 0 or not is_rule(original[above]):
+                report('FRAME', path + ':' + str(start + 1) + ' ' + name + '() has no opening separator. Put '
+                       + 'the 88 character separator on the line above its comment')
+                faults += 1
+            elif original[above].strip() != separator:
+                report('FRAME', path + ':' + str(above + 1) + ' ' + name + '() opens with a separator of '
+                       + str(len(original[above].strip())) + ' characters. Use exactly 88')
+                faults += 1
+            if end + 1 >= len(original) or original[end + 1].strip() != separator:
+                report('FRAME', path + ':' + str(end + 1) + ' ' + name + '() has no closing separator on the '
+                       + 'line after its last line. Put the 88 character separator there')
+                faults += 1
+    return faults
+
+# / -----------------------------------------------------------------------------------
+# / CHECK TWENTY TWO. No function destroys a global it declares.
+# / A global declared in a function IS the global. Handing it to purgeSensitiveMemory()
+# / shreds the value for the whole request, not a local copy of it.
+# / updateApplication() declared $Lol global & purged it, so with memory protection on every
+# / line it printed after an update ran together. waitForStream() did the same to a lowercase
+# / name that should never have been global at all. Both read as ordinary cleanup.
+# / The first argument to purgeSensitiveMemory() decides whether a failure halts & is not a
+# / target, so it is not read. A global is the right thing to pass there.
+# / It reads every global statement anywhere in the body & every purge call, so a global
+# / declared inside a branch still counts. It cannot see a purge reached through another
+# / function, which is the same blindness every other check here has to a call graph.
+def check_global_purge(files, report):
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        for name, record in read_functions(original, blanked).items():
+            body = '\n'.join(record['body'])
+            declared = set()
+            # / A variable variable declares the global its value names, & not itself, so $$name is not read as $name.
+            for statement in re.finditer(r'\bglobal\s+([^;]+);', body):
+                declared |= set(re.findall(r'(?<!\$)\$(\w+)', statement.group(1)))
+            for call in re.finditer(r'purgeSensitiveMemory\s*\(([^;]*)\)\s*;', body):
+                for target in re.findall(r'\$(\w+)', call.group(1))[1:]:
+                    if target in declared:
+                        report('GLOBALS', path + ':' + str(record['start'] + 1) + ' ' + name + '() declares $'
+                               + target + ' global & then purges it, which destroys the global for the whole '
+                               + 'request. Remove it from the purgeSensitiveMemory() call')
+                        faults += 1
+    return faults
+
+# / -----------------------------------------------------------------------------------
+# / CHECK TWENTY THREE. No setting is set both by the administrator & by the Engine.
+# / config.php is read first, because it is how an installation finds itself, & the Engine
+# / configuration is read after it, with the application's Engine settings last of all.
+# / So a name set in either half of the configuration template & in either Engine configuration
+# / file is decided by the Engine, silently, & an administrator who changes it sees nothing happen.
+# / Until v4.0.0 the documents said the Engine configuration was read first so that the
+# / administrator would win. No name was shared, so nothing was ever overridden, but the
+# / protection they described did not exist. This check is that protection.
+# / A name in either template that begins with Engine is reported as well, because that
+# / prefix is how an Engine setting is told apart, & the next Engine to use the name wins.
+# / It reads top level assignments only. A setting assigned inside a branch is not seen.
+def check_config_overlap(root, report):
+    faults = 0
+    def assigned(relative):
+        full = os.path.join(root, relative)
+        if not os.path.exists(full):
+            return set()
+        return set(re.findall(r'^\$([A-Z]\w*)\s*=', open(full, encoding='utf-8', errors='replace').read(), re.M))
+    # / config.php has two halves, & what an administrator sets is whatever either template holds.
+    administrator = assigned(os.path.join('Resources', 'Contract', 'config-template.php')) | assigned(os.path.join('Resources', 'Engine', 'config-template.php'))
+    engine = assigned(os.path.join('Resources', 'Engine', 'engineConfig.php')) | assigned(os.path.join('Resources', 'Contract', 'app-engine-config.php'))
+    for name in sorted(administrator & engine):
+        report('CONFIGS', '$' + name + ' is set in a configuration template & in an Engine configuration file, which '
+               + 'is read later & wins. Give the setting one home')
+        faults += 1
+    for name in sorted(n for n in administrator - engine if n.startswith('Engine')):
+        report('CONFIGS', '$' + name + ' is set in a configuration template with the prefix the Engine owns. Rename it')
+        faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK TWENTY FOUR. An owner is changed only through changeOwnerWithoutFollowing().
+# / The second rule of ABOUT_MANAGED_LOCATIONS.txt. Root never works by name inside a folder
+# / another account can change, & changing an owner is the most dangerous thing root does by
+# / name. chown follows a link, & even lchown can be handed a hard link swapped in between a
+# / look & the change. changeOwnerWithoutFollowing() changes the name itself, & refuses where
+# / a hard link could be swapped in, so every other function calls it.
+# / A PHP chown, chgrp, lchown or lchgrp is reported, & so is chown or chgrp as a word inside
+# / a string, which is how a shell command reaches one. A printed instruction that names
+# / chown is reported as well, & is reworded rather than exempted.
+# / Three functions are exempt & each is exempt for a stated reason.
+# /   changeOwnerWithoutFollowing  It is the one place the change is made.
+# /   applyCodeRole                It gives the code tree to root with find -execdir chown -h,
+# /   applyRootOnlyRole            which never follows a link, & a name handed to root gives
+# /                                no other account anything. The root only role does the
+# /                                same to the backup.
+# / runAsAccount was exempt until v4.0.5, when it gave its output file to the account it was about
+# / to become. That file stays root's now, so it changes no owner & is checked like the rest.
+# / It cannot see an owner changed by a program this one runs, such as a build script.
+OWNER_CALL = re.compile(r'\b(l?chown|l?chgrp)\s*\(')
+OWNER_SHELL = re.compile(r'''(['"])[^'"]*\b(chown|chgrp)\s''')
+def check_owner_changes(files, report):
+    exempt = {'changeOwnerWithoutFollowing', 'applyCodeRole', 'applyRootOnlyRole'}
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        # / The function each line belongs to, so an exempt one is passed over whole.
+        owners = {}
+        for name, record in read_functions(original, blanked).items():
+            for index in range(record['start'], record['end'] + 1):
+                owners[index] = name
+        for index, line in enumerate(blanked):
+            if owners.get(index) in exempt:
+                continue
+            # / A call is found in the blanked source, where no string or comment can fake one.
+            # / A shell command is found in the original, on a line that is code at all.
+            if OWNER_CALL.search(line) or (line.strip() != '' and OWNER_SHELL.search(original[index])):
+                report('OWNER', path + ':' + str(index + 1) + ' changes an owner by name. Call changeOwnerWithoutFollowing() instead')
+                faults += 1
+    return faults
+
+# / -----------------------------------------------------------------------------------
+# / CHECK TWENTY FIVE. No function destroys a static it keeps.
+# / A static keeps its value from one call to the next for the life of the process. Handing one to
+# / purgeSensitiveMemory() empties it, so the next call finds nothing kept & does the work again.
+# / verifySystemdRun() purged the three statics holding its probe until v4.2.4, so a probe its
+# / comments said ran once per request ran before every conversion.
+# / A static holds what is worth keeping & nothing secret, which ABOUT_DEFENSIVE_MEMORY_MANAGEMENT.md asks of one.
+# / The first argument to purgeSensitiveMemory() decides whether a failure halts & is not a target.
+# / It cannot see a static purged through another function, as check twenty two cannot see a global.
+def check_static_purge(files, report):
+    faults = 0
+    for path in files:
+        original, blanked = read_source(path)
+        for name, record in read_functions(original, blanked).items():
+            body = '\n'.join(record['body'])
+            kept = set(re.findall(r'\bstatic\s+\$(\w+)', body))
+            for call in re.finditer(r'purgeSensitiveMemory\s*\(([^;]*)\)\s*;', body):
+                for target in re.findall(r'\$(\w+)', call.group(1))[1:]:
+                    if target in kept:
+                        report('STATIC', path + ':' + str(record['start'] + 1) + ' ' + name + '() keeps $'
+                               + target + ' as a static & then purges it, which empties what it keeps & '
+                               + 'repeats the work on every call. Remove it from the purgeSensitiveMemory() call')
+                        faults += 1
+    return faults
+
+
+# / -----------------------------------------------------------------------------------
+# / CHECK TWENTY SIX. The contract sets every value strict contract mode requires, from v4.3.4.
+# / --Engine Strict Contract-- refuses to start an Engine whose contract leaves one out, & this holds every build to
+# / the same values whatever that setting says, because a released application ships it FALSE. The Engine defaults
+# / each of them, & two applications left on the default name collide on one host, because every unit & sandbox
+# / profile is named from it.
+# / The names are read from strictContractNames() in Resources/Engine/engine.php, the one line it lists them on, so the
+# / Engine, this check & its Bash twin cannot disagree about them. A value is set where a line of the contract begins by
+# / assigning it, unindented, as the Engine reads it. A comment, a comparison & an assignment that is indented or inside
+# / a condition do not set one.
+# / It cannot see a value a later line takes away, or one set to something the Engine refuses. The Engine cannot either.
+def check_strict_contract(root, report):
+    engine = os.path.join(root, 'Resources', 'Engine', 'engine.php')
+    contract = os.path.join(root, 'Resources', 'Contract', 'app-engine-config.php')
+    if not os.path.exists(engine):
+        return 0
+    listed = re.search(r'^[ \t]*\$StrictContractNames\s*=\s*array\(([^)]*)\);', open(engine, encoding='utf-8', errors='replace').read(), re.M)
+    names = re.findall(r"'(\w+)'", listed.group(1)) if listed else []
+    if not names:
+        report('STRICT', 'Resources/Engine/engine.php lists no name in strictContractNames(), so no contract was held to the values strict contract mode requires')
+        return 1
+    if not os.path.exists(contract):
+        report('STRICT', 'Resources/Contract/app-engine-config.php is missing, so it sets none of the values strict contract mode requires')
+        return 1
+    text = open(contract, encoding='utf-8', errors='replace').read()
+    faults = 0
+    for name in names:
+        if not re.search(r'^\$' + name + r'[ \t]*=(?!=)', text, re.M):
+            report('STRICT', 'Resources/Contract/app-engine-config.php does not set $' + name + ', which strict contract mode requires & the Engine otherwise defaults')
+            faults += 1
+    return faults
+
+# / -----------------------------------------------------------------------------------
+# / The main logic. Every check runs & the total decides the exit code.
+# / Nothing stops early, because an operator wants every fault in one pass rather than the
+# / first one seven times.
+def main():
+    quiet = '--quiet' in sys.argv
+    # / --fail-on names the kinds that decide the exit code. Every kind is still reported, but
+    # / only a named one fails the run. A pre-commit hook uses this to block on the kinds that
+    # / break execution while a tracked debt like CONTRACT is allowed through.
+    # / With nothing named, every finding fails the run, which is the right default for a
+    # / person reading the output & the wrong one for a hook nobody reads.
+    fail_on = set()
+    if '--fail-on' in sys.argv:
+        position = sys.argv.index('--fail-on')
+        if position + 1 < len(sys.argv):
+            fail_on = set(sys.argv[position + 1].upper().split(','))
+    global INCLUDE_SCANCORE, ENTRY_POINT, CONFIG_MODEL
+    INCLUDE_SCANCORE = '--no-scancore' not in sys.argv
+    root = os.getcwd()
+    ENTRY_POINT, CONFIG_MODEL = contract_names(root)
+    if not os.path.exists(os.path.join(root, ENTRY_POINT)):
+        print('Run this from the installation root, beside ' + ENTRY_POINT + ', the entry point Resources/Contract/app-engine-config.php names.')
+        return 2
+    findings = []
+
+    def report(kind, message):
+        findings.append((kind, message))
+        if not quiet:
+            print('  ' + kind.ljust(10) + message)
+
+    files = project_files(root)
+    # / Every check, in the order they run, keyed by the name --only accepts.
+    # / A check is a name, a one line description & something to call.
+    # / Adding one here is the only place a new check has to be registered.
+    checks = (
+        ('syntax', 'the php binary parses every file', lambda: check_syntax(files, report)),
+        ('balance', 'every delimiter closes', lambda: check_balance(files, report)),
+        ('order', 'nothing calls a component before it loads', lambda: check_call_order(root, report)),
+        ('undefined', 'every variable a function reads exists', lambda: check_undefined_reads(files, report)),
+        ('duplicate', 'no function is defined twice', lambda: check_duplicate_functions(files, report)),
+        ('pins', 'every version pin matches the file it points at', lambda: check_version_pins(root, report)),
+        ('strict', 'the contract sets every value strict contract mode requires', lambda: check_strict_contract(root, report)),
+        ('errno', 'every error number raised is documented', lambda: check_error_numbers(root, files, report)),
+        ('guard', 'every component refuses to load directly', lambda: check_component_guard(root, report)),
+        ('contract', 'the Engine never calls application code', lambda: check_engine_independence(root, report)),
+        ('kernel', 'the kernel calls only itself, PHP & a guarded Engine', lambda: check_kernel_independence(root, files, report)),
+        ('config', 'every setting a configuration template holds is modelled, & held once', lambda: check_config_globals(root, report)),
+        ('stray', 'nothing ships that is not part of the application', lambda: check_stray_files(root, report)),
+        ('logo', 'the Engine\'s own logo is the file it was distributed with', lambda: check_engine_logo(root, report)),
+        ('spacing', 'separators & blank lines follow the house shape', lambda: check_file_spacing(files, report)),
+        ('caps', 'no comment line is entirely capitals', lambda: check_comment_case(files, report)),
+        ('purge', 'every cleanup at a return carries its comment', lambda: check_purge_comment(files, report)),
+        ('locals', 'every lowercase local is destroyed before return', lambda: check_locals_purged(files, report)),
+        ('sentence', 'every comment ends a sentence', lambda: check_comment_sentences(files, report)),
+        ('name', 'no parameter has a generic name', lambda: check_generic_names(files, report)),
+        ('return', 'no function destroys what it returns', lambda: check_return_not_purged(files, report)),
+        ('args', 'every call supplies the arguments its function requires', lambda: check_argument_counts(files, report)),
+        ('pairs', 'a returned pair is never taken whole as one value', lambda: check_pairs_destructured(files, report)),
+        ('frame', 'every function opens & closes with a separator', lambda: check_function_frame(files, report)),
+        ('globals', 'no function destroys a global it declares', lambda: check_global_purge(files, report)),
+        ('configs', 'no setting is set by the administrator & by the Engine', lambda: check_config_overlap(root, report)),
+        ('owner', 'an owner is changed only through changeOwnerWithoutFollowing', lambda: check_owner_changes(files, report)),
+        ('static', 'no function destroys a static it keeps', lambda: check_static_purge(files, report)),
+        ('exit', 'every function has one exit', lambda: check_single_exit(files, report)))
+    if '--list' in sys.argv:
+        print('Checks, in the order they run.')
+        for name, description, runner in checks:
+            print('  ' + name.ljust(12) + description)
+        print()
+        print('Run one with  --only <name>. Run every one by naming none.')
+        return 0
+    wanted = ''
+    if '--only' in sys.argv:
+        position = sys.argv.index('--only')
+        wanted = sys.argv[position + 1] if position + 1 < len(sys.argv) else ''
+        if wanted not in [name for name, description, runner in checks]:
+            print('There is no check called ' + repr(wanted) + '. Run --list to see them.')
+            return 2
+    if not quiet:
+        print('Checking ' + str(len(files)) + ' PHP files under ' + root + '.')
+        if not INCLUDE_SCANCORE:
+            print('Resources/ScanCore is left out, because --no-scancore was given.')
+        print()
+    total = 0
+    for name, description, runner in checks:
+        if wanted != '' and name != wanted:
+            continue
+        total += runner()
+    if not quiet:
+        print()
+        if total == 0:
+            print('Every check passed.')
+        else:
+            # / A count per kind, because twenty findings of one kind is one job & twenty
+            # / findings of twenty kinds is twenty. The difference decides what to do next.
+            counted = {}
+            for kind, message in findings:
+                counted[kind] = counted.get(kind, 0) + 1
+            for kind in sorted(counted):
+                print('  ' + str(counted[kind]).rjust(4) + '  ' + kind)
+            print()
+            print(str(total) + ' finding(s). A finding is not always a fault, & the header')
+            print('for each check says which patterns it reports that are not.')
+            # / The two programs are counted apart, so a new finding in the application is not
+            # / lost among the ones ScanCore is carrying.
+            in_scancore = len([message for kind, message in findings if SCANCORE_MESSAGE.search(message)])
+            if in_scancore:
+                print(str(in_scancore) + ' of them are in Resources/ScanCore & ' + str(len(findings) - in_scancore)
+                      + ' are in the application. --no-scancore leaves ScanCore out.')
+    if fail_on:
+        blocking = [kind for kind, message in findings if kind in fail_on]
+        if not quiet and total > 0:
+            print(str(len(blocking)) + ' of those would block a commit under --fail-on ' + ','.join(sorted(fail_on)) + '.')
+        return 1 if blocking else 0
+    return 1 if total > 0 else 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

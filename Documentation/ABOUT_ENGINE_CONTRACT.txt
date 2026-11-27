@@ -1,0 +1,858 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRProprietary Engine, Copyright on 9/4/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
+
+FILE INFORMATION ...
+v3.8.9.
+This plain text file is the contract between an application and the Engine it bundles.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+The Engine requires PHP. Everything else it uses, it locates at runtime and reports when it cannot find.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Deciding Whether Something Is A Pipeline--
+
+The question is NOT whether it moves bytes on disk. That is a question about mechanism &
+it gives the wrong answer.
+
+The question is WHETHER IT IS A CAPABILITY AN APPLICATION WIRES IN.
+
+Delivering a file to a requester is a capability. That it verifies paths rather than
+copying them is an implementation detail, & a second application would not want to write it
+again. It is a pipeline.
+
+Bundling files together is a capability, & it is not the same as converting between archive
+formats even though both shell out to the same tools. One packages arbitrary files for
+delivery. The other transforms a zip into a tar. Same binaries, different job, different
+pipeline.
+
+Deciding whether a path is one this application will touch is NOT a capability an
+application wires in. Every pipeline needs it, the Engine itself calls it, & an application
+that had to supply it would be supplying something every other application also supplies.
+That is Engine work.
+
+THE FAILURE MODE THIS EXISTS TO PREVENT. A list of candidates written from function NAMES
+will put things on it that sound like file work & leave off things that are. Read what a
+function DOES. A function operating on paths another function handed it is a caller rather
+than an operation, & a function that only counts is not doing the thing it appears to do.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Shape This Is Growing Toward--
+
+NOT IN SCOPE. Recorded so that decisions made now do not quietly foreclose it.
+
+Three applications are anticipated & they differ in what a pipeline DOES rather than in
+how one is declared, loaded, versioned or dispatched.
+
+  HRConvert2    conversion pipelines & file pipelines.
+  HRProtect     scanner pipelines.
+  HRCloud3      file operation pipelines & user automation pipelines.
+
+The Pipeline Core already carries a Kind, & already knows three of them. conversion, chosen
+by the formats it declares. operation, chosen by what it does. scanner, chosen by name.
+That field was added for one reason & turns out to be the seed of the contract these three
+applications need. A fourth kind is a value & a dispatch rule, not a redesign.
+
+WHAT THAT MEANS FOR WORK DONE NOW. A pipeline change should ask whether the rule being
+written is true of pipelines or true of CONVERSION pipelines. The rule that a pipeline must
+declare an input & an output format was written when every pipeline converted something,
+& it silently refused both scanner pipelines for two releases. That is the shape of mistake
+to watch for.
+
+THE INSTALL SECRET & THE SESSION MECHANISM ARE THE KERNEL'S, FROM v4.1.9.
+
+HRConvert2 derives a session identity from an install secret & a supplied token, with a
+daily parent directory for domain separation, & uses NO COOKIE ANYWHERE. A token cannot be
+replayed into a different day or a different vhost.
+
+That is not a conversion feature. It is stateful identity without client side storage, &
+HRCloud3 would need exactly it for authentication rather than for grouping uploads.
+
+The application keeps what a session MEANS, which is whose files these are & what may be
+done with them. The kernel keeps how the install secret is kept & how a visitor's identity is
+derived from it. establishInstallSecret decides which secret a process may hold & reads it,
+settleInstallSecretAsRoot writes it again as root, & verifyTokens & verifySesHash derive a
+session. The application names its secret files with its slug & pins the version of secret it
+accepts, $RequiredSecretVersion.
+
+DECIDED AT v4.1.9, REVERSING v3.9.9. v3.9.9 decided both would move with authentication into a
+core of their own, & not into the kernel, because authentication is a large subsystem & the
+kernel is only worth having while it stays small & identical everywhere. Neither of them is
+authentication. Both are reached before the Engine is verified, which is question three below.
+The installation does not verify without the secret, root stops on the folders above it, the
+logfile is named from it & every log line carries the session's label. Every application on
+the Engine needs the secret, because its startup & socket keys are derived from it, & neither
+calls anything but the kernel.
+
+SIGNING IN IS THE ENGINE'S. Authentication, from v4.2.0, is a core the Engine loads, & it takes
+over a signed in request's identity once the Engine has loaded, as a workflow's worker adopts
+the session it continues. Rotating the install secret stops & starts the listener, so
+--rotate-secret is the Engine's command, & the kernel rewrites the secret for it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Engine Is A Drop In Replacement For Itself--
+
+The seam is VISIBLE IN THE TREE rather than described in a document.
+
+  Resources/Contract/            Belongs to the APPLICATION. The Engine reads it & never
+                                 writes it, & finds it through contractPath() in the kernel.
+    depends.php                  The application's half of the dependency manifest. What its
+                                 own pipelines need & how to get each.
+    config-template.php          The application's half of config.php, a real config.php at
+                                 defaults. The header & the guard config.php opens with,
+                                 $ConfigVersion & every setting only the application reads.
+
+    app-engine-config.php        Which providers this application supplies, which pipelines
+                                 & shared modules it accepts at which versions, & anything it
+                                 needs to differ from an Engine default.
+
+  Resources/Engine/engineConfig.php
+                                 THE ENGINE's, & replaceable with everything else. It holds
+                                 defaults & loads the override above LAST, so the
+                                 application wins wherever the two disagree.
+                                 This is the arrangement Apache & php use. A package ships
+                                 a configuration that works, & the thing being configured
+                                 drops a file beside it that changes what it needs.
+                                 Before the split, upgrading the Engine meant reading
+                                 engineConfig.php line by line to find which values were
+                                 the application's. Now it is a directory copy.
+
+  Resources/Engine/config-template.php
+                                 The Engine's half of config.php, from v4.2.4. Every setting
+                                 the kernel or the Engine reads, with its documentation & its
+                                 default. Replaceable, because a setting is the Engine's.
+  Resources/Engine/depends.php   The Engine's half of the dependency manifest, from v4.2.4.
+                                 PHP & the extensions the Engine calls, the web server, Curl,
+                                 Git & the sandbox. The Engine pins it itself, & Dependency
+                                 Core reads it before the application's half.
+  Resources/Engine/Cores/        The Engine. Replaceable.
+  Resources/Engine/Managers/     The Engine. Replaceable.
+  Resources/Engine/engine.php    The Engine. Replaceable.
+
+Resources/Engine is the Engine & nothing else. engine.php, engineConfig.php, the Engine's half
+of the configuration template, the Engine's half of the dependency manifest, the Managers & the
+Cores. Replacing it with a newer Engine is a directory copy, & nothing in it is the application's
+to keep.
+
+THE CONTRACT LEFT THE ENGINE TREE AT v3.9.9. It was Resources/Engine/Contract/ from v3.9.3.
+Inside the Engine directory, an upgrade meant copying everything except three files, & an
+Engine traded to a second application carried the first one's identity & manifest with it.
+Outside it, the seam is a directory boundary rather than a list of exceptions to remember.
+THE PIPELINE CORE JOINED THE ENGINE IN THE SAME RELEASE. It is Resources/Engine/Cores/
+pipelineCore.php, & the list of pipelines it accepts left it for app-engine-config.php, as
+$EngineAcceptedPipelines & $EngineAcceptedSharedModules. It is the Engine's mechanism & the
+application's choice, so the file names no pipeline & the contract names them all.
+THE BUILD WRITES THE PINS, FROM v4.0.0. $EnginePinSources in the contract names where each of
+the application's own pins reads its version, such as one file for each interface. The
+Engine knows where its own components live & needs no entry for them. php convertCore.php
+--build --pins checks every pin against what ships, & --write rewrites the ones that differ.
+The kernel's pin & the Engine's are moved by hand, from v4.0.1, because the build runs inside
+both & cannot rewrite what loads it.
+THE APPLICATION NAMES ITS LOCATIONS & THE ENGINE OWNS WHAT THEY MEAN, FROM v4.0.1.
+$EngineManagedLocations in the contract names every location the application keeps on disk,
+by the setting that holds it, & gives each a role. A role is code, data-root, secret, web,
+served, root-only or shared. Setup Core decides the owner & the mode each role means, & the contract
+cannot ask for a mode, so no location can be made writable by the account root protects itself
+from. -fp applies them. See ABOUT_MANAGED_LOCATIONS.txt.
+A FOLDER FOR SECRETS IS AN ENGINE LOCATION, FROM v4.0.4. The secret role is root's, the web
+server account's group & 0750, so that account reads what root keeps there & changes none of it,
+& no other account can list it. Setup Core makes the folder & gives it the role, & puts nothing
+in it. HRConvert2 names Secrets as $SecretLoc & keeps its install secret there. Reading, writing &
+copying the secret is the kernel's, from v4.1.9.
+THE ENGINE KNOWS WHAT THE WEB SERVER SERVES, FROM v4.0.5. A location the contract gives the
+served role is a folder of the web server account's that browsers fetch files from, & HRConvert2
+names DATA in its hosted location that way. Setup Core writes the Apache configuration from the
+roles & the hosted location, so the hosted location runs only the loader, every served location
+hands each file over as an inert download, & every data location refuses every request. The
+contract maps the hosted location, its address & the document root as HostedLocation, ServerURL
+& DocumentRoot. A served location must be inside the hosted location & below it, as written. One
+anywhere else is refused, given no role & named MISPLACED, because rules that turn PHP off would
+stop the loader at the hosted location or above it. Without the
+contract the Engine knows no location at all, so the application warns on every request. The contract names a location & can never write a
+rule, as it can never ask for a mode. Environment Core keeps each served
+location's protection file current & proves the rules are in force by fetching a canary, & the
+Engine reports that itself, so $EngineDataPolicyProvider is retired. Two things are the
+application's & cannot be the Engine's. index.html in a served location is the protection page &
+is the one file there served as a page, so the application must never stage a user's file by
+that name. HRConvert2 refuses it by name wherever it stages a file. Root reads every tree it runs
+before the contract can be read, so the application leaves its own served locations out of that
+read. HRConvert2 leaves out DATA. A served location the read does not leave out stops every
+command root runs but a repair.
+THE APPLICATION IS INSTALLED OUTSIDE THE WEB ROOT, FROM v4.0.1. $EngineApplicationLayout in the
+contract names the entries at the top of a release that make up the application. Setup Core's
+installApplicationTree copies exactly those into the folder the application names, & keeps the
+one it replaces as the backup. $EngineHostedAssetFolders & $EngineHostedAssetTypes name the
+static files a browser fetches. publishHostedLocation writes them, with a loader carrying the
+entry point's name, into the folder the web server serves, & removes only what is a copy of the
+installation. An application that names no layout installs nothing & runs where it is.
+WHAT NO RELEASE SHIPS IS TAKEN AWAY, FROM v4.0.6. $EngineRetiredPaths in the contract names paths
+inside an installation that no release of the application ships, each by its path below the
+installation. -fp leaves each out of the walk that gives the installation to root, then removes
+it as root with the Kernel's removeTreeWithoutFollowing, which follows nothing in it, makes every
+folder in it root's alone before anything in it is listed & never leaves the filesystem the
+installation is on. A path that is absolute, or has a part that is empty, . or .., could reach
+outside the installation & is refused with a warning. One in a folder that is not root's alone is
+left where it is & named, & the installation counts as incomplete. HRConvert2 names
+Documentation/Build/ffmpeg-build, the tree FFmpeg's build left in the installation until v4.0.6,
+which root refuses to run because it holds links. An application that names none has nothing
+removed. See ABOUT_MANAGED_LOCATIONS.txt.
+A DEPENDENCY INSTALL TURNS OFF WHAT IT TURNED ON, FROM v4.0.2. $EngineUnwantedApacheConfs in the
+contract names the Apache configurations a dependency's package turns on that the application
+never uses. Dependency Core's installDepends notes which are on before it installs anything, &
+turns off each one the install turned on. One an administrator turned on is left as it is. See
+ABOUT_DEPENDENCIES.txt.
+THE APPLICATION'S SETTINGS ARE READ THROUGH A MAP, FROM v3.9.9. $EngineSettingNames in the
+contract names, for each name a shared layer uses, the setting the application keeps the value
+in. applicationSetting in the kernel reads it, or the shared layer's own default when the
+application maps nothing. An operator's setting keeps its name, & no shared layer reads one
+application's settings by their names. The names read today are FormatDetectionType,
+WarnOnCapabilityMismatch, DefaultScanner, MaintainProtectionFile, LiftNamespaceRestriction,
+RequireResourceAwareness,
+HostedLocation, ServerURL & DocumentRoot, & from v4.1.3 StorageWarningPercentage &
+StorageReserveMegabytes. From v4.1.4 the Workflow Core reads EnableWorkflows, MaxWorkflowSteps,
+MaxWorkflowFiles, MaxWorkflowRuntime, MaxConcurrentWorkflows, SessionFolder, SessionContext &
+WorkflowLibrary, from v4.1.5 EnableWorkflowBuilder & EnableWorkflowImportExport, from v4.2.2 WorkflowStaging, & from v4.2.4
+AllowedExtensions, every extension the application reads or writes, which the Engine judges a fetched file by. HostedLocation,
+ServerURL, DocumentRoot, SessionFolder, SessionContext & AllowedExtensions name values the application works out as it starts,
+which the map reads the same way. LiftNamespaceRestriction, from v4.0.5, says
+whether -fp may lift the kernel's AppArmor restriction on unprivileged namespaces where
+bubblewrap, run through the application's own copy & the profile attached to it, refuses a
+sandbox twice, & an application that maps nothing permits it. It is never lifted for an attempt
+cut short, or to cover a copy that is missing or cannot be run. The startup key's variable & the
+policy marker are built from the identity.
+Some of the Engine's messages still name settings as config.php labels them, which
+ENGINE_MIGRATION_STATUS.txt lists under step nine.
+FROM v4.2.4 EVERY SETTING THE ENGINE READS IS THE ENGINE'S, in its half of the configuration
+template, so the name a shared layer reads through the map is the Engine's name for it too. The map
+stays, because it is also how an application OFFERS a feature. A shared name the contract does not
+map reads the shared layer's default, so an application that maps no workflow setting has no
+workflows & one that maps no account setting has no accounts, whatever config.php holds.
+
+THE COMMAND LINE WAS SPLIT AT ONE CALL AT v3.9.9. An application read the command line with
+the kernel's parseArgumentVector, served -v, -h, its updater & everything beginning --app
+itself, & offered every other command to dispatchEngineCommand. The Engine owns the listener,
+the managers, --status, --setup, --config, --pipeline, -fp, -c & --run-environment-manager,
+& answers whether it handled the command & the exit status it earned.
+FROM v4.2.4 THE APPLICATION READS NONE OF IT. The entry point calls the kernel's
+runCommandLine(), which reads the vector, answers -v & -h, hands everything beginning --app to
+the function the contract names in $EngineApplicationArgumentHandler, & refuses every other
+command where there is no Engine. Everything else is the Engine's runEngineCommandLine(),
+which offers it to dispatchEngineCommand, runs -u through Setup Core & names an option typed
+alone, or an argument nothing recognizes, from engineSubOptionOwners(). An application keeps
+only what follows --app, & a second application gets every other command by making that call.
+THE HANDLER SETS THE EXIT STATUS, FROM v4.3.1. The function $EngineApplicationArgumentHandler
+names is handed the command & two values, & what it returns is the status the command exits with.
+A whole number from 0 to 255 is that status, nothing is 0, & anything else is reported as failed,
+with a warning & status 1. Nothing sanitizes a value before the handler has it, so the handler does.
+AN APPLICATION MAY START A WORKER OF ITS OWN, FROM v4.3.1. The Engine's startApplicationWorker() is
+handed one argument beginning --app & one value. It starts the entry point with the two through
+setsid -f, as a workflow's worker is started, so the worker leads a session of its own, has no
+terminal & outlives the command that started it. It returns whether the worker was started & why
+it was not, & does not wait for it.
+Nothing but an argument beginning --app is started, so the worker arrives at the application's own
+handler & no command of the Engine's can be started this way. The value is letters, digits &
+dashes, 64 at most, because every account can read a command line. It names the work, & the
+application keeps what the work is where only it can read.
+The worker is the application's & no manager's. No manager is told of it, it holds no token of the
+budget, & -k does not stop it. The application that starts one decides whether it should run,
+watches it & stops it. Work a manager should supervise is a workflow's, or a pipeline's detached process.
+A worker logs to a file of its own where the application's contract sets $EnginePerWorkerLogFiles
+TRUE & the application sets $LogWorkerIdentifier before the logging environment is verified.
+
+AN APPLICATION MAY PUT A COMMAND OF ITS OWN ON A SCHEDULE, FROM v4.3.1. The function
+$EngineTimerProvider names returns the commands systemd is to run, each keyed by a name & holding a
+Description, the one Argument beginning --app- it is run with, a Calendar as systemd writes one, &
+its Reach. The Setup Core writes a service & a timer for each, named for the application's slug &
+that name, beside the Environment Manager's. --setup --install-service & --setup --install-complete
+write them, -fp writes again whichever are installed, & nothing enables one. An administrator does.
+A unit that is a link, as one an administrator masked is, is never written over.
+Every field is written into a unit root runs, so each is held to the characters it may have. A timer
+with a field that is refused is refused whole, with a warning. A calendar systemd cannot read falls
+back to daily, with a warning, because a calendar is usually a setting an administrator typed.
+Reach is confined, for what the Environment Manager's own unit is confined by, or host, for a
+command that must see the whole server. A host unit hides nothing from its command & takes nothing
+from it. Success is optional, & lists the exit statuses other than 0 that mean the command did its work.
+A unit sets no limit on how long its command runs, so a command put on a schedule ends itself.
+The Engine's applicationTimerState() says whether a timer is installed, enabled & running, & when
+systemd runs it next, for an application that reports on its own parts.
+A scan takes the host reach, because a scan that could not see a folder would call it clean.
+AN APPLICATION MAY SHOW ITS OWN LOGO ON THE PROTECTION PAGE, FROM v4.3.1. $EngineProtectionLogo names
+a logo of the application's, as a path from the installation's root, & the page that keeps a folder from
+being listed shows it in place of the Engine's. It is kept beside the Engine's own,
+Resources/Engine/UI/HRProprietary_logo.png, & never over it. No application removes the Engine's logo or
+writes over it, & both checkers fail where it is not the file the Engine was distributed with. The page
+holds the logo as a data URI, so it asks the server for nothing else. A logo that cannot be shown is
+refused with a warning, & the Engine's own is shown in its place.
+-v IS THE ENGINE'S REPORT, FROM v4.2.4. The kernel recognizes -v & prints the Engine's
+showVersionReport(), which places what the application's report provider adds among the
+Engine's own sections. Without an Engine it prints the kernel's showKernelVersionReport(), a short
+report naming the kernel, the Engine found & required, & the configuration, & saying what to do.
+-h IS THE ENGINE'S HELP, FROM v4.2.4. The kernel recognizes -h & prints the Engine's
+showHelpInfo(), which lists every command the Engine answers & adds what the application's help
+provider returns. Without an Engine it prints the kernel's showKernelHelpInfo(), which lists -v &
+-h & says why nothing else is listed.
+
+That is deliberate & it is why the Engine ships INSIDE an application rather than beside
+it. An application carries the Engine it was tested against. A newer Engine arrives when
+somebody chooses it, not when a package manager decides.
+
+It also means two applications iterating on the same Engine can trade improvements by
+copying a directory. Whichever one last needed a thing has it, & the other takes it when it
+wants it. There is no shared installation to coordinate & no version of the Engine that
+everything must move to at once.
+
+The three files are the seam. Anything that starts to feel like a fourth is worth arguing
+about before it is written, because the argument is really about whether the Engine has
+started to know something about one application.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About This Contract--
+
+THE ENGINE IS BUNDLED, NOT INSTALLED.
+
+It lives at Resources/Engine inside the application that carries it. It is not on a shared
+path, it is not a system package & no other application can reach it. An application ships
+with the Engine it was tested against & the two move together, so the EXACT version pin
+between them is free rather than fragile.
+
+The benefit is not one a user notices at runtime. It is that two applications stop being
+one codebase kept in step by hand, & that an application keeps working until the people who
+maintain it decide to update the copy it carries.
+
+THE APPLICATION IS THE ENTRY POINT. THE ENGINE IS NOT A FRAMEWORK.
+An application boots, verifies its components, loads the Engine & calls into it. The Engine
+never calls application code. An Engine that needed to would be an Engine that works for
+exactly one application, which is the situation this exists to leave behind.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Three Tiers--
+
+  THE KERNEL   Resources/Kernel/kernel.php, beside the Engine & never inside it. Required
+               by the entry point before anything else runs & pinned exactly by
+               $RequiredKernelVersion. Logging, halting, memory shredding, sanitizing,
+               the command line, dependency location, component loading, the file
+               operations root performs where another account could interfere, the
+               install secret & a visitor's session identity. From v4.2.4 it also boots
+               the installation, & reads config.php, in verifyInstallationState().
+
+  THE ENGINE   Resources/Engine/engine.php. The environment every application needs.
+
+  THE APP      Everything that makes one application different from another.
+
+THE KERNEL CANNOT MOVE INTO THE ENGINE & THE REASON IS MECHANICAL RATHER THAN STYLISTIC.
+verifyCoreComponent() is what loads the Engine, so it cannot be inside the file it loads.
+It calls purgeSensitiveMemory(), so that cannot be either. Something has to be able to
+report that loading the Engine failed, which means a halt & a log line must exist first.
+
+LOGGING IS KERNEL & THAT IS A DECISION RATHER THAN AN OVERSIGHT.
+It was considered for the Engine & moving it would have been wrong.
+An Engine that fails to load costs an application the capability it provides.
+Every other component degrades that way & the loss is reported.
+An application whose logging lived in the Engine would lose the ability to report anything.
+It would lose it at exactly the moment there was something worth reporting.
+Logging is also needed three hundred times before the Engine is loaded at all.
+The Engine is verified late, because a failure to verify it is worth a warning that has
+somewhere to be written.
+
+THE ENGINE MAY CALL THE KERNEL. THE ENGINE MAY NOT CALL THE APPLICATION.
+That distinction is the whole of the direction rule & an earlier draft of this document
+stated it too broadly.
+The kernel is the substrate both the Engine & the application stand on.
+It is byte identical in every application, so an Engine calling it is not coupled to any
+one of them.
+An Engine function may therefore call logEntry, warningEntry, errorEntry, quickDie,
+purgeSensitiveMemory & redeclare freely.
+An Engine function may not call convertFiles, buildGUI or anything else that only
+HRConvert2 has.
+
+THE KERNEL SERVICES ARE WHATEVER Resources/Kernel/kernel.php DEFINES.
+This document listed eight. The linter listed fourteen. The code relied on twenty one. Three
+definitions of one thing drift apart & these had, so the list lives in one place now & that
+place is the file. Checks eight & nineteen of Documentation/Build/hrconvert2-check.py read
+their kernel from it rather than from a list of their own.
+
+The kernel carries its own version stamp, $KernelVersion, so that drift between two
+applications is visible rather than discovered. This document claimed that before v3.9.9 &
+it was not true. Nothing versioned the kernel until it became a file.
+
+THE KERNEL BOOTS THE INSTALLATION, FROM v4.2.4.
+Everything an application did before its Engine loaded, it did the same way as any other would.
+So verifyInstallationState() in the kernel does it once, & the application hands it its pins.
+  verifyCodeIsTrustedByRoot  Root runs nothing another account could have changed. The entry point
+                             calls it as the kernel loads & names itself, so a refusal names the
+                             command that gives the tree back to root.
+  verifyRunningContext       Who runs the process, whether from a terminal & whether in a
+                             container, the web server account & root's own home.
+  configurationTemplatePaths The two halves of the configuration template, whose setting names say
+                             what config.php must hold & which of its names become globals.
+  requireWithGlobals         Reads config.php with each of those names made global first, so no
+                             function lists them by hand.
+  verifyConfigurationSettings  Refuses a config.php missing any of them, with error 28000.
+  writeMissingConfiguration  Writes a missing config.php from both halves, for --config --repair.
+  establishDataLocations     Every data location & every account's home, from the configured one.
+The application's verifyInstallation() is its pins & one call to verifyInstallationState().
+The entry point declares $DefaultApplicationName before it loads the kernel, so a refusal raised
+before config.php names the application is labelled with its name & not with the kernel's.
+Three more calls are the kernel's from v4.2.4, so the entry point's boot is calls & nothing else.
+  loadEngine                 Verifies the Engine & has it start, or gates resource awareness
+                             without it.
+  runCommandLine             Reads the command line & answers it, or hands it to the Engine.
+  admitWebRequest            Refuses a web request the server must not serve, & has the Engine
+                             prepare one it may.
+
+THE KERNEL BECAME A FILE AT v3.9.9, REVERSING WHAT THIS DOCUMENT SAID.
+It used to say the kernel lives in the application entry file. The reason given was that
+verifyCoreComponent cannot live inside the file it loads, which is true & is about the
+ENGINE's file. Nothing in it requires the kernel to be interleaved with an application, &
+interleaved is what it was, twenty one functions among sixty three application ones from
+the top of convertCore.php to the bottom. A second application could only have obtained it
+by copying functions out by hand, which is the drift this project builds tooling to prevent.
+The entry point now requires the kernel as its first act. It reads the version with a pattern
+before requiring the file, so a mismatched kernel is never executed, & it finds the kernel
+beside itself rather than through $InstLoc, which comes from a configuration not yet read.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About What The Application Must Supply--
+
+SIX VALUES. THE CONTRACT IS DELIBERATELY SMALL.
+
+  $InstLoc                Absolute path to the application root. The Engine resolves every
+                          path it needs from this & derives none of them from __FILE__,
+                          because an application may be relocated & the Engine should not
+                          have an opinion about that.
+  $LogDir                 Absolute path to where logs are written.
+  $SecretKey              The install secret. Startup keys are derived from it. The kernel
+                          establishes it, & the application sets it from what that returns.
+  $ApacheUser             The account the web server runs as.
+  $Verbose                Whether ordinary activity is logged.
+  $EnableMemoryProtection Whether sensitive memory is shredded at every return.
+
+THAT IS THE WHOLE CONTRACT. Anything else the Engine needs, it works out for itself.
+It is the contract the Engine is held to & not yet the contract it keeps. Engine code reads
+globals beyond these six, & the gap is tracked in Documentation/ENGINE_MIGRATION_STATUS.txt
+rather than here, because a count written into a design document stops being true quietly.
+FROM v4.2.4 THE KERNEL ESTABLISHES ALL SIX. $InstLoc, $LogDir, $Verbose & $EnableMemoryProtection
+are settings in the Engine's half of config.php, & verifyInstallationState() reads them & corrects
+$InstLoc to the tree the entry point is in. verifyRunningContext() sets $ApacheUser, &
+verifyInstallationState() sets $SecretKey from the install secret it reads. An application supplies
+its pins, its name before config.php is read, its half of config.php & its contract.
+
+THE ENGINE DERIVES THESE RATHER THAN ASKING FOR THEM.
+$DirSep, $Lol, $CurrentUser, $RunningAsRoot, $RunningFromCLI & $RunningInContainer are all
+properties of the host rather than decisions an application makes. Asking an application to
+supply them would mean every application computing the same answer slightly differently,
+which is the shape of bug this whole exercise exists to remove.
+From v4.2.4 the kernel sets $DirSep, $Lol, $Lolol & $Append as verifyInstallationState()
+begins, & $ManagerSocketDir with the data locations, so no application sets any of them.
+
+EVERY ENGINE READ OF A CONTRACT VALUE USES isset() WITH A LOCAL FALLBACK.
+A newer Engine reading a value an older application never supplied produces a notice, & a
+notice inside an AJAX response is read by the interface as a line of the reply. The fallback
+is the same shape as the lowercase $defaultGui sitting beside the global $DefaultGui, & it
+is what lets an Engine be newer than the application that bundles it without either of them
+knowing.
+
+--Engine Strict Contract-- in the Engine configuration inverts this while developing. Set it
+TRUE, in the application's own contract, & an Engine whose contract does not set a value it
+cannot default correctly does not start, rather than running on its default. Ship it FALSE.
+
+STRICT CONTRACT MODE REQUIRES SIX VALUES, FROM v4.3.4.
+  $EngineApplicationName     It names the units, the sandbox profiles & the startup key.
+  $EngineEntryPoint          It is the file the managers & the listener start.
+  $EngineManagedLocations    Every location -fp creates, owns & holds.
+  $EngineApplicationLayout   What the installer copies.
+  $EnginePinSources          Where --build --pins reads each of the application's pins.
+  $EngineSettingDefaults     The title, the folders & the update source.
+Two applications left on the default name collide on one host, because every unit & profile is
+named from it. strictContractNames() in engine.php lists the six, so no contract can shorten the
+list. A value is set where a line of the contract begins by assigning it, unindented. The text
+is read, without executing it, because engineConfig.php gives most of these a default before
+the contract is loaded, & so nothing is missing by the time anything reads one. Until v4.3.4
+strict mode was documented here & nothing read it. ERROR 31027 names every value left out at
+once, & the kernel still answers -v & -h. Both code checkers report a contract that leaves one
+out, on every build & whatever --Engine Strict Contract-- says, under the check named strict.
+
+THE REPAIR IS THE ENGINE'S, FROM v4.2.4.
+-fp, --setup & an Environment Manager pass all run repairInstallation(), which was HRConvert2's
+fixManagedPermissions() until v4.2.4 & is nothing any one application needs to write. It corrects
+every managed location, the install secret, the tree root runs, the build environment, the bootstrap
+script, the hosted location, the PHP & Apache configuration, the sandbox kernel & profile, the
+protection file, the per conversion limits & the units, & then verifies the environment.
+An application adds two things.
+  $EnginePolicyChecks      The policies it keeps on the host beside the sandbox profile, each by name,
+                           with the function that checks it as Check & the label its line carries in a
+                           report as Finding. A check accepts whether it may repair & returns a validity
+                           boolean & a status word. The repair repairs each, & -v, the listener & the
+                           Environment Manager report each, so the application names them once.
+                           HRConvert2 names ImageMagick & OpenSCAD AppArmor.
+  $EngineRepairProvider    Optional. A repair of anything else it keeps, run before the environment is
+                           verified. It accepts nothing & returns a success boolean & a count. HRConvert2
+                           names none.
+THE ENGINE TELLS A REPAIR WHETHER ANYBODY IS WATCHING, FROM v4.0.1. The Engine sets
+$EngineRepairIsUnattended TRUE for the length of an Environment Manager repair & FALSE again
+after it. repairInstallation() & any repair provider read it with isset(), as every contract value
+is read, & an unattended one starts & enables no service & leaves the host's configuration alone
+unless the configuration allows it. Unset or FALSE means an administrator typed the command, which
+is the case for -fp & --setup. See Documentation/ABOUT_ENVIRONMENT_MANAGER.txt.
+
+THE OPERATOR IS ASKED ON THE TERMINAL BY THE ENGINE, FROM v4.2.4.
+promptOperator() reads a line from the terminal itself where nothing is named in
+$EngineOperatorPrompt, & refuses every question in a web request, which has no operator. An
+application that reaches its operator some other way names its own. HRConvert2 names none.
+
+THE APPLICATION ADDS TO -v, FROM v4.2.4.
+The Engine prints -v, & the function the application names in $EngineReportProvider returns rows &
+titled sections for the places the report leaves for it, keyed Dependencies, DependencyNotes,
+SectionsAfterDependencies, SwitchedOff, SectionsAfterSwitchedOff & SectionsAfterResources. A row is a
+Label, a Text & whether it Failed, & a failed row is counted with the report's own. HRConvert2 names
+applicationVersionReport(), which checks its tools through the Engine's toolPath() & toolRequirement().
+
+THE APPLICATION DESCRIBES ITSELF TO -h, FROM v4.2.4.
+The Engine prints -h, & the function the application names in $EngineHelpProvider returns what only
+it knows, each optional. Description is the line under its name, Arguments its own lines, listed
+after the Engine's, Sections its titled lines, printed after the Engine's, & Address the line
+printed last. HRConvert2 names applicationHelpInfo(). A provider named & missing is a warning, &
+the help is printed without what it would have added.
+
+THE ENGINE STARTS ITSELF, FROM v4.2.4.
+The entry point calls the kernel's loadEngine(), which verifies the Engine & calls its
+startEngine(). That finds the host's architecture, reads the sandbox profiles from the function
+the application names in $EngineSandboxProvider into $EngineSandboxProfiles, gates resource
+awareness, adopts a workflow's session, answers the request, establishes the session in
+establishEngineSession() & loads the Pipeline & Workflow Cores. A session holds StreamTemp & each
+folder the application names in $EngineSessionFolders, & each is a global of the same name holding
+its path. A name must begin with a capital letter, & one that does not, or is StreamTemp, is
+refused with a warning. HRConvert2 names getSandboxProfiles() & ScadTemp.
+
+A SANDBOX PROFILE CAN REQUIRE A SANDBOX, FROM v4.2.7.
+A profile the application supplies may set RequireSandbox, & nothing but TRUE counts. The Engine's
+sandboxCommand() refuses such a profile wherever no sandbox can be built, whatever
+--Require Sandbox-- & --Require Sandbox On Docker-- say, & warns naming it.
+sandboxRequiredProfiles() names every such profile for -v & the operating environment check. It is
+for a tool that reads a file an upload names by its path, which no setting accepts as it accepts the
+risk of a tool's own bugs.
+HRConvert2 sets it on its libreoffice, calibre, inkscape, resvg, dia, meshlab & ffmpeg profiles.
+The application sets its own globals once the Engine has started. A web request is then admitted by
+the kernel's admitWebRequest(), which refuses root & every account but the web server's, halts with
+28005 where there is no Engine & has the Engine's prepareWebRequest() make the folders a session
+needs & clean the data locations. The application serves the request, & the Engine's
+finishWebRequest() closes the connection & reaps a worker the request left running. The application
+calls each, & names none of what they do.
+
+A MANAGER MOVES ON TO THE LOGFILE IT SHOULD BE WRITING, FROM v4.0.6.
+A manager runs for weeks, & the application names its logfiles by date & by size. Once a minute
+every manager loop calls the function the application names in $EngineLogProvider, which accepts
+nothing & returns whether a logfile is in use & its path, as verifyLogs() does. HRConvert2 names
+refreshLogFile(), which reads the date again & runs verifyLogs(), so a manager moves on when the
+day turns or its logfile passes --Maximum Log File Size--. A provider declared & not defined, or
+one that fails, is a warning once for the life of the process, & the manager keeps the logfile it
+has. An application that names none leaves a manager on the logfile it started with, which is
+what every manager did until v4.0.6.
+
+A WORKFLOW RUNS THE APPLICATION'S OPERATIONS & NAMES NONE OF ITS OWN, FROM v4.1.4.
+The Workflow Core asks the function the application names in $EngineOperationProvider which
+operations a workflow may run, & what each reads, takes & accepts, & which kinds of file a step may
+name. HRConvert2 names applicationOperations(). $EngineShippedWorkflows names the library the
+application ships, relative to the installation, & WorkflowLibrary in $EngineSettingNames the
+installed one, a location of the library role. WorkflowStaging, from v4.2.2, names the folder an
+administrator stages a workflow into from a page, a location of the web role, which root reads for
+--workflow --install-staged & never writes, & hands --workflow --discard-staged to the web server
+account. An application that names no provider runs no workflow, logs error 38000 & loses nothing
+else. A worker is the application's own entry point, & the Engine adopts the session it is handed
+in adoptWorkflowSession() as it starts, before a session's folders are derived. The application
+adopted it until v4.2.4. From v4.1.5 the
+provider may also name SessionFiles, a function listing a session's files as the application's
+pages list them, which gives its workflows the Workflow Core's Select step. HRConvert2 names
+getFiles(). See ABOUT_WORKFLOWS.txt.
+
+AN APPLICATION MAY OFFER ACCOUNTS, FROM v4.2.0.
+The Engine's default is none, $EngineEnableAuthentication FALSE in engineConfig.php, & an application
+that offers accounts sets it TRUE in its contract. HRConvert2 does. The administrator still decides,
+through the setting the contract maps to EnableAuthentication, & every other setting accounts read is
+mapped in $EngineSettingNames as well, from AllowAnonymousVisitors to EmailRecoveryBody, with
+AccountLocation & UserLocation, which the contract names as locations of the web role,
+ApplicationTitle & ServerName. An application offering accounts makes three generic calls & names
+nothing about an account.
+  answerEngineRequest()        Called once the Engine has loaded & before the application builds the
+                               globals a session hangs from. It returns an empty string where the
+                               application serves the request, page where the application draws the
+                               page the Engine names & runs no operation, or answered where the Engine
+                               wrote the whole answer & the application draws nothing & runs nothing.
+                               HRConvert2 keeps it in $EngineAnswer.
+  engineSessionFolder()        Called with the folder a request's files would be in. It returns the
+                               signed in user's own folder for a signed in request, & the folder it
+                               was handed for any other.
+  engineGui.php                A file every interface supplies. The application draws it, inside its
+                               header & footer, where the answer was page. $EnginePageState tells it
+                               which page, & what the page may show about the visitor.
+The Engine names the signed in user to the listener itself, through storageQuotaOwner(), & to a
+workflow's worker through engineWorkerContext(), so the application changes nothing for a quota or a
+worker. An application also pins $RequiredAuthenticationCoreVersion & $RequiredEmailCoreVersion, as
+it pins every Engine core, & -v reports both. See ABOUT_AUTHENTICATION.txt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Two Configurations--
+
+TWO FILES, ANSWERING DIFFERENT QUESTIONS, READ IN AN ORDER THAT IS NOT A CHOICE.
+
+  Resources/Engine/engineConfig.php   Which Engine capabilities this application uses.
+                                      Set by a developer. Shipped with the release.
+                                      Replaced by an update.
+
+  Resources/config.php                How this installation behaves.
+                                      Set by an administrator. Kept across an update.
+                                      The only one anybody is ever asked to read.
+
+config.php is read FIRST, & has to be. It is how an installation finds itself. The
+directory it names is verified before anything is derived from it, & the Engine
+configuration's path is derived from it. An installation with no config.php writes one from
+its template before anything else is trusted. The Engine configuration is read next, before
+the logging environment, because part of the logfile's name is the Engine's decision. The
+application's Engine settings in Resources/Contract are read last & win over the Engine's
+defaults.
+
+CONFIG.PHP HAS TWO HALVES, FROM v4.2.4, & EACH HAS A TEMPLATE & A MODEL.
+  The Engine's       Resources/Engine/config-template.php & engineConfigModel(). Every setting the
+                     kernel or the Engine reads.
+  The application's  Resources/Contract/config-template.php & the model its contract names. The
+                     header & guard a config.php opens with, $ConfigVersion & every setting only
+                     the application reads.
+This is where the kernel & the Engine get their settings. The kernel reads the names in both
+templates, makes each a global as it reads config.php & refuses a config.php that lacks one, so no
+list of setting names is kept anywhere. A missing config.php is written from both, the Engine's
+settings first in each section the two share, & a repair adds what either holds that a
+configuration lacks. The configuration utility joins the two models.
+A default of the Engine's that would name one application, its name, its title, its folders & its
+update source, is the application's to give in $EngineSettingDefaults. The setting & its
+documentation stay the Engine's, & only the value is the application's. A setting written
+across several lines, as an array is, is replaced whole. A default is given to the Engine's
+settings alone, in a generated config.php & in a reset, so one named for any other is never written.
+A setting is added in two places, its template & its model, & check thirteen of
+hrconvert2-check.py fails the day the two disagree, a name is in both halves or a default names a
+setting that is not the Engine's. $ConfigVersion in
+the application's half is raised whichever half gains or loses a setting.
+
+SO THE LAST FILE READ WINS, & IT IS NOT THE ADMINISTRATOR'S.
+A name set in config.php & in either Engine configuration file would be decided by the
+Engine, silently, & an administrator changing it would see nothing happen. NO NAME IS SET
+IN BOTH. Check twenty three in hrconvert2-check.py, configs, fails the day one is.
+Until v4.0.0 this document & engineConfig.php said the Engine configuration was read first,
+so that an administrator's setting would win. The code has always read config.php first. No
+name was shared, so nothing was ever overridden, but the protection described did not exist.
+
+A VALUE THE APPLICATION MUST NOT BE ABLE TO OVERRIDE DOES NOT BELONG IN A VARIABLE.
+A global is overridable by definition. Something the Engine must decide for itself is a
+constant or the return of a function, not a configuration line that happens to be read
+early.
+
+NAME COLLISION IS THE THING TO WATCH.
+Both files assign uppercase globals into one scope. Engine owned names begin with Engine.
+An application setting that begins with Engine is a mistake waiting to be discovered by the
+Engine, which loads second, so the same check refuses that prefix in either half of the template.
+Four operating constants in engineConfig.php keep the names they had while HRConvert2 set them,
+$ManagerSocketTimeout, $ManagerMessageBatchSize, $ManagerMessageSkew & $StartupKeyWindow, because
+every manager reads them by those names, & no setting in config.php has any of them.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Capability Gates--
+
+EVERY CAPABILITY IS A GATE RATHER THAN A FEATURE REQUEST.
+
+A capability that is disabled is not loaded, is not verified & is not reported. An
+application that sandboxes nothing should not be told its sandbox is broken.
+
+A capability that is enabled still degrades the way everything else in this project
+degrades. Enabling it says this application uses it, not that it must be present.
+
+  $EngineEnableAuthentication         Accounts. Off unless the application's contract offers them.
+
+The list grows as applications need more. It does not grow speculatively. A gate with
+nothing behind it is a gate somebody will eventually turn on expecting something to happen.
+v4.3.1 removed five such gates, $EngineEnableEnvironment, $EngineEnableDependencyLocation,
+$EngineEnableStartupKeys, $EngineEnableEnvironmentValidation & $EngineEnableResourceLimits, because
+nothing read them. Each is wired again only when an application needs it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About What Has Moved So Far--
+
+v3.8.9 MOVED EIGHT FUNCTIONS. NOTHING ABOUT THEM CHANGED.
+
+  systemdIsUsable               Whether a service manager is present & usable.
+  environmentFindingStatus      Formats an environment finding for a report.
+  parseConversionLimit          Reads a per operation resource limit.
+  deriveStartupKey              Mints a key proving a process is ours.
+  validateStartupKey            Judges one, & spends it when it crossed a boundary.
+  consumeStartupKey             The ledger of spent keys.
+  readTransportedStartupKey     Reads a key out of the environment & clears it.
+  validateOperatingEnvironment  Reports whether the host is configured correctly.
+
+Every one was already engine work sitting in an application file. The measurement that
+decided this was simple. Resources/coreManager.php, the Core Manager of the time, called
+fourteen functions defined in the core, & eleven of them would serve a virus scanner
+unchanged. The other three spoke the application's vocabulary.
+
+THOSE THREE MOVED IN THE SAME RELEASE, RENAMED FOR THE CONCEPT RATHER THAN THE APPLICATION.
+enumerateDataLocations, resolveDataLocation & cleanDataLocation, with the session counter
+they share. HRConvert2 calls it a Convert Location & ScanCore would call it a quarantine.
+Nothing was added to the contract to do it. Everything the application knows is passed in,
+which is why they carry more arguments than they otherwise would.
+
+cleanDataLocation authorizes a delete differently as a result & the change is worth reading.
+It took a NAME, matched it against a short list it knew, then checked the path that name
+referred to. It takes the list of paths the caller is permitted to clean instead.
+That is no weaker, because an arbitrary path is still refused for not being in the list, &
+it no longer ties a generic cleaner to one application's vocabulary.
+
+ONE FUNCTION MOVED INTO THE ENGINE & MOVED BACK, WHICH IS WORTH RECORDING.
+locateDependency was moved in the first pass & returned to the kernel in a later one.
+Finding an executable is a primitive that boot code needs before the Engine can exist.
+verifyInstallation reaches it through verifySandboxPolicy & unloadApparmorProfile, & that
+path runs before any component has been verified.
+From v4.0.5 that check runs once the Engine has loaded, so verifyInstallation no longer
+reaches it, & verifySandboxPolicy is the Engine's own. unloadApparmorProfile is gone. It fell
+back to aa-remove-unknown, which unloads every profile on the host that is not in
+/etc/apparmor.d, & nothing needs it now that the profile replaces itself by name.
+locateDependency stays in the kernel.
+It was found by a call order check that follows the call graph rather than by reading, &
+Documentation/Build/hrconvert2-check.py is that check.
+
+THE ENGINE CALLED TEN APPLICATION FUNCTIONS & THAT WAS A DEBT RATHER THAN A DESIGN.
+CLEARED. Check eight of Documentation/Build/hrconvert2-check.py now fails the build if the
+Engine calls anything outside the kernel, so the debt cannot reopen without saying so.
+The three groups below are kept because the REASONING is what stops them coming back.
+None of them are deliberate. Each is a function that moved without a helper it quietly
+depended on, which is invisible while both files load in the same request & fatal the
+moment somebody bundles this Engine on its own.
+
+They fall into three groups & each group has a different answer.
+
+  THE POLICY GROUP, reached from validateOperatingEnvironment.
+  RESOLVED AT v3.9.1. The Engine named six application functions & could not load without
+  an application that defined all six. That is not a shared Engine.
+  It now checks what the Engine PROVIDES, which was Bubblewrap alone then & is Bubblewrap, the
+  bootstrap script, the kernel settings & the AppArmor profile every sandbox needs, & what the
+  web server serves from v4.0.5, & calls one provider named by the
+  application in $EngineEnvironmentProvider. The provider returns a
+  readiness boolean & a list of findings & the Engine appends them to its own.
+  From v4.2.4 the policies an application keeps are named in $EnginePolicyChecks & reported by the
+  Engine, so HRConvert2's provider, which reported only those, is gone & it names none.
+  An installation declaring no provider gets the Engine's own checks alone, which is correct
+  rather than degraded. An application with no ImageMagick policy is not asked about one.
+  A name declared & not defined is a warning, because a check nobody notices is missing is
+  worse than one that was never claimed.
+
+  THE LIMIT GROUP, reached from limitCommand.
+  resolveConversionLimit & verifySystemdRun.
+  Small & mechanical. resolveConversionLimit reads the application's limit table, so the
+  table becomes something the application supplies, the same way sandbox profiles are.
+
+  THE REMAINDER.
+  verifyDataExposure asks whether a web server is serving a directory it should not be,
+  which only an application with a web server can answer. It should be a value passed in
+  rather than a call made out.
+  ANSWERED THE OTHER WAY AT v4.0.5. The Engine took the web server rather than the answer. The
+  contract says which locations are served, by role, & the Engine writes their rules & proves
+  them, so the exposure check is the Engine's own & calls nothing of the application's.
+  cleanFiles reads the application's own paths & belongs to the application.
+
+That list is empty as at v3.9.9, so the Engine no longer depends on an application defining
+anything but the kernel. Status for every migration step lives in
+Documentation/ENGINE_MIGRATION_STATUS.txt rather than here, for the reason that sentence
+above was wrong for several releases.
+
+MANAGER SUBCOMPONENTS ARE POPULATED & Resources/coreManager.php IS GONE.
+getAcceptedManagers names four files under Resources/Engine/Managers & loadEngineManager
+verifies & loads one when a process is dispatched to that role.
+Twenty eight functions of shared machinery went into the Engine rather than into any one
+role, because sockets, budget arithmetic & the worker registry are not a role.
+A process running as one role never parses the other three.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Adding To The Engine--
+
+FOUR QUESTIONS. A NO TO ANY OF THEM MEANS IT STAYS IN THE APPLICATION.
+
+  1  WOULD A DIFFERENT APPLICATION WANT THIS UNCHANGED?
+     Not with a rename & not with a parameter added. Unchanged. A virus scanner & a job
+     dispatcher are the two to hold it against.
+
+  2  DOES IT CALL APPLICATION CODE?
+     If it does, it is not Engine work yet. Either what it calls moves too, or the value it
+     needs becomes a parameter.
+
+  3  IS IT REACHABLE BEFORE THE ENGINE IS LOADED?
+     Anything the boot path touches belongs in the kernel or in the application. The Engine
+     cannot provide what is needed to load the Engine.
+
+  4  DOES IT READ A GLOBAL THAT IS NOT IN THE CONTRACT?
+     Then either the contract grows, which is a decision, or the value becomes a parameter,
+     which usually turns out to be the better answer.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Application's Identity--
+
+An application tells the Engine four things about itself, & the Engine asks for them rather
+than assuming them. Each has a helper in Cores/environmentCore.php.
+
+  $EngineApplicationName     engineApplicationName()        HRConvert2
+                             engineApplicationSlug()        hrconvert2, for names on disk
+  $EngineEntryPoint          engineApplicationEntryPoint()  convertCore.php
+  $EngineApplicationVersion  engineApplicationVersion()     3.9.9
+  $DefaultApplicationName    defaultApplicationName()       HRConvert2, in the kernel
+
+The first two are set in Contract/app-engine-config.php. The version is handed over by the
+application where it defines its own version, so there is never a second copy to drift, & it
+deliberately has no default in engineConfig.php, because that file loads later & would
+overwrite it.
+$DefaultApplicationName is set by the entry point before it loads the kernel, from v4.2.4. The
+kernel labels whatever it reports with it until config.php names the application, so a refusal
+raised that early carries the application's name. The kernel named HRConvert2 there until then.
+
+IDENTITY IS NOT BRANDING. $ApplicationName is a config setting an operator may rename, & it is
+what the interface shows. $EngineApplicationName is fixed. Everything the Engine writes to disk
+comes from the identity: unit names, configuration files, sandbox profiles, backup suffixes. An
+operator who renames an installation must not also rename its listener unit & leave the running
+one behind.
+
+The Engine contains no application's name, no entry point & no application version. An Engine
+component refusing a direct request prints Engine-35000 & names nothing else.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Settings The Engine Reads From Configuration--
+
+The Engine reads its own settings from config.php, such as $MaxConcurrentWorkers, $RequireSandbox
+& $TotalResourceBudget. From v4.2.4 every one is in the Engine's half of the configuration
+template, with its documentation & its default, so an application inherits them & defines none.
+An application gives one a default of its own in $EngineSettingDefaults, as HRConvert2 gives
+$ApplicationName, $ApplicationTitle, $InstLoc, $ConvertLoc & $UpdateSourceRepository.
+Some carry names from HRConvert2, such as $ConvertLoc, because renaming them would break every
+existing installation's configuration.
+$ManagerSocketTimeout & the three operating constants beside it are the Engine's, in
+engineConfig.php, from v4.2.4. HRConvert2 set them until then, so an application that did not
+would have run every manager with no timeout.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

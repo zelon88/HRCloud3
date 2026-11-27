@@ -1,0 +1,568 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRProprietary Engine, Copyright on 10/30/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
+
+FILE INFORMATION ...
+v3.9.7.
+This plain text file describes how a dependency is declared, found, approved & audited.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+What the Engine itself needs is Resources/Engine/depends.php, & --setup installs it with the application's own half. Run  php <entry point> -v  to see what an installation has.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Dependencies--
+
+A dependency is third party software this application runs rather than reimplements. FFMPEG,
+LibreOffice, ImageMagick & 7-Zip are dependencies. They are what makes the application
+useful & they are also the largest part of its attack surface, because every one of them
+parses a file a stranger uploaded.
+
+A program the application runs is a dependency whoever wrote it, from v4.3.4, the shell, rm &
+the package manager included. Each is software some host provides & this application trusts.
+
+Everything in this file follows from two decisions.
+
+  THE MANIFEST IS THE ONLY PLACE A DEPENDENCY IS DECLARED.
+  One file says what a dependency is called, what it is for, what version is acceptable & who
+  wrote it. Nothing else may hold a second opinion.
+
+  A DEPENDENCY IS APPROVED BY A PERSON, NOT BY BEING PRESENT.
+  Software that happens to be installed is not approved software. The approval record beside
+  each pipeline says who looked at a dependency, when, & when that decision expires.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Manifest--
+
+The manifest holds one entry per dependency, in two halves from v4.2.4, as config.php has.
+
+  Resources/Engine/depends.php     The Engine's half. The parts of the operating system the
+                                   Engine runs, from v4.3.4, PHP & its OpenSSL, Pcntl & Posix
+                                   extensions, Apache, Curl, Tar, Bubblewrap & AppArmor Utils,
+                                   which the Engine runs whatever the application is. It is
+                                   replaced with the Engine, which pins it itself. Git was the
+                                   Engine's until v4.3.4, & is the application's where ScanCore is.
+  Resources/Contract/depends.php   The application's half. What its own pipelines run. It is in
+                                   Contract because it belongs to the APPLICATION & is handed to
+                                   the Engine, & it sits outside Resources/Engine so the Engine can
+                                   be replaced whole without taking it. It was
+                                   Resources/Engine/Contract/depends.php from v3.9.3 until v3.9.9.
+
+Dependency Core reads the Engine's half first & the application's after it. A name the
+application's half repeats is left out with a warning, so an application cannot change what the
+Engine needs. An entry in the application's half may name one of the Engine's in Requires, as
+PHP Zip names PHP. Until v4.2.4 the Engine's entries were in HRConvert2's manifest, & an
+application built on the Engine would have repeated them. It writes its own half & nothing else.
+
+Each entry carries these fields.
+
+  Name             What everything else calls this dependency. It is the key.
+  Binary           The executable to look for on the path. Empty when there is nothing to run.
+  Type             How it is installed. apt, php-extension, source, pip, manual, bundled or
+                   system. See below.
+  Package          The package name the installer asks the package manager for.
+  MinimumVersion   The oldest acceptable version. Empty means any version will do.
+  VersionCommand   The command that makes it report its version.
+  VersionPattern   The expression that lifts the version out of that output.
+  Required         Whether the application refuses to run without it.
+  Subsystem        The capability it belongs to, such as Archives or 3D Models.
+  Requires         Other manifest entries this one needs first.
+  License          The license it is distributed under.
+  Source           Where it officially comes from.
+  Purpose          Why this application needs it, in one sentence.
+  BuildCommand     For a source entry, the command that builds & installs it.
+  MaximumVersion   Optional. The first version refused, so 3.15 refuses the whole 3.15 line &
+                   accepts every 3.14 patch. A program past it is too-new, a state of its own.
+  VersionSource    Optional. A command that lists the versions available. The highest inside
+                   the window is handed to the build command as DEPENDENCY_VERSION.
+  Fallback         For an apt entry, how this application builds its own copy where the
+                   package manager's falls short. See When The Package Manager Is Behind.
+  Architectures    The architectures the entry works on. On any other it is UNSUPPORTED, which
+                   is its own state rather than a failure.
+  ArchitectureOverrides
+                   The fields replaced on one architecture, such as a package name or a whole
+                   Fallback. Only the fields named change, & everything else is inherited.
+  Interpreter      python3 for a program the distribution packaged as a Python program, from
+                   v4.2.0. It is started by the distribution's own Python 3. See below.
+  Programs         The other programs this application runs from the same dependency, from
+                   v4.3.4, as the Engine runs cp & timeout beside rm. Each is a name, or an array
+                   of names any one of which will do, as apachectl or apache2ctl. An entry is
+                   present only where its Binary & every one of these are, & -v names what is
+                   missing. They are looked up on the path, so an entry with a Fallback names none.
+
+THE TYPE SAYS WHO INSTALLS A DEPENDENCY.
+  apt              The package manager installs, upgrades & removes it.
+  php-extension    The package manager installs php-<Package>, or docker-php-ext-install builds it
+                   on the official PHP container image, which has no package for it.
+  source           Its BuildCommand builds & installs it.
+  pip              pip3 installs & upgrades it. No entry is of this Type. An application that adds
+                   one declares pip3 as an entry of its own & names that entry in Requires, because
+                   the Engine runs pip3 only for such an entry.
+  manual           Nothing installs it. Its licence forbids redistribution, or it needs a decision
+                   the installer is not entitled to make, such as one nobody has approved yet.
+  bundled          It ships inside the application & is never installed, upgraded or removed.
+  system           It is part of the operating system, from v4.3.4. It is checked & reported like
+                   any other entry & is never installed, upgraded or removed, because the host's
+                   own package manager keeps it & everything else on the host runs it. A required
+                   one that is missing fails --install-depends, which says what to install by hand.
+                   An optional one that is missing is a fact about the host rather than a problem,
+                   as dnf is missing from a host that uses apt, & the Engine uses it only where it is.
+Entries in the Core subsystem are never removed whatever their Type. procps is apt for that
+reason, so a slim container image that lacks it is given it & no host ever loses it.
+
+EVERY PROGRAM THE APPLICATION RUNS IS DECLARED, FROM v4.3.4.
+The Engine's half declares what the Engine runs, & the application's half what the application
+runs, its pipelines & its version sources included. A shell builtin is the Shell's. A program a
+dependency starts for itself, such as the interpreter of a script, is that dependency's & is
+the package manager's to bring, unless this application starts it itself, as the Engine starts
+mat2 with the distribution's Python. Until v4.3.4 the Engine ran more than thirty programs no
+entry named, & the Example ran wget, grep, perl, xvfb-run & xpstopdf the same way.
+
+THE MANIFEST OWNS EVERY MINIMUM VERSION & THERE IS NO OVERRIDE.
+Nineteen Minimum*Version settings were retired from config.php because they were a second
+place to hold the same number, & the two drifted. An operator cannot lower a minimum from
+configuration, & nothing in a pipeline may hardcode one. The version a pipeline enforces, the
+version -v reports & the version --check-depends tests are the same number read from the same
+line.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--How A Pipeline Asks For A Tool--
+
+A pipeline never looks for a binary itself & never writes a path.
+
+  $binary = verifiedToolPath('7-Zip');
+
+verifiedToolPath() lives in Resources/Engine/Cores/pipelineCore.php. It asks the Dependency
+Core for the named entry, loading that core if it is not loaded yet, & it returns a usable
+path or FALSE. FALSE means missing, unidentifiable or older than the manifest allows, & the
+pipeline must then report that & refuse rather than guess.
+
+This is what makes a pipeline portable. A pipeline names a dependency & knows nothing else
+about it, so the same pipeline runs against any installation & any host layout.
+
+A PIPELINE IS OFFERED ONLY WHERE WHAT IT CANNOT RUN WITHOUT IS INSTALLED, from v4.2.1.
+It names those in $PipelineRequiredDependencies, & dependencyIsInstalled() in the Dependency
+Core says whether each is there. It looks where resolveDependencyChoice() looks, at this
+application's own build in service & then at the program the entry names, & never runs the
+tool, so a page asks on every load. A library, which names no program, is believed installed.
+An entry the architecture rules or a policy gate refuses is not. Whether an installed program
+is too old is not asked, because only running it could say, & verifiedToolPath() still
+refuses it when the pipeline runs. -v names a pipeline that is not offered & what it lacks.
+
+  $command = verifiedToolCommand('MAT2', $binary);
+  list ($status, $reason) = verifiedToolVerdict('MAT2');
+
+verifiedToolCommand() turns the path into the command that starts the tool, quoted for the
+shell, from v4.2.0. A tool is started as the Dependency Core asked its version, so the program
+that runs is the program that was verified. verifiedToolVerdict() gives the status a refused
+tool was given & the line of its output that says the most, so the error a pipeline raises can
+say what to fix.
+
+A PROGRAM THE DISTRIBUTION PACKAGED IS STARTED BY THE DISTRIBUTION'S PYTHON.
+A Python program a distribution packages imports modules built for that distribution's Python
+3 & no other, & its first line is #!/usr/bin/python3. A host that points python3 at another
+Python, through an alternative or a PPA, cannot start it by that line. An entry whose
+Interpreter is python3 is therefore started by the Python 3 Debian & Ubuntu name in
+/usr/share/python3/debian_defaults, in isolated mode, when that Python is root's alone & the
+program's first line names python3. Its version is asked the same way. A program whose first
+line names anything else, & every entry on a host that names no such Python, is started by its
+path. mat2 is the one entry that names an interpreter.
+
+A PIPELINE DECLARES EVERY DEPENDENCY THAT RUNS ON ITS BEHALF, FROM v4.3.4.
+$PipelineDependencies names, as the manifest names them, what the pipeline's own code runs,
+what a shared module it loads runs, what an Engine function it calls runs for it, as Curl
+fetches a stream & ps watches the worker capturing it, & what a bundled program it starts runs
+for itself, as ScanCore runs git. The Engine's own machinery is the Engine's half's & is not
+repeated, the shell & the limits every command runs under included, except Bubblewrap, which
+every pipeline that isolates a command names. --pipeline --check-depends names a declared
+dependency the manifest does not have.
+
+EVERY DEPENDENCY THAT PARSES AN UPLOADED FILE RUNS INSIDE A SANDBOX.
+sandboxCommand() wraps the command before it is run. A pipeline that isolates a command
+therefore depends on Bubblewrap as surely as it depends on the tool itself, which is why
+Bubblewrap appears in the approval record of every pipeline that sandboxes anything.
+Documentation/ABOUT_NETWORK_ISOLATION.txt describes how a profile is arrived at.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Policy Gates--
+
+Three settings decide what the installer is allowed to do. They are Engine settings & they
+are deliberately separate from the manifest, because the manifest states facts & these state
+policy.
+
+  $EngineEnforceGPLCompliantDeps    Refuse to install a dependency whose license does not
+                                    suit this installation's distribution plans.
+  $EngineAllowIncompleteDeps        Allow a dependency whose manifest entry is incomplete to
+                                    be installed anyway.
+  $EngineAllowIncompleteDepsUpdate  The same decision, for an update rather than an install.
+
+A refusal caused by a gate is a warning carrying a reason, not an error. Nothing is installed
+& nothing is changed.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Commands--
+
+  php convertCore.php -v                              What is installed, what is required &
+                                                      which subsystems are ready.
+  sudo php convertCore.php --setup --check-depends    Test every manifest entry. Changes nothing.
+  sudo php convertCore.php --setup --install-depends  Install what is missing.
+  sudo php convertCore.php --setup --update-depends   Update what is installed.
+  sudo php convertCore.php --setup --uninstall-depends  Remove what this application installed.
+  sudo php convertCore.php --pipeline --check-depends   The same test, per pipeline.
+
+None of them installs, upgrades or removes an entry of Type system, from v4.3.4.
+--check-depends & -v count a problem exactly as the verdict beneath them does, from v4.3.4. A
+required dependency is a problem where it is missing, too old, too new, misconfigured, refused
+or unable to run on this architecture, & an optional one on the same terms but the last. A
+version that could not be read is not a problem, & neither is an optional system entry that is
+missing. Until v4.3.4 the count beneath the table called a required program with an unreadable
+version missing, while the verdict called the installation ready.
+
+A BUILD THAT FAILED IS NOT RUN AGAIN IN THE SAME INSTALL, from v4.1.7. FFMPEG & FFprobe come
+from one build, & FFprobe is skipped & named when the build already failed for FFMPEG, rather
+than failing the same way after as long again. Correct the cause & run the install again.
+
+An install can take hours on a slow connection, because some dependencies are large downloads
+rather than quick package installs. A status line is printed every minute while one runs, with
+the elapsed time & the last thing the installer said, so a slow install is distinguishable
+from a stuck one.
+
+A package can publish something on every site the host serves as it installs. javascript-common,
+which arrives with the packages Calibre recommends, turns on an alias of /javascript to
+/usr/share/javascript. --install-depends notes which of the Apache configurations the contract
+names in $EngineUnwantedApacheConfs are on before it installs anything, & turns off with
+a2disconf each one the install turned on. One an administrator turned on is left as it is. A
+running web server keeps it until it is reloaded, which the install says.
+
+EVERY SOURCE BUILD WORKS IN A FOLDER OF ITS OWN, OUTSIDE THE INSTALLATION, FROM v4.0.6.
+Each build script the manifest names makes a new folder under /var/tmp with mktemp, which only
+root can open, builds there, & removes it however the build ends, so nothing a build leaves can
+reach the installation. /var/tmp is used rather than /tmp, which is often held in memory,
+because FFmpeg's build fills several gigabytes. Set TMPDIR to build somewhere else.
+
+  sudo TMPDIR=/srv/build php convertCore.php --setup --install-depends
+
+Until v4.0.6 FFmpeg's build ran in Documentation/Build/ffmpeg-build & left its whole tree there,
+links & files with more than one name included. Root refuses to run an installation holding a
+link, with error 28008, so every installation it ran in, the Docker image's web root among them,
+was one root refused, & -fp could not put that right. The contract names that folder among the
+paths no release ships, & -fp takes it away. See ABOUT_MANAGED_LOCATIONS.txt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--When The Package Manager Is Behind--
+
+A package manager installs the version its distribution carries, & a distribution can carry one
+with a hole in it long after the fix is published. Ubuntu 24.04 carries 7-Zip 23.01, & every
+7-Zip from 21.07 through 26.01 decodes XZ with a heap overflow a crafted archive reaches. Raising
+the floor alone would leave such a host with no archives at all.
+
+So an entry a package manager installs may declare a Fallback, which says how this application
+builds its OWN copy where the package manager's is missing or outside the window. 7-Zip's reads
+as follows.
+
+  'Fallback' => array('Version' => '26.06', 'Sha256' => '<the source archive's checksum>',
+    'BuildCommand' => 'bash '.escapeshellarg($InstLoc.'/Documentation/Build/build-7zip.sh'),
+    'Source' => 'https://github.com/ip7z/7zip', 'License' => 'LGPL-2.1'),
+
+  Version       The release the command builds. A build reporting any other is refused.
+  Sha256        The checksum of what the command downloads. It refuses anything else.
+  BuildCommand  The command that fetches, checks, builds & installs it.
+  Source        Where the own copy comes from, which the supply chain audit records.
+  License       Its licence, which the gates judge & the audit records.
+  Method        release, from v4.2.5, where the command fetches a program its project publishes
+                ready to run rather than building one, & --install-depends then says it is
+                fetching rather than building, as --check-depends says it would. Left out for a
+                build.
+
+A RELEASE BINARY IS FETCHED, CHECKED & INSTALLED BY ONE SCRIPT, from v4.2.5.
+Documentation/Build/hrconvert2-release-fetch.sh is handed the program's name, the https address
+of its release with {version} where the version goes, & the program's path inside a tar.gz where
+it is packed in one. It refuses anything but https, checks the file against DEPENDENCY_SHA256
+before anything is unpacked, takes only the one program named, & installs it at bin/ beneath
+DEPENDENCY_PREFIX. Dasel, yq, Pandoc & Resvg are fetched this way. Where a project publishes no
+checksum, the checksum is the one this release took, & the manifest says so beside it.
+
+AN ENTRY THAT NAMES NO PACKAGE HAS ONLY ITS OWN COPY, from v4.2.5.
+Where no distribution this application supports carries a version inside the window, or one
+carries another program of the same name, Package is left empty. --install-depends asks no
+package manager for it, & fetches or builds the own copy, which is then the only copy. Dasel, yq
+& Pandoc are such entries. Resvg names its package, which recent distributions carry, & has an
+own copy on x86-64 & ARM64 alone, through ArchitectureOverrides, because those are the
+architectures its project publishes a binary for.
+
+THE OWN COPY IS THIS APPLICATION'S ALONE.
+It lives in /usr/local/libexec/hrconvert2/builds/, beside the application's own copy of
+bubblewrap, in a folder named for the entry & laid out as a prefix, with the program at bin/.
+The package manager's copy is left exactly as it is, & nothing else on the host runs the own
+copy. Every name in its folder must be root's & not a link, in folders root alone can change, or
+it is never run. The account that runs conversions must be able to run it too, or it is not
+used. -v names it only while it is in service, & --check-depends says why one is not.
+
+A Fallback is honoured only for an entry naming its program by a plain name, whose VersionCommand
+runs that program, because the version asked must be the own copy's. --install-depends &
+--update-depends warn about one this release cannot use.
+
+THE OWN COPY IS ASKED FIRST & THE WINDOW DECIDES.
+Wherever the entry is used, by a pipeline, -v, --check-depends, capability detection or the
+supply chain audit, the own copy is the program used while it answers inside the window. One
+that does not falls back to the package manager's where that one does, & a warning says so. The
+program in service changes only when the dependency commands below change it, so a package
+manager that catches up meanwhile is not used until --update-depends takes the own copy away.
+--check-depends says when it has caught up.
+
+ONLY THE DEPENDENCY COMMANDS MAKE, KEEP OR TAKE AWAY AN OWN COPY.
+  --install-depends    Asks the package manager's copy again after the package manager has
+                       run, & builds the own copy where it is missing or outside the window,
+                       whether or not the package manager succeeded, because falling back
+                       comes before failing. A program on the host that answers with no
+                       version this release can read is given the own copy too, from v4.2.5,
+                       because it may be another program of the same name. Where the entry
+                       can have no own copy, it is present & left as it is.
+  --update-depends     Takes the own copy away where the package manager's now answers inside
+                       the window, & builds it again where it is behind the Version pinned,
+                       which is how an update of this application moves it.
+  --uninstall-depends  Takes it away with the package it stands in for.
+Each of the three also takes away whatever an interrupted run, or an entry an update renamed or
+removed, left in the builds folder, & says what it took.
+-fp, the Environment Manager & a conversion never build or remove one.
+
+A BUILD IS PUT IN SERVICE ONLY ONCE IT HAS ANSWERED FOR ITSELF.
+The command is handed a new folder only root can open, as DEPENDENCY_PREFIX, with
+DEPENDENCY_VERSION & DEPENDENCY_SHA256, each set even where the Fallback pins nothing. What it
+built is asked its version exactly as the copy in service would be, & is renamed into place only
+when every name in it is root's alone, it answers inside the window & it is the Version pinned.
+A build that fails leaves the copy in service as it was. One run changes the builds folder at a
+time, & a run that has to wait says so.
+
+A BUILD TAKEN AWAY IS NEVER FOLLOWED OUT OF ITS FOLDER.
+Every name in it is examined without following anything, & each folder in it is made root's alone
+before anything in it is listed, so an account that could change part of a build cannot point
+root's removal anywhere else. A warning says when a folder had to be taken back. From v4.0.6 the
+Kernel's removeTreeWithoutFollowing does this, for -fp's retired paths too, & never leaves the
+filesystem the builds folder is on, so anything mounted inside a build is left as it is.
+
+7-Zip's build script installs build-essential & xz-utils where the host has no compiler, & leaves
+them installed, as every build this application runs does.
+
+A PACKAGE MANAGER IS BELIEVED ONLY INSIDE THE WINDOW.
+It reports success for whatever version it has, & until v4.0.6 that was printed as installed
+above a report refusing it. An entry with no Fallback is now reported FAILED where what the
+package manager installed does not answer inside the window, with the version it got.
+
+A host that cannot reach GitHub or 7-zip.org may hand the 7-Zip source archive over by its path,
+& it is checked exactly as a download is.
+
+  sudo DEPENDENCY_SOURCE=/root/7z2606-src.tar.xz php convertCore.php --setup --install-depends --subsystem=Archives
+
+A FALLBACK IS DETACHABLE. Once the distributions this application supports carry a version
+inside the window, the Fallback is taken out of the manifest, & the next --update-depends takes
+every own copy it built away. Nothing else changes.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Approval Record--
+
+A DEPENDENCY APPROVAL RECORD SHIPS BESIDE EVERY PIPELINE.
+
+  Resources/Pipelines/<Name>/DEPENDENCY_APPROVALS.txt   The dependencies that pipeline uses.
+  Documentation/DEPENDENCY_APPROVALS.txt                The dependencies the application uses.
+
+A pipeline is detachable. Somebody can copy one into another installation, so the record of
+what it depends on & whether anybody has ever examined those dependencies has to travel with
+it. A central list would be left behind.
+
+Each record opens with the same file header as every other document, then says what it
+covers, then holds a section for every dependency.
+
+  An approval block        Status, approved on, expires on, audited by, the outcome, & any
+                           notes or conditions the approval was given under.
+  The manifest facts       Copied from the half of the manifest that holds the dependency, which
+                           the record names. License, source, minimum version & the rest, & the
+                           programs it runs, from v4.3.4.
+  The audit answers        One line per question the audit procedure below asks.
+
+A NOTE OR CONDITION MAY RUN OVER SEVERAL LINES. Write the first line beside the label & indent
+each line after it to the same column. A refresh keeps every line. A condition is anything the
+approval depends on, such as a configuration it was approved under or an event that must
+trigger a fresh audit.
+
+The second block is a copy, so it can go stale. It is rewritten from the manifest by a tool
+rather than by hand.
+
+  python3 Documentation/Build/hrconvert2-approvals.py            Write any record that is missing.
+  python3 Documentation/Build/hrconvert2-approvals.py --refresh  Rewrite the facts, keep the answers.
+  python3 Documentation/Build/hrconvert2-approvals.py --check    Report gaps & expiries. Exits 1 on a finding.
+
+THE TOOL NEVER ANSWERS AN AUDIT QUESTION & NEVER WRITES A DATE.
+It writes the questions & leaves them unanswered. An answer is a judgement a person made &
+is the only part of the record worth anything. A refresh keeps every answer already written,
+so running it after a manifest change is safe.
+
+A date is written as M/D/YYYY, the way the changelog writes one, or as YYYY-MM-DD. A date with
+slashes is always read month first. --check has to compare a date against the calendar & a date
+nobody can parse cannot be checked, so an unparseable date is reported rather than ignored.
+--check also reports an audited dependency that leaves Approved on, Expires on or Audited by
+empty, & a single line field that runs onto a second line, which usually means a label below
+it was deleted. An expiry on any day but 1 January of the year after approval is reported
+too, because every dependency comes up for audit together.
+
+WHICH DEPENDENCIES A PIPELINE'S RECORD COVERS.
+The tool works it out from three places, because no single one is complete. It reads the names
+the pipeline passes to verifiedToolPath, it adds Bubblewrap when the pipeline isolates a
+command, & it adds anything in the manifest whose Subsystem matches the one the pipeline
+declares. A pipeline that declares $PipelineDependencies is believed before any of that.
+The README it writes for a pipeline that declares $PipelineRequiredDependencies says where
+that pipeline is offered, from v4.2.1.
+
+Dependencies the application needs in order to run at all, such as PHP, Apache & Curl, are
+recorded once in Documentation rather than repeated in every pipeline, because removing one
+does not disable a conversion type. It stops the application. That record is every entry in
+Core, Updates, Resource Awareness or Sandbox, & was first written in v4.3.4.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Adopting A Dependency--
+
+'Adopting' means "We are approving this dependency for use as-is."
+
+  1. Research the dependency & record every answer in the approval record as you go.
+    1a. Evaluate its security design. Judge whether its security paradigm suits ours.
+    1b. Look for recent CVEs, security issues or proof-of-concept exploits for the version we want.
+    1c. Check how active development is. How often will the features we need break?
+    1d. What does it need to function? Network? File access? System calls?
+    1e. Can it be sandboxed? Can it be isolated? Does its default behaviour pose an attack vector?
+    1f. What security options does it offer? What does a hardened configuration look like?
+    1g. Could another dependency do this job better, more safely, more simply?
+    1h. Where does it come from? Is the developer reliable? Is there a supply chain risk?
+    1i. Consider the dependency traps this creates for existing installs & for new ones.
+  2. Determine the most suitable version.
+    2a. Check what the system package does, then what a current source build does.
+    2b. Evaluate building from source with optional flags, libraries or features.
+    2c. Consider minimum versions, minimum functional levels & version edge cases.
+    2d. Consider the licensing implications. Some source builds carry non-free flags.
+  3. Obtain the dependency.
+    3a. Decide how it is distributed. Bundled asset, system package or source build.
+    3b. Find the most official download source & use only that.
+    3c. If it is a system package, document how an installer gets the version we expect.
+    3d. If a binary or code is bundled, inspect & cross-reference it as far as you are able.
+    3e. If we build it ourselves, sanity check the machine we build it on first.
+    3f. If installers build it themselves, provide a working build script.
+  4. Add or update the entry in Resources/Contract/depends.php, or in Resources/Engine/depends.php
+     for a dependency the Engine itself runs.
+  5. Run the approvals tool so the record carries the new facts.
+    5a. python3 Documentation/Build/hrconvert2-approvals.py --refresh
+    5b. Fill in Status, Approved on, Expires on & Audited by, & any Notes or Conditions.
+    5c. Expires on is 1 January of the year after approval. --check holds every record to it.
+  6. Update SUPPLY_CHAIN_AUDIT_<YEAR>.xlsx, the Dockerfile & INSTALLATION_INSTRUCTIONS.txt.
+  7. Update CHANGELOG.txt.
+  8. The dependency is 'Adopted'.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Owning A Dependency--
+
+'Owning' means "We are forking this dependency to continue distribution or development ourselves."
+
+This begins when a third party dependency is easier or safer to distribute ourselves, has
+become unmaintained, unreliable, incompatible or compromised, or no longer performs the way we
+need it to.
+
+  1. Follow every step of 'Adopting A Dependency' above. The research is identical.
+  2. Remediate the thing that caused us to take ownership in the first place.
+  3. Record the Status as OWNED, with the date ownership was taken.
+  4. Update CHANGELOG.txt.
+  5. The dependency is 'Owned'.
+
+AN OWNED DEPENDENCY DOES NOT EXPIRE ON THE CALENDAR.
+It is re-audited when third party code comes back into it, & not otherwise. Updating it
+entirely in-house is exempt, because the audit trail for that work is the repository itself.
+Write NOT APPLICABLE, OWNED in the Expires on field so --check does not chase it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Removing A Dependency--
+
+'Removing' means "We are removing all reference to this dependency from the codebase."
+
+  1. Uninstall it from a complete, working installation & confirm the uninstall worked.
+  2. Confirm that installation matches what INSTALLATION_INSTRUCTIONS.txt produces.
+  3. Test everything related to it. Confirm the application still works without it.
+  4. Do NOT remove it from the current SUPPLY_CHAIN_AUDIT_<YEAR>.xlsx. Mark the removal date
+     & the reason under Description instead. A removed dependency is still history.
+  5. Remove its entry from the half of the manifest that holds it.
+  6. Search the codebase for every reference & remove each one, including any verifiedToolPath
+     call & any $PipelineDependencies declaration.
+  7. Run the approvals tool with --refresh so it drops out of every record that listed it.
+  8. Remove it from the Dockerfile & INSTALLATION_INSTRUCTIONS.txt.
+  9. Update CHANGELOG.txt.
+  10. The dependency is 'Removed'.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Auditing Dependencies--
+
+The supply chain audit schedule begins on 1 January each year.
+
+  ADOPTED DEPENDENCIES
+    1. Audited when they are adopted, & every year after that.
+    2. Every audit is due by 1 January.
+    3. The procedure is identical to adopting it again. If you are following the audit
+       procedure, just adopt the dependency again.
+    4. Record the new dates in the approval record.
+
+  OWNED DEPENDENCIES
+    1. Audited once when ownership is taken.
+    2. Audited again whenever third party code is merged into them.
+    3. An update made entirely in-house needs no audit.
+    4. The procedure is identical to owning it again.
+
+  python3 Documentation/Build/hrconvert2-approvals.py --check
+
+That command is the whole status report. It names every dependency with no declared status &
+every approval that has expired, & exits 1 if it found anything. A finding is work to do
+rather than a broken tree.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Where This Stands Today--
+
+THE FIRST AUDITS ARE RECORDED, & EVERY RECORD SAYS WHAT IS STILL OUTSTANDING.
+
+The records were scaffolded from the manifest, & the first audits were written into them in
+November 2026. Each of those approvals expires on 1 January 2027. Every other section reads NOT
+YET AUDITED, among them every dependency first declared in v4.3.4 & everything in
+Documentation/DEPENDENCY_APPROVALS.txt, which v4.3.4 wrote for the first time. --check counts
+what is outstanding.
+
+AN APPROVAL HOLDS FOR THE FACTS IT WAS GIVEN.
+A dependency is audited again when its entry changes in a way the approval did not see. That is
+a new minimum or maximum version, a new way of building or fetching it, a new build script or a
+changed one, a new Binary or Program, a new Type, Package, Source or License, a move to the other
+half of the manifest, & a pipeline that uses it for the first time. A Purpose reworded is not.
+--check does not compare facts, so the changelog & the record's own history say what changed.
+
+This project is maintained by one person & has collected more than thirty dependencies over
+ten years. These procedures are newer than most of those dependencies. The first full cycle
+will not be finished quickly, & having the procedure & an honest record of what is outstanding
+is worth more than a cycle finished on paper.
+
+If you want to help, take a dependency, answer the questions in its record & send it back.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

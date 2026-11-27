@@ -1,0 +1,40 @@
+# The Document pipeline
+
+The Document pipeline converts files. It accepts 35 input format(s) & produces 21 output format(s).
+
+This file is written by `Documentation/Build/hrconvert2-approvals.py --readme`.
+It is rewritten from the pipeline's own declarations & from the dependency manifest,
+so it cannot drift from either. Do not edit it by hand.
+
+## What it declares
+
+- **Version** v4.3.4
+- **Kind** conversion
+- **Family** Document
+- **Entry point** convertDocuments
+- **Subsystem** Documents
+- **Available to** every surface
+- **Offered where** LibreOffice is installed
+
+## Formats
+
+**Accepts** doc, docx, docm, dot, dotx, odt, ott, fodt, rtf, txt, pdf, html, htm, xml, wpd, abw, pages, xls, xlsx, xlsm, ods, ots, fods, csv, ppt, pptx, pot, potx, potm, ppa, odp, otp, fodp, xps, oxps
+
+**Produces** pdf, doc, docx, odt, ott, fodt, rtf, txt, html, xml, epub, xls, xlsx, ods, csv, ppt, pptx, pot, potx, potm, odp
+
+## Dependencies
+
+- **Bubblewrap** (required, 0.4 or newer, LGPL-2.0). Isolates every conversion from the host & the network.
+- **Coreutils** (required, GPL-3.0). Removes & copies files, sets their owner & mode, bounds how long & how hard a command runs, & names the machine.
+- **GXPS Utils** (optional, LGPL-2.1). Converts an XPS or OXPS document to PDF.
+- **LibreOffice** (optional, 7.0 or newer, MPL-2.0). Converts documents, spreadsheets & presentations.
+- **PHP Zip** (required, PHP-3.01). Opens OOXML documents so external references can be stripped before LibreOffice sees them. Without it the sandbox is the only protection.
+- **Procps** (optional, GPL-2.0-or-later). Says whether a worker is still running & counts the web server's workers. Without it a stream is taken to have finished as it starts.
+
+## Approval
+
+`DEPENDENCY_APPROVALS.txt` beside this file is the official record for every
+dependency listed above. It holds the approval status, the approval & expiry dates,
+& the audit answers. That record is authoritative & this README is a summary of it.
+
+The procedure behind it is `Documentation/ABOUT_DEPENDENCIES.txt`.

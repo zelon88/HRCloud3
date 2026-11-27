@@ -1,0 +1,404 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRProprietary Engine, Copyright on 8/25/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
+
+FILE INFORMATION ...
+v3.8.8.
+This plain text file describes how HRConvert2 is divided into components, how each one is verified, and what happens when one is missing or does not match.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+A component requires nothing this application does not already require. Every component is optional & the core runs without all of them.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Components--
+
+HRConvert2 is one core & a small number of detachable components.
+
+convertCore.php is the core. It converts files, serves the interface & answers the command
+line. It is the only file a web request ever reaches, & it runs on its own.
+
+A COMPONENT ADDS A CAPABILITY. IT IS NEVER LOAD BEARING FOR CONVERSION.
+Every component can be deleted from an installation & every conversion still works. What is
+lost is the capability that component provides, & the loss is reported rather than silent.
+
+  Resources/Engine/Managers/coreManager.php   Resource awareness & the listener.
+  Resources/Engine/Cores/setupCore.php        Installation & configuration.
+  Resources/Engine/Cores/dependencyCore.php   Dependency management & the supply chain audit.
+  Resources/Engine/Cores/pipelineCore.php     Pipeline verification & dispatch.
+  Resources/Engine/Cores/workflowCore.php     Workflows, their libraries, their workers & their status.
+  Resources/Engine/Cores/authenticationCore.php  Accounts, signing in & the key a signed in page holds.
+  Resources/Engine/Cores/emailCore.php        The emails the Authentication Core sends.
+  Resources/Engine/Cores/eventCore.php        The record of what the application did & found.
+
+The Environment Core, Resources/Engine/Cores/environmentCore.php, is the one Core that is load bearing.
+It is the environment the Engine gives every application, the Engine pins it itself, & from v4.3.1 the
+Engine does not start without it. The kernel then answers -v & -h, & says the Engine is unavailable.
+
+Each Core lives in Resources/Engine/Cores, because a Core is part of the Engine. Configuration
+files do not. config.php & versionInfo.php stay in Resources, & depends.php lives in
+Resources/Contract with everything else the application tells the Engine, because a
+configuration file is data & is not part of a component.
+
+coreManager.php keeps its name for historical reasons. It lives with the other three manager
+roles in Resources/Engine/Managers & is pinned by the Engine rather than by the core.
+
+TWO KINDS OF THING LIVE UNDER Resources/Pipelines & NEITHER IS A CORE.
+
+  Resources/Pipelines/<Family>/pipelineConfig.php   What a pipeline declares.
+  Resources/Pipelines/<Family>/pipeline.php         The converter itself.
+  Resources/Pipelines/Shared/<name>.php             Code two pipelines both need.
+
+A pipeline is verified by Pipeline Core rather than by the core, which makes it a
+sub component. Pipeline Core pins each one exactly, the same way the core pins Pipeline
+Core. See ABOUT_PIPELINE_COMPONENTS.txt.
+
+The converter was called pipelineCore.php until v3.8.8. That name collided with the
+dispatcher & described the wrong thing, because a converter owns no domain & is not called
+on demand by the application. It is pipeline.php now.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Cores--
+
+A CORE IS A COMPONENT THAT OWNS A DOMAIN & EXTENDS THE OPERATIONAL SCOPE OF THE APPLICATION.
+
+The core converts files & serves the interface. A Core adds a whole area of responsibility
+the core does not have on its own.
+
+  Setup Core        Installing, configuring, repairing & the service unit.
+  Dependency Core   Dependencies, capability detection & the supply chain audit.
+  Pipeline Core     Which conversion families exist & which one gets a given conversion.
+  Workflow Core     Workflows, from their format to running one & reporting how it went.
+  Authentication Core  Accounts, signing in & the files a signed in user keeps.
+  Email Core        Sending an email through the host's own mail system.
+  Environment Core  The sandbox, the Apache configuration, the data location's protection & -fp's repair.
+  Event Core        The record of what the application did & found, from v4.3.1.
+  Core Manager      Resource awareness & the manager processes.
+
+FOUR PROPERTIES SEPARATE A CORE FROM ANYTHING ELSE IN THIS APPLICATION.
+
+  1  IT OWNS A DOMAIN. Everything about installation is in Setup Core & nowhere else.
+     Two files understanding the same thing is two implementations kept in step by hand.
+
+  2  IT RUNS INSIDE THE CALLER. It is called, it works, it returns. A Core starts nothing
+     that outlives the call. Core Manager starts processes, which is why the processes it
+     starts are described separately in ABOUT_MANAGERS.txt rather than here.
+     The Workflow Core starts one worker for each workflow it runs. A worker is the
+     application's own entry point running that one workflow & ending with it, with no
+     socket & no supervisor, so it is not a manager. See ABOUT_WORKFLOWS.txt.
+
+  3  IT IS OPTIONAL. Every Core can be deleted & the application still converts files.
+     What is lost is the scope that Core provided, & the loss is reported rather than silent.
+
+  4  IT EXTENDS SCOPE RATHER THAN CAPABILITY. A dependency gives the application a new
+     format. A pipeline gives it a new conversion. A Core gives it a new thing it is able
+     to be responsible for, which is a larger claim & is why there are only seven.
+
+A CORE IS NOT A MANAGER, & THE WORD MANAGER MEANS SOMETHING ELSE IN THIS APPLICATION.
+A Core is a file that is loaded. A manager is a role a long lived process runs under, with
+a socket, a supervisor & a place in a budget. Core Manager is the role that starts the rest.
+core-manager, resource-manager, worker-manager & request-manager are the managers, & each has
+a file under Resources/Engine/Managers that only a process running as that role loads. See
+ABOUT_MANAGERS.txt.
+
+That distinction decides what moves when this machinery is shared with another application.
+The managers have nothing to do with converting files & would serve a virus scanner or a
+job dispatcher unchanged. The Cores would not.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Rules Every Component Follows--
+
+FOUR RULES, & ALL FOUR ARE ENFORCED IN CODE RATHER THAN BY CONVENTION.
+
+  1  A COMPONENT DEFINES FUNCTIONS & DOES NOTHING ELSE.
+     No component runs anything at load. The core decides when to call into it. A component
+     that acted on being loaded would act during an installation check, a version report &
+     every other place a version is read.
+
+  2  A COMPONENT REFUSES TO RUN ON ITS OWN.
+     Every component begins by testing $CoreLoaded & halting when it is not set. A component
+     reached directly over HTTP refuses rather than executing with no configuration, no
+     secret & no session.
+     THIS ONE HALT CANNOT USE quickDie. Reaching that line means convertCore.php was never
+     loaded, so quickDie is not defined & calling it would replace a clear refusal with an
+     undefined function error.
+
+  3  A COMPONENT DECLARES ITS VERSION IN A VARIABLE THE CORE CAN READ WITHOUT EXECUTING IT.
+     The core reads the version out of the file with a regular expression. A mismatched
+     component may define functions this core cannot call safely, so it must be judged
+     before it is loaded, never after.
+
+  4  A COMPONENT IS MATCHED EXACTLY.
+     Not a minimum. The same rule a GUI folder & a language pack follow. A component built
+     for another release may accept an argument this core has dropped, or omit one it now
+     needs, & neither is detectable at runtime.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About How A Component Is Loaded--
+
+verifyCoreComponent() does all of it, for every component, in one place.
+
+  Accepts   the component name, its path relative to Resources, the name of the variable it
+            declares its version in, & the version this core requires.
+  Returns   an availability boolean & the detected version.
+
+The sequence is always the same.
+
+  1  Test that the file exists. Absent is reported & is not an error.
+  2  Read the file as text. Never execute it.
+  3  Extract the version with a regular expression.
+  4  Refuse a component that reports no version. An unknown build cannot be cleared.
+  5  Refuse a component whose version is not an exact match.
+  6  require_once the file.
+  7  Publish the detected version as a global under the name the component uses.
+
+STEP SEVEN EXISTS BECAUSE A require INSIDE A FUNCTION LANDS ITS ASSIGNMENTS IN THAT FUNCTION.
+A component sets its version variable at the top of its own file. Loaded from inside a
+function, that assignment is local to the function & is invisible everywhere else, so the -v
+argument reported an empty version for a component that was loaded & working perfectly.
+
+Three components once had three near identical copies of this logic. Collapsing them into
+one function is what surfaced that bug.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About When A Component Is Loaded--
+
+NOT AT BOOT. ON DEMAND, BY WHATEVER NEEDS IT.
+
+A web request never installs, configures or manages dependencies, so it never pays to read a
+component it will not call. Only the Engine, its Environment Core & the Pipeline Core are resolved on every request.
+
+  engine.php             Resolved by the kernel's loadEngine(), before verifyGlobals().
+  environmentCore.php    Resolved by the Engine's startEngine() before anything else, from v4.3.1. Until then
+                         engine.php required it as it was loaded, with no version.
+  pipelineCore.php       Resolved by the Engine's startEngine(), once the session is established.
+  workflowCore.php       Resolved after Pipeline Core, when workflows are on or --workflow is asked for.
+  authenticationCore.php Resolved with the Engine's answer to a request, in startEngine(), when
+                         accounts are on, & by --account whether or not they are.
+  emailCore.php          Resolved with the Authentication Core.
+  eventCore.php          Resolved by the first event a command keeps or reads, where --Record Events-- is TRUE.
+  setupCore.php          Loaded by --config, & by -fp for resource limits & the service unit.
+  dependencyCore.php     Loaded by --setup.
+  Managers/<role>.php    Loaded by loadEngineManager, only in a process running as that role.
+  Managers/authenticationManager.php
+                         Loaded by loadEngineManager to sweep accounts, to keep a quota & by --account.
+
+PIPELINE CORE IS THE EXCEPTION TO ON DEMAND & THE REASON IS ORDERING.
+It is resolved on every request that could convert something, because a conversion cannot
+wait for it. It is resolved as the Engine starts, after verifyLogs() rather than during
+verifyInstallation, because enumerating pipelines warns about every one it refuses & those
+warnings are worthless before there is a logfile to write them to. It was resolved after
+verifyGlobals() until v4.2.4, & reads nothing verifyGlobals() sets.
+
+EACH COMMAND LOADS ONLY WHAT IT NEEDS.
+--config needs Setup Core. --setup needs Dependency Core. Only --install-complete &
+--reinstall-existing need both. An operator asking what is installed must not be stopped
+because a component they are not using is absent, which is exactly what an earlier release
+did by loading Setup Core before every --setup option.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Version Pins--
+
+FIFTEEN PINS. EVERY ONE OF THEM IS AN EXACT MATCH EXCEPT WHERE NOTED.
+
+  $RequiredConfigVersion           config.php                    MINIMUM. A newer config carrying
+                                                                 every required setting is fine.
+  $RequiredKernelVersion           Resources/Kernel/kernel.php   EXACT.
+  $RequiredEngineVersion           engine.php                    EXACT.
+  $RequiredSetupCoreVersion        setupCore.php                 EXACT.
+  $RequiredDependencyCoreVersion   dependencyCore.php            EXACT.
+  $RequiredPipelineCoreVersion     pipelineCore.php              EXACT.
+  $RequiredWorkflowCoreVersion     workflowCore.php              EXACT.
+  $RequiredAuthenticationCoreVersion authenticationCore.php      EXACT.
+  $RequiredEmailCoreVersion        emailCore.php                 EXACT.
+  $RequiredEventCoreVersion        eventCore.php                 EXACT.
+  $RequiredDependsVersion          Contract/depends.php          EXACT. The application's half.
+  $RequiredSecretVersion           the install secret file       EXACT.
+  $RequiredGuiVersion              every UI folder               EXACT.
+  $RequiredLanguageVersion         every language pack           EXACT.
+  $RequiredConfigScript            the bootstrap script          EXACT.
+
+The Engine pins its own manager roles in getAcceptedManagers, so a manager is judged by the
+Engine that runs it rather than by the core. It pins its half of the dependency manifest,
+Resources/Engine/depends.php, in getAcceptedEngineManifest from v4.2.4, for the same reason, & its
+Environment Core in getAcceptedEnvironmentCore from v4.3.1.
+
+Pipeline Core checks a pin for every pipeline & every shared module the application accepts.
+The pins are the application's & are set in Resources/Contract/app-engine-config.php, as
+$EngineAcceptedPipelines & $EngineAcceptedSharedModules. ABOUT_PIPELINE_COMPONENTS.txt says how
+they are judged. An application that accepts none converts nothing, & from v4.3.2 that is no
+failure. -v says NONE where the pipelines are listed.
+
+THE BUILD WRITES EVERY PIN BUT THREE. THOSE ARE EDITED BY HAND.
+php convertCore.php --build --pins reads each pin's version from the component it names &
+reports every pin that differs. With --write it rewrites them, & only the version between
+the quotes changes. Choosing a component's version is the developer's decision. Making every
+pin agree with that choice is the build's.
+A pin the build cannot settle is refused rather than guessed. Interfaces or language packs
+that declare different versions, or one that declares none, stop the build for that pin.
+$RequiredSecretVersion is the one pin no shipped file declares, so it is still set by hand.
+$RequiredKernelVersion & $RequiredEngineVersion are set by hand as well, from v4.0.1. The
+build runs inside the kernel & the Engine, so it cannot rewrite the pins that load them.
+The Engine knows where its own components live. The application names its own pin sources
+in $EnginePinSources in Resources/Contract/app-engine-config.php.
+Until v4.0.0 every pin was moved by hand. $RequiredConfigScript said v3.8.0 for a whole
+release after the script it pins moved to v3.9.3, & the Resource Manager disabled the
+installer wherever it could.
+
+RAISE $RequiredPipelineCoreVersion WHEN THE PIPELINE CORE ITSELF CHANGES, & FOR NOTHING ELSE.
+A pipeline added, removed or raised is a line in the contract. Until v3.9.9 the pin list was
+inside the Pipeline Core, so a pipeline moving meant a new Pipeline Core & a new pin here.
+
+A SETTING ADDED TO config.php IS ADDED IN TWO PLACES, FROM v4.2.4, ITS TEMPLATE & ITS MODEL.
+config.php has two halves, & a setting belongs to the half whose code reads it.
+  A setting the kernel or the Engine reads  Resources/Engine/config-template.php & engineConfigModel()
+                                            in Resources/Engine/engine.php.
+  A setting only HRConvert2 reads           Resources/Contract/config-template.php & applicationConfigModel()
+                                            in convertCore.php.
+The template holds every default & its documentation. The kernel reads the names in both templates,
+makes each a global as it reads config.php & refuses a config.php missing any, so there is no list
+of required settings & no global declaration to keep in step, as there was until v4.2.4, when a
+setting was added in four places & two settings had been missing from the global declaration since
+they were added. Resources/config.php is what --config --repair writes from both halves.
+The model holds what a configuration cannot say about itself, a type, a dependency between
+settings & a section an operator owns. A dependency is named only where the code does not read
+the setting while the one it depends on is off, & a Conflict names what follows where it is read
+& contradicts it instead, as --Require Resource Awareness-- does. --config prints both. The Engine
+joins its model to the one named in $EngineConfigModelProvider in Resources/Contract/app-engine-config.php,
+& finds both templates through configurationTemplatePaths() in the kernel.
+Check thirteen of hrconvert2-check.py fails when a template & its model disagree or a name is in both halves.
+A setting whose model carries NamedWhenChanged, from v4.2.0, is named as having no effect only once it differs from its
+default, so a feature with many settings that most installations leave off, as accounts are, names only what was changed.
+The settings of automatic updates carry it from v4.2.3, when updates became off by default.
+Forgetting the model does not break anything immediately, which is the point. A setting the
+model does not know is reported as unaccounted, can still be edited by hand, & simply cannot
+be reset or repaired, which is why check thirteen reports it.
+An installation updated by a drop in runs  --config --repair  before -fp, which adds each new
+setting at its default. Until then every other command refuses with error 28000.
+Until v4.1.2 this said to raise $RequiredSetupCoreVersion whenever $RequiredConfigVersion was
+raised. The model left Setup Core for convertCore.php at v3.9.3, so raising it changed nothing.
+
+RAISING $RequiredSecretVersion ROTATES THE SECRET & INVALIDATES EVERY SESSION IN PROGRESS.
+Do it deliberately, not as part of a routine version bump.
+
+Compare version numbers NUMERICALLY, never as strings. A string comparison ranks 24.2 below
+7.6 & ranks 3.10 below 3.9. Strip a leading v first. Casting 'v3' to an integer yields 0,
+which silently reduces a three part comparison to a two part one. compareVersionMinimum()
+does all of this & is the only correct way to compare two versions in this application.
+
+Run  php convertCore.php -v  to see every pin, with what is required beside what was found.
+A mismatch does not stop the core. It silently removes whatever that component provides, &
+that report is the only place the loss becomes visible.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About What Happens When A Component Is Missing--
+
+THE CORE DEGRADES. IT DOES NOT BREAK.
+
+  No Engine             A web request is refused with 28005, a sentence rather than a blank
+                        page. -v & -h still work, & -v names what failed.
+  No Core Manager       Conversions run without resource awareness. Every budget request is
+                        approved by default. --status, -l & -k report the component missing.
+  No Setup Core         --config refuses & explains why. Everything else is unaffected.
+  No Dependency Core    --setup refuses & explains why. Conversions are unaffected.
+                        Capability detection is unavailable & declared formats are trusted.
+  No Pipeline Core      NO CONVERSION RUNS AT ALL, & neither does an upload, a delete or
+                        a virus scan, because the Files & scanner pipelines are loaded
+                        by it. The page is still served & -v names the cause.
+                        This is the one component whose absence is not a partial loss,
+                        because convertCore.php stopped converting anything itself once
+                        the last family moved out of it.
+  No depends.php        Dependency management is unavailable. Conversions are unaffected.
+  No bootstrap script   Nothing at all. It is a convenience, not a dependency.
+
+--Require Resource Awareness-- inverts this for the Core Manager only, for an operator who
+would rather refuse work than accept work they cannot account for.
+
+A COMPONENT THAT IS PRESENT BUT MISMATCHED IS TREATED EXACTLY LIKE ONE THAT IS ABSENT.
+There is no partial acceptance & no attempt to work around a version difference.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Bootstrap Script--
+
+Documentation/Build/hrconvert2-setup.sh is a component in every sense except that it is not
+PHP & cannot be version checked the same way.
+
+It does ONE job. It makes sure PHP exists, then hands every argument to convertCore.php.
+Every decision about installing, configuring, updating or repairing lives in Setup Core.
+
+A CONFIGURATION UTILITY WRITTEN IN BASH WOULD BE A SECOND IMPLEMENTATION OF THE SAME
+UNDERSTANDING, KEPT IN STEP BY HAND. That is the whole reason it is this thin.
+
+It carries a SCRIPT_VERSION & a DisabledByCore line. verifyBootstrapScript() in the Engine
+compares the version against $RequiredConfigScript, & -v, the listener & the Environment
+Manager all report what it found. -fp changes it, as root. A script that does not match has
+DisabledByCore rewritten to TRUE, so it refuses to run & says why. It is never deleted & is
+not otherwise altered, so an operator can read exactly what was disabled. A script that is
+later replaced with a matching version is enabled again by the next -fp. A permitted
+Environment Manager repair does both, because that repair is -fp's.
+
+ONLY ROOT CHANGES IT, FROM v4.0.1. Until then the Resource Manager rewrote it on its sweep, as
+the web server account. The installation is root's now, so that account cannot write it, & the
+listener only reports a script that needs changing. Root reads it & writes a new copy renamed
+into place through the kernel, & only once -fp has made the installation one root may run, so
+nothing planted at its name is ever followed.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Adding A Component--
+
+Five things, in this order.
+
+  1  Create Resources/Engine/Cores/yourCore.php.
+  2  Open it with the $CoreLoaded guard, copied from any existing component.
+  3  Declare $YourCoreVersion near the top, where it can be seen.
+  4  Add $RequiredYourCoreVersion to verifyInstallation, with a comment saying what raises it.
+  5  Call verifyCoreComponent() from whatever needs it, on demand.
+
+Nothing else. No registry, no manifest & no change to any existing component. Step five is
+one line, which is the entire point of collapsing the three loaders into one.
+
+Then add it to the components showVersionReport() lists in Resources/Engine/engine.php, so -v
+reports it beside the others. A component nobody can see the version of is a component nobody
+can diagnose.
+
+AN APPLICATION MAY HAVE A CORE OF ITS OWN, & NOTHING IN THE ENGINE CHANGES FOR IT.
+A Core that owns a domain only one application has is that application's. It follows the four
+rules every component follows & is added by the same five steps, with three differences.
+
+  1  The file is Resources/Cores/yourCore.php, beside the application's contract & its
+     pipelines. Resources/Engine is the Engine's, & is replaced when a newer Engine arrives.
+  2  The pin is in the application's own verifyInstallation(), & the contract names the file
+     under the pin's name in $EnginePinSources, so the Engine's list of pins finds it.
+     verifyCoreComponent() takes a path relative to Resources, so it loads a Core from there
+     as it loads one of the Engine's.
+  3  The application reports it. showVersionReport() lists the Engine's components, & the
+     function the contract names in $EngineReportProvider adds a row for the application's.
+
+Its guard names the application & carries a number from the application's own block of
+ERROR_DESCRIPTIONS.txt, because Engine-35000 is the guard of a component of the Engine's.
+An application never calls a function of such a Core without asking whether it is loaded, so
+the application runs whatever is done with the file.
+
+HRProtect's Event Core was one until v4.3.1, when it became the Engine's, at Resources/Engine/Cores/eventCore.php.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,418 @@
+-----------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRProprietary Engine, Copyright on 8/20/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+The HRProprietary Engine provides a coherent application environment. It is bundled with
+an application rather than installed beside one.
+
+FILE INFORMATION ...
+v3.7.8.
+This file contains detailed information about the coding & quality conventions in-use
+in the HRConvert2 codebase.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+What the Engine itself needs is Resources/Engine/depends.php, & --setup installs it with the application's own half. Run  php <entry point> -v  to see what an installation has.
+
+<3 Open-Source
+-----------------------------------------------------------------------------------
+
+
+-----BUILD PROCESS-----
+
+HRConvert2 is maintained by Zelon88 with help from an amazing & dedicated community on Github.
+Github is the source control management platform where all HRConvert2 development takes place.
+Docker repositories are updated less often than Github, but offer much easier installation.
+
+'Nightly Builds' are what you get when you download the repo at any point in time.
+'Nightly Builds' have the latest features and are updated regularly.
+'Releases' available on the Releases page on Github typically represent major milestones.
+'Releases' have the best stability and are updated only for major patches or changes.
+-----------------------------------------------------------------------------------
+
+
+-----GENERAL CODING CONVENTIONS-----
+
+HRConvert2 is built using strict coding & quality conventions to promote quality and
+consistency within the codebase. Those conventions are detailed here so they can be
+developed in the open, alongside the code they are designed to safeguard.
+
+1. Core Logic and interface are completely separate. UI Pages must not contain any
+  core logic. Any logic contained within UI pages must be only for the purpose of
+  generating local UI elements.
+
+2. The Core must not itself contain any UI elements. The Core must "build" or
+  "assemble" the UI from separate, modular components.
+
+3. Upper case first letter variables are global in scope. Only variables with upper-case can
+  transcend multiple functions. Upper case first letter variables can be used as Globals or
+  function returns.
+  The only allowed & documented exception is $SecretKey. Please don't touch.
+  When followed, this technique will reduce the application's exposure to PHP memory leakage.
+  For more information, see `Documentation/ABOUT_DEFENSIVE_MEMORY_MANAGEMENT.md`.
+
+4. Lower case variables are severely limited in scope. Lower case first letter variables
+  must not be used or extended outside of the function in which they are initialized.
+  When followed, this technique will reduce the application's exposure to PHP memory leakage.
+  For more information, see `Documentation/ABOUT_DEFENSIVE_MEMORY_MANAGEMENT.md`.
+
+5. Lower case variables must be initialized only within the function where they are used,
+  and destroyed via purgeSensitiveMemory() immediately afterwards.
+  Pass every target as its own argument.
+  Never collect targets into an array first, because that copies the values.
+  When followed, this technique will reduce the application's exposure to PHP memory leakage.
+  For more information, see `Documentation/ABOUT_DEFENSIVE_MEMORY_MANAGEMENT.md`.
+
+6. Try not to redeclare lower case, narrow scope variables where possible.
+  Try to use redeclare() where possible.
+  Developers, use your best judgement here.
+  The spirit of this rule is: keep track of your variable scope. Do not take function scope for granted to protect your data.
+  Assume the interpreter is always compromised.
+  When followed, this technique will reduce the application's exposure to PHP memory leakage.
+  For more information, see `Documentation/ABOUT_DEFENSIVE_MEMORY_MANAGEMENT.md`.
+
+7. Functions go first. Logic goes after. All functions must be defined sequentially at
+  the top of a code file. Do not define functions nested with logical code.
+
+8. If a function is complex or longer than approximately 35 lines of code, then it must
+  return a sanity check in addition to its usual output.
+
+9. Calling code must consume a returned check from a called function that has one.
+  When consuming a returned check from a called function, strongly consider validating it.
+  Calling code need not log a failure the callee has already logged under the caller's name.
+  Duplicating the entry misreports the origin & doubles the log volume.
+  Developers may utilize best judgment.
+
+10. If a sanity check could alter behavior, failing the check must be logged.
+
+11. Any and all code changes must be mentioned in the CHANGELOG.txt file.
+
+12. Code comments must be written in complete sentences, with proper grammar & punctuation.
+
+13. Functions must be prefaced with a comment describing its functionality.
+
+14. Function input and return variable names should be coherent to a human reader. Do not
+  use generic, non-descriptive variable names like $f or $a in function inputs or returns.
+
+15. Changes to code files should be batched into groups, tested completely and thoroughly,
+  and uploaded to the repository only once they are complete. Do not upload in-process or
+  untested code to the repository under any circumstances. Code contained in the repository
+  must always be fully executable.
+
+16. No browser console errors or HTML syntax errors are allowed to exist in any release or
+  nightly build that gets uploaded to the repository. The code contained in the repository
+  must execute in all tested cases without HTML, JS, or PHP Errors or Warnings. Warnings or
+  errors that are generated normally during expected operation are acceptable.
+
+17. Any warning or error message that the application code may produce must be documented
+  in the ERROR_DESCRIPTIONS.txt file.
+
+18. No cookies. No databases. No third party connections. No analytics. No exceptions.
+
+19. If the code needs all capital comments, it's too important.
+
+20. A pattern repeated more than twice belongs in a function or a template.
+
+21. Call sanitize() against any user input before using it. It accepts any variable type as input.
+  A path is user input too, & sanitize() would make it the name of another file. Call
+  sanitizePath() against a path instead. It accepts a path whole or refuses it whole.
+
+22. No dependency command may run unsandboxed. Every exec() or shell_exec() that runs a
+  tool this application depends on goes through sandboxCommand(), which gives it a
+  namespace with no network, a minimal device set, a tmpfs for everything writable, and
+  read only access to the two directories it was handed.
+  A command handling a file somebody else supplied is the whole attack surface of this
+  application. A sandbox is not a precaution there, it is the boundary.
+  Some commands genuinely cannot be sandboxed. A package manager installs to the machine,
+  a source build writes into /usr/local, and a probe that asks a tool for its version has
+  to reach that tool where it actually lives.
+  Every one of those must carry a comment saying why it does not comply. An exception
+  nobody wrote down is indistinguishable from an oversight, and the next person to read it
+  has no way to tell whether it was considered.
+  A command that cannot be sandboxed must still be given a disposable environment.
+  dependencyEnvironmentPrefix() points HOME and every XDG location at a scratch directory,
+  because a tool that reads HOME, finds nothing, and falls back to the working directory
+  writes into the installation itself. A .cache appearing beside convertCore.php is that
+  happening.
+  A folder in a temporary directory every account shares is used only after checking that
+  it is not a link, that the running account owns it, and that nobody else can reach it.
+  A predictable name there can be taken first by anybody. Two such folders were found at
+  v3.9.9, one locking accounts out and one running another account's code as root.
+  Do not prefix an environment onto a command that goes to bwrap. bwrap execs directly and
+  reads NAME=value as the name of a program to run rather than as an assignment. Use
+  --setenv there instead.
+
+-----------------------------------------------------------------------------------
+
+
+-----DETAILED CODEBASE STANDARDS & GUIDANCE-----
+
+-----FALLBACK & FAILURE-----
+
+A subsystem that can fall back MUST fall back before it errors.
+
+The pattern is: try the requested thing, warn if it fails, try the default, warn again,
+and only then return failure. The numbered error fires only when the DEFAULT has also
+failed, at which point the issue is deemed fatal.
+
+A user who cannot read the page cannot report the problem. Falling back to a working
+default & logging loudly is better than a blank page & a number wherever possible.
+
+Initialize a local fallback that cannot be overwritten by configuration. A lowercase
+$defaultGui alongside the global $DefaultGui gives the function something to fall back to
+when the administrator's value is invalid.
+-----------------------------------------------------------------------------------
+
+
+-----LOGGING TIERS-----
+
+  logEntry()        Op-Act        Normal activity. Suppressed by the caller when $Verbose is FALSE.
+  warningEntry()    WARNING!!!    Always written. Carries no error number. Can never halt.
+  errorEntry()      ERROR!!!      Always written. Carries a documented error number. Sometimes fatal.
+  quickDie()        ERROR!!!      Reports & halts. The only place the application stops on an error.
+
+A log is for normal operational activity. `logEntry('This will be logged.');`
+
+A warning is something the administrator should know is happening. It does not necessarily
+mean anything needs to change. `warningEntry('This will be logged.');`
+
+An error reports a critical failure that alters behaviour. `errorEntry('Text.', 123, FALSE);`
+where 123 is the documented number & FALSE says whether it is fatal.
+
+Anything an attacker caused that HRConvert2 handled correctly is a WARNING, not an error.
+A blocked SSRF attempt, a removed file reference & a refused stream are all warnings.
+
+ALL FOUR HANDLE A MISSING LOGFILE THEMSELVES. DO NOT GUARD A CALL.
+Each tests $LogFile before writing & falls back to the server error log. An earlier release
+required every caller to check first, which meant eight functions reachable before
+verifyLogs() each carried the same guard, & the ninth to be written did not. Writing to an
+unset path produces a raw PHP warning on the page naming an absolute path outside the web
+root, which is how that class of bug announced itself.
+
+quickDie() IS THE ONLY HALT. Every die in the core routes through it, so a halt is formatted
+the same way, closes the connection the same way & is recorded the same way, whichever stage
+of boot it happens in. errorEntry() with a TRUE fatal flag hands off to it. The single
+exception is the $CoreLoaded guard at the top of a component, where quickDie is not yet
+defined.
+-----------------------------------------------------------------------------------
+
+
+-----EARLY BOOT ORDER-----
+
+THE CORE BOOTS IN A FIXED ORDER & MOST OF IT IS NOT AVAILABLE AT THE START.
+
+  verifyTime()          Sets $Time & $Date.
+  verifyInstallation()  Holds the pins & calls the kernel's verifyInstallationState(), which sets $DirSep, $Lol, $Lolol &
+                        $Append, reads versionInfo.php & config.php, derives every data location & resolves the install
+                        secret with establishInstallSecret().
+  verifySession()       Establishes the session, in the kernel.
+  verifySesHash()       Derives the session identifiers, in the kernel.
+  verifyLogs()          Opens the logfile through the kernel. NOTHING BEFORE THIS POINT HAS A LOG TO WRITE TO.
+  loadEngine()          Verifies & starts the Engine, in the kernel. The Engine derives a session's folders & the served
+                        address in establishEngineSession().
+  verifyGlobals()       Sets the core's own globals.
+
+NOTHING CALLED BEFORE verifyInstallationState() MAY USE $Lol OR $DirSep, & NOTHING CALLED BEFORE THE
+ENGINE STARTS MAY USE A SESSION'S FOLDERS. Use PHP_EOL & DIRECTORY_SEPARATOR before then. verifyGlobals()
+set $Lol & $DirSep until v4.2.4, & they were the two that caught people.
+Writing a file with $Lol before it exists concatenates an empty string, which once produced
+a secret file with no whitespace after its opening tag. PHP treated the entire file as
+inline HTML & printed the real secret into the page source.
+
+A FUNCTION THAT REQUIRES A GUARDED FILE MUST DECLARE global $CoreLoaded.
+A require inside a function reads that file in the function's scope. A component guard
+testing an undefined local halts, & the message names the component rather than the caller,
+which sends an operator to the wrong file entirely.
+-----------------------------------------------------------------------------------
+
+
+-----VERSION CHECKING-----
+
+  config.php        MINIMUM match. A newer config carrying every required setting is fine.
+  Components        EXACT match. See ABOUT_COMPONENTS.txt.
+  UI folders        EXACT match. Newer or older may render incorrectly in either direction.
+  Language packs    EXACT match, REPORTED rather than enforced. A match is required for best
+                    practice & for support, but a mismatched pack still runs, with a warning,
+                    over a baseline pack that supplies any string it lacks. The core & the UI
+                    are the security boundary & their pins are enforced. A language pack is
+                    strings.
+  Dependencies      MINIMUM match, compared NUMERICALLY, never as strings.
+
+USE compareVersionMinimum() TO COMPARE TWO VERSIONS. IT IS THE ONLY CORRECT WAY.
+A string comparison ranks 24.2 below 7.6 & ranks 3.10 below 3.9. Split on the dot, cast each
+part to an integer, compare major then minor then patch. Strip a leading v before comparing.
+Casting 'v3' to an integer yields 0, which silently reduces a three part comparison to a two
+part one.
+
+A build that reports no parseable version is REFUSED. An unknown build cannot be cleared.
+
+A STAMP MAY CARRY A LINEAGE MARK, FROM v4.3.1. The Engine's maintainer stamps canon plainly,
+as v4.3.1. An application's copy of the Engine carries r after the numbers where it is canon's
+unchanged, as v4.3.1r, & ur where the application has changed it & the change waits in its
+ENGINE_RECONCILIATION_ file, as v4.3.1ur. An exact match compares the whole stamp, so the three
+are three builds. compareVersionMinimum() compares the numbers alone, because the mark says
+whose copy a build is & nothing of its order.
+
+A COMPONENT VERSION IS READ WITHOUT EXECUTING THE FILE. A mismatched component may define
+functions this core cannot call safely, so it is judged before it is loaded, never after.
+-----------------------------------------------------------------------------------
+
+
+-----DIAGNOSING FAILURES-----
+
+REPORT WHY, NOT ONLY THAT.
+
+A check that reports failure without the reason is worse than no check, because it looks
+like a diagnosis & is not. Every one of the following cost real hours before it was fixed.
+
+  A sandbox probe ending in  > /dev/null 2>&1  discarded the one line naming the cause.
+  A dependency reported absent without showing what its version command printed.
+  A version pattern that did not match reported unknown-version & not what it read.
+  A permissions run that repaired a policy & never re-tested what the policy was for.
+
+CAPTURE STDERR. A tool that failed usually said why.
+SHOW WHAT WAS ACTUALLY READ when a pattern did not match. The pattern is the bug, not the
+dependency, & nobody can correct a pattern they cannot see the input to.
+DISTINGUISH NOT ASKED FROM NOT ANSWERED. A check with nothing to ask reports n/a. A check
+that asked & got nothing reports unknown. Only the second is a fault.
+
+TEST AS THE ACCOUNT THAT WILL DO THE WORK.
+A check run as root proves what root can do. The web server user is what converts files. A
+sandbox probe run by -fp passed as root & reported a working sandbox while every web request
+was refused. Re-run the probe as the web server user & say which account was tested.
+
+VERIFY A REPAIR RATHER THAN ASSUMING IT.
+-fp writes a policy & then re-tests what the policy was for. Writing an AppArmor profile &
+never re-testing the sandbox is how an operator ends up with a green permissions run & a
+server that refuses every conversion.
+
+A CHECK THAT CACHES MUST CACHE THE ANSWER, NOT THE ATTEMPT.
+A profile on disk is not a profile in force. Read the loaded set from securityfs rather than
+trusting that a file matching means a policy applied.
+-----------------------------------------------------------------------------------
+
+
+-----SHELL EXECUTION-----
+
+EVERY ARGUMENT IS ESCAPED WITH escapeshellarg(). EVERY ONE. NO EXCEPTIONS.
+A filename is the one thing a user fully controls, & it reaches clamscan, ScanCore & every
+converter. Cast a numeric setting before escaping it rather than trusting its type.
+
+A COMMAND IS BUILT ONCE & WRAPPED, NEVER ASSEMBLED IN PIECES ACROSS FUNCTIONS.
+sandboxCommand() takes a finished command & returns a sandboxed one. limitCommand() takes
+that & returns a resource limited one. Each wrapper knows nothing about the command inside
+it, which is why adding the resource ceiling touched one line & covered all twenty three
+call sites at once.
+
+A SANDBOX PROFILE NAMES ONE DEPENDENCY. The base sandbox carries what every dependency
+needs. Anything specific to one tool belongs in its profile, so a converter is never handed
+mounts belonging to another converter. An unrecognized profile gets nothing extra rather
+than everything, because a missing mount fails loudly & a spare one fails silently.
+-----------------------------------------------------------------------------------
+
+
+-----SYSTEM CONFIGURATION-----
+
+HRConvert2 WRITES SYSTEM FILES. -fp WRITES ALL BUT TWO, & ONLY AN UPDATE WRITES THOSE.
+
+  A PHP drop in at conf.d/99-hrconvert2.ini, for every SAPI whose program is installed. The
+  folder a removed PHP leaves behind is passed over, because nothing reads it.
+  An AppArmor profile named for the application, where the kernel can restrict unprivileged
+  namespaces. It is attached to the application's own copy of bubblewrap & to nothing else, &
+  only where no account but root could put a program at that copy's path.
+  That copy, at /usr/local/libexec/<application>/bwrap, which only root & the web server
+  user's group may run. --setup --install-depends, --update-depends & --install-complete write
+  it, & so does an update of the application, & nothing else does, so the program every sandbox
+  runs changes when the administrator updates something & at no other time.
+  Its own build of a dependency the package manager carries too old, in
+  /usr/local/libexec/<application>/builds, such as 7-Zip on Ubuntu 24.04. --setup
+  --install-depends & --update-depends build it, --update-depends & --uninstall-depends take it
+  away, all three take away what an interrupted run left, one run at a time, & nothing else
+  touches it. The package manager's copy is never changed for it.
+  A sysctl drop in holding only the kernel settings -fp had to change, & none at all where it
+  changed nothing.
+  The listener's systemd service unit, & the Environment Manager's where they are installed,
+  generated from the live configuration.
+  A systemd service & a timer for each command an application puts on a schedule, from v4.3.1,
+  where they are installed. --setup --install-service writes them, & nothing enables one.
+  A systemd drop in delegating cgroup controllers to the web server user.
+
+A FILE ANOTHER PROGRAM ALSO READS IS NOT CHANGED FOR THIS APPLICATION'S SAKE. Until v4.0.5 -fp
+wrote an ImageMagick policy over the host's policy.xml & extended the distribution's profiles
+for bubblewrap & OpenSCAD, & every program on the host ran under what was written. A policy a
+tool reads now travels with the pipeline that runs the tool, into that conversion's sandbox,
+& what an earlier release wrote is put back as it was. A setting the whole host shares, such as
+the kernel's AppArmor restriction on unprivileged namespaces, is changed only where nothing
+narrower works, & only where the configuration permits it.
+
+REPAIR NEEDS ROOT. EVERYTHING ELSE VALIDATES & REPORTS.
+The listener runs as the web server user & cannot repair anything, so a validator that tried
+would fail on every pass & fill the log. validateOperatingEnvironment() is read only & is
+called at listener startup, on the Resource Manager sweep, & at the end of -fp.
+
+NEVER EDIT A FILE A PACKAGE MANAGER OWNS. Write a drop in instead.
+php.ini edited in place is reverted by the next PHP upgrade, months later, with no obvious
+cause. A second AppArmor profile beside the distribution one leaves two attachments for one
+binary & no defined outcome, which is why this application's is attached to a copy of its own,
+as Ubuntu attaches its own profiles to Steam, Flatpak & Chrome, & never to a program a
+distribution ships.
+
+ASK A TOOL WHERE ITS CONFIGURATION LIVES. DO NOT GUESS.
+A distribution package puts the ImageMagick policy in /etc. A build from source puts it
+under its prefix. Guessing from a hardcoded list wrote a version 7 policy into a version 6
+directory that the running version 7 never read, so the policy did nothing & the one being
+read went on refusing every document coder.
+A policy a pipeline carries is named to the tool through the tool's own search path, which
+the tool always reads, such as MAGICK_CONFIGURE_PATH. Inside the sandbox it also covers the
+host's copy, where a package or a build keeps one & where the tool says it keeps one, which only
+stops that copy overriding it. Outside a sandbox the host's copy is read after it, so its
+ceilings hold & a host rule naming the same coder decides that coder.
+
+BACK UP ANYTHING NOT WRITTEN BY THIS APPLICATION BEFORE REPLACING IT.
+A file carrying no HRCONVERT2-POLICY-MARKER belongs to the distribution or the
+administrator. Copy it with a timestamp first, & refuse the write if the backup fails.
+
+UNLOAD BEFORE DELETING. Reloading AppArmor loads what is on disk & never unloads what is
+not. Deleting a profile first strands it in the kernel until a reboot, still attached to the
+binary & invisible to anything that only lists files. A profile replaced by one of the same
+name is replaced in the kernel by the load, which is how the profile attached to bubblewrap
+before v4.0.5 loses its attachment. Never sweep with aa-remove-unknown, which unloads every
+profile on the host that is not in /etc/apparmor.d, other applications' included.
+
+A BUILD WORKS IN A FOLDER OF ITS OWN, NEVER IN THE INSTALLATION & NEVER BY A FIXED NAME.
+A build script makes its folder with  mktemp -d "${TMPDIR:-/var/tmp}/<application>-<name>.XXXXXXXX"
+& removes it with  trap 'rm -rf "$WORK"' EXIT , so it is gone however the build ends. The manifest
+names it as bash & its quoted path, with no cd before it. A fixed name in a folder every account
+can write is one another account can make first, & a tree left in the installation is one root
+refuses to run once it holds a link. Until v4.0.6 FFmpeg's build left its tree in the installation
+& ImageMagick's built in /tmp by fixed names. A path an earlier release left in an installation is
+named in the contract's $EngineRetiredPaths, & -fp takes it away.
+-----------------------------------------------------------------------------------
+
+
+-----LANGUAGE PACKS-----
+
+A language pack is required from inside buildGUI(), so every string is a function local.
+Nothing outside that call can read them. This is deliberate & is what stops a stray string
+leaking into an unrelated part of the core.
+
+Simple logic is permitted in a language pack where localization requires it. Plural
+selection is the common case. Languages that do not inflect for number leave the plural
+helpers empty & write the sentence so it reads correctly for any count.
+
+A language name in a language selector appears as an ENDONYM, untranslated. A user who has
+landed on a language they cannot read must still recognize their own.
+
+Language packs must be UTF-8 with NO byte order mark. A BOM emits three bytes before any
+output & breaks header delivery.
+
+Never repeat a closing HTML tag that footer.php already supplies.
+-----------------------------------------------------------------------------------

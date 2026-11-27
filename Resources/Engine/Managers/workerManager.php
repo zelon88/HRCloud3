@@ -1,0 +1,118 @@
+<?php
+// / -----------------------------------------------------------------------------------
+// / Copyright Information ...
+// / HRProprietary Engine, Copyright on 9/4/2026 by Justin Grimes, www.github.com/zelon88
+// /
+// / License Information ...
+// / This project is protected by the GNU GPLv3 Open-Source license.
+// / https://www.gnu.org/licenses/gpl-3.0.html
+// /
+// / File Information ...
+// / v4.0.8.
+// / This file is the Worker Manager. It is a manager subcomponent of the Engine.
+// / The Worker Manager ends the worker it is told to end. The Resource Manager keeps the
+// / worker registry & finds a worker that has outlived its expected runtime.
+// /
+// / A manager is a role a long lived process runs under, with a socket & a place in a budget.
+// / This file holds what the role does.
+// / The sockets, messages, budget arithmetic, worker registry & identity checks are the Engine's, shared by every role.
+// / getAcceptedManagers() pins this file exactly, & loadEngineManager() loads it only for a process in this role.
+// /
+// / See Documentation/ABOUT_MANAGERS.txt for what each role is responsible for.
+// /
+// / <3 Open-Source
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / A component may only be loaded by an application.
+if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, A manager subcomponent cannot be loaded directly!'.PHP_EOL);
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / The version of this manager. Read by the Engine WITHOUT executing this file.
+$ManagerVersion = 'v4.0.8';
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / A function to run the Worker Manager loop.
+// / Accepts no arguments & does not return until the process is terminated.
+// / Returns TRUE when the loop exited cleanly.
+// / Worker Manager is the only component that may end a process without negotiation.
+function runWorkerManager() {
+  // / Set variables.
+  global $ManagerSocketTimeout, $ManagerMessageBatchSize, $Verbose, $EnableMemoryProtection;
+  $WorkerManagerExitedCleanly = FALSE;
+  $socketServer = FALSE;
+  $serverIsOpen = $keepRunning = $processWasTerminated = FALSE;
+  $socketPath = '';
+  $managerMessages = $managerConnections = $replyPayload = array();
+  $messagesReceived = $messageIndex = $killedCount = 0;
+  $lastLogRefresh = time();
+  $socketPath = buildManagerSocketPath('worker-manager');
+  list ($serverIsOpen, $socketServer) = openManagerSocketServer($socketPath);
+  if (!$serverIsOpen) errorEntry('The Worker Manager could not open its socket!', 31003, TRUE);
+  else {
+    logEntry('Worker Manager started.');
+    $keepRunning = TRUE;
+    while ($keepRunning) {
+      // / A manager runs for weeks, so it moves on to the logfile it should be writing now, once a minute.
+      $lastLogRefresh = refreshProcessLog($lastLogRefresh);
+      list ($messagesReceived, $managerMessages, $managerConnections) = receiveManagerMessages($socketServer, 'internal', (int)$ManagerMessageBatchSize, (int)$ManagerSocketTimeout);
+      $messageIndex = 0;
+      while ($messageIndex < $messagesReceived) {
+        $replyPayload = array('Approved' => FALSE, 'Reason' => 'Unrecognized worker request.');
+        if (isset($managerMessages[$messageIndex]['RequestType'])) {
+          if ($managerMessages[$messageIndex]['RequestType'] === 'kill') {
+            $processWasTerminated = terminateWorkerProcess(($managerMessages[$messageIndex]['WorkerPid'] ?? 0), TRUE, ($managerMessages[$messageIndex]['ProcessStartTime'] ?? 0));
+            if ($Verbose) logEntry('Worker Manager ended process '.(int)($managerMessages[$messageIndex]['WorkerPid'] ?? 0).'. Result: '.($processWasTerminated ? 'OK' : 'FAILED').'.');
+            $replyPayload = array('Approved' => $processWasTerminated, 'Reason' => $processWasTerminated ? 'Terminated.' : 'The process could not be terminated.'); }
+          else if ($managerMessages[$messageIndex]['RequestType'] === 'kill-every') {
+            $killedCount = killEveryWorker();
+            $replyPayload = array('Approved' => TRUE, 'Reason' => 'Terminated '.$killedCount.' process(es).', 'KilledCount' => $killedCount); } }
+        replyToManagerMessage($managerConnections[$messageIndex], $replyPayload, 'internal');
+        $messageIndex++; } }
+    $WorkerManagerExitedCleanly = TRUE; }
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $socketServer, $serverIsOpen, $keepRunning, $processWasTerminated, $socketPath, $managerMessages, $managerConnections, $replyPayload, $messagesReceived, $messageIndex, $killedCount, $lastLogRefresh);
+  return $WorkerManagerExitedCleanly; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to terminate every PHP process owned by the web server user.
+// / Accepts no arguments.
+// / Returns the number of processes terminated.
+// / This ends unrelated applications sharing the host. It is never called automatically.
+function killEveryWorker() {
+  // / Set variables.
+  global $ApacheUser, $ManagerSocketTimeout, $EnableMemoryProtection;
+  $ProcessesKilled = 0;
+  $processOutput = array();
+  $processExitCode = 1;
+  $processLine = '';
+  $processPid = 0;
+  $protectedPids = array();
+  $managerState = array();
+  $stateWasRead = FALSE;
+  // / The listener must survive its own instruction, so every manager is excluded.
+  list ($stateWasRead, $managerState) = readManagerState('managers');
+  $protectedPids[] = getmypid();
+  if (isset($managerState['CoreManagerPid'])) $protectedPids[] = (int)$managerState['CoreManagerPid'];
+  if (isset($managerState['Subordinates'])) foreach ($managerState['Subordinates'] as $processLine) $protectedPids[] = (int)$processLine;
+  exec('pgrep -u '.escapeshellarg($ApacheUser).' php 2>/dev/null', $processOutput, $processExitCode);
+  foreach ($processOutput as $processLine) {
+    $processPid = (int)trim($processLine);
+    if ($processPid > 1 && !in_array($processPid, $protectedPids, TRUE)) {
+      if (terminateWorkerProcess($processPid, TRUE, 0)) $ProcessesKilled++; } }
+  // / The registry lives in Resource Manager memory, so it is told to forget rather than
+  // / having a file emptied underneath it.
+  sendManagerMessage(buildManagerSocketPath('resource-manager'), array('RequestType' => 'kill-tracked'), 'internal', (int)$ManagerSocketTimeout);
+  warningEntry('Every process owned by '.$ApacheUser.' was terminated on request. '.$ProcessesKilled.' process(es) ended. Unrelated applications on this host were affected.');
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $processOutput, $processExitCode, $processLine, $processPid, $protectedPids, $managerState, $stateWasRead);
+  return $ProcessesKilled; }
+// / -----------------------------------------------------------------------------------
+
+?>

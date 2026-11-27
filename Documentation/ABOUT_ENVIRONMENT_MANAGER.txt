@@ -1,0 +1,315 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRProprietary Engine, Copyright on 9/7/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
+
+FILE INFORMATION ...
+v3.9.3.
+This plain text file describes the Environment Manager, what it is allowed to do, and the reasons it is shaped the way it is.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+systemd for the timer. Nothing else. It refuses to run without root.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Problem It Solves--
+
+EVERYTHING THAT CAN REPAIR THIS INSTALLATION NEEDS ROOT, & NOTHING THAT RUNS NEEDS ROOT.
+The web server runs as www-data. The four managers that make up the listener run as
+www-data. That is deliberate & is most of why a compromised dependency achieves so little.
+
+The cost is that a drifted AppArmor profile, a kernel setting somebody changed, a
+permission that moved, or a php.ini a distribution upgrade replaced can all be SEEN by the
+running application & repaired by none of it. validateOperatingEnvironment() reports them
+& says run -fp, which requires an administrator to read a log & type a command.
+
+An installation nobody is watching drifts until a conversion fails.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About What It Is--
+
+A ROOT PROCESS THAT WAKES ON A TIMER, LOOKS, & GOES BACK TO SLEEP.
+It is not a manager in the sense the other four are. It is not dispatched by the listener,
+it is not in getAcceptedManagers(), & it does not appear in the manager socket directory.
+The listener could not start it even if something convinced the listener to try, because
+the listener is www-data & this refuses to run as anything but root.
+
+It is started by a systemd timer & by an administrator running the command by hand.
+Those are the only two ways in. --setup --install-service & --install-complete write the timer
+& leave it off, so an administrator reads one pass before scheduling root, & then enables it.
+  sudo php <installation>/convertCore.php --run-environment-manager
+  sudo systemctl enable --now hrconvert2-environment.timer
+Until v4.0.6 only --install-complete wrote it, so a host whose listener --install-service had
+installed had no timer, & the manager never ran there.
+
+IT RUNS AGAIN AS OF v4.0.1, & IT IS THE FIRST RELEASE IN WHICH IT HAS RUN AT ALL.
+Until v4.0.1 every pass halted before it began. Its file was required from inside a function
+that did not declare $CoreLoaded, so the file's own guard never saw it & stopped the pass with
+Engine-35000 & exit status 0, & a timer read every pass as a success. Five things were put right
+before it was allowed to run, because a root process on a timer has to keep the two rules in
+ABOUT_MANAGED_LOCATIONS.txt every hour without anybody watching.
+
+  It is loaded by loadEngineRootManager(), which declares $CoreLoaded & pins it exactly through
+  getAcceptedRootManagers(). That list is not the one the listener dispatches from.
+  Its state left the web server account's socket folder, where root writes nothing, for the top
+  of the data location, which root owns. See What It Leaves Behind.
+  Its repair could restart a listener an administrator stopped & ignored the setting that keeps
+  configuration files alone. Both are now kept. See Watching Before Repairing.
+  A pass told only to watch would have repaired the sandbox profile while it booted & then
+  reported it as fine. It now checks it & leaves it alone.
+  Two passes cannot run at once. See One Pass At A Time.
+
+It exits 0 when a pass completed, whatever it found, & 1 when a pass could not run. A pass that
+found drift has done its job, which is to say so, & says so in root's log, in its state & in
+--status. A pass that could not run has not, & a timer reports it as failed.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Why It Has No Socket--
+
+THE OTHER FOUR MANAGERS LISTEN. THIS ONE NEVER DOES.
+A socket is a door, & a door on a root process is worth more to an attacker than everything
+else in this application put together. A worker that could ask a root process to repair a
+policy could ask it to repair a policy into something else.
+
+So it accepts no requests, reads no messages, & has no path anybody can write to. It reads
+the same environment every other component reads, decides for itself, & writes what it
+found where the web server account may read it & only root may write it.
+
+INFORMATION LEAVES IT & NOTHING ENTERS IT. That is the whole security model & it is worth
+more than any amount of validation on a request it does not accept.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Watching Before Repairing--
+
+IT REPORTS BY DEFAULT & REPAIRS ONLY WHEN AN ADMINISTRATOR SAYS SO.
+A root process that silently rewrites /etc on a timer is a liability even when every write
+is correct. The first release watches. Repair is a setting an administrator turns on
+deliberately, having read what it would have done.
+
+  $EnvironmentManagerMayRepair = FALSE   Look, log what drifted, change nothing.
+  $EnvironmentManagerMayRepair = TRUE    Look, log what drifted, & repair it.
+
+Repair, when enabled, is -fp's repair & nothing more. It is reached through the repair the
+application declares in $EngineRepairProvider, exactly as -fp reaches it, so there is no second
+implementation of a repair to disagree with the first.
+
+A REPAIR NOBODY IS WATCHING IS NOT QUITE THE ONE AN ADMINISTRATOR TYPED.
+The Engine sets $EngineRepairIsUnattended for the length of the repair, & the application's
+repair reads it. An unattended repair starts & enables no service, & rewrites the host
+configuration files this application owns only when --Environment Manager May Rewrite Configs--
+is TRUE. Everything else it does is exactly what -fp does. -fp itself never sees the flag.
+
+A WATCHING PASS CHANGES NOTHING IT CHECKS, ITS OWN BOOT INCLUDED.
+Every command checks the sandbox AppArmor profile while it boots, & none repairs it there. A
+pass's repair, when one is permitted & due, is -fp's & repairs the profile itself. Until v4.0.5
+every root command but a pass repaired it while it booted, -v among them. The three policy
+checks keep their result for the rest of a run, & a result found without permission to repair
+is checked again when a repair is permitted, so the check a pass made first cannot answer the
+repair with the failure it was asked to fix.
+One thing is not a check, & a pass does it while it boots exactly as -v does. It settles the
+install secret, which can write the key into a copy that does not carry it, or remove a copy not
+known to carry it that cannot be written. A data location another account holds stops a pass
+before that with ERROR 28008, as the gate stops every command run as root but a repair, because
+the installation is inside it. -fp takes it back.
+See ABOUT_MANAGED_LOCATIONS.txt, --About The Install Secret--.
+
+IT LOOKS EVERY HOUR & REPAIRS ONCE A DAY.
+A repair walks the data tree, rewrites configuration & touches services. Doing that hourly
+on an appliance costs real work for nothing, because a drift that survived one repair will
+survive the next one an hour later. What it needs is an operator.
+So the first pass of a day that finds a problem repairs it. Every later pass that day
+reports the same problem & changes nothing. The next day it tries once more.
+An installation repairing every day is telling you something. A log full of daily repairs
+says it; a log full of hourly ones buries it.
+
+A REPAIR IS LOGGED AS A WARNING, NEVER AS NORMAL ACTIVITY. Silence is what a correct
+environment sounds like.
+
+IT NEVER STARTS OR ENABLES A SERVICE.
+installListenerService() takes a start decision separately from an enable decision. Setup
+and -fp pass TRUE for both, because an installation with no listener running is not
+installed. An unattended repair passes FALSE for both, so the unit file is written & nothing
+else happens. A listener that is down stays down, a listener that was disabled stays disabled,
+& both are reported. For the same reason it skips the per conversion resource limits, because
+enabling lingering starts the web server account's own service manager.
+An administrator who stopped the listener to look at something has a reason, & watching it
+come back an hour later with no explanation is the worst kind of surprise a root process on
+a timer can produce. Until v4.0.1 the repair this manager called passed TRUE for both, so a
+permitted repair would have restarted it.
+
+WHAT A PERMITTED REPAIR ACTUALLY TOUCHES, STATED PLAINLY.
+  The role of every managed location, as -fp gives it. The code is walked & given to root.
+  A web location's own folder is corrected & nothing inside it is touched. The data root's own
+  folders are created if one is missing.
+  The DATA protection file, which lives in this application's own tree.
+  The loader, the protection page & the static files in the hosted location, which are this
+  application's own files too. A release unpacked there & not installed yet is left alone.
+  The build environment & the development documentation, when config.php asks for them to go.
+  The bootstrap script's DisabledByCore line, set when the script does not match this core &
+  cleared when it matches again. Nothing else in the script is changed.
+  The listener unit file, written but never enabled or started.
+And only when --Environment Manager May Rewrite Configs-- is TRUE.
+  99-hrconvert2.ini in the php conf.d, & hrconvert2.conf in the Apache conf-available, which
+  reloads Apache once the new configuration has passed its own test, & only while Apache is
+  running. Until v4.0.1 that reload started an Apache somebody had stopped.
+  The sandbox kernel settings & the drop in that keeps them across a reboot. From v4.0.5 the
+  drop in holds only what was changed, & one holding more is reported as outdated. One an
+  earlier release wrote held all three settings on every host, so it keeps a namespace line
+  only where the next boot would refuse namespaces without it.
+  The sandbox AppArmor profile, & the ImageMagick policy & the AppArmor additions an earlier
+  release wrote into the host, which a permitted repair puts back as they were.
+With it FALSE each of those is checked & reported, & left exactly as it was found.
+Every one of them is a file this application owns or a setting it needs. That is why
+--Environment Manager May Rewrite Configs-- defaults to TRUE while repair itself defaults to
+FALSE. Set it FALSE if you have tuned one of those files by hand, because a rewrite reverts it
+silently & you find out at the next conversion. Until v4.0.1 nothing read the setting at all.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About What It Looks At--
+
+IT DOES NOT DECIDE WHAT MATTERS. THE APPLICATION DOES.
+$EngineEnvironmentProvider names the function that reports on an application's environment,
+& the Environment Manager reads the same findings validateOperatingEnvironment() returns.
+There is one definition of what a healthy installation looks like & three things read it.
+
+The policies an application keeps on the host are named in $EnginePolicyChecks & reported by the
+Engine itself, from v4.2.4. For HRConvert2 those are the ImageMagick policy each pipeline carries &
+what confines OpenSCAD, which applicationEnvironmentFindings() in convertCore.php reported until
+then, & HRConvert2 names no environment provider.
+
+The Engine adds checks of its own, because each is something it provides. Bubblewrap must be
+able to build a namespace, & the bootstrap script must match the core or be disabled. A script
+from another release is reported as MISMATCHED & a permitted repair disables it, as -fp does.
+FROM v4.0.5 THE ENGINE ALSO CHECKS THE KERNEL SETTINGS & THE APPARMOR PROFILE EVERY SANDBOX
+NEEDS, which were the application's until then & are reported where they always were, first.
+On a kernel that restricts unprivileged namespaces, the restriction is reported as left in
+force when every sandbox runs the application's own copy of bubblewrap, which the profile is
+attached to, & as BLOCKED when that copy is missing or cannot be run, or cannot carry one &
+lifting it is not permitted. A pass never lifts it, & neither does a pass's repair, because
+lifting it changes what every program on the host may do & is -fp's alone. Where lifting is
+forbidden, a permitted repair switches back on a restriction HRConvert2 had lifted, & a pass reads
+it as outdated until then. Until v4.0.6 a pass read it as ok, so no pass ever repaired it. Where
+lifting is permitted, a restriction an earlier release lifted that the copy no longer needs lifted
+reads kept, which is benign, & names the command that switches it back on. Other programs on the
+host may rely on it by now, so switching it back on is the administrator's decision, & -fp lets
+the drop in go once it is on. Until v4.0.6 it read ok & said only that nothing was restricted.
+/etc/apparmor.d/bwrap reads kept too where no package installed it. Install guides before v3.8.0
+had an administrator write that profile, which lets any program on the host build a namespace
+through the system's bubblewrap. HRConvert2 does not use it, & neither a pass nor -fp changes it.
+The profile reads exposed where an account other than root could put a program at the copy's
+path, & a permitted repair takes it out. The copy has a line of its own. It reads MISSING where
+no sandbox can be built without it, UNSAFE where an account other than root could change it,
+NOT RUNNABLE where the web server's account cannot run it, ORPHANED where the bubblewrap it
+was copied from has been removed, & BEHIND where it is in use & the system's bubblewrap has
+been upgraded since it was copied. Neither a pass nor its repair changes the copy, so each
+pass warns until the dependency command its line names is run. The sysctl drop in has a line
+of its own wherever there is one.
+FROM v4.0.5 THE ENGINE ALSO CHECKS WHAT THE WEB SERVER SERVES, from the roles in the contract.
+Each served location is asked whether it hands its files over inert, which HRConvert2 reads as
+the DATA exposure test, & the data location & the hosted location are checked as before. They
+were the application's until then & are reported where they always were, after its own. A data
+location inside the document root is reported as MISPLACED, & a release unpacked over the
+hosted location & not installed as UNINSTALLED. A copy running from a folder the web server
+does not serve, unpacked to be installed, is NOT INSTALLED, where until v4.0.5 it was said to be
+served. A served location the contract places anywhere
+but inside the hosted location is refused & reported as MISPLACED on a placement line of its own,
+which never stands in for a location's exposure line.
+
+An application supplying no provider gets the Engine's own checks & a manager with very
+little to do, which is correct rather than broken.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About What It Leaves Behind--
+
+IT WRITES ONE STATE FILE & THAT FILE IS THE ONLY THING ANYTHING ELSE READS.
+The file records when it last ran, what it found, & what it repaired if anything.
+Every other component may read it. None of them may write it.
+
+That answers the question an operator actually asks, which is not whether the environment
+is healthy right now but whether anything has been quietly wrong since the last time
+somebody looked. --status asks it, as root or as the web server account.
+
+IT LIVES AT THE TOP OF THE DATA LOCATION, BESIDE A COPY OF THE INSTALL SECRET.
+  <data location>/hrconvert2-environment.state     root:<web server group> 0640
+Root owns that folder, so no other account can replace a name in it. The file is root's & only
+its group is the web server account's, so that account can read what a pass found & can never
+change it. Root writes it through the kernel, as a new file renamed into place, so a reader sees
+the last state or the new one & never part of either, & nothing planted at the name is followed.
+Every reader reads it through the kernel too. Engine was considered & refused, because no account
+but root can read anything inside it, which would hide the state from every reader it exists for.
+Secrets holds secrets & nothing else, & the state is not one, so it is not kept there either. The
+install secret sat beside the state alone until v4.0.4. It is kept in Secrets now, & a copy with
+the same key stays beside the state for every release that reads it there.
+Until v4.0.1 it was written into the web server account's socket folder, where root writes nothing.
+
+A state the pass cannot read counts as no repair today, so one is allowed, & the pass says why.
+
+IT REMOVES ROOT'S OWN OLD LOGFILES, EVERY PASS, WATCHING OR REPAIRING.
+Root logs to Engine, which no other account can read or clean, so nothing else would ever remove
+an old one, & an hourly pass would grow that folder forever. Every pass removes root's logfiles
+there older than thirty days, through the kernel, which follows no link. Only a name shaped like
+one of root's logfiles is considered, so the lock & the supply chain report are never touched.
+Thirty days is fixed rather than configured. Removing root's own files from root's own folder
+changes nothing about the host, which is why a watching pass does it too.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About One Pass At A Time--
+
+TWO PASSES NEVER RUN TOGETHER.
+A timer & an administrator can both start one, & two repairs at once would each correct what
+the other was correcting. A pass holds a lock for its whole length, environment.lock in Engine,
+opened through the kernel in root's own folder, where no other account can reach it. A pass that
+finds the lock held checks nothing, changes nothing, says so in root's log & exits 1.
+
+A pass also refuses until Engine exists, because it has nowhere to hold the lock. -fp creates it,
+& the gate refuses every root command but a repair on an installation another account could
+change, so the first pass after an upgrade from v4.0.0 always follows the -fp that makes it safe.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About What It Must Never Do--
+
+  It must never accept input from any source but its own configuration.
+  It must never run as anything but root, & must refuse rather than degrade.
+  It must never stay resident. It wakes, works, writes, & exits.
+  It must never repair anything -fp would not repair.
+  It must never start or enable a service.
+  It must never touch a user file, a session, or a conversion in progress.
+  It must never start, stop or signal a worker. That is the Resource Manager's work &
+  giving a root process the ability to signal www-data processes buys an attacker a
+  privilege boundary for free.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Fifth Manager That Is Not This One--
+
+LOG ROTATION & CLEANUP ARE NOT ROOT WORK & DO NOT BELONG HERE.
+They were considered for this manager & rejected. They operate on files www-data already
+owns, so they need no privilege, & putting them in a root process would mean a root process
+touching the data tree on a timer for no reason at all.
+
+They belong in a manager under the listener, alongside the other four, with a socket like
+its siblings. That is a separate piece of work & is not started by this document.
+
+The one exception is root's own logfiles in Engine. No account but root can remove them, so
+this manager does, & touches nothing of the web server account's to do it. See What It Leaves
+Behind.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,97 @@
+<?php
+// / -----------------------------------------------------------------------------------
+// / Copyright Information ...
+// / HRConvert2, Copyright on 9/22/2026 by Justin Grimes, www.github.com/zelon88
+// /
+// / License Information ...
+// / This project is protected by the GNU GPLv3 Open-Source license.
+// / https://www.gnu.org/licenses/gpl-3.0.html
+// /
+// / Application Information ...
+// / This application is designed to provide a web-interface for converting file formats on
+// / a server for users of any web browser without authentication.
+// /
+// / File Information ...
+// / v4.3.0.
+// / This file declares what the Subtitle conversion pipeline is & what it can do.
+// / It is read by pipelineCore.php on every request & it must stay cheap.
+// / It assigns variables & does nothing else, with no functions, no logic & no output.
+// / Error block 22000 through 22002 belongs to this pipeline.
+// / See Documentation/ABOUT_PIPELINE_COMPONENTS.txt for what each declaration means.
+// /
+// / <3 Open-Source
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / A component may only be loaded by the core.
+if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRConvert2-34000, A pipeline configuration cannot be loaded directly!'.PHP_EOL);
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / The version of this pipeline folder. Read without executing this file, then matched
+// / exactly against the pin in getAcceptedPipelines(). This version covers the whole
+// / folder, so pipeline.php beside it ships & moves with this file.
+$PipelineVersion = 'v4.3.0';
+
+// / What this pipeline is dispatched as. A conversion pipeline takes one file & returns
+// / the six value contract. An operation pipeline takes a selection & returns its own
+// / shape. An undeclared kind is a conversion pipeline.
+$PipelineKind = 'conversion';
+
+// / The family this implementation serves. The interface groups controls by this name.
+$PipelineFamily = 'Subtitle';
+
+// / The English fallback label. A language pack may translate it. Nothing breaks if none does.
+$PipelineDisplayName = 'Subtitle';
+
+// / Lower runs first when two implementations both claim a conversion.
+// / Subtitle sits above Document deliberately. Several subtitle formats are plain text &
+// / an installation that permits txt in both families would otherwise have the outcome
+// / decided by whichever folder the manager happened to read first.
+$PipelinePriority = 200;
+
+// / The function dispatch calls, whose name must be unique across every installed pipeline.
+// / It is defined in pipeline.php beside this file.
+$PipelineEntryPoint = 'convertSubtitles';
+
+// / The depends.php subsystem this pipeline needs. Dependency Core owns installation.
+// / This string must match a Subsystem name in depends.php exactly.
+// / Naming the subsystem rather than the package keeps one source of truth for the version.
+// / Four pipelines name this same subsystem: Audio, Video, Subtitle & Stream. All four ask
+// / the manifest for FFMPEG through verifiedToolPath(), so one minimum governs every one.
+$PipelineSubsystem = 'Audio, Video & Streams';
+
+// / Shared modules this pipeline needs, loaded before its converter is loaded.
+// / ffmpegDemuxers.php names the demuxers FFMPEG may read a file with, from v4.3.0.
+$PipelineSharedModules = array('ffmpegDemuxers.php');
+
+// / The request fields this pipeline actually reads.
+// / FFMPEG infers the subtitle format from the output file extension rather than from a
+// / flag, exactly as Calibre does for e-books, so the extension is the entire request.
+$PipelineRequestFields = array('Extension');
+
+// / What this pipeline can read & what it can write.
+// / These lists are informational while $SupportedFormatDetectionType is hardcoded-only.
+// / config.php is authoritative in that mode & $UserSubtitleInputArray with $UserSubtitleOutputArray decide what is offered,
+// / so an omission here cannot delete a conversion. They become authoritative in the
+// / detected modes.
+// / FFMPEG reads MicroDVD, JACOsub & MPL2 & has no encoder for any of them, so sub, jacosub & mpl2 are read & not written, from v4.2.8.
+$Capabilities = array(
+  'Input' => array('srt', 'ass', 'ssa', 'vtt', 'sub', 'sbv', 'smi', 'ttml', 'stl', 'jacosub', 'mpl2', 'pjs', 'realtext', 'subviewer'),
+  'Output' => array('srt', 'ass', 'ssa', 'vtt', 'ttml'));
+
+// / Pairs removed from the cross product above, written as 'input>output'.
+// / A conversion that produces the format it was handed is not a conversion.
+// / ass to ssa & ssa to ass are NOT excluded. SSA is the older revision of the same format
+// / & moving between them is a real change a user can legitimately want.
+$PipelineExclude = array(
+  'srt>srt', 'ass>ass', 'ssa>ssa', 'vtt>vtt', 'ttml>ttml');
+
+// / The tools this pipeline cannot run without, by their names in depends.php, from v4.2.1.
+// / A pipeline is offered only where one tool of each entry is installed. An array in it names tools any one of which will do.
+// / FFMPEG converts every subtitle, so nothing is converted without it.
+$PipelineRequiredDependencies = array('FFMPEG');
+// / -----------------------------------------------------------------------------------
+?>

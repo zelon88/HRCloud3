@@ -1,0 +1,113 @@
+<?php
+// / -----------------------------------------------------------------------------------
+// / Copyright Information ...
+// / HRConvert2, Copyright on 8/17/2026 by Justin Grimes, www.github.com/zelon88
+// /
+// / License Information ...
+// / This project is protected by the GNU GPLv3 Open-Source license.
+// / https://www.gnu.org/licenses/gpl-3.0.html
+// /
+// / Application Information ...
+// / This application is designed to provide a web-interface for converting file formats on
+// / a server for users of any web browser without authentication.
+// /
+// / File Information ...
+// / v4.3.4.
+// / This file declares what the Document conversion pipeline is & what it can do.
+// / It is read by pipelineCore.php on every request & it must stay cheap.
+// / It assigns variables & does nothing else, with no functions, no logic & no output.
+// / Error block 2005, 7000 through 7001 belongs to this pipeline.
+// / See Documentation/ABOUT_PIPELINE_COMPONENTS.txt for what each declaration means.
+// /
+// / <3 Open-Source
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / A component may only be loaded by the core.
+if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRConvert2-34000, A pipeline configuration cannot be loaded directly!'.PHP_EOL);
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / The version of this pipeline folder. Read without executing this file, then matched
+// / exactly against the pin in getAcceptedPipelines(). This version covers the whole
+// / folder, so pipeline.php beside it ships & moves with this file.
+$PipelineVersion = 'v4.3.4';
+
+// / What this pipeline is dispatched as. A conversion pipeline takes one file & returns
+// / the six value contract. An operation pipeline takes a selection & returns its own
+// / shape. An undeclared kind is a conversion pipeline.
+$PipelineKind = 'conversion';
+
+// / The family this implementation serves. The interface groups controls by this name.
+$PipelineFamily = 'Document';
+
+// / The English fallback label. A language pack may translate it. Nothing breaks if none does.
+$PipelineDisplayName = 'Document';
+
+// / Lower runs first when two implementations both claim a conversion.
+// / Document sits BELOW Subtitle & Ebook on purpose. Several subtitle formats are plain
+// / text & several e-book formats are markup, so an installation permitting txt or html in
+// / more than one family would otherwise have the outcome decided by directory read order.
+// / A user who wanted the document treatment reaches it through the document menu.
+$PipelinePriority = 600;
+
+// / The function dispatch calls, whose name must be unique across every installed pipeline.
+// / It is defined in pipeline.php beside this file.
+$PipelineEntryPoint = 'convertDocuments';
+
+// / The depends.php subsystem this pipeline needs. Dependency Core owns installation.
+// / This string must match a Subsystem name in depends.php exactly.
+// / Naming the subsystem rather than the package keeps one source of truth for the version.
+$PipelineSubsystem = 'Documents';
+
+// / Shared modules this pipeline needs, loaded before its converter is loaded.
+// / The OCR pipeline declares this same module & that is the point.
+// / convertWithLibreOffice(), sanitizeDocumentLinks(), neutralizeDocumentReferences() &
+// / verifyDocumentConversionEngine() have callers in both pipelines. Neither one can own
+// / them without making the other depend on it, so they live in the shared module & are
+// / loaded once for whichever pipelines a request happens to need.
+$PipelineSharedModules = array('libreOffice.php');
+
+// / The request fields this pipeline actually reads.
+// / LibreOffice infers the output format from the target extension passed to --convert-to,
+// / so the extension is the entire request. A height, a width, a rotation & a bitrate are
+// / all handed over by dispatch & all four are discarded by PHP.
+$PipelineRequestFields = array('Extension');
+
+// / What this pipeline can read & what it can write.
+// / These lists are informational while $SupportedFormatDetectionType is hardcoded-only.
+// / config.php is authoritative in that mode & its document, spreadsheet, presentation & XPS input & output lists decide what is offered,
+// / so an omission here cannot delete a conversion. They become authoritative in the
+// / detected modes.
+// / xps & oxps are inputs only. They are handled by the xpstopdf branch in the converter
+// / rather than by LibreOffice, & nothing here writes them back out.
+// / pdf, potx, potm, pot & ppa are read, & potx, potm & pot written, from v4.2.8, as config.php has long offered. ppa is not written.
+$Capabilities = array(
+  'Input' => array('doc', 'docx', 'docm', 'dot', 'dotx', 'odt', 'ott', 'fodt', 'rtf', 'txt', 'pdf', 'html', 'htm', 'xml', 'wpd', 'abw', 'pages', 'xls', 'xlsx', 'xlsm', 'ods', 'ots', 'fods', 'csv', 'ppt', 'pptx', 'pot', 'potx', 'potm', 'ppa', 'odp', 'otp', 'fodp', 'xps', 'oxps'),
+  'Output' => array('pdf', 'doc', 'docx', 'odt', 'ott', 'fodt', 'rtf', 'txt', 'html', 'xml', 'epub', 'xls', 'xlsx', 'ods', 'csv', 'ppt', 'pptx', 'pot', 'potx', 'potm', 'odp'));
+
+// / Pairs removed from the cross product above, written as 'input>output'.
+// / A conversion that produces the format it was handed is not a conversion. LibreOffice
+// / will open it & write it back out, & the result is a reflowed copy of what the user
+// / already had rather than the file they uploaded.
+// / pdf to txt is excluded, from v4.2.8. LibreOffice opens a PDF as a drawing, & a drawing has no plain text to write, so it wrote nothing.
+// / The E-Book family converts it, & a request the Document menu sends for it is converted there.
+$PipelineExclude = array(
+  'doc>doc', 'docx>docx', 'odt>odt', 'ott>ott', 'fodt>fodt', 'rtf>rtf', 'txt>txt', 'pdf>pdf', 'pdf>txt',
+  'html>html', 'xml>xml', 'xls>xls', 'xlsx>xlsx', 'ods>ods', 'csv>csv',
+  'ppt>ppt', 'pptx>pptx', 'pot>pot', 'potx>potx', 'potm>potm', 'odp>odp');
+
+// / What this pipeline shells out to, from v4.3.4. Names must match the manifest exactly.
+// / Shared/libreOffice.php converts with LibreOffice, strips a document's external references with PHP Zip first, & finds
+// / a running LibreOffice with pgrep & head, which are Procps & Coreutils. xpstopdf, which is GXPS Utils, converts an XPS file.
+// / Bubblewrap is named because both converters run in the sandbox.
+$PipelineDependencies = array('LibreOffice', 'GXPS Utils', 'PHP Zip', 'Coreutils', 'Procps', 'Bubblewrap');
+
+// / The tools this pipeline cannot run without, by their names in depends.php, from v4.2.1.
+// / A pipeline is offered only where one tool of each entry is installed. An array in it names tools any one of which will do.
+// / LibreOffice converts every document, spreadsheet & presentation, so nothing is converted without it.
+$PipelineRequiredDependencies = array('LibreOffice');
+// / -----------------------------------------------------------------------------------
+?>

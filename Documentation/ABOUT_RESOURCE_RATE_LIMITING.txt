@@ -1,0 +1,564 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRProprietary Engine, Copyright on 8/17/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
+
+FILE INFORMATION ...
+v3.8.3.
+This plain text file describes resource rate limiting, how it works, and how to make use of it.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+Resource rate limiting requires no dependency that the Engine does not already require.
+Per conversion resource ceilings additionally require systemd, which is present on Debian by default.
+An installation without systemd runs normally & falls back to scheduling priority.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Resource Rate Limiting--
+
+HRConvert2 has no request rate limiting of its own. A busy server accepts every conversion it is
+offered & will happily accept more work than the hardware can perform.
+
+Resource rate limiting adds a budget mechanism that lets config.php place limits on resource
+intensive operations. It is optional & is enabled by default.
+
+WHEN IT IS DISABLED, HRCONVERT2 BEHAVES EXACTLY AS IT ALWAYS HAS.
+Nothing is checked, nothing is refused & no additional process runs. This is the default & is
+the correct configuration for a single user installation or a lightly loaded server.
+
+When it is enabled, a listener holds a budget, hands out permission to convert, tracks the
+conversions it approved & reclaims the budget when they finish.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Listener--
+
+The listener is the four manager roles under Resources/Engine/Managers. coreManager.php is the
+one an operator starts, & it starts the other three.
+
+Each role file is a manager subcomponent of the Engine. The Engine pins it in
+getAcceptedManagers & loads it only in a process dispatched to that role, & convertCore.php runs
+perfectly well without any of them.
+
+A role's version must match the version the Engine accepts EXACTLY. A role built for another
+release may call Engine functions that have since changed, so a mismatch is refused & resource
+awareness becomes unavailable.
+
+The listener is four separate PHP processes, all started by one command:
+
+  Core Manager
+      Supervises the other three & restarts any that die.
+      Routes every request to whichever manager is responsible for answering it.
+      Holds no budget, no registry & no session map of its own.
+
+  Request Manager
+      Owns the only socket a worker is permitted to address.
+      Decrypts, validates & forwards worker requests to the Core Manager.
+      Refuses any request type a worker is not allowed to issue.
+
+  Resource Manager
+      Owns the resource budget, the worker registry & the session to location map.
+      Polls the host & recalculates the budget on an interval.
+      Decides which data location a session uses.
+      Finds workers that have outlived their runtime & asks for them to be ended.
+
+  Worker Manager
+      Holds no state at all.
+      Ends what it is told to end.
+      The only component permitted to act on a process without negotiation.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Socket Communication--
+
+Every manager listens on a unix domain socket inside a Sockets directory in the data location.
+The directory is created 0700 & is owned by the web server user. It is never inside the web root.
+
+REQUESTS ARE ONE WAY. A worker may only send to the Request Manager socket.
+There is no address a worker can send to that reaches another worker, from a web request, from
+the command line or from userspace. This is deliberate & is not a limitation to be worked around.
+
+Every message is encrypted with AES-256-GCM using a key derived from the install secret & the
+channel it travels on. Every message carries a timestamp & a nonce, & a message older than
+thirty seconds, $ManagerMessageSkew, is discarded as a replay.
+
+A reply travels back on the connection the sender opened. Nothing needs to be addressable to
+receive an answer.
+
+Messages are accepted in batches of up to thirty two, $ManagerMessageBatchSize, per loop, so a
+busy listener is not paying for one accept cycle per request.
+
+Unix domain sockets do not cross hosts. A front end & a listener on separate servers is not
+supported by the current transport, though shared storage between servers is.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Startup Keys--
+
+Every core to core startup call is cryptographically keyed against the install secret.
+
+The key is a launch number drawn at random & an HMAC over the purpose being authorized, a
+time bucket of ten seconds, set by $StartupKeyWindow in engineConfig.php, & that number. The
+current & the previous bucket are both accepted, because launching a process is not instant.
+A key is therefore useless a few seconds after it is created, & every launch has its own.
+
+THE STARTUP KEY IS NEVER PRINTED & IS NEVER WRITTEN TO THE LOG.
+Anything that captured console output or a logfile would otherwise be handed a working key.
+
+A standard command line user holds a per user secret rather than the install wide secret, in a
+folder of its own in the temporary directory. A per user secret cannot derive a valid startup
+key, so a standard user cannot start a listener that any worker would ever talk to. The web
+server user holds the install secret for the listener's commands, so it can.
+
+The --start-core-manager & --start-manager arguments are internal. They are invoked by the -l
+argument with a key & are refused without one. They are deliberately absent from -h.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Resource Budget--
+
+The budget is measured in arbitrary cost units. The host is polled every --Resource Poll
+Interval-- seconds, & the budget is worked out from that poll & the operations in flight each
+time one asks for it, from three figures:
+
+  A base budget.
+      --Total Resource Budget-- when it is set.
+      One hundred units per processor when it is set to 0.
+
+  A reserve.
+      --Reserve Resource Percentage-- of the base, never handed to a conversion.
+      This is what keeps the server answering requests while it is fully loaded.
+
+  A pressure penalty.
+      Scaled to whichever of load average or memory usage is under more pressure.
+
+An idle server throttles nothing. A loaded server stops accepting work before it falls over.
+
+Until v4.0.6 the budget was worked out only as the host was polled, so every request between two
+polls was judged against the same remaining budget, however many of them had been approved since.
+
+TEN OPERATIONS TAKE A BUDGET. Conversion, archiving, extraction, stripping metadata, merging,
+splitting, OCR, Identify, a fetch from a URL & the user virus scan. Until v4.1.2 this said four,
+though a fetch from a URL already took one, & until v4.1.8 it said six, though extraction took
+one from v4.1.7. Deleting & renaming take none, because deleting is how space is freed & a
+rename writes nothing new, so both still work once a disk is within --Storage Reserve--.
+A workflow's step takes the budget its operation's button takes, so its Delete & Rename steps
+take none either.
+
+Only conversion did so originally. Archiving, OCR & scanning ran unmetered, which understated
+the load twice over; they were never held back when the machine was full, & because they took
+nothing they also counted for nothing, so a machine saturated by them still reported itself idle
+& kept approving conversions on top of the work already running.
+
+Each declares the same --Default Conversion Cost-- & --Default Expected Runtime--. They are not
+weighted against each other. Weighting would be more precise, but there are no measurements
+behind a number claiming an archive costs half of an OCR, & an invented constant in a limiter is
+worse than an honest uniform one. An administrator needing finer control has the per conversion
+ceiling table.
+
+An operation requests a budget before it begins, declaring a cost & an expected runtime. The
+request is refused when the runtime exceeds --Maximum Expected Runtime--, when the tracked worker
+count has reached --Maximum Concurrent Workers--, or when the remaining budget is smaller than
+the cost requested.
+
+EVERY REQUEST IS REFUSED WHILE 1% OR LESS OF THE USER NAMESPACES ARE FREE.
+Every sandbox is a user namespace, & the kernel refuses a new one once the web server account
+holds user.max_user_namespaces of them. The Resource Manager counts that account's user
+namespaces at each poll. It warns once 10% or less are free, & raises ERROR 31025 & refuses work
+once 1% or less are. A conversion is refused before its sandbox could fail, & says why.
+
+EVERY REQUEST IS REFUSED WHILE THE DISK HOLDING ITS SESSION IS WITHIN THE STORAGE RESERVE.
+A budget request names the data location its session writes to. The Resource Manager measures the
+disk holding it when asked, & refuses the request while that disk has --Storage Reserve-- megabytes
+free or less. See About Storage below.
+
+A refused operation is not an error. Nothing failed & nothing was attempted. The core writes a
+warning naming the operation & prints the same alert string a refused conversion prints, which
+carries no ERROR!!! tag. An interface recognises it by the alert string rather than by the tag.
+
+An approved request is registered & is issued a budget token. The worker returns that token when
+the operation finishes & the budget is reclaimed immediately. The return is registered as a
+shutdown handler the moment the token is issued, so an operation that dies part way through still
+returns what it borrowed rather than leaving it for the reaper.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Storage--
+
+THE RESOURCE MANAGER WATCHES THE FREE SPACE ON EVERY DISK HOLDING A DATA LOCATION.
+It measures each one every --Resource Poll Interval--. Locations on one disk are measured as one,
+because they share one free space. Free means free to the web server account, so the blocks a
+filesystem keeps for root are not counted.
+
+  ok       More than --Low Storage Warning-- percent of the disk is free.
+  low      That share or less is free. A warning is logged once.
+  spent    --Storage Reserve-- megabytes or less are free. ERROR 31026 is logged once, & nothing
+           more is written to the disk until more is free.
+  unknown  The disk could not be measured. A warning is logged once, & nothing is refused for want
+           of a measurement.
+
+A recovery is logged once too. Every change of state is logged once, never at every poll.
+
+WHAT IS REFUSED WHILE A DISK IS SPENT.
+Every operation that takes a budget, because each one may write. An upload takes no budget, because
+it is the network that limits it, so it asks the listener before it writes, naming the bytes it
+holds. An upload that would leave the disk within the reserve is refused, even on a disk that is not
+spent yet. A refused upload fails as any other failed upload does, with ERROR 18, & the warning above
+it says why. Downloads, deletes & every page still work, because deleting is how space is freed.
+
+A disk is measured when a request asks, not read from the last poll, because a disk can fill between
+two polls. A request may only name a configured data location. Any other is answered for the primary,
+so a request cannot have the web server account measure a path of its choosing.
+
+THE RESERVE IS NOT A GUARANTEE.
+An operation that started before the reserve was reached may still finish, & what it writes comes
+out of the reserve. Keep the reserve larger than the largest file a conversion here writes.
+
+NOTHING IS MEASURED WITHOUT THE LISTENER.
+The listener runs once an installation is set up, so an installation, -fp & --setup measure nothing
+& refuse nothing, & neither does a command run at the command line. With no listener every write goes
+ahead as it always has. --Require Resource Awareness-- refuses an upload the listener does not answer,
+as it refuses a budget request.
+An answer that names no state for the disk measured nothing, & is treated as no answer. A listener
+still running a release from before v4.1.3 gives one, because its Request Manager refuses the storage
+request type, so uploads go ahead while it runs, & the log says to restart it.
+
+QUOTAS ARE NOT KEPT YET. THE HOOKS ARE.
+Every budget & storage request names an owner, which storageQuotaOwner() supplies & which is empty
+for every request until the Authentication Manager signs users in. The Resource Manager asks
+evaluateStorageQuota() about that owner after it has measured the disk, & it allows every write
+until that manager keeps a quota for each owner.
+
+--status as root reports each disk, its state & its free space, & the reserve.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Worker Lifecycle--
+
+The Resource Manager scans its registry every --Worker Reap Interval-- seconds.
+
+A tracked worker is stale when its process no longer exists, which means it never sent its
+completion message, or when it has outlived its expected runtime plus --Worker Stale Grace
+Period--. A stale worker is handed to the Worker Manager to be ended & its budget is reclaimed.
+
+A conversion that needs longer may request an extension. An extension is granted up to
+--Maximum Runtime Extensions-- times & never beyond --Maximum Expected Runtime--.
+
+The grace period exists because a conversion that is merely slow must not be reaped. Keep it
+generous. A reaped conversion is a lost conversion.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Data Locations--
+
+$ConvertLoc is always a string & always resolves to something usable. It represents the data
+location THIS WORKER will use for THIS CONVERSION, which holds true with or without a listener.
+
+--Additional Data Locations-- adds further locations, each declared as an array of a path & a
+type:
+
+  roundrobin
+      Joins the distribution. New sessions are spread across the pool by session identifier,
+      which needs no shared counter & therefore works across front ends that never speak.
+
+  leastactive
+      Joins the distribution. If ANY location declares this type, the whole pool is selected by
+      fewest sessions held rather than by identifier.
+
+  redundant
+      A standby. Takes a session only when every other location is unusable.
+
+--Data Storage Directory-- IS ALWAYS A MEMBER OF THE POOL & IS ALWAYS ITS PRIMARY.
+It is never declared under --Additional Data Locations--. It joins the distribution & it is
+swept on the same schedule as every other member. Declaring it again as an additional location
+changes nothing & its second declaration is skipped as a duplicate, with the type on that
+second declaration discarded. Declare each location exactly once.
+
+A SESSION IS ASSIGNED A LOCATION ONCE & KEEPS IT FOR ITS WHOLE LIFE.
+Load balancing happens at the session level & never at the conversion level. A session that
+moved would leave the user files behind.
+
+The listener holds the session to location map, so every front end sharing the install secret
+gets the same answer for the same session. The map is a cache & not the record. When it has no
+entry, an existing session directory is discovered on disk before anything is distributed, so a
+listener that restarted in the middle of a session still returns the location holding the files.
+
+With no listener running, --Data Storage Directory-- is used. This is the standalone behaviour.
+
+The socket directory is pinned to --Data Storage Directory-- & never moves with a session, or a worker
+& a manager would look for each other in different places.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Scheduled Storage Cleanup--
+
+The Resource Manager sweeps every configured data location every --Storage Cleanup Interval--
+seconds, using --File Deletion Age Threshold-- to decide what has expired. Every configured
+location means --Data Storage Directory-- as well as every entry under --Additional Data Locations--.
+
+A LOCATION MISSING FROM THE SWEEP KEEPS ITS EXPIRED SESSIONS FOREVER.
+Nothing else deletes them. The clean calls in convertCore.php only ever sweep the location the
+running request was assigned, so a location that no session is being assigned to is not reached
+by them either. Run the Resource Manager with --Enhanced Logging Verbosity-- on & read the Scheduled sweep lines to
+confirm every location you configured is listed.
+
+The sweep uses the same cleaning function the ordinary clean calls use. Those calls remain in
+convertCore.php & are what a standalone installation relies on. They are redundant when a
+listener is running & are required when one is not.
+
+Only the shared data locations are swept. The temporary location lives inside the installation
+directory, so it belongs to one front end & each front end cleans its own.
+
+Set --Storage Cleanup Interval-- to 0 to disable the scheduled sweep entirely.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Per Conversion Resource Ceilings--
+
+--Enable Per Conversion Limits-- runs every conversion inside a transient systemd scope carrying
+a processor & memory ceiling, so one conversion cannot starve the host.
+
+EVERY EXPENSIVE OPERATION RUNS INSIDE A CEILING, NOT ONLY FORMAT CONVERSION.
+Anything that goes through sandboxCommand() has always been wrapped, which covers document,
+image, video, audio, archive, model, drawing, SVG, subtitle, stream, OCR & ebook work. Three
+pipelines built their own command & walked around the wrapper along with it, & each of them is
+among the most expensive things the application does:
+
+  ClamAV        Ran raw. A signature database is well over a gigabyte once it is loaded.
+  ScanCore      Ran raw. It carried a PHP memory_limit & nothing else.
+  OpenSCAD      Ran under a fixed nice -n 19 & no memory ceiling at all.
+
+All three now resolve a ceiling the same way every other pipeline does.
+
+A PHP memory_limit is not a ceiling & does not replace one. It is a budget a child interpreter
+imposes on itself & honours only while it is behaving, & it never sees the allocations PHP does
+not count. A cgroup ceiling is imposed from outside & holds whatever the process does. ScanCore
+had the weaker of the two & now has both.
+
+For ClamAV & ScanCore the ceiling wraps the SCANNER & not the shell pipeline it sits in. Putting
+the pipe inside the scope would measure a shell rather than a scanner & would hold the unit open
+for the wrong process.
+
+OpenSCAD previously carried a hardcoded nice -n 19, & replacing it with the configured ceiling is
+not strictly stronger on every host. Where a scope can be created it is far stronger, because a
+CPUQuota is enforced against a cgroup instead of requested from the scheduler. Where no scope can
+be created the niceness is derived from the configured processor share instead, so the stock
+Scad entry of '75,1024' yields less than a fixed 19 did. Set a smaller processor share for Scad
+to get a larger niceness back.
+
+--Maximum Per Conversion Resources-- declares the ceiling for each conversion type as a string of
+a processor percentage & a memory ceiling in megabytes, comma separated. The processor figure is
+a percentage of ONE processor, so 200 is two whole cores. A type that is not listed falls back to
+--Default Per Conversion Resources--, unless the core carries a built-in for it.
+
+A BUILT-IN CEILING EXISTS FOR ANY TYPE THE CORE KNOWS THE GENERAL DEFAULT WOULD BREAK.
+config.php is accepted at or above a minimum version, so a server can take a newer core & keep
+the configuration file it already had. A type the core learned about after that file was written
+is a type the file cannot name, & it would fall to the general default.
+
+For Scan that default is not merely tight, it is fatal. A ClamAV signature database does not fit
+inside 512M, so the kernel kills the scan rather than slowing it, & every virus scan on that
+server fails from the moment the core is updated. The core therefore carries its own Scan ceiling
+& uses it when config.php names none, writing a warning that says which value it used & how to
+set the value yourself. Anything an administrator DOES set always wins.
+
+The resolution order is the listener's scaled table, then --Maximum Per Conversion Resources--,
+then the core's built-in for that type, then --Default Per Conversion Resources--.
+
+These are MAXIMA. With a listener running each is scaled down by what the host has free, &
+never below --Minimum Per Conversion Resources--. With no listener they are used unchanged.
+
+  The processor share shrinks with load, & is split between the conversions in flight & the new one.
+  The memory ceiling is what the host has available, less --Reserve Resource Percentage--, split
+  the same way, & never more than the configured ceiling. A kernel that does not report available
+  memory gives each conversion its split of the configured ceiling instead.
+
+A conversion counts only those already in flight. Until v4.0.6 the listener registered the new
+conversion before it scaled, so a conversion on its own counted itself & was given half. Both
+ceilings also shrank by whichever of load or memory in use was higher, as a share of the ceiling,
+so a desktop with half its memory in use halved every memory ceiling again while gigabytes stood
+free. LibreOffice was killed inside the 137M a 512M document ceiling had become.
+
+A conversion killed inside its ceiling exits 137. LibreOffice's is named in a warning from v4.0.6,
+& each pipeline's error says its converter produced no file after every attempt.
+
+SCAN'S MEMORY IS NEVER SCALED. Only its processor share is. A scanner needs the memory its loaded
+signature database takes, & neither the file nor the load changes that, so a smaller ceiling does
+not slow a scan, it has the kernel kill it. Until v3.9.9 it was scaled with the rest, & a quiet
+server with one scan in flight gave ClamAV 740M of 2048M. Whether a scan may start at all is the
+budget's decision. A scanner that is killed is logged with its exit status, 137 for a kill.
+
+A LARGE FILE DOES NOT RAISE WHAT A SCAN NEEDS. Each scanner is sized to its ceiling when it is
+dispatched, & a file it cannot finish is reported as not scanned, never as clean.
+
+  ClamAV      The ceiling must hold its signature database, & no argument shrinks that. A large
+              file adds little. ClamAV reads it through a mapping the kernel can reclaim, & what
+              it unpacks goes to a private folder in the conversion location rather than to the
+              sandbox's /tmp, which is always memory & is counted against the ceiling. A
+              conversion location on a RAM disk counts against it the same way.
+              Its limits follow the file. The size limit is four times the file, never below
+              ClamAV's own 400M default & never above the 2047M it can scan. The file count &
+              the time limit grow by the same factor, & the time limit also stretches for a
+              processor share under one whole processor. A file of 100M or less keeps ClamAV's
+              400M & 10000 file defaults. A limit ClamAV reaches is logged by name. A file over
+              2047M is refused before the signature database is loaded.
+  ScanCore    Reads a file larger than one chunk a chunk at a time, inside the memory limit it
+              is given. That limit is --User Virus Scanning ScanCore Memory Limit-- or the
+              ceiling less 64M, whichever is smaller. ScanCore holds about three chunks at once,
+              so the chunk is held to a quarter of the limit, & a larger configured chunk is
+              reduced with a warning. Until v3.9.9 the shipped 128M chunk inside a 256M limit
+              ended every scan of a file over 128M in a PHP fatal error.
+
+The scope wraps the SANDBOX rather than the tool inside it, so the ceiling covers bubblewrap &
+every process it goes on to create.
+
+A conversion that reaches its memory ceiling is killed by the kernel & is reported as a failed
+conversion rather than as a memory error. Keep the ceilings generous.
+
+THE WEB SERVER USER CANNOT CREATE A SYSTEM SCOPE & MUST NOT BE GIVEN PERMISSION TO.
+An account holding systemd manage-units can start a transient service as root. Granting that to
+the account which parses uploaded documents turns a converter vulnerability into a route to root.
+
+HRConvert2 uses a user manager instead. A user manager governs only the cgroup subtree systemd
+delegated to it & cannot start a unit as any other account, so nothing it grants can be turned
+into privilege. Running the -fp argument as root enables lingering for the web server user &
+writes the delegation drop-in that a processor quota requires. Without that drop-in a processor
+quota is silently ignored.
+
+The mechanism actually in use is reported by -v & is written to the log for each conversion:
+
+  user        A user scope. This is the correct configuration.
+  system      A system scope. An operator configured this deliberately. Remove it.
+  none        No scope. The conversion is deprioritized with nice & has no memory ceiling.
+
+Limits are keyed by conversion type but are resolved from the sandbox profile of the tool being
+run. This is exact for LibreOffice, ImageMagick & Tesseract. It is approximate for FFMPEG, which
+serves audio, video, subtitles & streams, & which is charged at the heaviest of them.
+
+Two profiles can share one type where an administrator would not want to tell them apart. ClamAV
+& ScanCore both resolve to Scan, in the same way LibreOffice & Poppler both resolve to Document.
+What is being tuned is what a scan may claim, not which scanner claimed it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Fallback Behaviour--
+
+EVERY FAILURE IN THIS SUBSYSTEM FAILS OPEN.
+
+A conversion proceeds when the component is missing, when the component version does not match,
+when no listener is running, when a socket cannot be reached, & when a request is delivered but
+no usable reply comes back. Each of those is recorded as a warning & the conversion runs.
+
+Only an explicit answer is permitted to refuse a conversion. A listener that is slow or broken is
+not a budget that declined.
+
+--Require Resource Awareness-- inverts this for an operator who would rather refuse work than
+accept work they cannot account for. With it set, an unavailable component halts the application
+instead of degrading, & a conversion the listener gives no answer for is refused.
+
+A resource ceiling is a courtesy to the host & is not a security control. The sandbox is the
+security control. Nothing in this subsystem is load bearing for safety.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Slow Uploads--
+
+THE BUDGET METERS CONVERSIONS. IT DOES NOT METER THE WEB SERVER.
+Apache holds a worker for as long as an upload takes. Ubuntu's mod_reqtimeout keeps reading a
+request body while 500 bytes or more arrive each second, & prefork starts at most 150 workers by
+default. A client sending 150 uploads that slowly holds every worker, & needs about 75 KB/s to do
+it. No conversion starts, so the budget never sees it.
+
+HRConvert2 caps an upload at 5000M, in PHP & in its Apache configuration. It does not limit how
+long an upload may take, because RequestReadTimeout applies to the whole server & every site on
+it. That is the administrator's call. A minimum rate of 50000 bytes a second costs a slow client
+a hundred times as much, & fails any upload slower than about 400 Kbit/s.
+
+  RequestReadTimeout body=20,minrate=50000
+
+It replaces the body line in /etc/apache2/mods-available/reqtimeout.conf, & applies once Apache
+reloads. MaxRequestWorkers raises the number of workers, & each one costs memory.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Command Line Operation--
+
+Listener commands require root or the web server user:
+
+  -l, --listen                Start the resource listener.
+  -k, --kill                  Stop the resource listener & every manager it started.
+  -k <worker-id>              End one worker by budget token or process identifier.
+  --kill-all-workers          End every tracked conversion in progress.
+  --kill-every-worker         End every PHP process owned by the web server user.
+  -y, --yes                   Skip the confirmation prompt on the two above.
+  --status                    Report listener & resource budget state. Available to any user.
+  -fp, --fix-permissions      Correct ownership & permissions, & enable conversion limits. Root only.
+
+--kill-every-worker reaches unrelated applications sharing the host. Anything else running under
+the web server user, such as WordPress or OwnCloud, loses every session in progress. Every manager
+process is excluded so the listener survives its own instruction.
+
+--status reports the identity it is running as & whether it can read the socket directory. A
+standard user cannot read it & will be told the listener is stopped whether it is or not, which
+is why the report says so plainly rather than collapsing the two cases into one word.
+
+The listener runs until it is stopped. It is started at boot by the service unit that
+--setup --install-service writes, or from the container entrypoint.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Persistence--
+
+The Resource Manager is where persistence lives. The budget, the worker registry & the session to
+location map are held in that process memory & nowhere else. Nothing is written to disk, so no
+process can read a half written file & no two processes race for a lock.
+
+One file survives between processes. The manager process identifiers are written beside the
+sockets, because -l, -k & --status are separate processes that must discover the listener before
+they can speak to it. That cannot live in another process memory.
+
+A Resource Manager that restarts loses its map. This is recoverable & not a fault. The session to
+location map is rebuilt by discovery, the registry is rebuilt as conversions complete or are
+reaped, & the budget is recalculated on the next poll.
+
+The session map is bounded. An entry older than --File Deletion Age Threshold-- plus an hour is
+dropped, so a listener that runs for months does not grow one entry per session it has ever seen.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Troubleshooting--
+
+The listener starts & then stops.
+    The web server user could not read the install secret, or could not write the logfile.
+    Run the -fp argument as root.
+
+Every conversion warns that the listener did not answer.
+    No listener is running. Check --status as root, not as a standard user.
+    Confirm four socket files exist in the Sockets directory & are owned by the web server user.
+
+Conversions are refused with no reason given.
+    A reply was delivered but could not be read. This is reported as a warning & the conversion
+    proceeds. It indicates a manager that is slow or has died.
+
+A processor quota appears to do nothing.
+    The delegation drop-in is missing or the user manager has not been restarted since it was
+    written. Run -fp as root, then restart the user manager for the web server user.
+
+Nothing appears in the log at all.
+    The logfile belongs to another account. A root command line run creates it first & the web
+    server user cannot append to it afterwards. Run -fp as root.
+
+Every numbered error this subsystem produces is documented in ERROR_DESCRIPTIONS.txt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

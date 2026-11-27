@@ -1,0 +1,512 @@
+<?php
+// / -----------------------------------------------------------------------------------
+// / Copyright Information ...
+// / HRConvert2, Copyright on 9/22/2026 by Justin Grimes, www.github.com/zelon88
+// /
+// / License Information ...
+// / This project is protected by the GNU GPLv3 Open-Source license.
+// / https://www.gnu.org/licenses/gpl-3.0.html
+// /
+// / Application Information ...
+// / This application is designed to provide a web-interface for converting file formats on
+// / a server for users of any web browser without authentication.
+// /
+// / File Information ...
+// / v4.2.1.
+// / The Scad pipeline's converter. pipelineCore.php loads it only to dispatch a Scad conversion.
+// / Error block 27000 through 27009 belongs to this pipeline.
+// / It holds what OpenSCAD source means.
+// /   sanitizeSCAD            reads OpenSCAD source & reports every call it finds
+// /   resolveSCADInclude      resolves an include against what the same user uploaded
+// /   rectifySCAD             rewrites the source using what the Sanitizer found
+// /   sanitizeAllSCADUploads  applies that to every file in the session
+// / verifyOpenScadPolicy() is the core's, so -fp & the environment check reach it without this pipeline.
+// / It writes nothing, & reports a profile confining OpenSCAD, because that profile governs a render.
+// / It removes the override an earlier release added to such a profile.
+// / OpenSCAD comes from verifiedToolPath().
+// / convertSCAD() builds its own sandbox with the Engine's verifySandboxLauncher() & limitCommand().
+// / See Documentation/ABOUT_PIPELINE_COMPONENTS.txt for the contracts this file obeys.
+// /
+// / <3 Open-Source
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / A component may only be loaded by the core.
+if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRConvert2-34000, A pipeline converter cannot be loaded directly!'.PHP_EOL);
+// / -----------------------------------------------------------------------------------
+
+
+// / -----------------------------------------------------------------------------------
+// / A function to resolve a single OpenSCAD file reference against the user's uploaded files.
+// / A reference is matched on its basename alone, so <../lib/threads.scad> matches threads.scad.
+// / Only files the user uploaded to this session are eligible.
+// / The path returned points at the sanitized copy in ScadTemp, never at the user's original.
+// / OpenSCAD resolves a relative include against the directory of the file it is reading.
+// / Returns an empty string when nothing matched, & the caller removes the reference.
+function resolveSCADInclude($scadReference, $sessionFiles) {
+  // / Set variables.
+  global $ScadTemp, $DirSep, $EnableMemoryProtection;
+  $ResolvedFile = $sessionFile = '';
+  $referenceIsUsable = FALSE;
+  $referenceBase = strtolower(trim(basename(str_replace('\\', '/', trim($scadReference)))));
+  // / A reference with no usable filename can never resolve to anything.
+  // / Only .scad sources may ever be resolved as an include or a use.
+  if ($referenceBase !== '' && $referenceBase !== '.' && $referenceBase !== '..' && getExtension($referenceBase) === 'scad') $referenceIsUsable = TRUE;
+  if ($referenceIsUsable) {
+    foreach ($sessionFiles as $sessionFile) {
+      if (strtolower(basename($sessionFile)) === $referenceBase) {
+        $ResolvedFile = $ScadTemp.$DirSep.basename($sessionFile);
+        break; } } }
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $scadReference, $sessionFiles, $referenceBase, $sessionFile, $referenceIsUsable);
+  return $ResolvedFile; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to find every file reading call in a block of OpenSCAD source.
+// / The source is walked once, carrying comment & string state, because whichever delimiter appears first wins.
+// / Comments, strings & angle bracket paths are removed, because a keyword inside any of them is not a call.
+// / A keyword counts only when the character before it is not a letter, digit or underscore, as in house_width.
+// / A keyword counts only when the next meaningful character opens a bracket, as include_lid does not.
+// / The lookahead skips comments as whitespace, because a comment separates tokens in OpenSCAD.
+// / It does so between the keyword & the bracket, & between the bracket & the quote.
+// / The boundary is the operating system sandbox in convertSCAD(), & this makes ordinary files render predictably.
+// / Returns one record per call, carrying the keyword, its first line & the raw reference where one could be read.
+function sanitizeSCAD($scadContents) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $ScadCalls = array();
+  $keywords = array();
+  $keyword = $currentChar = $nextChar = $priorChar = $lookaheadChar = $peekChar = $referenceText = '';
+  $sourceLength = $charIndex = $lineNumber = $keywordLength = $lookaheadIndex = $referenceStart = 0;
+  $callEnd = $scanIndex = $parenDepth = 0;
+  $scanChar = $scanNext = '';
+  $scanInString = $scanInLineComment = $scanInBlockComment = FALSE;
+  $inLineComment = $inBlockComment = $inString = $isCall = FALSE;
+  // / Every keyword that causes OpenSCAD to read a file.
+  // / The longest forms are listed first so a longer match is preferred over a shorter one.
+  // / import_stl would otherwise match as import & leave stl looking like an identifier.
+  $keywords = array('dxf_linear_extrude', 'dxf_rotate_extrude', 'import_stl', 'import_dxf', 'import_off', 'dxf_cross', 'surface', 'include', 'import', 'dxf_dim', 'use');
+  $sourceLength = strlen($scadContents);
+  $lineNumber = 1;
+  for ($charIndex = 0; $charIndex < $sourceLength; $charIndex++) {
+    $currentChar = $scadContents[$charIndex];
+    $nextChar = ($charIndex + 1 < $sourceLength) ? $scadContents[$charIndex + 1] : '';
+    // / Track the line number for every newline, wherever it appears.
+    // / The user has to be told which line a reference was on & a stream has no lines.
+    if ($currentChar === "\n") $lineNumber++;
+    // / A line comment runs to the end of the line & nothing inside it is code.
+    if ($inLineComment) {
+      if ($currentChar === "\n") $inLineComment = FALSE;
+      continue; }
+    // / A block comment runs to the first closing sequence & does not nest.
+    // / The character after that sequence is live code again, even on the same line.
+    // / That single property is what the reported block comment bypass depended on.
+    if ($inBlockComment) {
+      if ($currentChar === '*' && $nextChar === '/') {
+        $inBlockComment = FALSE;
+        $charIndex++; }
+      continue; }
+    // / A string literal may contain anything, including text that reads like a call.
+    if ($inString) {
+      if ($currentChar === '\\') {
+        $charIndex++;
+        continue; }
+      if ($currentChar === '"') $inString = FALSE;
+      continue; }
+    // / Not inside anything, so check whether this character opens something.
+    if ($currentChar === '/' && $nextChar === '/') {
+      $inLineComment = TRUE;
+      $charIndex++;
+      continue; }
+    if ($currentChar === '/' && $nextChar === '*') {
+      $inBlockComment = TRUE;
+      $charIndex++;
+      continue; }
+    if ($currentChar === '"') {
+      $inString = TRUE;
+      continue; }
+    // / Live code. Test every keyword at this position.
+    foreach ($keywords as $keyword) {
+      $keywordLength = strlen($keyword);
+      if (strtolower(substr($scadContents, $charIndex, $keywordLength)) !== $keyword) continue;
+      // / The character before the keyword must not make this part of a longer identifier.
+      $priorChar = ($charIndex > 0) ? $scadContents[$charIndex - 1] : ' ';
+      if (ctype_alnum($priorChar) or $priorChar === '_') continue;
+      // / Look for the bracket that would make this a call.
+      // / Whitespace is skipped. Comments are skipped, because OpenSCAD separates tokens with both.
+      // / A newline is whitespace here, so a call split across any number of lines is still found.
+      $isCall = FALSE;
+      $referenceText = '';
+      for ($lookaheadIndex = $charIndex + $keywordLength; $lookaheadIndex < $sourceLength; $lookaheadIndex++) {
+        $lookaheadChar = $scadContents[$lookaheadIndex];
+        if ($lookaheadChar === ' ' or $lookaheadChar === "\t" or $lookaheadChar === "\n" or $lookaheadChar === "\r") continue;
+        // / A comment sitting between the keyword & its bracket separates tokens.
+        // / It does not end the statement & must not end this search.
+        if ($lookaheadChar === '/' && ($lookaheadIndex + 1) < $sourceLength) {
+          $peekChar = $scadContents[$lookaheadIndex + 1];
+          if ($peekChar === '/') {
+            $lookaheadIndex = $lookaheadIndex + 2;
+            while ($lookaheadIndex < $sourceLength && $scadContents[$lookaheadIndex] !== "\n") $lookaheadIndex++;
+            continue; }
+          if ($peekChar === '*') {
+            $lookaheadIndex = $lookaheadIndex + 2;
+            while (($lookaheadIndex + 1) < $sourceLength && !($scadContents[$lookaheadIndex] === '*' && $scadContents[$lookaheadIndex + 1] === '/')) $lookaheadIndex++;
+            $lookaheadIndex = $lookaheadIndex + 1;
+            continue; } }
+        if ($lookaheadChar === '(' or $lookaheadChar === '<') $isCall = TRUE;
+        break; }
+      if (!$isCall) continue;
+      // / Read the reference itself so the caller can resolve or report it.
+      // / An angle bracket form runs to the closing bracket & cannot contain a comment.
+      // / OpenSCAD throws a parser error on include/**/<file>, so that form is a dead end.
+      $referenceStart = $lookaheadIndex;
+      if ($scadContents[$referenceStart] === '<') {
+        $lookaheadIndex++;
+        while ($lookaheadIndex < $sourceLength && $scadContents[$lookaheadIndex] !== '>') {
+          $referenceText .= $scadContents[$lookaheadIndex];
+          $lookaheadIndex++; } }
+      // / A bracket form may carry a comment between the bracket & the quote.
+      // / surface(/*x*/"file") is a live call & the quote must still be found.
+      else {
+        $lookaheadIndex++;
+        while ($lookaheadIndex < $sourceLength && $scadContents[$lookaheadIndex] !== '"' && $scadContents[$lookaheadIndex] !== ')') {
+          if ($scadContents[$lookaheadIndex] === '/' && ($lookaheadIndex + 1) < $sourceLength) {
+            $peekChar = $scadContents[$lookaheadIndex + 1];
+            if ($peekChar === '/') {
+              $lookaheadIndex = $lookaheadIndex + 2;
+              while ($lookaheadIndex < $sourceLength && $scadContents[$lookaheadIndex] !== "\n") $lookaheadIndex++;
+              continue; }
+            if ($peekChar === '*') {
+              $lookaheadIndex = $lookaheadIndex + 2;
+              while (($lookaheadIndex + 1) < $sourceLength && !($scadContents[$lookaheadIndex] === '*' && $scadContents[$lookaheadIndex + 1] === '/')) $lookaheadIndex++;
+              $lookaheadIndex = $lookaheadIndex + 2;
+              continue; } }
+          $lookaheadIndex++; }
+        if ($lookaheadIndex < $sourceLength && $scadContents[$lookaheadIndex] === '"') {
+          $lookaheadIndex++;
+          while ($lookaheadIndex < $sourceLength && $scadContents[$lookaheadIndex] !== '"') {
+            $referenceText .= $scadContents[$lookaheadIndex];
+            $lookaheadIndex++; } } }
+      // / Measure where the whole call ends, so a caller can replace exactly its characters.
+      // / A line is the wrong unit to work in. A block comment opened on an earlier line may
+      // / close part way along the line holding a call, & a comment marker written at the start
+      // / of such a line is swallowed by that comment while the call after the closing sequence
+      // / stays live. Offsets cannot be fooled that way, because the lexer only ever reports a
+      // / call it found in code state & the span it reports starts there.
+      $callEnd = $lookaheadIndex;
+      // / An angle bracket form ends at its closing bracket.
+      if ($scadContents[$referenceStart] === '<') $callEnd = $lookaheadIndex + 1;
+      // / A bracket form ends at the bracket closing the one that opened the call. Nesting,
+      // / strings & comments among the arguments are all skipped on the way there.
+      else {
+        $scanIndex = ($lookaheadIndex < $sourceLength && $scadContents[$lookaheadIndex] === '"') ? $lookaheadIndex + 1 : $lookaheadIndex;
+        $parenDepth = 1;
+        $scanInString = $scanInLineComment = $scanInBlockComment = FALSE;
+        $callEnd = $sourceLength;
+        for (; $scanIndex < $sourceLength; $scanIndex++) {
+          $scanChar = $scadContents[$scanIndex];
+          $scanNext = ($scanIndex + 1 < $sourceLength) ? $scadContents[$scanIndex + 1] : '';
+          if ($scanInLineComment) {
+            if ($scanChar === "\n") $scanInLineComment = FALSE;
+            continue; }
+          if ($scanInBlockComment) {
+            if ($scanChar === '*' && $scanNext === '/') {
+              $scanInBlockComment = FALSE;
+              $scanIndex++; }
+            continue; }
+          if ($scanInString) {
+            if ($scanChar === '\\') {
+              $scanIndex++;
+              continue; }
+            if ($scanChar === '"') $scanInString = FALSE;
+            continue; }
+          if ($scanChar === '/' && $scanNext === '/') {
+            $scanInLineComment = TRUE;
+            $scanIndex++;
+            continue; }
+          if ($scanChar === '/' && $scanNext === '*') {
+            $scanInBlockComment = TRUE;
+            $scanIndex++;
+            continue; }
+          if ($scanChar === '"') {
+            $scanInString = TRUE;
+            continue; }
+          if ($scanChar === '(') $parenDepth++;
+          if ($scanChar === ')') {
+            $parenDepth--;
+            if ($parenDepth === 0) {
+              $callEnd = $scanIndex + 1;
+              break; } } } }
+      // / One record per call found. The line number is where the KEYWORD started.
+      array_push($ScadCalls, array(
+        'Keyword'     => $keyword,
+        'Line'        => $lineNumber,
+        'Start'       => $charIndex,
+        'End'         => $callEnd,
+        'Reference'   => trim($referenceText),
+        'IsAngleForm' => ($scadContents[$referenceStart] === '<')));
+      // / Advance past the keyword so its own text cannot match a shorter keyword inside it.
+      $charIndex = $charIndex + $keywordLength - 1;
+      break; } }
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $callEnd, $scanIndex, $parenDepth, $scanChar, $scanNext, $scanInString, $scanInLineComment, $scanInBlockComment, $scadContents, $keywords, $keyword, $currentChar, $nextChar, $priorChar, $lookaheadChar, $peekChar, $referenceText, $sourceLength, $charIndex, $lineNumber, $keywordLength, $lookaheadIndex, $referenceStart, $inLineComment, $inBlockComment, $inString, $isCall);
+  return $ScadCalls; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to rewrite OpenSCAD source using what the Sanitizer found.
+// / It replaces the exact characters each call occupies & never works on whole lines.
+// / A block comment closing part way along a line would swallow a marker written at its start.
+// / A removed call is overwritten with whitespace of the same length, newlines kept.
+// / Every line keeps its number, so the renderer reports positions the user can find.
+// / A resolved include is replaced in place by a reference to the staged copy, & nothing is commented out.
+// / Replacements run from the end backwards, so earlier offsets stay correct.
+// / The result is handed back to the Sanitizer, & anything it still sees stops the render.
+// / A rewrite that cannot prove itself is a failure.
+// / An include or use may point at another source the same user uploaded, when config.php enables that.
+// / Everything else is removed, & geometry & heightmap reads are never resolved or rewritten.
+function rectifySCAD($scadContents, $sessionFiles, $resolveIncludes) {
+  // / Set variables.
+  global $Verbose, $EnableMemoryProtection;
+  $RectifiedSCAD = '';
+  $ReferencesFound = $ReferencesResolved = $ReferencesRemoved = 0;
+  $RectificationVerified = FALSE;
+  $scadCalls = $plannedEdits = $plannedEdit = $survivingCalls = array();
+  $scadCall = $resolvedPath = $replacementText = $spanText = '';
+  $spanIndex = $spanLength = 0;
+  // / Find every call in the source before touching a single character.
+  $scadCalls = sanitizeSCAD($scadContents);
+  $ReferencesFound = count($scadCalls);
+  // / Decide what happens to each call & remember the span it occupies.
+  foreach ($scadCalls as $scadCall) {
+    $resolvedPath = '';
+    // / Only an angle bracket include or use is ever eligible for resolution.
+    // / A geometry or heightmap read is always removed, whatever config.php says.
+    if ($resolveIncludes && $scadCall['IsAngleForm'] && ($scadCall['Keyword'] === 'include' or $scadCall['Keyword'] === 'use')) $resolvedPath = resolveSCADInclude($scadCall['Reference'], $sessionFiles);
+    if ($resolvedPath !== '') {
+      $ReferencesResolved++;
+      // / The reference is written as a BARE FILENAME rather than as the absolute path that
+      // / resolveSCADInclude() returned. Every sanitized copy lives in one directory, & the
+      // / render runs with that directory as its working directory, so a bare name resolves.
+      // / An absolute path would not, because inside the sandbox that directory is mounted
+      // / somewhere else entirely & the real path does not exist at all.
+      $replacementText = $scadCall['Keyword'].' <'.basename($resolvedPath).'>'; }
+    else {
+      $ReferencesRemoved++;
+      // / Whitespace of the same length, keeping every line ending the span contained.
+      $replacementText = '';
+      $spanText = substr($scadContents, (int)$scadCall['Start'], (int)$scadCall['End'] - (int)$scadCall['Start']);
+      $spanLength = strlen($spanText);
+      for ($spanIndex = 0; $spanIndex < $spanLength; $spanIndex++) $replacementText .= ($spanText[$spanIndex] === "\n" or $spanText[$spanIndex] === "\r") ? $spanText[$spanIndex] : ' ';
+      if ($Verbose) logEntry('Removing the '.$scadCall['Keyword'].' reference on line '.$scadCall['Line'].' of an uploaded OpenSCAD source.'); }
+    array_push($plannedEdits, array('Start' => (int)$scadCall['Start'], 'End' => (int)$scadCall['End'], 'Text' => $replacementText)); }
+  // / Apply the edits from the end backwards so every offset ahead of one stays correct.
+  $RectifiedSCAD = $scadContents;
+  foreach (array_reverse($plannedEdits) as $plannedEdit) $RectifiedSCAD = substr_replace($RectifiedSCAD, $plannedEdit['Text'], $plannedEdit['Start'], $plannedEdit['End'] - $plannedEdit['Start']);
+  // / Prove it. Every call the Sanitizer can still find must be one this function wrote,
+  // / which is a resolved include & nothing else. Anything more means a call survived.
+  $survivingCalls = sanitizeSCAD($RectifiedSCAD);
+  $RectificationVerified = (count($survivingCalls) === $ReferencesResolved);
+  if (!$RectificationVerified) warningEntry('An OpenSCAD file reference survived sanitization. '.count($survivingCalls).' call(s) remain & '.$ReferencesResolved.' resolved include(s) were expected. The source will not be rendered.');
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $scadContents, $sessionFiles, $resolveIncludes, $scadCalls, $scadCall, $plannedEdits, $plannedEdit, $survivingCalls, $resolvedPath, $replacementText, $spanText, $spanIndex, $spanLength);
+  return array($RectifiedSCAD, $ReferencesFound, $ReferencesResolved, $ReferencesRemoved, $RectificationVerified); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to sanitize every OpenSCAD source the user uploaded, in one flat pass.
+// / Nothing follows a reference from one file to another, so no cycle detection or depth budget is needed.
+// / Every file OpenSCAD can reach has been filtered, because the whole upload set has.
+// / Every sanitized copy is written to ScadTemp, & the user's originals are never modified.
+function sanitizeAllSCADUploads() {
+  // / Set variables.
+  global $Verbose, $ConvertDir, $ScadTemp, $DirSep, $AllowSCADIncludeResolution, $EnableMemoryProtection;
+  $AllSanitized = TRUE;
+  $FilesSanitized = $ReferencesFound = $ReferencesResolved = $ReferencesRemoved = 0;
+  $fileFound = $fileResolved = $fileRemoved = $bytesWritten = 0;
+  $fileVerified = FALSE;
+  $sessionFiles = array();
+  $sessionFile = $scadContents = $sanitizedSCAD = $sanitizedPath = '';
+  // / Gather every file the user uploaded to this session.
+  $sessionFiles = getFiles($ConvertDir);
+  foreach ($sessionFiles as $sessionFile) {
+    // / Only OpenSCAD sources are sanitized. Everything else is left alone entirely.
+    if (getExtension($sessionFile) !== 'scad') continue;
+    $scadContents = @file_get_contents($ConvertDir.$sessionFile);
+    if ($scadContents === FALSE) {
+      $AllSanitized = FALSE;
+      errorEntry('Could not read the OpenSCAD source file '.$sessionFile.'!', 27006, FALSE);
+      continue; }
+    // / Neutralize every file reading primitive in this source.
+    list ($sanitizedSCAD, $fileFound, $fileResolved, $fileRemoved, $fileVerified) = rectifySCAD($scadContents, $sessionFiles, $AllowSCADIncludeResolution);
+    // / A rewrite that cannot prove every reference is gone is not staged at all. Rendering
+    // / from it would mean trusting the rewrite rather than checking it, which is how the
+    // / block comment bypass stayed invisible. Nothing is written & the render is refused.
+    if (!$fileVerified) {
+      $AllSanitized = FALSE;
+      errorEntry('A file reference survived sanitization of the OpenSCAD source '.$sessionFile.'!', 27009, FALSE);
+      continue; }
+    $ReferencesFound = $ReferencesFound + $fileFound;
+    $ReferencesResolved = $ReferencesResolved + $fileResolved;
+    $ReferencesRemoved = $ReferencesRemoved + $fileRemoved;
+    // / Write the sanitized copy under the same basename so a resolved reference finds it.
+    $sanitizedPath = $ScadTemp.$DirSep.basename($sessionFile);
+    $bytesWritten = file_put_contents($sanitizedPath, $sanitizedSCAD, LOCK_EX);
+    if ($bytesWritten === strlen($sanitizedSCAD)) $FilesSanitized++;
+    else {
+      $AllSanitized = FALSE;
+      errorEntry('Could not stage the sanitized OpenSCAD source '.$sessionFile.'!', 27001, FALSE); } }
+  // / A reference removed from an uploaded source is worth an operator seeing at any verbosity.
+  if ($ReferencesRemoved > 0) warningEntry('OpenSCAD Sanitization removed '.$ReferencesRemoved.' file reference(s) across '.$FilesSanitized.' uploaded source file(s) in this session. Resolved: '.$ReferencesResolved.'.');
+  else if ($Verbose) logEntry('OpenSCAD Sanitization Result: Files Sanitized: '.$FilesSanitized.', References Found: '.$ReferencesFound.', Resolved: '.$ReferencesResolved.', Removed: '.$ReferencesRemoved.', Resolution Enabled: '.($AllowSCADIncludeResolution ? 'TRUE' : 'FALSE').'.');
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $fileVerified, $sessionFiles, $sessionFile, $scadContents, $sanitizedSCAD, $sanitizedPath, $fileFound, $fileResolved, $fileRemoved, $bytesWritten);
+  return array($AllSanitized, $FilesSanitized, $ReferencesFound, $ReferencesResolved, $ReferencesRemoved); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to convert OpenSCAD source files into a supported export format.
+// / Every uploaded source is sanitized into ScadTemp first, so a resolved include is never unfiltered.
+// / The user's .scad is never modified, & sanitized copies are not retained.
+// / Sanitization is not the security boundary & must never be treated as one.
+// / A filter that must interpret a grammar only approximates another program's parser.
+// / Every disagreement between them is a bypass, so the boundary is the operating system sandbox below.
+// / This does not use sandboxCommand(), because includes need a whole directory visible.
+// / Both binaries are located, so the OpenSCAD verified & the bubblewrap proven are the ones that run.
+// / OpenSCAD renders what it can past a missing include & reports success.
+// / The count of such warnings is logged, never the text, because a parse warning quotes the source.
+function convertSCAD($pathname, $newPathname, $extension) {
+  // / Set variables.
+  global $Verbose, $DirSep, $SCADConversionTimeout, $ScadTemp, $EnableMemoryProtection;
+  // / The six value pipeline contract. Success, errors, path, extension, filename & PID.
+  // / The last two keep their defaults, & $WorkerPID stays 0 unless a detached process is supervised.
+  $OutputFilename = basename($newPathname);
+  $WorkerPID = 0;
+  $ConversionSuccess = $ConversionErrors = FALSE;
+  $allSanitized = $readyToRender = FALSE;
+  $scadBinary = $bwrapBinary = FALSE;
+  $sandboxLauncher = '';
+  $filesSanitized = $referencesFound = $referencesResolved = $referencesRemoved = 0;
+  $openscadExitCode = $missingIncludes = 0;
+  $sanitizedPath = $openscadCommand = $sandboxOutputName = $sandboxOutputPath = '';
+  $openscadOutput = array();
+  // / Confirm this server can isolate a render before anything else happens.
+  // / A server that cannot isolate a render must refuse to render at all.
+  // / The launcher built the proving sandbox, so it builds this one.
+  // / On a kernel restricting unprivileged namespaces it is the application's bubblewrap, with its AppArmor profile.
+  list ($bwrapBinary, $sandboxLauncher) = verifySandboxLauncher();
+  if ($bwrapBinary === FALSE) {
+    $ConversionErrors = TRUE;
+    errorEntry('Bubblewrap is missing or non functional, so OpenSCAD renders cannot be isolated!', 27007, FALSE); }
+  else {
+    // / Locate & verify OpenSCAD. A path is returned only when both succeeded.
+    $scadBinary = verifiedToolPath('OpenSCAD');
+    if ($scadBinary === FALSE) {
+      $ConversionErrors = TRUE;
+      errorEntry('The installed OpenSCAD version is missing or too old!', 27005, FALSE); }
+    else {
+      // / Sanitize every uploaded source, not just this one.
+      // / A resolved include points at a sanitized copy, so every copy must already exist.
+      list ($allSanitized, $filesSanitized, $referencesFound, $referencesResolved, $referencesRemoved) = sanitizeAllSCADUploads();
+      // / The sanitized copy of the requested file carries the same basename as the original.
+      $sanitizedPath = $ScadTemp.$DirSep.basename($pathname);
+      if ($allSanitized && file_exists($sanitizedPath)) $readyToRender = TRUE;
+      else {
+        $ConversionErrors = TRUE;
+        errorEntry('Could not prepare the OpenSCAD sources for rendering!', 27000, FALSE); } } }
+  // / Render only from the sanitized copy, & only from inside the sandbox.
+  // / The users original is never handed to OpenSCAD.
+  if ($readyToRender) {
+    if ($Verbose) logEntry('Converting OpenSCAD model to '.$extension.'.');
+    // / The sandbox cannot see the real output location, so the render writes inside it.
+    // / The finished model is moved out afterwards, from outside the namespace.
+    $sandboxOutputName = basename($newPathname);
+    $sandboxOutputPath = $ScadTemp.$DirSep.$sandboxOutputName;
+    // / --unshare-all removes every namespace this render does not need, so no import() can fetch a URL.
+    // / --die-with-parent guarantees the render cannot outlive the PHP process that started it.
+    // / --new-session prevents the render from injecting into the controlling terminal.
+    // / /work is the only writable path, & the only path from the data location that exists.
+    // / --chdir /work makes a resolved include work, because rectifySCAD() rewrites one to a bare filename.
+    // / timeout enforces a wall clock limit, because OpenSCAD will not stop on its own.
+    // / The render is wrapped in its resource ceiling below.
+    $openscadCommand = 'timeout '.(int)$SCADConversionTimeout
+      .' '.$sandboxLauncher
+      .' --unshare-all'
+      .' --die-with-parent'
+      .' --new-session'
+      .' --ro-bind /usr /usr'
+      .' --ro-bind-try /lib /lib'
+      .' --ro-bind-try /lib64 /lib64'
+      .' --ro-bind-try /bin /bin'
+      .' --ro-bind-try /etc/fonts /etc/fonts'
+      .' --ro-bind-try /etc/ld.so.cache /etc/ld.so.cache'
+      .' --proc /proc'
+      .' --dev /dev'
+      .' --tmpfs /tmp'
+      .' --tmpfs /run'
+      // / A dependency resolves the running user with getpwuid() during startup & throws
+      // / out of its configuration backend when the lookup fails. --unshare-all unshares
+      // / the user namespace, so without these the lookup has nothing to read & LibreOffice
+      // / aborts with Signal 6 before it opens a file.
+      .' --ro-bind-try /etc/passwd /etc/passwd'
+      .' --ro-bind-try /etc/group /etc/group'
+      .' --ro-bind-try /etc/machine-id /etc/machine-id'
+      .' --ro-bind-try /etc/localtime /etc/localtime'
+      // / --dev builds a minimal device tree with no /dev/shm, which several dependencies
+      // / require for shared memory. A tmpfs is enough & stays inside the namespace.
+      .' --tmpfs /dev/shm'
+      .' --setenv HOME /tmp'
+      // / Every writable location a dependency reaches for is pointed at the tmpfs.
+      // / Nothing tries to create state outside the namespace & fail.
+      .' --setenv XDG_RUNTIME_DIR /tmp'
+      .' --setenv XDG_CONFIG_HOME /tmp/.config'
+      .' --setenv XDG_CACHE_HOME /tmp/.cache'
+      .' --setenv XDG_DATA_HOME /tmp/.local'
+      .' --bind '.escapeshellarg($ScadTemp).' /work'
+      .' --chdir /work'
+      .' '.escapeshellarg($scadBinary).' -o '.escapeshellarg('/work/'.$sandboxOutputName)
+      .' '.escapeshellarg('/work/'.basename($sanitizedPath))
+      .' 2>&1';
+    // / Wrap the render in the ceiling configured for its type, as sandboxCommand() wraps every other pipeline.
+    // / Where a scope can be created the ceiling is enforced against a cgroup.
+    // / Where none can, limitCommand() falls back to a niceness derived from the processor share.
+    // / The stock 'Scad' => '75,1024' yields a niceness below 19, & a smaller share gives a larger one.
+    $openscadCommand = limitCommand($openscadCommand, 'openscad');
+    exec($openscadCommand, $openscadOutput, $openscadExitCode);
+    // / An exit code of 124 is the timeout command reporting that it killed the render.
+    if ($openscadExitCode === 124) {
+      $ConversionErrors = TRUE;
+      errorEntry('The OpenSCAD converter timed out after '.(int)$SCADConversionTimeout.' seconds!', 27002, FALSE); }
+    else if ($openscadExitCode !== 0) {
+      $ConversionErrors = TRUE;
+      errorEntry('The OpenSCAD converter failed with exit code '.$openscadExitCode.'!', 27003, FALSE); }
+    // / Count the includes OpenSCAD could not open. The COUNT is reported & the text is not.
+    // / A render that silently drops geometry reports success without this.
+    if (is_array($openscadOutput)) $missingIncludes = count(preg_grep('/Can\'t open include file/i', $openscadOutput));
+    if ($missingIncludes > 0) warningEntry('The OpenSCAD render could not open '.$missingIncludes.' include file(s). The model may be incomplete.');
+    // / Move the rendered model out of the sandbox directory to where the core expects it.
+    // / This happens BEFORE the cleanup, or the cleanup would delete the model.
+    if (file_exists($sandboxOutputPath)) {
+      if (!@rename($sandboxOutputPath, $newPathname)) {
+        $ConversionErrors = TRUE;
+        errorEntry('Could not move the rendered OpenSCAD model out of the sandbox!', 27008, FALSE); } }
+    // / Remove every sanitized copy immediately. None of them are retained for any reason.
+    // / cleanFiles() removes the emptied directory itself, so its absence is the success case.
+    // / verifyRequiredDirs() recreates it at the start of the next request.
+    // / The second argument is the list of roots this call may clean under & is required.
+    // / cleanFiles refuses a path outside it, so omitting it refused this call silently,
+    // / the sanitized sources were never removed, & the error below reported a failure on a
+    // / render that had already succeeded.
+    cleanFiles($ScadTemp, array($ScadTemp));
+    if (is_dir($ScadTemp) && !is_dir_empty($ScadTemp)) errorEntry('Could not remove the sanitized OpenSCAD sources!', 27004, FALSE); }
+  // / The output file is the only verdict on whether the render actually produced anything.
+  if (file_exists($newPathname)) $ConversionSuccess = TRUE;
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  // / $openscadOutput may hold quoted source lines & is cleared like everything else.
+  purgeSensitiveMemory($EnableMemoryProtection, $sanitizedPath, $openscadCommand, $openscadOutput, $openscadExitCode, $missingIncludes, $readyToRender, $scadBinary, $bwrapBinary, $sandboxLauncher, $allSanitized, $filesSanitized, $referencesFound, $referencesResolved, $referencesRemoved, $sandboxOutputName, $sandboxOutputPath, $pathname);
+  return array($ConversionSuccess, $ConversionErrors, $newPathname, $extension, $OutputFilename, $WorkerPID); }
+// / -----------------------------------------------------------------------------------
+
+?>

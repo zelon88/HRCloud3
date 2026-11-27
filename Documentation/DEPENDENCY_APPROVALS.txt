@@ -1,0 +1,1047 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRConvert2, Copyright on 10/30/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+This application is designed to provide a web-interface for converting file formats on a server for users of any web browser without authentication.
+
+FILE INFORMATION ...
+v4.3.4.
+This plain text file is the dependency approval record for the application itself.
+It is written by Documentation/Build/hrconvert2-approvals.py. Every factual field is read from the dependency manifest & is rewritten by that tool. Every audit answer & every note is written by a person & is kept across a refresh.
+The procedure these questions come from is in Documentation/ABOUT_DEPENDENCIES.txt.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+The authoritative list of dependencies is Resources/Engine/depends.php & Resources/Contract/depends.php, the Engine's half & the application's, & nothing else. Run  php convertCore.php -v  to see what this installation has.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About This Record--
+
+These dependencies belong to the application rather than to any one pipeline. Removing
+one does not disable a conversion type. It stops the application running at all, or
+it removes a capability every pipeline relies on, such as the sandbox. Each section names
+the half of the dependency manifest it is read from.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--APK--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        apk
+    Programs                                      -
+    Install type                                  system
+    Package                                       apk-tools
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Core
+    License                                       GPL-2.0
+    Depends on                                    -
+    Source                                        https://gitlab.alpinelinux.org/alpine/apk-tools
+    Purpose                                       Installs, upgrades & removes a dependency on Alpine.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--APT--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        apt-get
+    Programs                                      dpkg-query
+    Install type                                  system
+    Package                                       apt dpkg
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Core
+    License                                       GPL-2.0-or-later
+    Depends on                                    -
+    Source                                        https://salsa.debian.org/apt-team/apt
+    Purpose                                       Installs, upgrades & removes a dependency on Debian & Ubuntu, & dpkg-query says which package a file belongs to.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Apache--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        apache2
+    Programs                                      apachectl or apache2ctl, a2disconf
+    Install type                                  apt
+    Package                                       apache2 libapache2-mod-php
+    Minimum version                               2.4
+    Required                                      YES
+    Subsystem                                     Core
+    License                                       Apache-2.0
+    Depends on                                    PHP
+    Source                                        https://httpd.apache.org
+    Purpose                                       Serves the web interface.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--AppArmor Utils--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        apparmor_parser
+    Programs                                      -
+    Install type                                  apt
+    Package                                       apparmor-utils
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Sandbox
+    License                                       GPL-2.0
+    Depends on                                    Bubblewrap
+    Source                                        https://gitlab.com/apparmor/apparmor
+    Purpose                                       Loads the profile bubblewrap needs on a restricted kernel.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Bubblewrap--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        bwrap
+    Programs                                      -
+    Install type                                  apt
+    Package                                       bubblewrap
+    Minimum version                               0.4
+    Required                                      YES
+    Subsystem                                     Sandbox
+    License                                       LGPL-2.0
+    Depends on                                    -
+    Source                                        https://github.com/containers/bubblewrap
+    Purpose                                       Isolates every conversion from the host & the network.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Coreutils--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        rm
+    Programs                                      chmod, chown, cp, env, head, nice, nohup, timeout, tr, true, uname
+    Install type                                  system
+    Package                                       coreutils
+    Minimum version                               -
+    Required                                      YES
+    Subsystem                                     Core
+    License                                       GPL-3.0
+    Depends on                                    -
+    Source                                        https://www.gnu.org/software/coreutils
+    Purpose                                       Removes & copies files, sets their owner & mode, bounds how long & how hard a command runs, & names the machine.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Curl--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        curl
+    Programs                                      -
+    Install type                                  apt
+    Package                                       curl
+    Minimum version                               7.0
+    Required                                      YES
+    Subsystem                                     Core
+    License                                       curl
+    Depends on                                    -
+    Source                                        https://curl.se
+    Purpose                                       Fetches update packages & remote streams.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--DNF--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        dnf
+    Programs                                      rpm
+    Install type                                  system
+    Package                                       dnf rpm
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Core
+    License                                       GPL-2.0-or-later
+    Depends on                                    -
+    Source                                        https://github.com/rpm-software-management/dnf
+    Purpose                                       Installs, upgrades & removes a dependency on Fedora & its relatives, & rpm says which package a file belongs to.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--E2fsprogs--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        chattr
+    Programs                                      -
+    Install type                                  system
+    Package                                       e2fsprogs
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Core
+    License                                       GPL-2.0
+    Depends on                                    -
+    Source                                        https://e2fsprogs.sourceforge.net
+    Purpose                                       Clears the immutable & append only attributes from a file before the Engine removes it.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Findutils--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        find
+    Programs                                      -
+    Install type                                  system
+    Package                                       findutils
+    Minimum version                               -
+    Required                                      YES
+    Subsystem                                     Core
+    License                                       GPL-3.0
+    Depends on                                    -
+    Source                                        https://www.gnu.org/software/findutils
+    Purpose                                       Walks a managed location, so -fp can set the owner & mode of everything in it.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--PHP--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        php
+    Programs                                      -
+    Install type                                  apt
+    Package                                       php-cli php-mbstring
+    Minimum version                               8.0
+    Required                                      YES
+    Subsystem                                     Core
+    License                                       PHP-3.01
+    Depends on                                    -
+    Source                                        https://www.php.net
+    Purpose                                       Runs the application.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--PHP Ext Installer--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        docker-php-ext-install
+    Programs                                      -
+    Install type                                  system
+    Package                                       -
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Core
+    License                                       MIT
+    Depends on                                    -
+    Source                                        https://github.com/docker-library/php
+    Purpose                                       Installs a PHP extension on the official PHP container image, which has no package for one.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--PHP OpenSSL--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        -
+    Programs                                      -
+    Install type                                  php-extension
+    Package                                       openssl
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Resource Awareness
+    License                                       PHP-3.01
+    Depends on                                    PHP
+    Source                                        https://www.php.net/manual/en/book.openssl.php
+    Purpose                                       Encrypts every message on a manager socket. Resource awareness cannot work without it & fails quietly rather than loudly.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--PHP Pcntl--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        -
+    Programs                                      -
+    Install type                                  php-extension
+    Package                                       pcntl
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Core
+    License                                       PHP-3.01
+    Depends on                                    PHP
+    Source                                        https://www.php.net/manual/en/book.pcntl.php
+    Purpose                                       Lets root run a command as the web server account. Without it that command is refused.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--PHP Posix--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        -
+    Programs                                      -
+    Install type                                  php-extension
+    Package                                       posix
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Core
+    License                                       PHP-3.01
+    Depends on                                    PHP
+    Source                                        https://www.php.net/manual/en/book.posix.php
+    Purpose                                       Names accounts & lets root run a command as the web server account. Without it that command is refused.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Pacman--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        pacman
+    Programs                                      -
+    Install type                                  system
+    Package                                       pacman
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Core
+    License                                       GPL-2.0-or-later
+    Depends on                                    -
+    Source                                        https://gitlab.archlinux.org/pacman/pacman
+    Purpose                                       Installs, upgrades & removes a dependency on Arch.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Procps--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        ps
+    Programs                                      pgrep
+    Install type                                  apt
+    Package                                       procps
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Core
+    License                                       GPL-2.0-or-later
+    Depends on                                    -
+    Source                                        https://gitlab.com/procps-ng/procps
+    Purpose                                       Says whether a worker is still running & counts the web server's workers. Without it a stream is taken to have finished as it starts.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Shell--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        sh
+    Programs                                      -
+    Install type                                  system
+    Package                                       dash
+    Minimum version                               -
+    Required                                      YES
+    Subsystem                                     Core
+    License                                       BSD-3-Clause
+    Depends on                                    -
+    Source                                        https://git.kernel.org/pub/scm/utils/dash/dash.git
+    Purpose                                       Runs every command the Engine & an application start, & its builtins cd, command, echo, exit, export, kill, test & umask.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Systemd--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        systemctl
+    Programs                                      loginctl, systemd-analyze, systemd-run
+    Install type                                  system
+    Package                                       systemd
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Core
+    License                                       LGPL-2.1
+    Depends on                                    -
+    Source                                        https://systemd.io
+    Purpose                                       Runs the listener & the managers as units & timers, & bounds the memory & processor a conversion may use.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Tar--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        tar
+    Programs                                      -
+    Install type                                  system
+    Package                                       tar
+    Minimum version                               1.30
+    Required                                      YES
+    Subsystem                                     Updates
+    License                                       GPL-3.0
+    Depends on                                    -
+    Source                                        https://www.gnu.org/software/tar
+    Purpose                                       Unpacks the release an update fetches, & creates & extracts tar archives for an application that offers them.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Util-linux--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        setsid
+    Programs                                      -
+    Install type                                  system
+    Package                                       util-linux
+    Minimum version                               -
+    Required                                      YES
+    Subsystem                                     Core
+    License                                       GPL-2.0-or-later
+    Depends on                                    -
+    Source                                        https://github.com/util-linux/util-linux
+    Purpose                                       Starts a worker in a session of its own, so it outlives the request that started it.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--YUM--
+
+  Approval record
+    Status                                        NOT YET AUDITED
+    Approved on                                   NOT YET AUDITED
+    Expires on                                    NOT YET AUDITED
+    Audited by                                    NOT YET AUDITED
+    Audit outcome                                 NOT YET AUDITED
+    Notes or Conditions                           NOT YET AUDITED
+
+  Manifest facts, read from Resources/Engine/depends.php
+    Binary                                        yum
+    Programs                                      rpm
+    Install type                                  system
+    Package                                       yum rpm
+    Minimum version                               -
+    Required                                      NO
+    Subsystem                                     Core
+    License                                       GPL-2.0-or-later
+    Depends on                                    -
+    Source                                        https://github.com/rpm-software-management/yum
+    Purpose                                       Installs, upgrades & removes a dependency on an older Red Hat host without dnf, & rpm says which package a file belongs to.
+
+  Audit answers. Every one is a judgement a person records here.
+    1a Security design is amenable to ours        NOT YET ANSWERED
+    1b Recent CVEs, issues or exploits            NOT YET ANSWERED
+    1c Development activity & breakage risk       NOT YET ANSWERED
+    1d What it needs to function                  NOT YET ANSWERED
+    1e Can it be sandboxed or isolated            NOT YET ANSWERED
+    1f Security options & hardened configuration  NOT YET ANSWERED
+    1g Could another dependency do this better    NOT YET ANSWERED
+    1h Origin & supply chain risk                 NOT YET ANSWERED
+    1i Dependency traps for existing installs     NOT YET ANSWERED
+    2a System package versus a source build       NOT YET ANSWERED
+    2b Build flags, libraries & features          NOT YET ANSWERED
+    2c Minimum version & version edge cases       NOT YET ANSWERED
+    2d Licensing implications of the build        NOT YET ANSWERED
+    3a Distribution method                        NOT YET ANSWERED
+    3b Download source used                       NOT YET ANSWERED
+    3c How an installer obtains this version      NOT YET ANSWERED
+    3d Inspection of any bundled binary or code   NOT YET ANSWERED
+    3e Sanity check of the build system           NOT YET ANSWERED
+    3f Build script provided                      NOT YET ANSWERED
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

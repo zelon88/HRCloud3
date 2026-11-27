@@ -1,0 +1,316 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRProprietary Engine, Copyright on 9/4/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
+
+FILE INFORMATION ...
+v3.8.9.
+This plain text file describes how HRConvert2 writes a log, and why it writes it that way.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+Logging requires a writable directory. Everything else it needs, it does without.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Three Tiers--
+
+  logEntry()      Op-Act      Normal activity. The caller suppresses it when not verbose.
+  warningEntry()  WARNING!!!  Always written. Carries no number. Can never halt.
+  errorEntry()    ERROR!!!    Always written. Carries a documented number. May halt.
+
+A log is normal operational activity.
+A warning is something an administrator should know is happening.
+It does not mean anything needs to change & it can never stop execution.
+An error reports a failure that alters what this application does.
+Anything an attacker caused & this application handled correctly is a warning.
+A blocked SSRF attempt, a removed file reference & a refused stream are all warnings.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About One Writer--
+
+THREE TIERS, ONE COMPOSER & ONE WRITER.
+
+  composeLogEntry()        Builds the line & gives it a sequence number.
+  emitLogEntry()           Writes the line, or holds it until there is somewhere to write.
+  appendLogText()          Appends to the logfile, through the held handle when there is one.
+  flushLogBuffer()         Empties whatever was held, in order.
+  echoLogEntryToConsole()  Repeats a warning or an error on root's terminal. See Where Root's Log Goes.
+
+The three tiers were three near identical copies of the same formatting until v3.8.9.
+Each one recomputed the timestamp, resolved the session & assembled the line itself.
+A change to any of that had to be made three times & was once made in only two.
+The tiers are now nine lines each & the thing they share is written down once.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Sequence Number--
+
+EVERY ENTRY IS NUMBERED FROM ZERO & THE NUMBER COUNTS ENTRIES RATHER THAN SECONDS.
+
+  Op-Act, 00042, September 4, 2026, 6:30 am, <session>: Converting model.
+
+A gap in that sequence is the only evidence that an entry was lost.
+Nothing else in a logfile can prove a line was written & never arrived.
+Two entries stamped with the same second are otherwise impossible to order.
+A conversion writes several entries inside one second routinely.
+
+The counter starts at zero when the process starts rather than when the day starts.
+A manager process therefore counts from its own launch & a web request from its own arrival.
+A number is meaningful within one process & means nothing across two.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Buffer--
+
+AN ENTRY RAISED BEFORE THERE IS A LOGFILE IS HELD RATHER THAN LOST.
+
+verifyLogs() runs a long way into the boot & several hundred entries are raised before it.
+Those entries used to go to the server error log.
+They sat there apart from everything around them & were almost never found.
+They are held in a buffer now & written in order the moment a logfile exists.
+The kernel empties the buffer the moment it opens the logfile, so nothing waits for the next entry to arrive.
+
+THE BUFFER IS BOUNDED AT FIVE HUNDRED & TWELVE ENTRIES.
+A process that never reaches a logfile must not grow until it is killed for memory.
+The entries that explain a boot failure are the early ones rather than the thousandth.
+An overflow keeps the earliest entries & leaves a line in the log saying later ones were
+discarded. Until v4.0.1 that line said older ones, which was the reverse of what happened.
+
+quickDie() EMPTIES THE BUFFER TO WHATEVER CHANNEL EXISTS BEFORE IT HALTS.
+A halt during boot is exactly the case where the entries leading up to it explain the halt.
+It is also exactly the case where there was nowhere to have written them.
+
+quickDie() IS THE ONE PLACE A HALT IS RECORDED, & A HALT IS RECORDED & SHOWN ONCE.
+errorEntry() leaves a fatal error to quickDie(), which writes it to the logfile when one is
+usable & to PHP's own error log when none is, then shows it on the page or the terminal. On the
+command line PHP's error log is standard error unless php.ini names somewhere else, so there the
+halt is printed once rather than sent to both. A logfile is usable on the terms emitLogEntry()
+uses, a held handle or a file that exists, so a halt raised because the logfile could not be
+created reaches PHP's error log rather than a file that is not there.
+Until v4.0.1 errorEntry() wrote a fatal error as well. A halt before a logfile existed appeared
+twice, a halt after one existed was recorded under one sequence number & shown under the next, &
+a halt raised through quickDie() directly once a logfile existed was shown & never recorded.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Log Files Being Named For A Role--
+
+  HRConvert2_Web_0_<date>.txt       A web request.
+  HRConvert2_Manager_0_<date>.txt   A manager process.
+  HRConvert2_Cli_0_<date>.txt       Anything run from the command line.
+
+The role is decided in verifyLogs() before the filename is built.
+Web is the default, because a request is what this application mostly is.
+
+SEPARATING BY ROLE IS THE MAIN DEFENCE AGAINST TWO PROCESSES INTERLEAVING ONE LINE.
+Several processes append to a logfile at the same time.
+A web request, four manager processes & any worker they supervise all write at once.
+An append shorter than the pipe buffer is atomic on Linux & most entries are.
+A stream inspection dump, a compiler log or an FFMPEG failure is not.
+Those are exactly the entries worth not corrupting.
+LOCK_EX in emitLogEntry() closes the gap that remains & costs nothing at this volume.
+
+It is also a readability decision & that is not a small one.
+A manager writing every few seconds for a week buried every web request beside it.
+
+TWO ENGINE SETTINGS SPLIT THE FILES FURTHER & BOTH ARE FALSE FOR HRConvert2.
+$EnginePerManagerLogFiles gives each manager role a file named for the role, so the
+listener & the three managers stop sharing one.
+$EnginePerWorkerLogFiles gives each tracked worker a file named from an identifier the
+application supplies before verifyLogs runs.
+Four managers sharing one file is readable & four files is four things to open, so the
+first stays off until a manager is writing enough to matter.
+One file per conversion on a busy server is a directory nobody can read, so the second is
+for an application that dispatches long running work rather than for this one.
+Turning either on removes the possibility of two processes interleaving rather than
+guarding against it, which is why they exist at all.
+
+THE Worker ROLE IS FOR A WORKER OF THE APPLICATION'S OWN, FROM v4.3.1.
+Nothing of the Engine's spawns a PHP worker. A detached conversion spawns FFMPEG rather than PHP.
+An application starts one of its own arguments as a worker with startApplicationWorker(). Where
+its contract sets $EnginePerWorkerLogFiles TRUE & it sets $LogWorkerIdentifier to the identifier
+of the work before verifyLogs() runs, that worker logs to a file of its own.
+  HRConvert2_Worker-<identifier>_0_<date>.txt   One worker, were HRConvert2 to start one.
+Every other command logs as it did. A worker root starts logs where root's logfile is, in Engine
+in the data location, & pruneRootLogs() removes it with the rest of root's once it is thirty days old.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Opening The Logfile--
+
+THE KERNEL DECIDES WHAT THE LOGFILE IS & OPENS IT, FROM WHAT THE APPLICATION SUPPLIES.
+
+  verifyLogs()           Decides the role, the folders & the rest of the name, & has the logfile opened.
+  refreshLogFile()       Reads the date again & runs verifyLogs(), for a process that runs for days.
+  findCurrentLogFile()   Builds a logfile's name & moves on past one that is full.
+  openLogFileForRoot()   Opens root's logfile in Engine without following a link, or standard error.
+  openLogFileByName()    Makes the folder another account logs to when it is missing & creates its logfile.
+
+verifyLogs() decides the role the logfile is named for, the folders it may be in, the file placed in
+that folder & the rest of its name, from the folders, the size & the name the application supplies.
+How a logfile is named in turn, opened & protected is the same in every application. Until v4.1.1
+verifyLogs() did all of it, & built the same filename in five places. Until v4.1.8 verifyLogs() &
+refreshLogFile() were defined in convertCore.php.
+
+A manager & a workflow's worker are told apart by the command each was started with. Those commands
+are the Engine's, which every application on the Engine shares, so the kernel names them & is still
+identical in every application.
+
+A FOLDER THAT CANNOT BE USED IS PASSED OVER, & THAT IS REPORTED.
+An account other than root logs to the folder --Log Storage Directory-- names, & to Logs in the data
+location when that folder cannot be made. Root logs to standard error when the logfile in Engine
+cannot be opened. Each is a warning, written once a logfile exists, or shown with error 9 when none
+can be. Until v4.1.1 both fell back in silence.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Where Root's Log Goes--
+
+ROOT LOGS TO A FILE IN ITS OWN FOLDER, Engine, INSIDE THE DATA ROOT.
+The web server account's log folder sits inside the data root & is that account's, so root will
+not open a logfile there: that account could rename the whole folder aside & put a link in its
+place, redirecting a logfile root opened by name to any file on the host. Guarding the name is
+not enough when the folder under it can be swapped, as Debian's nginx package was in 2016, in
+CVE-2016-1247. Engine is root:root inside a data root root owns, so no other account can swap it.
+
+Root opens its logfile in Engine through openLogFileForRoot(), which opens it with
+openFileWithoutFollowing(). That follows neither a symbolic nor a hard link & checks the handle is
+the file it examined. A logfile there that exists & cannot be opened is reported in a warning, & root
+logs to standard error instead. A fatal
+error is written to that file once, by quickDie(), rather than logged by errorEntry() & written
+again. Op-Act, warning & error lines all go to the file; with $Verbose FALSE the Op-Act lines are
+suppressed. The printed report an administrator sees on the terminal is separate from the log, as
+it is for a web request, & is the human-facing summary.
+
+ROOT'S LOGFILE IS NOT HANDED TO A COMMAND ROOT RUNS, FROM v4.3.1. Root writes through one open
+handle for as long as it runs. A process hands every handle it holds to each command it starts,
+unless the handle was opened to be closed there, & openFileWithoutFollowing() now opens it so.
+Until then every command root ran could write to root's logfile, a sandboxed one included.
+
+AN ADMINISTRATOR AT A TERMINAL STILL SEES EVERY WARNING & ERROR AS IT HAPPENS.
+When root opens its file in Engine with standard error on a terminal, openLogFileForRoot() sets
+$LogEchoToConsole, & echoLogEntryToConsole() repeats each WARNING!!! & ERROR!!! line there as it
+reaches the file, held lines included. The repeat is the recorded line, sequence number & all.
+Op-Act lines are not repeated. A systemd timer, a pipe, a redirect & a Docker build have no
+terminal on standard error, so their lines go to the file alone. A halt is repeated there once
+by quickDie() & is not printed beside the repeat. Every other account is unaffected.
+
+ROOT'S OLD LOGFILES ARE REMOVED BY THE ENVIRONMENT MANAGER.
+No account but root can read or clean Engine, so nothing else would ever remove an old one.
+Every Environment Manager pass, watching or repairing, removes root's logfiles there older than
+thirty days, through pruneRootLogs() & the kernel. An installation that never runs a pass keeps
+them until root removes them by hand. See ABOUT_ENVIRONMENT_MANAGER.txt.
+
+Until the data root is root's — before -fp has run after an upgrade — Engine does not exist, so
+root falls back to standard error for that one command, which a terminal shows & a systemd unit
+sends to the journal. appendLogText() writes a handle that is not a plain file without a lock,
+because standard error under systemd is a socket where a lock always fails. The next root command,
+with Engine in place, logs to the file. A halt before verifyLogs() has run goes to PHP's own error
+log & to the terminal, as for every account.
+
+The web server account & every other account are unchanged. Each still opens a logfile in its
+own folder & writes to it, because nothing there belongs to an account root is protecting
+itself from.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Whether A Web Request Is A Worker--
+
+IT IS ONE TO THE BUDGET & IT IS NOT ONE TO THE LOG. BOTH ARE CORRECT.
+
+A request that converts something asks the listener for budget, receives a token & is
+registered by registerTrackedWorker() against that token. It is a worker in every sense
+the resource machinery cares about, & findStaleWorkers() will notice if it overruns.
+
+The log role is decided in verifyLogs(), which runs long before anybody knows whether this
+request will convert anything at all. A request that only uploads a file never becomes a
+worker & a request that converts one does. The same code path produces both.
+
+So the role names the KIND OF PROCESS rather than what it turned out to do.
+A web request writes to the Web log whether or not it ends up holding a budget token.
+That is the right level for a filename, & the budget token is in the entries themselves for
+anybody following one conversion through.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Why Logging Is Kernel Rather Than Engine--
+
+IT WAS CONSIDERED FOR THE ENGINE & MOVING IT WOULD HAVE BEEN WRONG.
+
+An Engine that fails to load costs an application the capability the Engine provides.
+Every other component degrades that way & the loss is reported.
+An application whose logging lived in the Engine would lose the ability to report anything,
+at exactly the moment there was something worth reporting.
+
+Logging is also used several hundred times before the Engine is loaded at all.
+The Engine is verified late on purpose, because a failure to verify it is worth a warning
+that has somewhere to be written.
+
+Opening the logfile was considered for the Engine at v4.1.1 & refused for the same reasons, so it
+moved into the kernel instead. Deciding what the logfile is followed it at v4.1.8, as Opening The
+Logfile says.
+
+The Engine may call logEntry, warningEntry, errorEntry & quickDie freely.
+The kernel is the substrate both the Engine & the application stand on, & it is byte
+identical in every application, so an Engine calling it is not coupled to any one of them.
+The kernel services are whatever Resources/Kernel/kernel.php defines, &
+Documentation/ABOUT_ENGINE_CONTRACT.txt explains why that file is the only list.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Rotation--
+
+$MaxLogSize in config.php decides when a logfile is finished with.
+findCurrentLogFile() advances the count in the filename until it finds one under that size.
+A rotation therefore happens at the start of a request rather than in the middle of one.
+No entry is ever split across two files.
+
+A MANAGER ROTATES ONCE A MINUTE. It runs for weeks & handles no request, so every manager loop
+asks refreshLogFile() through $EngineLogProvider, which reads the date again & runs verifyLogs().
+Until v4.0.6 a manager wrote the logfile it started with for as long as it ran, past 38M on one
+host & under the date it started on. Root runs nothing for days & is left as it is.
+
+A logfile the web server account makes is 0600, as the folder it is in is 0700. Until v4.0.6 it
+was given whatever the process's umask allowed, & earlier releases made them 0755. Those keep the
+mode they were made with.
+
+NEITHER SESSION TOKEN IS WRITTEN TO A LOG. The tokens are the session, so a reader of the log could
+take the session over. Until v4.0.6 both were logged with --Enhanced Logging Verbosity-- on. Every
+entry still names the session by its two folder names, which come from the tokens through a keyed
+hash & cannot be turned back into them.
+
+The scanner pipelines report through the application log, & a user requested scan writes its
+own report into the session. verifyLogs() also named & rotated a ClamLog file until v4.0.0,
+which nothing had written since ClamAV moved into its pipeline.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Text Nobody Vetted--
+
+An entry is written as it is handed over. composeLogEntry() puts a tier, a sequence number, a
+time, the number of an error & a session before it, & changes nothing in it.
+
+Some of what an entry holds was chosen by nobody the application trusts. The name of a file, &
+what a tool prints about one, is chosen by whoever made the file. A line break in it would forge
+a line of the log, & an escape sequence would have a terminal obey it when the log is read.
+
+The kernel's printableText() makes such text safe to log & to print, from v4.3.1. It shows every
+control character as a question mark, C1 ones included, & every byte outside printable ASCII too
+where the text is not UTF-8. With its second argument TRUE it also cuts text longer than 1000
+bytes, where a character ends, & ends it with three dots.
+
+Whatever logs or prints text it did not choose passes that text through printableText() first.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

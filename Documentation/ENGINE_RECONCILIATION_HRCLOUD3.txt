@@ -1,0 +1,108 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRCloud3, Copyright on 11/26/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
+
+FILE INFORMATION ...
+v0.9.8.
+This plain text file records every difference between the HRProprietary Engine this application carries & the Engine as it is distributed, with the reason for each, so that each can be taken upstream or dropped deliberately.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+This file describes the Engine the application carries, which is the HRProprietary Engine v4.3.4, by what it changed in the Engine v4.3.4 its starter kit distributes. Run  php cloudCore.php -v  to see what this installation has.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About This File--
+
+HRCloud3 carries its own copy of the HRProprietary Engine, as every application built on the
+Engine does. The Engine is maintained for every application, so a change made to this copy
+is a proposal to the Engine & not a private convenience.
+
+This file is the record of those proposals. Every change to a file the Engine distributes is
+entered here in the build that makes it, with what changed, why, what it does to the
+reference application & how to see that it works. Nothing is changed in the Engine that is
+not entered here.
+
+A change is written so that it could be applied to the Engine as it stands. It names no
+application, asks nothing of one that the contract does not already ask, & leaves the
+reference application behaving as it did.
+
+A versioned Engine file this application changes is stamped with the version it was taken at &
+ur, for un-reconciled, as v4.3.4ur. A file it carries unchanged keeps the kit's stamp. The
+HRProprietary conversation merges every application's copy into canon, & only canon is stamped
+plainly.
+
+The baseline is the HRProprietary repository at 2c576bb, the v4.3.4 starter kit. Its kernel is
+v4.3.3, its Engine v4.3.4, with the Setup Core at v4.3.3, the Dependency Core at v4.3.4, the
+Pipeline Core at v4.3.2, the Workflow & Event Cores at v4.3.1, the Environment Core at v4.3.3,
+the Authentication Core at v4.2.3 & the Email Core at v4.2.0.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What This Application Took From The Kit--
+
+HRCloud3 v0.9.8 took, unchanged:
+  Resources/Kernel/                 The kernel.
+  Resources/Engine/                 engine.php, engineConfig.php, config-template.php, depends.php, every Core,
+                                    every Manager, Sandbox/ & UI/.
+  Documentation/                    Every document, the checkers & the tests, but Logos/, which an application
+                                    does not copy.
+  LICENSE                           The GNU GPLv3.
+
+  Resources/Pipelines/              Every pipeline the kit carries, & its shared modules.
+  Resources/ScanCore/               ScanCore v1.9.
+
+HRCloud3 v0.9.8 accepts no pipeline. Its contract's allowlist is empty, so no pipeline is ever read,
+required or enumerated. They are carried as the kit's assembled Starter carries them, because the message
+checker attributes each block of ERROR_DESCRIPTIONS.txt to the files it names, & the pipelines' blocks are
+reported stale in a tree that does not hold them. The build that first accepts a pipeline names it.
+
+Its entry point, cloudCore.php, its versionInfo.php & its three contract files began as the kit's
+Example/Starter, & are HRCloud3's own.
+
+To these documents HRCloud3 added CHANGELOG.txt, this file, test_hrcloud3-cli.php in Build/Tests,
+& its own entries in ERROR_DESCRIPTIONS.txt: its errors 2 & 35000, beside the Starter's, & a block of
+its own, WARNINGS ABOUT HRCLOUD3. The seven entries for the kernel's errors 3 to 9 name cloudCore.php
+beside convertCore.php & app.php, because the kernel raises each from whichever entry point boots it.
+Build/Tests/README.txt gains a section naming test_hrcloud3-cli.php. Nothing of the Engine's was removed
+from any document.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Changes To The Engine--
+
+None in v0.9.8. Every file of the Engine's is the kit's, byte for byte. Compare the tree against the
+kit to see that it is so.
+
+The Engine changes this application expects to propose are listed in the HRCloud3 planning record,
+& each is entered here in the build that makes it:
+  The sign in pages & their scripts, which are HRConvert2's today, as an interface of the Engine's own.
+  A signed in user changing their own password & address, which ABOUT_AUTHENTICATION.txt lists as Not Yet.
+  Folders within a user's folder. Today it is flat, & the account sweep reads only its top.
+  Libraries, as locations an administrator defines, each with a role.
+  Encryption at rest, as a Core, with a way to serve a file that decrypts it as it is read.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What The Engine Assumes About An Application--
+
+Entered as each is met.
+
+THE DOCUMENTATION CHECKER KNOWS ONLY THE EXAMPLE'S CODE. Met in v0.9.8.
+hrconvert2-doccheck.py reports 38 names in ERROR_DESCRIPTIONS.txt, labels & functions only HRConvert2's
+code has, as it does from the kit's assembled Starter. The message checker already attributes each block
+to the files it names & sets aside what another application raises. The documentation checker could learn
+the same rule. Left to the HRProprietary conversation, which owns both checkers, & unchanged here.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
