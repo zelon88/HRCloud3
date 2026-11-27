@@ -1118,10 +1118,18 @@ function signOutKey($signInKey) {
 // / A function to list how long a signed in user may choose to keep their files, from v4.2.3.
 // / Accepts nothing. Returns the lifetimes in seconds, 0 first, which keeps them until the user deletes them.
 // / The choices are fixed, so a page can name each in its own language, & 0 is every account's until its user chooses another.
+// / An application offers fewer by naming them in $EngineFileLifetimes in its contract, from HRCloud3 v1.0.0, as HRCloud3 offers only 0.
+// / A lifetime the Engine does not offer is never offered, & 0 always is, so a contract cannot take a user's choice of keeping away.
 // / A file is removed once it has gone unchanged for longer than its account's lifetime. See expireAccountFiles().
 function accountFileLifetimes() {
   // / Set variables.
-  $FileLifetimes = array(0, 3600, 86400, 604800, 2592000);
+  global $EngineFileLifetimes, $EnableMemoryProtection;
+  $FileLifetimes = array();
+  $engineLifetimes = array(0, 3600, 86400, 604800, 2592000);
+  $FileLifetimes = $engineLifetimes;
+  if (isset($EngineFileLifetimes) && is_array($EngineFileLifetimes)) $FileLifetimes = array_values(array_unique(array_merge(array(0), array_intersect($engineLifetimes, $EngineFileLifetimes))));
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $engineLifetimes);
   return $FileLifetimes; }
 // / -----------------------------------------------------------------------------------
 

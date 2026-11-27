@@ -11,7 +11,7 @@
 // / HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 // /
 // / FILE INFORMATION ...
-// / v0.9.9.
+// / v1.0.0.
 // / The English language pack of the Default interface. Every string a page shows, & nothing else.
 // / The Page Core requires it from inside the function that builds a page, so every string is local to that call & nothing
 // / outside it can read one. English is the last rung of the language ladder, so this pack must define every string a page reads.
@@ -37,19 +37,20 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRCloud3-2: This 
 
 // / -----------------------------------------------------------------------------------
 // / The version of this pack, which the Page Core compares with $RequiredLanguageVersion, & the way it reads.
-$LanguageVersion = 'v0.9.9';
+$LanguageVersion = 'v1.0.0';
 $LanguageDirection = 'ltr';
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
 // / What each page is called, in the title of the window.
-$TextPageTitles = array('engine' => 'Sign in', 'home' => 'Home', 'settings' => 'Settings');
+$TextPageTitles = array('engine' => 'Sign in', 'home' => 'Home', 'files' => 'Files', 'settings' => 'Settings');
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
 // / The bar at the top of every page a signed in user sees.
 $TextMainNavigation = 'Main';
 $TextHome = 'Home';
+$TextFiles = 'Files';
 $TextSettings = 'Settings';
 $TextSignIn = 'Sign in';
 $TextSignOut = 'Sign out';
@@ -61,6 +62,88 @@ $TextSignedInAs = 'Signed in as';
 $TextLauncherHeading = 'Apps';
 $TextWelcome = 'Welcome,';
 $TextNoApps = 'No apps are installed yet.';
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / The Files page, where a signed in user keeps files in the libraries an administrator names, from v1.0.0.
+// / A library's own name is the administrator's, & is shown as it is written.
+// / {name}, {count}, {days} & {percent} are replaced by the page. A sentence about a number is given for each plural category the
+// / language has, as Intl.PluralRules names them, & English has one & other.
+$TextFilesHeading = 'Files';
+$TextLibrary = 'Library';
+$TextLibraryPersonal = 'Only you can see this library.';
+$TextLibraryShared = 'Everybody who signs in can see this library.';
+$TextLibrarySharedReadOnly = 'Everybody who signs in can see this library. You can only read it.';
+$TextFolderTrail = 'Folder';
+$TextUpload = 'Upload files';
+$TextNewFolder = 'New folder';
+$TextShowTrash = 'Trash';
+$TextShowFiles = 'Back to files';
+$TextEmptyTrash = 'Empty the trash';
+$TextFilesCaption = 'What this folder holds';
+$TextTrashCaption = 'What was deleted from this library';
+$TextColumnName = 'Name';
+$TextColumnSize = 'Size';
+$TextColumnChanged = 'Changed';
+$TextColumnFrom = 'Deleted from';
+$TextColumnDeleted = 'Deleted';
+$TextColumnActions = 'Actions';
+$TextDownload = 'Download';
+$TextRename = 'Rename';
+$TextMove = 'Move';
+$TextCopy = 'Copy';
+$TextDelete = 'Delete';
+$TextRestore = 'Put back';
+$TextDeleteForever = 'Delete forever';
+$TextOpenFolder = 'Open the folder {name}';
+$TextTopOfLibrary = 'the top of the library';
+$TextFolderEmpty = 'This folder is empty. Upload files or drop them here.';
+$TextTrashEmpty = 'The trash is empty.';
+$TextLoading = 'Loading';
+$TextNoLibraries = 'No library is available. Contact the administrator.';
+$TextFilesNotSignedIn = 'Sign in to see your files.';
+$TextNameLabel = 'Name';
+$TextIntoLibrary = 'Into the library';
+$TextIntoFolder = 'Into the folder';
+$TextIntoFolderNote = 'Separate the names of folders with /. Leave it empty for the top of the library.';
+$TextCancel = 'Cancel';
+$TextConfirmDelete = 'Move {name} to the trash?';
+$TextConfirmPurge = 'Delete {name} forever? It cannot be put back.';
+$TextConfirmEmpty = 'Empty the trash? Nothing in it can be put back.';
+$TextUploading = 'Uploading {name}, {percent}%';
+$TextUploadedSome = array('one' => '{count} file was uploaded. {name}: ', 'other' => '{count} files were uploaded. {name}: ');
+$TextUploadedAll = array('one' => '{count} file was uploaded.', 'other' => '{count} files were uploaded.');
+$TextTrashKeeps = array('one' => 'What is deleted is kept here for {days} day, then deleted forever.', 'other' => 'What is deleted is kept here for {days} days, then deleted forever.');
+$TextTrashKeepsForever = 'What is deleted is kept here until the trash is emptied.';
+$TextFolderCut = array('one' => 'This folder holds more than {count} item, so only the first is shown.', 'other' => 'This folder holds more than {count} items, so only the first {count} are shown.');
+$TextSizeUnits = array('B', 'KB', 'MB', 'GB', 'TB');
+// / What the Files page says when a library answers, by the outcome the Engine's Storage Core names.
+$TextFileOutcomes = array(
+  'made' => 'The folder was made.',
+  'uploaded' => 'Uploaded.',
+  'renamed' => 'Renamed.',
+  'moved' => 'Moved.',
+  'copied' => 'Copied.',
+  'trashed' => 'Moved to the trash.',
+  'restored' => 'Put back.',
+  'purged' => 'Deleted forever.',
+  'emptied' => 'The trash was emptied.',
+  'exists' => 'Something with that name is already there.',
+  'name-invalid' => 'That name cannot be used. A name holds no slash, does not begin or end with a space, and is not . or ..',
+  'missing' => 'That is not there any more.',
+  'into-itself' => 'A folder cannot go inside itself.',
+  'read-only' => 'You can only read this library.',
+  'not-allowed' => 'Only an administrator, or whoever added it, can delete that forever.',
+  'quota' => 'That would take you past the space you may use.',
+  'disk-full' => 'The server does not have room for that.',
+  'too-large' => 'That is larger than this server accepts.',
+  'upload-failed' => 'That upload did not finish. Please try again.',
+  'library-unknown' => 'That library is not available.',
+  'folder-invalid' => 'That folder cannot be used.',
+  'action-invalid' => 'That could not be done.',
+  'unavailable' => 'That could not be done right now. Please try again later.',
+  'signed-out' => 'You have been signed out.',
+  'no-answer' => 'The server did not answer. Please try again.');
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------

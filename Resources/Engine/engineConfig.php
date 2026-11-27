@@ -104,6 +104,27 @@ $EngineApplicationSlug = 'application';
 // /   Valid options are TRUE or FALSE.
 // /   Default is FALSE.
 $EngineEnableAuthentication = FALSE;
+// /
+// /  --Engine Enable Storage--
+// /   Libraries a signed in user keeps files in, from HRCloud3 v1.0.0. A library is a folder an
+// /   administrator lists in the application's config.php, personal, where each user has a space no
+// /   other user reaches, or shared, which every signed in user reads.
+// /   It needs --Engine Enable Authentication--, because a library is kept for a signed in user, &
+// /   the application pins the Storage Core with $RequiredStorageCoreVersion.
+// /   An application that offers it declares LibraryLoc in $EngineManagedLocations with the web role,
+// /   & maps LibraryLocation to it, & StorageLibraries & TrashLifetime to its own settings.
+// /   See Documentation/ABOUT_STORAGE.txt.
+// /   Valid options are TRUE or FALSE.
+// /   Default is FALSE.
+$EngineEnableStorage = FALSE;
+// /
+// /  --Engine File Lifetimes--
+// /   The lifetimes, in seconds, a signed in user may choose to keep the files in their own folder for,
+// /   from HRCloud3 v1.0.0. Each is one the Engine offers, 0, 3600, 86400, 604800 or 2592000, & 0, which
+// /   keeps a file until its user deletes it, is always offered. An application that keeps every file
+// /   until its user deletes it offers array(0).
+// /   Default is every one the Engine offers.
+$EngineFileLifetimes = array(0, 3600, 86400, 604800, 2592000);
 // / -----------------------------------------------------------------------------------
 
 

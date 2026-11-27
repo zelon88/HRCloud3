@@ -630,6 +630,16 @@ DefaultLanguage, AllowUserSelectableLanguage, SupportedColors, DefaultColor, All
                                page, the application hands it the page drawn from engineGui.php.
 -v reports every interface & language pack offered. See ABOUT_PAGES.txt. HRCloud3 is the first
 application that uses it, & names applicationPageData().
+
+AN APPLICATION MAY KEEP ITS USERS' FILES IN LIBRARIES, FROM v4.3.4ur AS HRCLOUD3 v1.0.0 CARRIES IT.
+The Storage Core keeps what signed in users store in libraries an administrator lists. An application
+that offers them sets $EngineEnableStorage TRUE in its contract, pins $RequiredStorageCoreVersion,
+declares LibraryLoc with the web role in $EngineManagedLocations, & maps LibraryLocation to LibraryLoc,
+StorageLibraries & TrashLifetime to settings of its own, & StorageReserveMegabytes to StorageReserve, in
+$EngineSettingNames. It makes no call. The Engine answers a request that sends StorageAction, sweeps
+the libraries, removes an account's spaces with it & reports each library in -v. An application that
+keeps every file until its user deletes it names $EngineFileLifetimes = array(0); too, so a user is
+offered no other lifetime for the files in their own folder. See ABOUT_STORAGE.txt.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -708,6 +718,8 @@ A capability that is enabled still degrades the way everything else in this proj
 degrades. Enabling it says this application uses it, not that it must be present.
 
   $EngineEnableAuthentication         Accounts. Off unless the application's contract offers them.
+  $EngineEnableStorage                Libraries, from v4.3.4ur. Off unless the application's contract offers them,
+                                      & only where accounts are on.
 
 The list grows as applications need more. It does not grow speculatively. A gate with
 nothing behind it is a gate somebody will eventually turn on expecting something to happen.

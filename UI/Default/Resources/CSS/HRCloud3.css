@@ -7,7 +7,7 @@
  * https://www.gnu.org/licenses/gpl-3.0.html
  *
  * FILE INFORMATION ...
- * v0.9.9.
+ * v1.0.0.
  * The Default interface's stylesheet. Every color styleCore.php offers has a rule of its own, under the data-color attribute
  * header.php writes on the page, & each sets the same few custom properties the rest of the sheet is drawn with.
  * Layout uses start & end rather than left & right, so a language that reads right to left is drawn the other way round.
@@ -157,7 +157,76 @@ h2 { font-size: 1.2rem; }
 .hrc3-signin-brand { text-align: center; margin: 0 0 1rem 0; font-size: 1.4rem; }
 .hrc3-signin-card h2 { font-size: 1.3rem; }
 
+/* The Files page, from v1.0.0. A library's tools sit above its trail of folders, & its list scrolls sideways on a narrow screen. */
+.hrc3-files { width: min(1180px, 94vw); }
+.hrc3-files-bar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.75rem 1rem; }
+.hrc3-files-library { display: flex; flex-direction: column; gap: 0.25rem; font-weight: 600; }
+.hrc3-files-library select, .hrc3-dialog input, .hrc3-dialog select {
+  font: inherit;
+  font-weight: 400;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--hrc3-line);
+  border-radius: calc(var(--hrc3-radius) - 4px);
+  background: var(--hrc3-field);
+  color: var(--hrc3-text);
+  min-width: 12rem;
+}
+.hrc3-files-tools { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.hrc3-files-upload { position: relative; overflow: hidden; }
+.hrc3-files-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.hrc3-files-upload:focus-within { outline: 3px solid var(--hrc3-accent); outline-offset: 2px; }
+.hrc3-files-trail ol { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; list-style: none; margin: 0.75rem 0; padding: 0; }
+.hrc3-files-trail li { overflow-wrap: anywhere; }
+.hrc3-files-trail li + li::before { content: '/'; color: var(--hrc3-muted); margin-inline-end: 0.25rem; }
+.hrc3-files-trail li[aria-current] { font-weight: 600; }
+.hrc3-files .hrc3-status { margin-block-end: 0.75rem; }
+.hrc3-files-scroll { overflow-x: auto; border-radius: calc(var(--hrc3-radius) - 4px); outline: 2px dashed transparent; outline-offset: 4px; }
+.hrc3-files-scroll.hrc3-dropping { outline-color: var(--hrc3-accent); }
+.hrc3-files-table { width: 100%; border-collapse: collapse; }
+.hrc3-files-table caption { text-align: start; color: var(--hrc3-muted); font-size: 0.9rem; padding-block-end: 0.5rem; }
+.hrc3-files-table th, .hrc3-files-table td { text-align: start; padding: 0.45rem 0.6rem; border-block-end: 1px solid var(--hrc3-line); vertical-align: middle; }
+.hrc3-files-table th { font-size: 0.9rem; color: var(--hrc3-muted); font-weight: 600; white-space: nowrap; }
+.hrc3-files-table td:first-child { overflow-wrap: anywhere; min-width: 12rem; }
+.hrc3-files-table td:nth-child(2), .hrc3-files-table td:nth-child(3) { color: var(--hrc3-muted); white-space: nowrap; }
+.hrc3-files-table tbody tr:hover { background: var(--hrc3-page); }
+.hrc3-number { font-variant-numeric: tabular-nums; }
+.hrc3-link-button {
+  font: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--hrc3-accent);
+  text-align: start;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.hrc3-link-button:hover { text-decoration: underline; }
+.hrc3-link-button:focus-visible { outline: 3px solid var(--hrc3-accent); outline-offset: 2px; }
+.hrc3-entry-folder::before, .hrc3-entry-file::before { display: inline-block; width: 1.4em; color: var(--hrc3-muted); }
+.hrc3-entry-folder::before { content: '\1F4C1'; }
+.hrc3-entry-file::before { content: '\1F4C4'; }
+.hrc3-entry-folder { font-weight: 600; }
+.hrc3-row-actions { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.hrc3-button-small { padding: 0.2rem 0.55rem; font-size: 0.85rem; font-weight: 600; }
+.hrc3-files-frame { display: none; }
+
+.hrc3-dialog {
+  border: 1px solid var(--hrc3-line);
+  border-radius: var(--hrc3-radius);
+  background: var(--hrc3-card);
+  color: var(--hrc3-text);
+  padding: 1.25rem 1.5rem;
+  width: min(30rem, 92vw);
+}
+.hrc3-dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+.hrc3-dialog p { margin: 0; overflow-wrap: anywhere; font-weight: 600; }
+.hrc3-dialog .hrc3-note { font-weight: 400; font-size: 0.9rem; }
+.hrc3-dialog-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
 @media (max-width: 600px) {
   .hrc3-card { padding: 1rem; }
   .hrc3-account { margin-inline-start: 0; }
+  .hrc3-files-table td:nth-child(3), .hrc3-files-table th:nth-child(3) { display: none; }
+  .hrc3-files-table th, .hrc3-files-table td { padding: 0.4rem 0.35rem; }
+  .hrc3-files-table td:first-child { min-width: 7rem; }
 }

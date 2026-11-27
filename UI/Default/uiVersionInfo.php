@@ -11,7 +11,7 @@
 // / HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 // /
 // / FILE INFORMATION ...
-// / v0.9.9.
+// / v1.0.0.
 // / The version of the Default interface, which the Page Core compares with $RequiredInterfaceVersion before it loads anything of it.
 // / The comparison is exact. An interface written for another release may read a string or a value this release does not give it.
 // / The Page Core reads this file as text & never runs it, & every interface carries one of its own, because a version is never inherited.
@@ -36,5 +36,5 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRCloud3-2: This 
 
 // / -----------------------------------------------------------------------------------
 // / The version of this interface.
-$InterfaceVersion = 'v0.9.9';
+$InterfaceVersion = 'v1.0.0';
 // / -----------------------------------------------------------------------------------

@@ -172,7 +172,8 @@ BEFORE THE FIRST COMPONENT, THE PAGE CORE SETS WHAT EVERY COMPONENT READS.
   $PageData           What the function the contract names in $EnginePageDataProvider gave for this page.
   $InterfaceToUse     The interface chosen, & $LanguageToUse & $ColorToUse the language & the color.
   $InterfaceAssets    The address of each asset, keyed by the name the contract gives it.
-  $PageChoices        The interfaces, the languages, by code & endonym, & the colors a user may choose between.
+  $PageChoices        The interfaces, the languages, by code & endonym, & the colors a user may choose between. An
+                      interface is listed only where it can be used, from HRCloud3 v1.0.0, & -v says why one cannot.
   $EnginePageState    What the Engine says about the request, as the Authentication Core sets it.
 A component reads these, the language strings & nothing else. It never reads a request, so what a
 page can show is decided by the application & by the Engine, & a component can be replaced without

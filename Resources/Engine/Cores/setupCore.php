@@ -12,7 +12,7 @@
 // / on a server for users of any web browser without authentication.
 // /
 // / Fileinformation ...
-// / v4.3.3.
+// / v4.3.3ur.
 // / HRConvert2 Setup Core.
 // / A detachable installation & configuration component. convertCore.php runs without it.
 // / This file defines functions only. convertCore.php dispatches into them.
@@ -39,7 +39,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, A c
 
 // / -----------------------------------------------------------------------------------
 // / The component version. convertCore.php reads this without executing the file.
-$SetupCoreVersion = 'v4.3.3';
+$SetupCoreVersion = 'v4.3.3ur';
 // / -----------------------------------------------------------------------------------
 
 
@@ -232,6 +232,7 @@ function validateConfigDependencies($configModel, $detectedSections) {
 // / recovering an account are impossible, & signing in with valid credentials still works.
 // / Requiring confirmation where no email can be sent leaves every account a visitor registers unconfirmed until an administrator confirms it.
 // / A quota where the listener is off, & accounts this application does not offer, have no effect.
+// / An application that offers libraries keeps the quota for every write to one, listener or not, so its quota is never named, from HRCloud3 v1.0.0.
 // / The Email Core is judged by its file & its pin, & loaded only to ask whether the host can send, so --config needs no account of its own.
 function findEngineConfigContradictions($detectedSections) {
   // / Set variables.
@@ -252,7 +253,7 @@ function findEngineConfigContradictions($detectedSections) {
     if (!$emailCoreIsInstalled) $EngineFindings[] = array('Kind' => 'conflict', 'Detail' => '$EnableAuthentication is TRUE & the Email Core is missing or does not match this release, so no address can be confirmed & no account recovered. Signing in with valid credentials still works. Restore Resources/Engine/Cores/emailCore.php from this release.');
     else if (!$hostCanSend) $EngineFindings[] = array('Kind' => 'conflict', 'Detail' => '$EnableAuthentication is TRUE & this host cannot send email, so no address can be confirmed & no account recovered. Signing in with valid credentials still works. '.$emailReason);
     if (!$hostCanSend && $settingValues['AllowRegistration'] === 'TRUE' && $settingValues['RequireEmailConfirmation'] === 'TRUE') $EngineFindings[] = array('Kind' => 'conflict', 'Detail' => '$RequireEmailConfirmation is TRUE & no email can be sent, so every account a visitor registers stays unconfirmed until an administrator runs --account --confirm.');
-    if (is_numeric($settingValues['UserStorageQuota']) && (float)$settingValues['UserStorageQuota'] > 0 && in_array($settingValues['EnableResourceAwareness'], array('FALSE', '0', 'NULL', ''), TRUE)) $EngineFindings[] = array('Kind' => 'inert', 'Detail' => '$UserStorageQuota has no effect, because the listener keeps it & $EnableResourceAwareness is '.$settingValues['EnableResourceAwareness'].'.');
+    if (is_numeric($settingValues['UserStorageQuota']) && (float)$settingValues['UserStorageQuota'] > 0 && !(function_exists('storageIsOffered') && storageIsOffered()) && in_array($settingValues['EnableResourceAwareness'], array('FALSE', '0', 'NULL', ''), TRUE)) $EngineFindings[] = array('Kind' => 'inert', 'Detail' => '$UserStorageQuota has no effect, because the listener keeps it & $EnableResourceAwareness is '.$settingValues['EnableResourceAwareness'].'.');
     if (isset($EngineEnableAuthentication) && $EngineEnableAuthentication === FALSE) $EngineFindings[] = array('Kind' => 'inert', 'Detail' => '$EnableAuthentication has no effect, because this application does not offer the Engine\'s accounts.'); }
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
   purgeSensitiveMemory($EnableMemoryProtection, $foundSection, $emailVersion, $emailReason, $foundRecord, $settingValues, $settingName, $emailCoreIsInstalled, $emailCoreIsLoaded, $hostCanSend, $detectedSections);
@@ -1623,7 +1624,9 @@ function runConfigUtility($suppliedPath, $utilityMode, $modeTarget, $operatorCon
             foreach ($configModel as $sectionName => $sectionModel) {
               // / A section this utility only displays is never reset, & a repair adds to it all the same, from v4.2.5, because adding
               // / a missing setting changes no value already there. Each format list v4.2.5 added is in such a section.
-              if ((!$sectionModel['Writable'] && $utilityMode !== 'repair') or !isset($detectedSections[$sectionName])) continue;
+              // / A section the file does not hold is added by a repair too, from HRCloud3 v1.0.0, because appendConfigAssignment() gives it its
+              // / header, & a release that adds a section would otherwise leave every older file unable to start until it was edited by hand.
+              if ((!$sectionModel['Writable'] && $utilityMode !== 'repair') or (!isset($detectedSections[$sectionName]) && $utilityMode !== 'repair')) continue;
               if ($utilityMode === 'reset-section' && strtolower($sectionName) !== strtolower((string)$modeTarget)) continue;
               foreach ($sectionModel['Variables'] as $variableName => $variableModel) {
                 if ((string)$variableModel['Default'] === '') continue;

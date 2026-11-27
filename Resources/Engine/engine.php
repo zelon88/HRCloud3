@@ -507,9 +507,9 @@ function printReportSections($reportSections) {
 // / It was the application's showVersionInfo until v4.2.4. Without an Engine, the kernel's showKernelVersionReport prints a short report instead.
 function showVersionReport() {
   // / Set variables.
-  global $EngineActive, $Verbose, $DependsManifest, $KernelVersion, $ApacheUser, $RequiredKernelVersion, $RequiredEngineVersion, $ManagerSocketDir, $InstLoc, $HostedLoc, $ApplicationLoc, $ServerRootDir, $EngineApplicationVersion, $ConfigVersion, $RequiredConfigVersion, $RequiredSetupCoreVersion, $RequiredDependencyCoreVersion, $RequiredDependsVersion, $RequiredPipelineCoreVersion, $PipelineCoreActive, $ApplicationName, $DirSep, $Lol, $RunningInContainer, $RunningAsRoot, $CurrentUser, $EnableMemoryProtection, $EnableResourceAwareness, $RequireResourceAwareness, $ResourceAwarenessActive, $TotalResourceBudget, $ReserveResourcePercentage, $MaxConcurrentWorkers, $MaxExpectedRuntime, $ConvertTemp, $MaintainHTAccess, $EngineVersion, $HostArchitecture, $HostMachineString, $EnvironmentManagerMayRepair, $EnablePerConversionLimits, $Pipelines, $RequiredWorkflowCoreVersion, $RequiredAuthenticationCoreVersion, $RequiredEmailCoreVersion, $EnableAutoUpdates, $EngineReportProvider, $EngineSettingNames, $RequiredPageCoreVersion;
+  global $EngineActive, $Verbose, $DependsManifest, $KernelVersion, $ApacheUser, $RequiredKernelVersion, $RequiredEngineVersion, $RequiredStorageCoreVersion, $ManagerSocketDir, $InstLoc, $HostedLoc, $ApplicationLoc, $ServerRootDir, $EngineApplicationVersion, $ConfigVersion, $RequiredConfigVersion, $RequiredSetupCoreVersion, $RequiredDependencyCoreVersion, $RequiredDependsVersion, $RequiredPipelineCoreVersion, $PipelineCoreActive, $ApplicationName, $DirSep, $Lol, $RunningInContainer, $RunningAsRoot, $CurrentUser, $EnableMemoryProtection, $EnableResourceAwareness, $RequireResourceAwareness, $ResourceAwarenessActive, $TotalResourceBudget, $ReserveResourcePercentage, $MaxConcurrentWorkers, $MaxExpectedRuntime, $ConvertTemp, $MaintainHTAccess, $EngineVersion, $HostArchitecture, $HostMachineString, $EnvironmentManagerMayRepair, $EnablePerConversionLimits, $Pipelines, $RequiredWorkflowCoreVersion, $RequiredAuthenticationCoreVersion, $RequiredEmailCoreVersion, $EnableAutoUpdates, $EngineReportProvider, $EngineSettingNames, $RequiredPageCoreVersion;
   $VersionInfoDisplayed = FALSE;
-  $pageCoreIsPinned = $pageCoreIsLoaded = FALSE;
+  $pageCoreIsPinned = $pageCoreIsLoaded = $storageIsOffered = $storageCoreIsLoaded = FALSE;
   $reportFunction = $applicationVersion = $apacheConfigName = '';
   $reportSections = array();
   $pipelineIsOffered = FALSE;
@@ -548,6 +548,11 @@ function showVersionReport() {
   else if ($reportFunction !== '') warningEntry('A report provider named '.$reportFunction.' was declared & does not exist. The report carries nothing of the application\'s own.');
   // / An application that serves pages through the Page Core pins it, from HRCloud3 v0.9.9, & the Engine reports its interfaces & their language packs.
   // / They come before the application's own sections, where a report provider placed its interfaces until then.
+  // / An application that offers libraries has the Engine report each, from HRCloud3 v1.0.0, after its interfaces. It is loaded where
+  // / accounts are off as well, so a library that is wrong is said before anybody signs in to it.
+  $storageIsOffered = storageIsOffered();
+  if ($storageIsOffered) list ($storageCoreIsLoaded) = loadStorageCore(TRUE);
+  if ($storageCoreIsLoaded && function_exists('storageReportSections')) $reportSections['SectionsAfterSwitchedOff'] = array_merge(storageReportSections(), (array)$reportSections['SectionsAfterSwitchedOff']);
   $pageCoreIsPinned = (isset($RequiredPageCoreVersion) && is_string($RequiredPageCoreVersion) && trim($RequiredPageCoreVersion) !== '');
   if ($pageCoreIsPinned) list ($pageCoreIsLoaded) = loadPageCore();
   if ($pageCoreIsLoaded && function_exists('pageCoreReportSections')) $reportSections['SectionsAfterSwitchedOff'] = array_merge(pageCoreReportSections(), (array)$reportSections['SectionsAfterSwitchedOff']);
@@ -591,6 +596,8 @@ function showVersionReport() {
     'Email Core' => array(readComponentVersion('Engine'.$DirSep.'Cores'.$DirSep.'emailCore.php', 'EmailCoreVersion'), $RequiredEmailCoreVersion));
   // / The Page Core is reported only where the application pins it, because an application that serves no pages needs none.
   if ($pageCoreIsPinned) $componentChecks['Page Core'] = array(readComponentVersion('Engine'.$DirSep.'Cores'.$DirSep.'pageCore.php', 'PageCoreVersion'), $RequiredPageCoreVersion);
+  // / The Storage Core is reported only where the application offers libraries, from HRCloud3 v1.0.0.
+  if ($storageIsOffered) $componentChecks['Storage Core'] = array(readComponentVersion('Engine'.$DirSep.'Cores'.$DirSep.'storageCore.php', 'StorageCoreVersion'), $RequiredStorageCoreVersion);
   foreach ($componentChecks as $componentName => $componentPair) {
     if (ltrim((string)$componentPair[0], 'vV') === ltrim((string)$componentPair[1], 'vV')) print('  '.str_pad($componentName, 28).'OK, '.ltrim((string)$componentPair[0], 'vV').$Lol);
     else {
@@ -694,6 +701,8 @@ function showVersionReport() {
     else {
       if (isset($EngineSettingNames['EnableWorkflowBuilder']) && !applicationSetting('EnableWorkflowBuilder', FALSE)) $disabledFeatures[] = array('Workflow builder', 'Enable Workflow Builder');
       if (isset($EngineSettingNames['EnableWorkflowImportExport']) && !applicationSetting('EnableWorkflowImportExport', FALSE)) $disabledFeatures[] = array('Workflow import & export', 'Enable Workflow Import & Export'); } }
+  // / Libraries need accounts, so an application that offers them names them here while accounts are off, from HRCloud3 v1.0.0.
+  if ($storageIsOffered && !authenticationIsOn()) $disabledFeatures[] = array('Libraries', 'Enable Authentication');
   if (!$EnvironmentManagerMayRepair) $disabledFeatures[] = array('Environment repair', 'Environment Manager May Repair');
   if (!$EnablePerConversionLimits) $disabledFeatures[] = array('Per conversion limits', 'Enable Per Conversion Limits');
   if (!$EnableAutoUpdates) $disabledFeatures[] = array('Automatic updates', 'Enable Automatic Updates');
@@ -813,7 +822,7 @@ function showVersionReport() {
   print($Lol);
   $VersionInfoDisplayed = TRUE;
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $pageCoreIsPinned, $pageCoreIsLoaded, $engineManifestVersion, $acceptedEngineManifest, $reportFunction, $applicationVersion, $apacheConfigName, $reportSections, $listenerIsAsked, $secretRows, $secretRow, $secretGroupWasFound, $manifestEntry, $serviceEntry, $servicePath, $choiceIsPresent, $choiceVersion, $choiceStatus, $choiceOutput, $choicePath, $choiceOrigin, $sandboxLauncher, $treeIsServed, $pipelineKindCounts, $pipelineKindLabels, $pipelineKind, $pipelineKindCount, $pipelineRecord, $pipelineIsOffered, $pipelineName, $unmetRequirements, $manifestVersion, $disabledFeatures, $disabledFeature, $misplacedRoots, $hostedStatus, $hostedDetail, $setupVersion, $hostedWritten, $hostedRemoved, $setupIsAvailable, $scriptIsValid, $scriptStatus, $scriptDisplayStatus, $scriptDetail, $bwrapBinary, $listenerStatus, $listenerIsRunning, $socketMode, $componentChecks, $componentPair, $componentName, $failureCount, $maintainHtaccess, $apacheConfigIsInstalled, $dataIsProtected, $exposureStatus, $exposureDetail, $requiredProfiles, $launcherMakesUserNamespace, $identityIsOwn, $identityFlags, $identityReason, $eventCoreState, $eventCoreVersion, $eventCoreNotice, $acceptedEnvironmentCore, $environmentPinned, $environmentFound);
+  purgeSensitiveMemory($EnableMemoryProtection, $pageCoreIsPinned, $pageCoreIsLoaded, $storageIsOffered, $storageCoreIsLoaded, $engineManifestVersion, $acceptedEngineManifest, $reportFunction, $applicationVersion, $apacheConfigName, $reportSections, $listenerIsAsked, $secretRows, $secretRow, $secretGroupWasFound, $manifestEntry, $serviceEntry, $servicePath, $choiceIsPresent, $choiceVersion, $choiceStatus, $choiceOutput, $choicePath, $choiceOrigin, $sandboxLauncher, $treeIsServed, $pipelineKindCounts, $pipelineKindLabels, $pipelineKind, $pipelineKindCount, $pipelineRecord, $pipelineIsOffered, $pipelineName, $unmetRequirements, $manifestVersion, $disabledFeatures, $disabledFeature, $misplacedRoots, $hostedStatus, $hostedDetail, $setupVersion, $hostedWritten, $hostedRemoved, $setupIsAvailable, $scriptIsValid, $scriptStatus, $scriptDisplayStatus, $scriptDetail, $bwrapBinary, $listenerStatus, $listenerIsRunning, $socketMode, $componentChecks, $componentPair, $componentName, $failureCount, $maintainHtaccess, $apacheConfigIsInstalled, $dataIsProtected, $exposureStatus, $exposureDetail, $requiredProfiles, $launcherMakesUserNamespace, $identityIsOwn, $identityFlags, $identityReason, $eventCoreState, $eventCoreVersion, $eventCoreNotice, $acceptedEnvironmentCore, $environmentPinned, $environmentFound);
   return $VersionInfoDisplayed; }
 // / -----------------------------------------------------------------------------------
 // / A function to check that this host can actually do the work, without changing it.
@@ -1114,7 +1123,7 @@ function getAcceptedManagers() {
     'resourceManager.php' => 'v4.2.0',
     'workerManager.php' => 'v4.0.8',
     'requestManager.php' => 'v4.1.3',
-    'authenticationManager.php' => 'v4.2.3');
+    'authenticationManager.php' => 'v4.2.3ur');
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
   // / $AcceptedManagers is not purged, because it is the return value.
   purgeSensitiveMemory($EnableMemoryProtection);
@@ -2266,6 +2275,113 @@ function loadPageCore() {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
+// / A function to say whether this application offers its users libraries to keep files in, from HRCloud3 v1.0.0.
+// / Accepts nothing. Returns TRUE where its contract turns storage on & it pins a Storage Core.
+// / A capability a missing Engine configuration leaves unset counts as on, as every other capability does, & an application that pins
+// / no Storage Core offers none, whatever its contract says. Whether accounts are on is storageIsOn()'s to say.
+function storageIsOffered() {
+  // / Set variables.
+  global $EngineEnableStorage, $RequiredStorageCoreVersion;
+  $StorageIsOffered = ((!isset($EngineEnableStorage) or $EngineEnableStorage === TRUE) && isset($RequiredStorageCoreVersion) && is_string($RequiredStorageCoreVersion) && trim($RequiredStorageCoreVersion) !== '');
+  return $StorageIsOffered; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to say whether this installation keeps its users' files in libraries, from HRCloud3 v1.0.0.
+// / Accepts nothing. Returns TRUE where the application offers libraries & accounts are on, because a library is kept for a signed in user.
+function storageIsOn() {
+  // / Set variables.
+  $StorageIsOn = (storageIsOffered() && authenticationIsOn());
+  return $StorageIsOn; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to load the Storage Core, which keeps signed in users' files in libraries, from HRCloud3 v1.0.0.
+// / Accepts whether to load it where accounts are off, as removing an account & -v do, so a library is never left unreached.
+// / Returns whether it is loaded. It is loaded once, at the version the application pins, as every Engine core is, & verifyCoreComponent()
+// / names what was refused & why. An application that offers no libraries never loads it.
+function loadStorageCore($loadWhenOff) {
+  // / Set variables.
+  global $RequiredStorageCoreVersion, $StorageCoreActive, $EnableMemoryProtection;
+  $storageCoreVersion = '';
+  if (!isset($StorageCoreActive) or !is_bool($StorageCoreActive)) $StorageCoreActive = FALSE;
+  if (!$StorageCoreActive && (storageIsOn() or ($loadWhenOff === TRUE && storageIsOffered()))) list ($StorageCoreActive, $storageCoreVersion) = verifyCoreComponent('Storage Core', 'Engine'.DIRECTORY_SEPARATOR.'Cores'.DIRECTORY_SEPARATOR.'storageCore.php', 'StorageCoreVersion', (string)$RequiredStorageCoreVersion);
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $storageCoreVersion, $loadWhenOff);
+  return array($StorageCoreActive); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to name the folder libraries are kept in, from HRCloud3 v1.0.0.
+// / Accepts nothing. Returns TRUE where it was named.
+// / It is Libraries in the data location, beside Accounts & Users, & is named whether or not storage is on, as the kernel names every
+// / data location. An application that offers libraries declares LibraryLoc in its contract with the web role, so -fp makes it & gives it
+// / to the web server account, & maps LibraryLocation to it, so the Storage Core reads it as it reads every setting.
+function establishStorageLocation() {
+  // / Set variables.
+  global $DataRootLoc, $LibraryLoc;
+  $LocationIsNamed = FALSE;
+  $LibraryLoc = ((string)$DataRootLoc !== '') ? rtrim((string)$DataRootLoc, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'Libraries' : '';
+  $LocationIsNamed = ($LibraryLoc !== '');
+  return $LocationIsNamed; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to answer a request that asks a library for something, from HRCloud3 v1.0.0.
+// / Accepts nothing. Returns answered where it was answered, & an empty string where the request did not ask or libraries are off.
+// / A request asks by sending StorageAction, & is answered with what the library says & nothing drawn, signed in or not, so the script
+// / that asked can always read what happened. A Storage Core that could not be loaded answers nothing, & the page is drawn as it would
+// / have been, which the script reads as no answer.
+function answerStorageWhenAsked() {
+  // / Set variables.
+  global $RunningFromCLI, $EnableMemoryProtection;
+  $EngineAnswer = '';
+  $storageIsLoaded = FALSE;
+  if ($RunningFromCLI !== TRUE && isset($_POST['StorageAction']) && storageIsOn()) list ($storageIsLoaded) = loadStorageCore(FALSE);
+  if ($storageIsLoaded && function_exists('answerStorageRequest')) $EngineAnswer = answerStorageRequest();
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $storageIsLoaded);
+  return $EngineAnswer; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to sweep the trash & the unfinished uploads of every library, where libraries are on & a sweep is due, from HRCloud3 v1.0.0.
+// / Accepts the fewest seconds since the last sweep. Returns how many entries were removed.
+// / Only a web request served as the web server account sweeps, because the libraries are that account's, as sweepAccountsWhenDue()
+// / says of accounts, & root never works by path inside a folder another account can change.
+function sweepStorageWhenDue($sweepInterval) {
+  // / Set variables.
+  global $CurrentUser, $ApacheUser, $RunningAsRoot, $RunningFromCLI, $EnableMemoryProtection;
+  $EntriesRemoved = 0;
+  $storageIsLoaded = $sweepRan = FALSE;
+  if (storageIsOn() && $RunningFromCLI !== TRUE && $RunningAsRoot !== TRUE && (string)$CurrentUser !== '' && (string)$CurrentUser === (string)$ApacheUser) list ($storageIsLoaded) = loadStorageCore(FALSE);
+  if ($storageIsLoaded && function_exists('sweepStorageIfDue')) list ($sweepRan, $EntriesRemoved) = sweepStorageIfDue((int)$sweepInterval);
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $storageIsLoaded, $sweepRan, $sweepInterval);
+  return $EntriesRemoved; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to take away the space a removed account kept in every personal library, from HRCloud3 v1.0.0.
+// / Accepts the account's folder, its random identifier. Returns TRUE when none is left, or where this application offers no libraries.
+// / The Authentication Manager calls it as an administrator removes the account, so what the user kept goes with them wherever accounts
+// / are now on or off. A Storage Core that could not be loaded leaves every space where it is, & that is a warning.
+function removeAccountLibraries($accountFolder) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  $LibrariesWereRemoved = TRUE;
+  $storageIsLoaded = FALSE;
+  if (storageIsOffered()) list ($storageIsLoaded) = loadStorageCore(TRUE);
+  if ($storageIsLoaded && function_exists('removeAccountStorage')) $LibrariesWereRemoved = removeAccountStorage($accountFolder);
+  else if (storageIsOffered()) {
+    $LibrariesWereRemoved = FALSE;
+    warningEntry('What a removed account kept in its libraries was left where it is, because the Storage Core could not be loaded.'); }
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $storageIsLoaded, $accountFolder);
+  return $LibrariesWereRemoved; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
 // / A function to make sure a folder an application keeps to itself is there, & is root's alone, from v4.3.1.
 // / Accepts the folder. Returns whether it is & the reason it is not, in that order.
 // / -fp makes each folder the contract gives the root-only role. One that is missing is made here, 0700, so a command run before
@@ -2400,7 +2516,7 @@ function noteEvent($eventFacts) {
 function answerEngineRequest() {
   // / Set variables.
   global $RunningFromCLI, $TransportedWorkerIdentity, $EnginePageState, $EnableMemoryProtection;
-  $EngineAnswer = '';
+  $EngineAnswer = $storageAnswer = '';
   $authenticationIsLoaded = $emailIsLoaded = FALSE;
   $EnginePageState = array('Enabled' => FALSE, 'SignedIn' => FALSE, 'Username' => '', 'Role' => '', 'Page' => '');
   list ($authenticationIsLoaded, $emailIsLoaded) = loadAuthenticationCores(FALSE);
@@ -2416,8 +2532,14 @@ function answerEngineRequest() {
   else if (!$authenticationIsLoaded && $RunningFromCLI !== TRUE && authenticationIsOn() && applicationSetting('AllowAnonymousVisitors', TRUE) !== TRUE) {
     list ($EnginePageState['Enabled'], $EnginePageState['Page'], $EnginePageState['Available'], $EngineAnswer) = array(TRUE, 'signin', FALSE, 'page');
     errorEntry('A visitor must sign in & nobody can, because the Authentication Core could not be loaded!', 43002, FALSE); }
+  // / A page that asks a library for something is answered here, from HRCloud3 v1.0.0, once the request is known to be signed in or not.
+  // / It is answered even where a visitor must sign in first, so its script reads signed-out rather than a page, & a request one of the
+  // / Authentication Core's actions answered never reaches a library. Libraries are swept from here as accounts are.
+  if ($authenticationIsLoaded && $EngineAnswer !== 'answered') $storageAnswer = answerStorageWhenAsked();
+  if ($storageAnswer !== '') $EngineAnswer = $storageAnswer;
+  if ($authenticationIsLoaded && $RunningFromCLI !== TRUE) sweepStorageWhenDue(600);
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $authenticationIsLoaded, $emailIsLoaded);
+  purgeSensitiveMemory($EnableMemoryProtection, $authenticationIsLoaded, $emailIsLoaded, $storageAnswer);
   return $EngineAnswer; }
 // / -----------------------------------------------------------------------------------
 
@@ -2723,7 +2845,7 @@ function startEngine() {
 function startEngineSteps() {
   // / Set variables.
   global $HostArchitecture, $HostMachineString, $EngineSandboxProfiles, $EngineSandboxProvider, $EnableResourceAwareness, $ResourceAwarenessActive, $EngineConfigVersion, $EngineManagedLocations, $EngineReportsItsOwnLoad, $EngineVersion, $EngineApplicationName, $ApplicationName, $WorkflowSessionAdopted, $EngineAnswer, $EnginePageState, $CapabilityCacheWasRead, $CapabilityRecords, $PipelineCoreActive, $PipelineCoreVersion, $PipelinesAreEnumerated, $Pipelines, $PipelineCount, $RequiredPipelineCoreVersion, $WorkflowCoreActive, $WorkflowCoreVersion, $RequiredWorkflowCoreVersion, $EnableWorkflows, $RunningFromCLI, $Verbose, $EnableMemoryProtection;
-  $EngineIsStarted = $sandboxPolicyIsValid = $resourceAwarenessIsSettled = $sessionIsEstablished = FALSE;
+  $EngineIsStarted = $sandboxPolicyIsValid = $resourceAwarenessIsSettled = $sessionIsEstablished = $storageLocationIsNamed = FALSE;
   $sandboxPolicyStatus = $sandboxProvider = '';
   // / The capability cache is read once per request & carried, so a conversion of ten files does not read the same file ten times.
   // / The Pipeline Core fills these on first use.
@@ -2759,6 +2881,8 @@ function startEngineSteps() {
   if ($RunningFromCLI && isset($_SERVER['argv'][1]) && $_SERVER['argv'][1] === '--run-workflow') $WorkflowSessionAdopted = adoptWorkflowSession();
   // / $EngineAnswer is empty for a request the application serves, page for one it draws the Engine's page for & runs no operation for,
   // / & answered for one the Engine wrote the whole answer to, which draws nothing & runs nothing. What a page may show is in $EnginePageState.
+  // / The folder libraries are kept in is named before anything may ask a library for something, & before -fp makes it, from HRCloud3 v1.0.0.
+  $storageLocationIsNamed = establishStorageLocation();
   $EnginePageState = array();
   $EngineAnswer = answerEngineRequest();
   $sessionIsEstablished = establishEngineSession();
@@ -2787,7 +2911,7 @@ function startEngineSteps() {
   else if ($WorkflowCoreActive && $Verbose) logEntry('Verified the Workflow Core.');
   $EngineIsStarted = TRUE;
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $sandboxPolicyIsValid, $sandboxPolicyStatus, $sandboxProvider, $resourceAwarenessIsSettled, $sessionIsEstablished);
+  purgeSensitiveMemory($EnableMemoryProtection, $sandboxPolicyIsValid, $sandboxPolicyStatus, $sandboxProvider, $resourceAwarenessIsSettled, $sessionIsEstablished, $storageLocationIsNamed);
   return $EngineIsStarted; }
 // / -----------------------------------------------------------------------------------
 
@@ -5654,7 +5778,8 @@ function engineConfigModel() {
       'DefaultConversionCost' => array('Type' => 'int', 'Depends' => '', 'Description' => 'Default Conversion Cost'),
       'DefaultExpectedRuntime' => array('Type' => 'int', 'Depends' => '', 'Description' => 'Default Expected Runtime'),
       'LowStorageWarning' => array('Type' => 'int', 'Depends' => 'EnableResourceAwareness', 'Description' => 'Low Storage Warning'),
-      'StorageReserve' => array('Type' => 'int', 'Depends' => 'EnableResourceAwareness', 'Description' => 'Storage Reserve'),
+      // / An application that offers libraries keeps the reserve for every write to one, listener or not, from HRCloud3 v1.0.0, so it depends on nothing there.
+      'StorageReserve' => array('Type' => 'int', 'Depends' => (storageIsOffered() ? '' : 'EnableResourceAwareness'), 'Description' => 'Storage Reserve'),
       'MaxWorkflowSteps' => array('Type' => 'int', 'Depends' => '', 'Description' => 'Maximum Workflow Steps'),
       'MaxWorkflowFiles' => array('Type' => 'int', 'Depends' => 'EnableWorkflows', 'Description' => 'Maximum Workflow Files'),
       'MaxWorkflowRuntime' => array('Type' => 'int', 'Depends' => 'EnableWorkflows', 'Description' => 'Maximum Workflow Runtime'),
@@ -7332,7 +7457,7 @@ function listEnginePins() {
   $engineSources = $pinSources = $pinMatches = $pinMatch = array();
   $entryPath = $entryContents = $enginePath = $contractFile = $pinKey = $pinVersion = '';
   $engineSources = array('KernelVersion' => 'Resources/Kernel/kernel.php', 'EngineVersion' => 'Resources/Engine/engine.php', 'SetupCoreVersion' => 'Resources/Engine/Cores/setupCore.php',
-    'DependencyCoreVersion' => 'Resources/Engine/Cores/dependencyCore.php', 'PipelineCoreVersion' => 'Resources/Engine/Cores/pipelineCore.php', 'WorkflowCoreVersion' => 'Resources/Engine/Cores/workflowCore.php', 'AuthenticationCoreVersion' => 'Resources/Engine/Cores/authenticationCore.php', 'EmailCoreVersion' => 'Resources/Engine/Cores/emailCore.php', 'EventCoreVersion' => 'Resources/Engine/Cores/eventCore.php', 'PageCoreVersion' => 'Resources/Engine/Cores/pageCore.php', 'ConfigScript' => 'Documentation/Build/'.engineApplicationSlug().'-setup.sh');
+    'DependencyCoreVersion' => 'Resources/Engine/Cores/dependencyCore.php', 'PipelineCoreVersion' => 'Resources/Engine/Cores/pipelineCore.php', 'WorkflowCoreVersion' => 'Resources/Engine/Cores/workflowCore.php', 'AuthenticationCoreVersion' => 'Resources/Engine/Cores/authenticationCore.php', 'EmailCoreVersion' => 'Resources/Engine/Cores/emailCore.php', 'EventCoreVersion' => 'Resources/Engine/Cores/eventCore.php', 'PageCoreVersion' => 'Resources/Engine/Cores/pageCore.php', 'StorageCoreVersion' => 'Resources/Engine/Cores/storageCore.php', 'ConfigScript' => 'Documentation/Build/'.engineApplicationSlug().'-setup.sh');
   $pinSources = array_merge((isset($EnginePinSources) && is_array($EnginePinSources)) ? $EnginePinSources : array(), $engineSources);
   $entryPath = $InstLoc.$DirSep.engineApplicationEntryPoint();
   $enginePath = $InstLoc.$DirSep.'Resources'.$DirSep.'Engine'.$DirSep.'engine.php';

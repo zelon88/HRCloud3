@@ -71,6 +71,7 @@ The Data pipeline reserves 44000 through 44019, the LaTeX pipeline 45000 through
 the Email pipeline 47000 through 47019 & the Markup pipeline 48000 through 48019, from v4.2.5.
 The Graph pipeline reserves 49000 through 49019, from v4.2.6.
 The Page Core reserves 51000 through 51019, from v4.3.4ur.
+The Storage Core reserves 52000 through 52019, from v4.3.4ur as HRCloud3 v1.0.0 carries it.
 
 <3 Open-Source
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -10074,6 +10075,125 @@ WARNINGS ABOUT PAGES
     WARNING!!! A page was asked for & this application pins no Page Core, so no page can be drawn through it.
       The application called loadPageCore() without declaring $RequiredPageCoreVersion, so the Page Core is not loaded & every
       page it asks for is refused. It is a fault in the application.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! <TIMESTAMP>, <APPLICATION_NAME>-52000, <SESSION_IDENTIFIER>: The libraries folder <FOLDER> is missing or cannot be written, so no library kept in the data location can be used. Run -fp as root!
+
+FILE
+  Resources/Engine/Cores/storageCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  From v4.3.4ur, as HRCloud3 v1.0.0 carries it. A library --Libraries-- lists without a Location of its own is kept in Libraries
+  in the data location, which -fp makes & gives the web server account, because the application's contract declares LibraryLoc
+  with the web role. It is missing, is a link, or the web server account cannot write it, so every such library answers that it
+  is unavailable. A library given a Location of its own still works. Run  sudo php <ENTRY_POINT> -fp  & read Libraries in -v.
+  See Documentation/ABOUT_STORAGE.txt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR NUMBER RESERVATION
+  52000 through 52019 are reserved for the Storage Core, & 52001 through 52019 are currently unused.
+  52000 is raised by the Storage Core, & is documented above.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+WARNINGS ABOUT LIBRARIES
+  A warning carries no error number & never halts anything. Each says what happened & what was done about it.
+  Every one of these is from v4.3.4ur, as HRCloud3 v1.0.0 carries it. Documentation/ABOUT_STORAGE.txt says how a library is kept.
+  The Storage Core raises these, from Resources/Engine/Cores/storageCore.php.
+    WARNING!!! No library is listed in --Libraries--, so the library this installation falls back to, Drive, is used.
+    WARNING!!! No library in --Libraries-- could be used, so the library this installation falls back to, Drive, is used.
+      --Libraries-- is missing, is not a list, lists nothing, or lists only libraries that cannot be used, each of which is a
+      warning of its own. Drive is a personal library kept in Libraries in the data location, & no setting can change it, so a
+      signed in user always has somewhere to keep their files. Correct --Libraries-- & run -v, which names every library & why
+      one cannot be used.
+    WARNING!!! The library <LIBRARY> could not be used, because <REASON>.
+      The library is left out, & every other is used. A page is never offered it. <REASON> is one of these.
+        its name is not 1 to 32 letters, digits, dashes & underscores beginning with a letter or a digit
+        it is not a list of settings
+        its Kind is neither personal nor shared
+        its Writers is not admins, everyone or none
+        it has no Location, & this installation keeps no Libraries folder in its data location
+        its location is not an absolute path without a part that is a dot, two dots or empty
+        its location <FOLDER> is in <FOLDER>, where the operating system keeps its own files
+        its location <FOLDER> is inside the data location or holds it. Leave its Location empty to keep it in the data location
+        its location <FOLDER> is inside the installation or holds it
+        its location <FOLDER> is inside the hosted location or holds it, where the web server would serve it
+        its location <FOLDER> is inside the document root or holds it, where the web server would serve it
+        its location <FOLDER> is not a folder
+        its location <FOLDER> leads to <FOLDER>, & a link is never followed
+        its location <FOLDER> is a folder the operating system needs
+        its location overlaps the library <LIBRARY>
+      A library given a Location of its own is never a folder whatever a user stores there could be served, run or taken for the
+      Engine's own or the host's from, so it is outside each of those & is a real folder that is there already.
+    WARNING!!! --Trash Lifetime-- is not a whole number of days from 0 to 3650, so the trash is emptied after <DAYS> days.
+      The setting in config.php is missing or holds something else. The default is used until it is corrected. 0 keeps a trash
+      until it is emptied.
+    WARNING!!! The library <LIBRARY> at <FOLDER> is missing or cannot be read by the web server account.
+      A library given a Location of its own is never made by the Engine. Make the folder, or mount what it is on, & let the web
+      server account read it, & write it unless its Writers is none. Every request to it answers unavailable until then.
+    WARNING!!! The library <LIBRARY> could not be made at <FOLDER>.
+    WARNING!!! The space of an account in the library <LIBRARY> could not be made in <FOLDER>. The web server account must be able to write it.
+      A library kept in the data location, & each user's space in a personal library, is made the first time it is used. It could
+      not be, usually because the folder above it is not the web server account's. Run  sudo php <ENTRY_POINT> -fp  for a library
+      kept in the data location, or give a folder of your own to the web server account.
+    WARNING!!! The shared library <LIBRARY> at <FOLDER> cannot be written by the web server account, so it is only read.
+      --Libraries-- lets the user write the library, & its own folder, named for the application, as .hrcloud3, which holds its trash,
+      what is being uploaded & who added what, could not be made at its top. Every user reads it until the web server account can
+      write it.
+    WARNING!!! An upload to the library <LIBRARY> could not be put in place from <PATH>.
+      The upload was whole & could not be given its name, though nothing had the name. The disk may keep no second name for a file
+      & refused a rename too, or something mounted inside the library stands between the two. The upload is taken away & the
+      user is told it did not finish.
+    WARNING!!! A file could not be sent, because something was written before its headers.
+      A download must be the first & only thing a request writes. Something the application or a PHP setting wrote came first, so
+      nothing was sent & the browser is answered in JSON instead. It is a fault in the application or in PHP's configuration.
+    WARNING!!! Something in the library <LIBRARY> was not copied, because it holds more than can be measured.
+      A folder must be measured against the quota & the storage reserve before it is copied, & one that holds more than 200,000
+      names, or cannot be read to its end, is not. Copy the folders inside it one at a time.
+    WARNING!!! A copy that did not finish could not be taken away from <PATH>. The next sweep takes it away.
+      A copy is written in the space's upload folder & put in place only once it is whole. One that failed is taken away, & one
+      that could not be is left for the sweep, which takes anything in an upload folder for a day.
+    WARNING!!! <COUNT> link(s) were left out of a copy in the library <LIBRARY>, because a link is never followed.
+      A link in a shared library that other software writes leads somewhere no user stored anything, so a copy never carries one.
+    WARNING!!! Something in the library <LIBRARY> could not be moved to its trash, so it was left where it was. Something mounted inside a library cannot be moved there.
+      Deleting moves what is deleted into the space's trash, which never copies, so it must be on the same disk. Something mounted
+      inside a shared library is on another, & is never deleted through a page.
+    WARNING!!! Who added something to the library <LIBRARY> could not be recorded, so only an administrator can delete it forever.
+      A shared library records which account added each file & folder, in Authors in its own folder, so that account may delete
+      it forever from the trash. The record could not be written, usually because the disk is full, the web server account
+      cannot write Authors, or something in what was added is a link or is on another disk. What was added is kept, & an
+      administrator can delete it forever.
+    WARNING!!! The trash of the library <LIBRARY> could not record who added something deleted there, so only an administrator can delete it forever.
+      Something deleted in a shared library was moved to its trash, & its record could not be rewritten to name the account that
+      added it, usually because the disk is full. It can still be put back, & an administrator can delete it forever.
+    WARNING!!! Something in the trash of the library <LIBRARY> could not be taken away.
+    WARNING!!! A sweep of the libraries did not finish, & what it left is swept next time.
+      A trash entry, or something left in an upload folder, could not be taken away, usually because something mounted inside it,
+      or a name the web server account cannot remove, is in it. A folder on another disk inside a tree stops the removal, because
+      it is not the tree's. Look inside the trash folder the log names.
+    WARNING!!! The space of a removed account in the library <LIBRARY> could not be taken away from <FOLDER>.
+      An administrator removed the account & its space in the library could not be taken away. The files are no longer reached
+      by anybody. Take the folder named for the account's identifier away by hand.
+    WARNING!!! A library answered <ACTION> with nothing a page can read, so it was answered unavailable.
+      The Storage Core answered an action without naming what happened, which is a fault in the Storage Core. Report it with the log.
+    The Storage Core also raises the Authentication Manager's warning that the files of a user could not be measured against
+    --User Storage Quota--, for a write to a personal library, & allows the write as the listener does.
+  The Engine raises this, from Resources/Engine/engine.php.
+    WARNING!!! What a removed account kept in its libraries was left where it is, because the Storage Core could not be loaded.
+      The application offers libraries & its Storage Core was refused, which verifyCoreComponent() named just before. Restore
+      Resources/Engine/Cores/storageCore.php from the release, & take the account's space in each personal library away by hand.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 

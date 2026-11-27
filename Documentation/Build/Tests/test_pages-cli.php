@@ -298,7 +298,8 @@ $printed = ob_get_clean();
 $stylesheetTime = filemtime($InstLoc.'/UI/Night/Resources/CSS/look.css');
 check('a page is drawn from its components in order, from the layer each lives in, with every string read', $pageWasBuilt && $pageIsJudged
   && $printed === '[header Bonjour fr night][night body Bonjour][footer UI/Night/Resources/CSS/look.css?v='.$stylesheetTime.']', $printed);
-check('a component reads the page, the application\'s data, the choices & the addresses it is handed', $PageName === 'main' && $PageData === array('Asked' => 'main', 'Application' => 'TestApp')
+check('a component reads the page, the application\'s data, the choices & the addresses it is handed, & is offered only the interfaces that can be used',
+  $PageName === 'main' && $PageData === array('Asked' => 'main', 'Application' => 'TestApp') && $PageChoices['Interfaces'] === array('Default', 'Night')
   && $InterfaceAssets === array('Stylesheet' => 'UI/Night/Resources/CSS/look.css?v='.$stylesheetTime, 'Icon' => 'UI/Default/Resources/Image/icon.svg?v='.filemtime($InstLoc.'/UI/Default/Resources/Image/icon.svg'))
   && $PageChoices['Languages'] === array('en' => 'English', 'fr' => 'Français') && $PageChoices['Colors'] === array('night'));
 preparePages('Default', 'fr', '');

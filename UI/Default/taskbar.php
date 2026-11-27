@@ -11,7 +11,7 @@
 // / HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 // /
 // / FILE INFORMATION ...
-// / v0.9.9.
+// / v1.0.0.
 // / The bar at the top of every page but the Engine's: the application's name, a button for each page a user may go to, & the account.
 // / A button names its page in data-hrc3-go, & HRC3-Functions.js posts to it, carrying the session, the interface, the language & the color.
 // / The account is the user's name & Sign out for a user who is signed in, & Sign in for a visitor where accounts are on. HRC3-SignIn.js
@@ -35,7 +35,7 @@
 if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRCloud3-2: This file cannot process your request! Please submit your request to cloudCore.php instead!'.PHP_EOL);
 // / Assign temporary variables.
 $taskbarState = (isset($EnginePageState) && is_array($EnginePageState)) ? $EnginePageState : array();
-$taskbarPages = array('home' => $TextHome, 'settings' => $TextSettings);
+$taskbarPages = array('home' => $TextHome, 'files' => $TextFiles, 'settings' => $TextSettings);
 $taskbarPage = $taskbarLabel = '';
 // / -----------------------------------------------------------------------------------
 ?>

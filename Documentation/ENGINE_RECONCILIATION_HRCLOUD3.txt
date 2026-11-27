@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 
 FILE INFORMATION ...
-v0.9.9.
+v1.0.0.
 This plain text file records every difference between the HRProprietary Engine this application carries & the Engine as it is distributed, with the reason for each, so that each can be taken upstream or dropped deliberately.
 
 HARDWARE REQUIREMENTS ...
@@ -86,8 +86,73 @@ HRCloud3 v0.9.9 added UI/, its interfaces, & CREATING_INTERFACES.txt, which are 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Changes To The Engine--
 
-v0.9.8 changed nothing. v0.9.9 changes what follows. Every other file of the Engine's is the kit's, byte for
-byte, & keeps the kit's stamp, so comparing the tree against the kit shows exactly these.
+v0.9.8 changed nothing. v0.9.9 & v1.0.0 change what follows. Every other file of the Engine's is the kit's, byte
+for byte, & keeps the kit's stamp, so comparing the tree against the kit shows exactly these.
+
+THE STORAGE CORE. NEW IN v1.0.0. Resources/Engine/Cores/storageCore.php, v4.3.4ur.
+  What. A Core that keeps what signed in users store in libraries an administrator lists, & the only part of
+  the Engine that reaches them. A library is personal, a space per account named for its random identifier,
+  or shared, one tree that admins, everyone or nobody writes. Each space has its tree, a trash & an incoming
+  folder. A shared library keeps its trash, its incoming folder & Authors in a folder of its own at its top,
+  which no request may name in any case, named '.'.engineApplicationSlug(), so the core names no application
+  & HRCloud3's is .hrcloud3. Authors records which account added each file & folder of a shared library, by
+  inode, with its kind, size & time, & a trash record names the one account that added what was deleted, so
+  an admin who may write it, or that account alone, deletes it forever. Names are kept exactly as written,
+  checked whole with sanitizePath(), & every folder is walked a name at a time with lstat, so a link is never
+  followed, listed or acted on. Nothing is ever replaced: a file is put in place with link(), & a folder with
+  rename() where the name is free. Delete moves to the trash with a record, & restore, purge & empty follow.
+  Downloads stream with one Range, nosniff & a sandbox policy, with output compression turned off. The quota
+  & the storage reserve are held for every write here, listener or not. A sweep empties each trash after
+  --Trash Lifetime-- days & takes unfinished uploads. A page asks with StorageAction & is answered one line
+  of JSON under Storage. -v reports every library.
+  Why. Step 3 of HRCloud3's rebuild, which Justin scoped on 11/27/2026: personal & shared libraries, a trash,
+  the Engine plus a bare Files page. One place for every file, so encryption at rest is added in one place.
+  Justin chose the application's name for the shared folder, & admins or authors for deleting forever, as a
+  shape to mold as sharing & social features are built. Ownership of a shared file starts from Authors.
+  Errors. 52000 to 52019 are proposed for it, after the Page Core's 51000 block. 52000 is raised.
+  The reference application. HRConvert2 does not turn $EngineEnableStorage on & pins no Storage Core, so
+  nothing changes for it. Its session sweep never reaches Libraries, which is not a session area.
+  Seen working. test_storage-cli.php, new, 72 checks. test_hrcloud3-cli.php Part 9 asks every action of the
+  loader through php-cgi, & a browser drives the Files page, a library everyone writes included. Each of 34
+  faults planted in the core failed test_storage-cli.php, 12 of them in who added what. Of 15 planted for
+  test_hrcloud3-cli.php, in the core, its hooks, the Page Core & the contract, 14 failed it. The one left
+  removes the line that turns output compression off, which changes nothing a request can see, because the
+  compressing buffer is let go as well.
+
+engine.php, v4.3.4ur, in v1.0.0.
+  storageIsOffered(), storageIsOn(), loadStorageCore(), establishStorageLocation(), answerStorageWhenAsked(),
+  sweepStorageWhenDue() & removeAccountLibraries(). $LibraryLoc is named in startEngineSteps() before the
+  request is answered, as Libraries in the data location. answerEngineRequest() answers StorageAction once
+  the request is known to be signed in or not, even where a visitor must sign in first, & sweeps libraries
+  as it sweeps accounts. -v reports the Storage Core, each library, & Libraries as switched off where accounts
+  are. listEnginePins() names StorageCoreVersion. getAcceptedManagers() pins authenticationManager.php
+  v4.2.3ur. The configuration model makes --Storage Reserve-- depend on nothing where libraries are offered.
+  Libraries is made by -fp through the contract's managed locations, as an application's own folder below
+  the data location, so the kernel & setupCore.php's list of the Engine's own folders are unchanged.
+
+setupCore.php, v4.3.3ur, in v1.0.0.
+  runConfigUtility(). FIXED AT ONCE, AS A FAULT THAT STOPS EVERY UPGRADE THAT ADDS A SECTION. --config
+  --repair skipped every section a config.php lacked, though appendConfigAssignment() gives a missing section
+  its header, so a release that added a section left every older config.php refused with missing settings
+  until it was edited by hand. A repair now adds the section & its settings. HRCloud3 v1.0.0 is the first
+  release to add a section, so canon never met it.
+  findEngineConfigContradictions() no longer calls --User Storage Quota-- inert where the listener is off &
+  the application offers libraries, because the Storage Core keeps it there.
+  The reference application. Every HRConvert2 release that adds a setting adds it to a section config.php has,
+  so its repairs are unchanged.
+
+authenticationCore.php, v4.2.3ur, in v1.0.0.
+  accountFileLifetimes() offers only the lifetimes the contract names in $EngineFileLifetimes, & always 0,
+  where it names them. The sweep that removes a user's files reads the same list, so a lifetime an account
+  held that is no longer offered is never applied. HRCloud3 names array(0).
+
+authenticationManager.php, v4.2.3ur, in v1.0.0.
+  removeAccountByAdministrator() removes the account's space in every personal library through the Engine's
+  removeAccountLibraries(). Where libraries are not offered it does nothing.
+
+engineConfig.php, v4.3.4ur, & config-template.php, the Engine's half, v4.3.1ur, in v1.0.0.
+  $EngineEnableStorage, FALSE, & $EngineFileLifetimes, every lifetime, with their documentation. --User
+  Storage Quota-- & --Storage Reserve-- say that the Storage Core keeps each for a library, listener or not.
 
 THE PAGE CORE. NEW. Resources/Engine/Cores/pageCore.php, v4.3.4ur.
   What. A Core that builds a page for a browser from the components of an interface, & holds no markup. The
@@ -107,6 +172,9 @@ THE PAGE CORE. NEW. Resources/Engine/Cores/pageCore.php, v4.3.4ur.
   The reference application. HRConvert2 pins no Page Core, so nothing changes for it. It could adopt it by
   mapping SupportedInterfaces & the rest to its own settings & declaring its pages.
   Seen working. test_pages-cli.php, new, 54 checks. test_hrcloud3-cli.php Part 8 drives it through php-cgi.
+  In v1.0.0, pageChoices() lists only the interfaces that can be used, judged as a request for one would be &
+  without a word, because -v says why one cannot. Justin's call, so a user is never offered an interface that
+  would fall back.
 
 engine.php, v4.3.4ur.
   loadPageCore() loads the Page Core the application pins, & warns where one asks for a page & pins none.
@@ -148,11 +216,13 @@ DOCUMENTS & TESTS.
   ABOUT_AUTHENTICATION.txt v4.2.0ur, ABOUT_COMPONENTS.txt v3.8.8ur, ABOUT_ENGINE_CONTRACT.txt v3.8.9ur &
   ERROR_DESCRIPTIONS.txt v3.9.7ur describe the changes above. ERROR_DESCRIPTIONS.txt gains 51000 to 51003
   & their reservation, WARNINGS ABOUT PAGES, five account warnings & the new purposes of 43100.
+  In v1.0.0, new ABOUT_STORAGE.txt, v4.3.4ur, & Build/Tests/test_storage-cli.php. ABOUT_MANAGED_LOCATIONS.txt
+  names Libraries, & the four documents above describe the Storage Core. ERROR_DESCRIPTIONS.txt gains 52000,
+  its reservation & WARNINGS ABOUT LIBRARIES.
 
 STILL TO PROPOSE. Each is entered here in the build that makes it.
-  Folders within a user's folder. Today it is flat, & the account sweep reads only its top.
-  Libraries, as locations an administrator defines, each with a role.
-  Encryption at rest, as a Core, with a way to serve a file that decrypts it as it is read.
+  Encryption at rest, inside the Storage Core, which every file passes through, with a key each user holds.
+  A file shared by a link, or with one other user, & who put each file in a shared library.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -212,6 +282,18 @@ any plain file at the top of their folder older than that. That fits a converter
 library. HRCloud3's settings page does not offer it, so every account keeps the default, which keeps every
 file. The build that adds libraries keeps them out of the sweep's reach, or proposes a sweep scoped to the
 folders an application names.
+Where it stands at v1.0.0. A library is never in Users, so the sweep never reaches one, & a library's trash
+has a lifetime of its own. HRCloud3's contract names $EngineFileLifetimes = array(0), so the Engine offers its
+users no other lifetime, & the sweep applies none.
+
+A RELEASE THAT ADDS A SECTION TO config.php. Met in v1.0.0.
+Fixed in setupCore.php, above. HRCloud3's --Libraries-- & --Trash Lifetime-- are a section of their own.
+
+--File Deletion Age Threshold-- SAYS 0 KEEPS FILES FOREVER, & THE SESSION SWEEP READS 0 AS EXPIRE EVERYTHING. Met in v1.0.0.
+The Engine's half of the template says 0 keeps files forever, & cleanDataLocation() says a threshold of zero
+expires everything, because every session is older than nothing, & does so. test_hrcloud3-cli.php sets it to 0
+to make every session expire, & checks that no library is reached. Left plain, because it is not this build's,
+& reported to the HRProprietary conversation: one of the two is wrong.
 
 THE DOCUMENTATION CHECKER KNOWS ONLY THE EXAMPLE'S CODE. Met in v0.9.8.
 hrconvert2-doccheck.py reports 38 names in ERROR_DESCRIPTIONS.txt, labels & functions only HRConvert2's

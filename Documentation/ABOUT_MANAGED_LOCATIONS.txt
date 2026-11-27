@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
 
 FILE INFORMATION ...
-v4.0.1.
+v4.0.1ur.
 This plain text file describes who owns each location HRConvert2 keeps on disk, what root
 will & will not do inside them, & what is not finished yet.
 
@@ -65,7 +65,8 @@ account root is protecting itself from.
   secret      $SecretLoc, Secrets                    root:www-data, 0750, never walked
   web         $SessionLoc, $CacheLoc, $LogDir,       the web server account, 0700
               $ManagerSocketDir, $AccountLoc,
-              $UserLoc, $WorkflowStageLoc
+              $UserLoc, $WorkflowStageLoc,
+              $LibraryLoc
   served      $ConvertTemp, DATA                     the web server account, 0700, served inert
   root-only   $EngineDir, $BackupLoc, $EventLoc       root:root, folders 0700, files 0600
   library     $WorkflowLoc, Workflows                root:root, folders 0755, files 0644
@@ -78,6 +79,7 @@ Sessions, the web server account's caches & its home in Cache, its logs in Logs 
 in Sockets, & from v4.1.4 the workflows an administrator installs are in Workflows. Root's own log folder is Engine & the previous installation is Last-Installed-Version.
 From v4.2.0 accounts are kept in Accounts & the files each signed in user keeps in Users, where the application offers accounts.
 From v4.2.2 a workflow an administrator stages from a page waits in Staged for root to install.
+From v4.3.4ur the libraries signed in users keep files in are kept in Libraries, where the application offers them. See ABOUT_STORAGE.txt.
 From v4.3.1 the Event Core keeps the record of what an application did & found in Events, root's alone. See ABOUT_EVENTS.txt.
 The install secret is kept in Secrets, from v4.0.4, which only root may change & only the web
 server account's group may enter, & a copy with the same key stays at the top for every release
@@ -154,6 +156,10 @@ library. The web server account writes it & clears it. Root only reads it, for -
 --install-staged, & writes what it read into the installed library, which is root's. Root's
 --workflow --discard-staged is handed to that account, so root never removes a name in it. See
 ABOUT_WORKFLOWS.txt.
+Libraries is a web folder too, from v4.3.4ur, where the application offers libraries & declares
+LibraryLoc in its contract, as an application's own folder below the data location is declared.
+-fp makes it, & each library in it is made by the web server account the first time it is used. No
+sweep of sessions reaches it, & only the Storage Core empties a library's trash. See ABOUT_STORAGE.txt.
 
 SERVED.
 A web folder the web server hands to browsers, from v4.0.5. HRConvert2's is DATA in the hosted

@@ -73,7 +73,13 @@ WHAT IS HERE.
                                      folders the suite writes, must name exactly what the Engine names.
   test_pages-cli.php                 The Page Core, from v4.3.4ur, against interfaces it writes: names, the contract's pages &
                                      assets, the interface, language & color ladders, inheritance from the base, exact versions,
-                                     building a page, the provenance log, component markers & what -v reports.
+                                     building a page, the interfaces a page offers, the provenance log, component markers & what
+                                     -v reports.
+  test_storage-cli.php               The Storage Core, from v4.3.4ur as HRCloud3 v1.0.0 carries it, against libraries it makes:
+                                     names, folders, ranges, the libraries an administrator lists & every one refused, spaces &
+                                     who may write them, links that lead out of a space, nothing replaced, copies, the quota &
+                                     the reserve, the trash & a tampered record, who added what to a shared library & who
+                                     may delete it forever, sweeps, removals, a request's fields & -v.
 
 The library, both runners, test_events-cli.php & test_kernel-cli.php were HRProtect's, from its v0.0.7. test_events_load-cli.php
 is HRProtect's suite of that name for the Engine's copy of its functions. The rest are the Engine's own, from v4.3.1.
@@ -81,7 +87,8 @@ test_install-cli.php is from v4.3.2. So are test_schedule-cli.php, the Engine's 
 test_quarantine-cli.php, HRProtect's suite of that name with a section of the Engine's own. test_starter-cli.php is the
 Engine's own, from v4.3.2. test_identity-cli.php is the Engine's own, from v4.3.3. test_depends-cli.php &
 test_contract-cli.php are the Engine's own, from v4.3.4. test_pages-cli.php is the Engine's own, from v4.3.4ur, which HRCloud3
-v0.9.9 added with the Page Core, & no example of the kit carries a Page Core yet.
+v0.9.9 added with the Page Core, & no example of the kit carries a Page Core yet. test_storage-cli.php is the Engine's own, from
+v4.3.4ur, which HRCloud3 v1.0.0 added with the Storage Core.
 
 
 WHAT HAS BEEN RUN.
@@ -129,6 +136,11 @@ HRCLOUD3'S OWN.
                                      requests through php-cgi as the web server account, with mail handed to a stand-in in the
                                      scratch folder: the sign in page, signing in, home, settings, changing the address & the
                                      password, the provenance log, the component markers & a base interface of the wrong version.
+                                     From v1.0.0 it asks the loader every library action as a page's script does, multipart
+                                     uploads & ranges included, as an administrator & as a user, & who may delete forever in a
+                                     library everyone writes. It checks the sweep, the repair of an older config.php, a library
+                                     that cannot be used, removing an account's spaces & the interfaces settings offers. It reads
+                                     every version it checks from the tree, so a release changes it only where its checks change.
                                      It installs, so it runs inside contained-install.sh, from the root of the HRCloud3 tree.
 
     cd /path/to/HRCloud3
@@ -136,6 +148,21 @@ HRCLOUD3'S OWN.
 
 test_starter-cli.php needs the kit's Starter, which HRCloud3 does not carry, so it is run from the kit. Every other suite is run from
 the root of the HRCloud3 tree, as the Starter's assembly runs them.
+
+From the root of the HRCloud3 v1.0.0 tree, with PHP 8.3.6 & bubblewrap 0.9.0:
+  test_hrcloud3-cli.php              127 checks, every one passed, inside contained-install.sh. Fifteen planted faults, fourteen
+                                     of which failed it: a signed out request drawn a page, no nosniff, no buffer let go, no spaces
+                                     removed with an account, a repair that skips a section, the quota & the reserve called inert,
+                                     no sweep, no Libraries in the contract, no Files page, every writer deleting forever, an
+                                     upload with no author, every interface offered & verbose logging off. The one left, no line
+                                     turning compression off, changes nothing a request sees. Its first runs found a repair that
+                                     could not add a section, warnings PHP raised for a missing file, & a reader shown a shared
+                                     library's trash.
+  test_storage-cli.php               72 checks, every one passed, inside contained.sh. Thirty four planted faults in the Storage
+                                     Core, each failed it, twelve of them in who added what. Two of the others, a sweep taking the
+                                     wrong entry & /tmp allowed for a library, survived its first draft, which now holds a check for
+                                     each.
+  Every other suite but test_starter-cli.php passed, inside contained.sh, 1,274 checks, test_pages-cli.php's 54 among them.
 
 From the root of the HRCloud3 v0.9.9 tree, with PHP 8.3.6 & bubblewrap 0.9.0:
   test_hrcloud3-cli.php              62 checks, every one passed, inside contained-install.sh. Ten planted faults, each failed it:

@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v0.9.9.
+// / v1.0.0.
 // / HRCloud3's Engine settings, loaded after engineConfig.php, so anything it sets wins.
 // / A package ships a configuration with working defaults, & the thing being configured drops a file beside it that overrides what it needs, as Apache & PHP do.
 // / engineConfig.php belongs to the Engine & is replaced wholesale when a newer Engine arrives, while this file belongs to the application & survives that.
@@ -72,6 +72,12 @@ $EngineApplicationArgumentHandler = '';
 // /   administrator leaves --Enable Authentication-- TRUE in config.php, which is HRCloud3's default.
 $EngineEnableAuthentication = TRUE;
 
+// /   This application keeps its users' files in the Engine's libraries, from v1.0.0, which --Libraries-- in config.php names.
+$EngineEnableStorage = TRUE;
+
+// /   A user's files are kept until the user deletes them, so the only lifetime offered is 0, from v1.0.0.
+$EngineFileLifetimes = array(0);
+
 // /   The function that gives a page HRCloud3's own data, with the page's name. A page reads it & $EnginePageState, & no other global.
 $EnginePageDataProvider = 'applicationPageData';
 
@@ -84,7 +90,8 @@ $EngineStrictContract = TRUE;
 // /   replaces only the value, in a config.php written from the templates & in what a reset writes.
 // /   Each value is written as config.php writes it, so a string carries its quotes.
 // /   HRCloud3 names itself, its folders & where it updates from. It has no workflows yet & hands work downward, so the settings
-// /   that offer workflows, resource awareness & a ceiling on each piece of work are off.
+// /   that offer workflows, resource awareness & a ceiling on each piece of work are off. Verbose logging is on while HRCloud3 is
+// /   in development, so each page logs every file it was built from.
 // /   A cloud keeps people's files, so accounts are on, every visitor must sign in, & only an administrator creates an account.
 $EngineSettingDefaults = array(
   'InstLoc' => "'/var/www/html/HRProprietary/HRCloud3'",
@@ -95,7 +102,7 @@ $EngineSettingDefaults = array(
   'EnableAuthentication' => 'TRUE',
   'AllowAnonymousVisitors' => 'FALSE',
   'AllowRegistration' => 'FALSE',
-  'Verbose' => 'FALSE',
+  'Verbose' => 'TRUE',
   'EnableWorkflows' => 'FALSE',
   'EnableWorkflowBuilder' => 'FALSE',
   'EnableWorkflowImportExport' => 'FALSE',
@@ -112,11 +119,13 @@ $EngineAcceptedPipelines = array();
 
 // / The pages HRCloud3 draws through the Engine's Page Core, each as the components it is drawn from, in order.
 // / Every interface in UI carries these, or takes them from Default, which every other inherits from & falls back to.
-// / engine is the page the Engine names, such as signing in, home is the App Launcher & settings is the user's own.
+// / engine is the page the Engine names, such as signing in, home is the App Launcher, files is the user's libraries, from v1.0.0,
+// / & settings is the user's own.
 // / See Documentation/ABOUT_PAGES.txt & Documentation/CREATING_INTERFACES.txt.
 $EnginePages = array(
   'engine' => array('header.php', 'engineGui.php', 'footer.php'),
   'home' => array('header.php', 'taskbar.php', 'launcherGui.php', 'footer.php'),
+  'files' => array('header.php', 'taskbar.php', 'filesGui.php', 'footer.php'),
   'settings' => array('header.php', 'taskbar.php', 'settingsGui.php', 'footer.php'));
 
 // / The files a page links, by the name a page reads each address under, & where each is inside an interface.
@@ -126,6 +135,7 @@ $EngineInterfaceAssets = array(
   'Library' => 'Resources/JS/HRC3-Functions.js',
   'SignIn' => 'Resources/JS/HRC3-SignIn.js',
   'SignInTimer' => 'Resources/JS/HRC3-SignInTimer.js',
+  'Files' => 'Resources/JS/HRC3-Files.js',
   'Icon' => 'Resources/Image/favicon.svg');
 
 // / The folder of the application whose static files a browser fetches, & the types those are.
@@ -158,8 +168,10 @@ $EnginePinSources = array(
 // /   shared     A folder other software shares. Checked & never walked.
 // / See Documentation/ABOUT_MANAGED_LOCATIONS.txt.
 // / HRCloud3 keeps no folder of its own yet, so these are the Engine's, named as every application names them.
-// / AccountLoc is Accounts, where the Engine keeps each account, sign in & code, & UserLoc is Users, where each signed in user's files are kept.
-// / Both are the web server account's, because a request is what signs a user in & what writes their files, & neither is ever swept.
+// / AccountLoc is Accounts, where the Engine keeps each account, sign in & code, & UserLoc is Users, where each signed in user's own folder is.
+// / LibraryLoc is Libraries, from v1.0.0, where each library the configuration leaves without a Location is kept, & which -fp makes.
+// / All three are the web server account's, because a request is what signs a user in & what writes their files. None is ever swept
+// / by the Engine's session sweep, & only the Storage Core empties a library's trash.
 $EngineManagedLocations = array(
   'ProprietaryLoc' => 'shared',
   'InstLoc' => 'code',
@@ -173,6 +185,7 @@ $EngineManagedLocations = array(
   'BackupLoc' => 'root-only',
   'AccountLoc' => 'web',
   'UserLoc' => 'web',
+  'LibraryLoc' => 'web',
   'EventLoc' => 'root-only');
 
 // / The entries at the top of a release that make up the application, & nothing else.
@@ -193,7 +206,10 @@ $EngineApplicationLayout = array('cloudCore.php', 'README.md', 'LICENSE', 'Docum
 // / where accounts & users' files are kept. ApplicationTitle & ServerName are what an email calls this server, & ServerName is
 // / --Server URL-- as an administrator typed it. The four after EmailRecoveryBody are the emails a signed in user's own change of address or
 // / password sends, from v0.9.9.
-// / SupportedInterfaces & every setting after it are the Page Core's, from v0.9.9, & live in HRCloud3's own half of config.php.
+// / SupportedInterfaces & every setting after it to MarkPageComponents are the Page Core's, from v0.9.9, & live in HRCloud3's own half
+// / of config.php. StorageReserveMegabytes is the Engine's --Storage Reserve--, & the three after MarkPageComponents are the Storage
+// / Core's, from v1.0.0. LibraryLocation is where libraries without a Location of their own are kept, & StorageLibraries & TrashLifetime
+// / live in HRCloud3's own half of config.php.
 $EngineSettingNames = array(
   'HostedLocation' => 'HostedLoc',
   'ServerURL' => 'FullURL',
@@ -205,6 +221,7 @@ $EngineSettingNames = array(
   'AllowRegistration' => 'AllowRegistration',
   'RequireEmailConfirmation' => 'RequireEmailConfirmation',
   'UserStorageQuota' => 'UserStorageQuota',
+  'StorageReserveMegabytes' => 'StorageReserve',
   'SignInKeyLifetime' => 'SignInKeyLifetime',
   'SignInExchangeInterval' => 'SignInExchangeInterval',
   'SignInMaximumLifetime' => 'SignInMaximumLifetime',
@@ -235,6 +252,9 @@ $EngineSettingNames = array(
   'SupportedColors' => 'SupportedColors',
   'DefaultColor' => 'DefaultColor',
   'AllowUserSelectableColor' => 'AllowUserSelectableColor',
-  'MarkPageComponents' => 'MarkPageComponents');
+  'MarkPageComponents' => 'MarkPageComponents',
+  'LibraryLocation' => 'LibraryLoc',
+  'StorageLibraries' => 'Libraries',
+  'TrashLifetime' => 'TrashLifetime');
 // / -----------------------------------------------------------------------------------
 ?>

@@ -1,0 +1,429 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+HRProprietary Engine, Copyright on 11/27/2026 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
+
+FILE INFORMATION ...
+v4.3.4ur.
+This file documents the Storage Core, which keeps what signed in users store in libraries an administrator names. It describes a
+library, a user's space in one, the names a request may use, what a page may ask a library for & what it is answered, a download,
+an upload, the trash, the quota & the storage reserve, what happens to a removed account's files, & what -v says of each library.
+The Storage Core is new in v4.3.4ur, which HRCloud3 v1.0.0 added to the Engine. It is not yet part of the Engine's own releases.
+For the values an application names in its contract, see ABOUT_ENGINE_CONTRACT.txt. For each warning & error, see ERROR_DESCRIPTIONS.txt.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+What the Engine itself needs is Resources/Engine/depends.php, & --setup installs it with the application's own half. Run  php <entry point> -v  to see what an installation has.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Storage--
+
+A LIBRARY IS A FOLDER AN ADMINISTRATOR LISTS. A signed in user keeps files in libraries, & nowhere
+else. A personal library holds a space of its own for each user, which no other user reaches. A
+shared library is one tree every signed in user reads, & which admins, everyone or nobody writes.
+
+THE STORAGE CORE IS THE ONLY PART OF THE ENGINE THAT REACHES A LIBRARY. It is
+Resources/Engine/Cores/storageCore.php. Every file a user stores is listed, read, written, moved &
+deleted through it, so a later layer, such as encryption, sits in one place & covers everything.
+
+A FILE LEAVES ONLY AS IT IS SENT. A library is never inside the document root or the hosted location,
+& a download is read from the library & written to the browser as it is sent. Nothing a user stores
+is ever copied where the web server serves it, so nothing stored is ever served as a page or run.
+
+A NAME IS KEPT EXACTLY AS ITS USER WROTE IT, & A LINK IS NEVER FOLLOWED. See --Names & Folders--.
+
+NOTHING IS EVER REPLACED. An upload, a copy, a rename, a move & a restore each refuse a name that
+is taken, or keep both under a numbered name, & never write over what is there.
+
+THE STORAGE CORE IS OPTIONAL, as every Core is. An application offers libraries by turning
+$EngineEnableStorage on in its contract & pinning the Storage Core, & an installation has them only
+where accounts are on, because a library is kept for a signed in user. See --For An Application--.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Libraries--
+
+AN ADMINISTRATOR LISTS EACH LIBRARY IN --Libraries--, by its name, with its settings.
+
+  $Libraries = array(
+    'Drive' => array('Kind' => 'personal', 'Location' => ''),
+    'Shared' => array('Kind' => 'shared', 'Location' => '', 'Writers' => 'admins'));
+
+  Name          1 to 32 letters, digits, dashes & underscores, beginning with a letter or a digit. A page shows it as it is written.
+  Kind          personal, where each user has a space no other user reaches, or shared, which every signed in user reads.
+  Location      Empty, which keeps the library in Libraries in the data location, or the absolute path of a folder of its own.
+  Writers       A shared library's only. admins, everyone or none. Default is admins.
+
+A LIBRARY WITH NO LOCATION IS KEPT IN THE DATA LOCATION, in Libraries, beside Accounts & Users. -fp
+makes Libraries & gives it to the web server account, & the library is made inside it the first time
+it is used. A missing Libraries folder is error 52000, which says to run -fp.
+
+A LIBRARY WITH A LOCATION OF ITS OWN is a folder that is there already, such as a second disk. The
+Engine never makes it & never changes its owner or its mode, so the administrator gives it to the
+web server account, which must write it for anybody to. It is used exactly as it is written. It is
+refused where it:
+  - is not an absolute path, or holds a part that is a dot, two dots or empty;
+  - is in /bin, /boot, /dev, /etc, /lib, /lib32, /lib64, /libx32, /proc, /root, /run, /sbin, /sys, /tmp, /usr or /var/tmp;
+  - is inside the data location, the installation, the hosted location or the document root, or holds one of them;
+  - is not a folder, or leads anywhere else through a link;
+  - is one of the folders an operating system needs, such as /srv or /var itself;
+  - overlaps a library listed before it.
+
+A LIBRARY THAT CANNOT BE USED IS LEFT OUT, & the log & -v say why, & every other is used. Where none
+can be, Drive is used, a personal library in the data location, which no setting can change, so a
+signed in user always has somewhere to keep their files.
+
+A LIBRARY TAKEN OFF THE LIST OR RENAMED KEEPS ITS FILES WHERE THEY ARE, & nobody reaches them. A
+personal library's spaces are named for each account's random identifier, so putting the library back
+under its old name gives every user their files again. Nothing is moved or removed by editing the list.
+
+SYSTEMD MAY HIDE A LOCATION FROM THE WEB SERVER. A web server run with ProtectHome or PrivateTmp sees
+an empty /home or a /tmp of its own, so a library there is missing to it & a warning says so. Use a
+location such as /srv/hrcloud3, or a mount of its own.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Spaces--
+
+A USER WORKS IN A SPACE. A space is a tree of files & folders, a trash, & a folder an upload or a copy
+waits in until it is whole. A shared library also records who added what. See --Who Added What--.
+
+  Personal      <library>/<account identifier>/Files, Trash & Incoming. Made the first time the user opens the library.
+  Shared        <library> itself, & Trash, Incoming & Authors in the library's own folder at its top, made the first time
+                a user who may write it opens it.
+
+A PERSONAL SPACE IS NAMED FOR THE ACCOUNT'S RANDOM IDENTIFIER, which names its folder in Users too,
+so no path names a user. Every folder the Storage Core makes is 0700, & every file a user stores through it is 0600.
+
+WHO MAY DO WHAT.
+  A personal space       Its owner reads, writes, deletes, restores & empties its trash.
+  A shared library       Every signed in user reads it. Its Writers write it, delete in it & restore from its trash.
+                         An admin who may write it empties its trash & deletes anything in it forever. Any other user who may
+                         write it deletes forever only what they alone added, so what a user deletes of somebody else's can be
+                         put back by anybody who may write it, until the trash lets it go.
+  Writers none           Nobody writes it, not even an admin, & it has no trash.
+
+A SHARED LIBRARY'S OWN FOLDER IS NAMED FOR THE APPLICATION, a dot & the application's name as the Engine
+writes every name on disk, so HRCloud3's is .hrcloud3. It is the name the application's contract gives
+it, $EngineApplicationName, never the one an administrator gives an installation, so it never moves.
+
+THE LIBRARY'S OWN FOLDER IS NEVER A USER'S. It is never listed, entered or named by a request, &
+nobody may make, upload, copy, move, rename or restore anything to that name at its top. A name is
+compared with its case folded, because a disk that ignores case, such as one shared from Windows, would
+open the folder by any spelling of its name. Without PHP's mbstring, only the case of ASCII is folded.
+
+ONE FOLDER SHOULD BE A LIBRARY OF ONE APPLICATION. Two applications on the Engine that share a folder as
+a library each keep a folder of their own at its top, & each would list the other's as a user's.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Names & Folders--
+
+A NAME IS ACCEPTED WHOLE OR REFUSED WHOLE, & NEVER CHANGED. sanitize() would change one, so the
+kernel's sanitizePath() checks it instead. A name is valid UTF-8 of 1 to 255 bytes, & holds no slash
+& no control character. It is neither a dot nor two, begins & ends with no space, & is nothing PHP
+would open as a stream, such as data: at its start. Anything else is allowed, a quote, a dollar sign
+or an angle bracket included, because a name is never handed to a shell & a page shows it as text.
+
+A FOLDER IS ITS NAMES JOINED BY SLASHES, from the top of the space, & nothing names the top. It is at
+most 32 names deep & 4096 bytes long, & a slash beside another leaves an empty name, which is refused.
+
+EVERY FOLDER IS WALKED A NAME AT A TIME, & A LINK IS NEVER FOLLOWED. Each name is looked at with lstat
+before the next is joined to it. A link anywhere in the way of a request answers missing. A link in a
+folder is never listed, & is never deleted, renamed, moved, copied or sent. A copy leaves every link
+inside it out, & says how many in a warning. A removal takes a link away as a link, & never what it
+leads to. A file is opened only where lstat shows a file, & what was opened is compared with it by
+device & inode, so a link swapped in between the two is never read.
+
+A FOLDER MOUNTED INSIDE A LIBRARY IS NEVER CROSSED BY A REMOVAL. Removing a tree stops at a folder on
+another disk, because it is not the tree's, & a warning says what could not be taken away. Deleting
+something on another disk than its space's trash leaves it where it is, with a warning, because
+deleting moves it & never copies.
+
+A SHARED LIBRARY OTHER SOFTWARE WRITES IS TRUSTED AS FAR AS THAT SOFTWARE. A program that may write
+the library could swap a folder for a link between the Storage Core's look at it & its use of it. PHP
+cannot open a folder by a handle it has already checked, so give such a program no more than it needs.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Who Added What--
+
+A SHARED LIBRARY RECORDS WHICH ACCOUNT ADDED EACH FILE & FOLDER, from HRCloud3 v1.0.0, so that account
+may delete it forever. An upload, a new folder & a copy are recorded as the signed in account's, a copy
+& everything in it alike, because a copy is new. A personal library records nothing, because its owner
+added everything in it.
+
+A RECORD FOLLOWS WHAT IT IS THE RECORD OF. It is a file in Authors, in the library's own folder, named
+for the inode of what was added, which a rename, a move, the trash & a restore all keep. It names the
+account by its random identifier, what was added is a file or a folder, &, for a file, its size & when
+it was last changed. A record is believed only where it still agrees, so a file another program
+changed, or one that reuses the inode of something taken away outside the Storage Core, is taken for
+nobody's. An upload & a copy are recorded while they wait in Incoming, where no request reaches, so a
+record is never written for something put in their place.
+
+WHAT IS DELETED NAMES ITS ONE AUTHOR. Once something is in the trash, where nothing can be added to
+it, the Storage Core reads the record of it & of everything in it. Where one account added all of it,
+the trash record names that account as Author. A folder that holds anything another account added, or
+anything no account added, such as a file another program put there, names nobody.
+
+WHO DELETES FOREVER.
+  An admin who may write the library    Any entry, & empties the trash.
+  Another user who may write it         Only an entry whose record names them. Any other is not-allowed.
+  A user who only reads it              Nothing, because they have no trash.
+
+A RECORD GOES WITH WHAT IT IS THE RECORD OF. Deleting forever, emptying & the sweep take the records
+of what they take away, before taking it, & a copy or an upload that could not be put in place takes
+its records back. A record left behind by something taken away outside the Storage Core is never
+believed for a file, & is replaced the moment the Storage Core adds something with the same inode.
+
+WHERE A DISK KEEPS NO INODE FOR LONG, NOTHING IS RECORDED FOR LONG. Linux may give a file on a FAT or
+exFAT disk a new inode number whenever it reads it again, as after the disk is mounted again, so after
+that only an admin deletes forever what is in a shared library there. A record is checked against
+what a file is, so a file is never taken for the wrong account's, & at most an empty folder can be.
+Something mounted inside a shared library is never recorded, because it is on another disk than Authors.
+
+A record that cannot be written is a warning, & what was added is kept. See ERROR_DESCRIPTIONS.txt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What A Page May Ask--
+
+A PAGE ASKS BY POSTING StorageAction, with the page's sign in key, which the page's sign in script adds
+to every request it sends, as HRCloud3's HRC3-SignIn.js does.
+The answer is one line of JSON under Storage, as the Authentication Core answers under SignIn, & is
+never cached. A request is answered before any page is drawn, & a visitor who is not signed in is
+answered signed-out, never a sign in page, so the script that asked can always read what happened.
+
+  Field                        What it is
+  StorageAction                The action, below.
+  StorageLibrary               The library's name.
+  StorageFolder                The folder, its names joined by slashes. Not sent, or empty, is the top.
+  StorageName                  The name of what is acted on.
+  StorageNewName               A new folder's name, or a new name for what is renamed.
+  StorageDestinationLibrary    The library a copy goes to. Not sent is the same library.
+  StorageDestinationFolder     The folder a move or a copy goes to.
+  StorageTrashId               A trash entry, as the trash lists it.
+  StorageWhenTaken             refuse, which refuses a name that is taken, or keep, which keeps both. Default is refuse.
+  StorageUpload[]              The files of an upload.
+
+  Action       Fields it uses                              Answered with
+  libraries    none                                        libraries, & Libraries, each a Name, Kind, Writable & Purgeable,
+                                                           UploadLimit, the largest upload PHP takes in bytes or 0, & TrashDays.
+                                                           Purgeable here & below says the user may empty the trash.
+  list         Library, Folder                             listed, & Entries, each a Name, Kind, Size & Modified, Cut, Writable
+                                                           & Purgeable. Folders come first, & a folder of more than 10,000 lists
+                                                           10,000 & is Cut.
+  folder       Library, Folder, NewName                    made
+  upload       Library, Folder, WhenTaken, Upload[]        uploaded or partly-uploaded, Stored & Refused
+  download     Library, Folder, Name                       the file itself, or a JSON answer where it is not sent
+  rename       Library, Folder, Name, NewName              renamed
+  move         Library, Folder, Name, DestinationFolder    moved, within one library
+  copy         Library, Folder, Name, DestinationLibrary,  copied, & the Name it was copied under
+               DestinationFolder, WhenTaken
+  delete       Library, Folder, Name                       trashed
+  trash        Library                                     trash-listed, & Entries, each an Id, Name, Folder, Kind, Size, Deleted
+                                                           & Purgeable, which says the user may delete it forever, newest first,
+                                                           with Writable & Purgeable
+  restore      Library, TrashId                            restored, & the Name & Folder it was put back under
+  purge        Library, TrashId                            purged
+  empty        Library                                     emptied, & Count
+
+  Every other outcome says what stopped it.
+  signed-out          The key signs nobody in.
+  action-invalid      StorageAction names no action.
+  library-unknown     The library is not one that can be used, or its name cannot be one.
+  folder-invalid      A folder field holds a name that cannot be used, a climb, or too many names.
+  name-invalid        A name cannot be used, or is the library's own folder's at the top of a shared library.
+  missing             What was named is not there, is a link, or is not what the action needs.
+  exists              A name is taken, & nothing was replaced.
+  into-itself         A folder cannot go into itself or a folder inside it.
+  read-only           The user may not write this library.
+  not-allowed         The user may not delete this forever, as what they did not alone add, or may not empty the trash.
+  quota               The write would take the user past --User Storage Quota--.
+  disk-full           The write would take the library's disk within --Storage Reserve--.
+  too-large           The upload is larger than PHP takes, or a folder holds more than can be measured.
+  upload-failed       The upload did not arrive whole, or could not be put in place.
+  unavailable         The library could not be used just now. The log says why.
+
+EVERY FIELD IS CHECKED BEFORE ANYTHING IS TRIED. An action, a library, a trash entry & StorageWhenTaken
+are sanitized & refused where sanitizing changed them. A name & a folder are checked whole, as
+--Names & Folders-- says. A field sent as anything but text of up to 4096 bytes is never used.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Downloads--
+
+A DOWNLOAD IS THE FILE ITSELF, sent with these headers, so a browser saves it & never shows it as a page.
+  Content-Type: application/octet-stream
+  Content-Disposition: attachment, with the name in UTF-8 in filename* & as plain text in filename
+  X-Content-Type-Options: nosniff
+  Content-Security-Policy: default-src 'none'; sandbox
+  Cache-Control: private, no-store
+  Accept-Ranges: bytes, & Content-Length
+
+ONE RANGE IS HONOURED, so a browser can resume a download. bytes=first-last, bytes=first- &
+bytes=-count are sent with status 206 & Content-Range. A range that begins past the end is answered
+416. Several ranges, or one that cannot be read, are answered with the whole file, as a server may.
+
+OUTPUT COMPRESSION IS TURNED OFF FOR A DOWNLOAD, & every buffer PHP holds is let go first, because a
+compressed part of a file is not the part a range asked for, & a buffer would hold a whole file in memory.
+The Engine's PHP drop-in turns zlib.output_compression on for pages, & this undoes it for a file.
+
+HRCLOUD3'S FILES PAGE DOWNLOADS THROUGH A FRAME. HRC3-Files.js posts a form into a frame of its own, so
+the browser saves the file as it arrives, & a refused download answers in the frame, where the script
+reads why. The answer escapes every character HTML gives meaning to, so a frame shows it as text.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Uploads--
+
+AN UPLOAD WAITS IN THE SPACE'S INCOMING FOLDER UNTIL IT IS WHOLE, & is then given its name, so a half
+written file is never seen. A file is given its name with link(), which fails where the name is
+taken, so two uploads of one name at once never replace each other. A disk that keeps no second name
+for a file has it renamed into place instead, where nothing had the name a moment before.
+
+EVERY UPLOAD OF A REQUEST IS MEASURED FIRST, together, against the quota & the storage reserve, &
+nothing is kept where they would not allow all of it.
+
+PHP DECIDES HOW LARGE AN UPLOAD MAY BE, by upload_max_filesize & post_max_size, which the Engine's PHP
+drop-in sets. A request larger than post_max_size arrives with no fields at all, so a page checks a
+file's size against UploadLimit, which libraries answers with, before it sends it. HRCloud3's
+HRC3-Files.js sends one file in each request, so max_file_uploads never limits a user.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Trash--
+
+DELETING MOVES TO THE TRASH, & NEVER COPIES. A trash entry is a folder named for when it was deleted,
+in UTC to the microsecond, & random hexadecimal digits, as 20261127061500-0a1b2c3d4e5f6a7b. It holds what was
+deleted as Item, & Record.json, which names it, the folder it was in, whether it is a file or a
+folder, & when it was deleted. A folder of any size is deleted in an instant.
+
+A RESTORE PUTS IT BACK WHERE IT WAS, & where that folder is gone, at the top of the space. Where its name
+is taken by now, it is put beside what has it under a numbered name, & nothing is replaced.
+
+A RECORD IS READ ONLY WHERE IT IS WHOLE & NAMES NOTHING A REQUEST COULD NOT, so a damaged one never leads a
+restore anywhere it should not. An entry whose record cannot be read is not listed, & the sweep takes it
+once its folder is as old as the trash's lifetime. In a shared library the record also names the one
+account that added what was deleted, & everything in it, where one did. See --Who Added What--.
+
+THE TRASH KEEPS WHAT IT HOLDS FOR --Trash Lifetime-- DAYS, which is 30 by default, & 0 keeps it until it
+is emptied. A user empties their own trash, & takes one entry out of it for good, at any time. In a
+shared library an admin who may write it does, & any other user who may write it takes out for good
+only an entry they alone added.
+
+A SWEEP RUNS AT MOST ONCE IN TEN MINUTES, from a web request served as the web server account, as the
+account sweep does, & takes every trash entry older than its lifetime, judged by its record, & anything
+left in an incoming folder for a day, which is an upload or a copy that never finished. The time of the
+last sweep is Libraries/swept, & a sweep holds a lock on it, so two requests never sweep at once. Root
+never sweeps a library, because a library is the web server account's.
+
+THE ENGINE'S SESSION SWEEP NEVER REACHES A LIBRARY. It sweeps Sessions, & --File Deletion Age Threshold--
+decides how long a session's files live there. A library's files are kept until their user deletes them.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Quota & Reserve--
+
+THE QUOTA HOLDS WHETHER OR NOT THE LISTENER RUNS. Every write into a personal space is held to
+--User Storage Quota--, which is 0 for none. What a user keeps is measured as the write is asked for:
+their folder in Users & their space in every personal library, its trash & its incoming folder
+included, because a trash full of deleted files still fills the disk. A shared library is the
+administrator's, & is counted against nobody. What cannot be measured, such as a space of more than
+200,000 names, is let through with a warning, as the listener lets it through. A disk whose free space
+cannot be read is not held to the reserve.
+
+THE STORAGE RESERVE HOLDS FOR EVERY LIBRARY. A write that would leave the library's disk with less
+free than --Storage Reserve-- is refused, as disk-full.
+
+--config says neither setting is without effect where an application offers libraries, because the
+Storage Core keeps both whether or not --Enable Resource Awareness-- is on.
+
+TWO WRITES AT ONCE ARE MEASURED APART, so a user who uploads two files at the same moment may pass
+the quota by as much as the smaller of them. The quota is a limit on what a user keeps, not a lock.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Removing An Account--
+
+AN ACCOUNT'S FILES GO WITH IT. sudo php <entry point> --account --remove <USERNAME> -y  removes the
+account, its folder in Users, & its space in every personal library --Libraries-- lists now, its trash
+included. Nothing it wrote in a shared library is removed, because a shared library is nobody's.
+A link in a space is removed as a link, & nothing it leads to is touched.
+
+A LIBRARY THAT IS NO LONGER LISTED IS NOT REACHED, so a space the account kept in one stays where it is.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What -v Says--
+
+-v NAMES THE STORAGE CORE WITH THE ENGINE'S OTHER CORES, AS  Storage Core  OK, 4.3.4ur, & EACH LIBRARY
+IN A SECTION OF ITS OWN, Libraries, after the interfaces.
+
+  Libraries
+    Drive                       OK, personal, /DATA/HRCloud3/Libraries/Drive
+    Shared                      OK, shared, made on first use at /DATA/HRCloud3/Libraries/Shared
+    Archive                     OK, shared, nobody writes, /srv/archive
+    Media                       FAILED, /srv/media is not www-data's, & must be for it to be written
+    System                      FAILED, its location /etc/hrcloud3 is in /etc, where the operating system keeps its own files
+    Trash                       Emptied after 30 day(s)
+
+A library is OK where its folder is there & is the web server account's, & is made on first use where
+it is kept in the data location & nobody has opened it yet. A shared library nobody writes need only be
+there. A library that cannot be used says why, after every library that can.
+
+A FAILED LIBRARY IS COUNTED AS A FAILED CHECK. -v reads the same settings a request reads, & neither
+warns, logs nor makes anything, because -v changes nothing. Where accounts are off, Libraries is named
+with the features that are installed & switched off, because a library is kept for a signed in user.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--For An Application--
+
+AN APPLICATION OFFERS LIBRARIES with these, in its contract & its entry point.
+
+  $EngineEnableStorage = TRUE;                   In its contract. The Engine's default is FALSE.
+  $RequiredStorageCoreVersion = 'v4.3.4ur';      In its entry point, as every Engine core is pinned exactly.
+  'LibraryLoc' => 'web'                          In $EngineManagedLocations, so -fp makes Libraries & gives it to the web server account.
+  'LibraryLocation' => 'LibraryLoc'              In $EngineSettingNames. The Engine names $LibraryLoc as it starts.
+  'StorageLibraries' => '<its setting>'          In $EngineSettingNames, the setting that lists its libraries.
+  'TrashLifetime' => '<its setting>'             In $EngineSettingNames, the days its trash keeps what it holds.
+  'StorageReserveMegabytes' => 'StorageReserve'  In $EngineSettingNames, so --Storage Reserve-- reaches the Storage Core.
+
+AN APPLICATION THAT KEEPS EVERY FILE UNTIL ITS USER DELETES IT offers only that lifetime, with
+$EngineFileLifetimes = array(0); in its contract, so the Authentication Core offers no other. HRCloud3 does.
+
+THE ENGINE LOADS THE STORAGE CORE ITSELF. answerEngineRequest() answers a request that sends
+StorageAction once the request is known to be signed in or not, sweeps the libraries, & draws nothing
+for one it answered. The Authentication Manager removes an account's spaces through the Engine's
+removeAccountLibraries(). -v reports the core & each library. An application calls none of it.
+
+A PAGE NEEDS NOTHING OF THE APPLICATION BUT A SHELL. HRCloud3's Files page is filesGui.php, which draws
+an empty shell & hands HRC3-Files.js its strings, & HRC3-Files.js fills it with what the Storage Core
+answers. See CREATING_INTERFACES.txt.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What It Does Not Do Yet--
+
+  Encryption      A file is kept as it was uploaded. Encrypting it, with a key its user holds, is HRCloud3's next step, &
+                  sits in the Storage Core, which every file passes through.
+  Sharing         A file is shared by putting it in a shared library. A link to one file, or a share with one other user,
+                  is a later step.
+  Versions        A file is never replaced, so there is no older copy to keep. A user who changes a file uploads it again,
+                  & it is kept beside the first under a numbered name.
+  Ownership       A shared library records who added each file & folder, for deleting it forever, & shows it to nobody yet.
+                  Sharing & social features are to build on it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

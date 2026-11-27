@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 
 FILE INFORMATION ...
-v0.9.9.
+v1.0.0.
 This file describes HRCloud3's interfaces. What the Default interface holds, what each of its files does, the names its
 components & scripts share, & how to make an interface of your own, a color or a language pack.
 The Engine's Page Core builds every page from these files. ABOUT_PAGES.txt says how it chooses & builds, & this file says what
@@ -39,6 +39,7 @@ markup.
 THE PAGES, AS Resources/Contract/app-engine-config.php DECLARES THEM.
   engine      header.php, engineGui.php, footer.php            Signing in, & the pages around it.
   home        header.php, taskbar.php, launcherGui.php, footer.php   The App Launcher.
+  files       header.php, taskbar.php, filesGui.php, footer.php      The user's libraries, from v1.0.0.
   settings    header.php, taskbar.php, settingsGui.php, footer.php   The user's account & appearance.
 
 THE ASSETS, BY THE NAME A COMPONENT READS THEM BY IN $InterfaceAssets.
@@ -46,6 +47,7 @@ THE ASSETS, BY THE NAME A COMPONENT READS THEM BY IN $InterfaceAssets.
   Library       Resources/JS/HRC3-Functions.js
   SignIn        Resources/JS/HRC3-SignIn.js
   SignInTimer   Resources/JS/HRC3-SignInTimer.js
+  Files         Resources/JS/HRC3-Files.js, which only the Files page links, from v1.0.0.
   Icon          Resources/Image/favicon.svg
 
 The engine page is drawn wherever the Engine answers page, which is whenever a visitor must sign in.
@@ -63,13 +65,14 @@ Every other request is drawn the page it asks for where HRCloud3 offers it, & ho
   taskbar.php                The bar at the top of every page a user sees signed in, with a button for
                              each page HRCloud3 offers & the account at its end.
   launcherGui.php            Home, which is the App Launcher. No app is installed yet.
+  filesGui.php               The Files page's shell, which HRC3-Files.js fills, & the dialog it asks in.
   settingsGui.php            The account, changing its password & its address, & the appearance form.
   engineGui.php              The sign in pages, which are sections of one page.
   footer.php                 Starts the scripts with what the page supplies, & closes the body & the
                              document.
   Languages/en/              The English pack, which is the last rung of the language ladder.
   Resources/CSS/             HRCloud3.css.
-  Resources/JS/              HRC3-Functions.js, HRC3-SignIn.js & HRC3-SignInTimer.js.
+  Resources/JS/              HRC3-Functions.js, HRC3-SignIn.js, HRC3-SignInTimer.js & HRC3-Files.js.
   Resources/Image/           favicon.svg.
 
 A COMPONENT READS WHAT THE PAGE CORE SETS & THE LANGUAGE STRINGS, & NO REQUEST. $PageData is
@@ -77,7 +80,8 @@ HRCloud3's, from applicationPageData() in cloudCore.php.
   Application, Title & Version   HRCloud3's name, its title & its version.
   EntryPoint                     cloudCore.php, where every form posts.
   Tokens                         Token1 & Token2, which carry the session from page to page.
-  Pages                          The pages a user may go to, so the taskbar offers no other.
+  Pages                          The pages a user may go to, so the taskbar offers no other. Files is
+                                 one only where this installation keeps libraries, from v1.0.0.
   Resume                         The page the request asked for, or home. The sign in pages send a
                                  visitor there once signed in, & a page that loads itself again goes there.
 
@@ -120,6 +124,26 @@ HRC3SignInPage, in the same file, is the sign in pages' behavior, & engineGui.ph
 
 HRC3-SignInTimer.js IS THE WORKER THE KEY IS TRADED ON, because a browser slows a hidden tab's own
 timers to once a minute. A page whose worker cannot start trades on its own timer instead.
+
+HRC3-Files.js IS THE FILES PAGE'S BEHAVIOR, from v1.0.0, & the Engine's Storage Core is the server's.
+filesGui.php starts it as HRC3Files.configure() with the endpoint, the page's own address, the tokens,
+its strings & the outcome messages, & it begins once the page has loaded, after the sign in library.
+Every request it sends is a form HRC3-SignIn.js stamps with the key, & every name a user wrote is put
+on the page as text. It keeps the library & the folder open in the address after #, & names the page &
+the choices in use before #, so a reload, back & forward keep a user where they were. A download is a
+form posted into a frame of its own, so a browser saves the file as it arrives. See ABOUT_STORAGE.txt.
+  hrc3FilesCard                  The shell. Where it is missing, as for a visitor not signed in, nothing runs.
+  hrc3FilesLibrary               The choice of library.
+  hrc3FilesUpload & hrc3FilesUploadLabel   The upload, & the button around it, shown where the user may write.
+  hrc3FilesNewFolder, hrc3FilesTrashToggle & hrc3FilesEmptyTrash   The tools above the list.
+  hrc3FilesLibraryNote           Says who sees the library open.
+  hrc3FilesTrail                 The trail of folders, each a button that opens it.
+  hrc3FilesStatus & hrc3FilesNote   What a library answered, & what the list or the trash keeps to.
+  hrc3FilesDrop                  The list's surroundings, which take files dropped on them.
+  hrc3FilesTable, hrc3FilesCaption, hrc3FilesColumnSecond, hrc3FilesColumnThird & hrc3FilesBody   The list.
+  hrc3FilesEmpty                 Says the folder or the trash is empty.
+  hrc3FilesDialog & every hrc3FilesDialog name   The dialog that asks for a name, a folder or a yes. Its form
+                                 names about:blank, so HRC3-SignIn.js never takes it for a post of the page's own.
 
 AN INTERFACE THAT REPLACES A COMPONENT KEEPS THESE NAMES, OR REPLACES THE SCRIPT THAT READS THEM TOO.
 They are the only contract between the markup & the scripts.
@@ -193,8 +217,27 @@ password changed ends every sign in the account had, this one included. An addre
 the code sent to the new one is entered. ABOUT_AUTHENTICATION.txt describes both.
 
 The appearance form offers the interfaces, the languages & the colors a user may choose between,
-each only where there is more than one to choose.
+each only where there is more than one to choose. An interface that cannot be used is never offered,
+from v1.0.0, & -v says why.
 
 The Engine also lets a signed in user choose how long their files are kept, & HRCloud3 does not offer
-it. HRCloud3 keeps a user's files until the user deletes them.
+it. HRCloud3 keeps a user's files until the user deletes them, & from v1.0.0 its contract offers the
+Engine no other lifetime.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What Files Offers--
+
+From v1.0.0. A signed in user chooses a library, & sees what the folder open holds, folders first. They
+make a folder, upload files, by choosing them or dropping them on the list, & download one by its name.
+They rename a file or a folder, move it to another folder of the same library, copy it to any library
+they may write, & delete it to the library's trash, where it is kept for --Trash Lifetime-- days. From
+the trash they put a thing back, delete it forever, or empty the trash. Nothing is ever replaced: an
+upload or a copy whose name is taken is kept beside it under a numbered name.
+
+A library the user only reads offers no upload, no new folder, no change & no trash. In a shared library
+an administrator deletes anything forever & empties the trash, & any other user deletes forever only
+what they added, so the trash offers Delete forever on each entry the Storage Core says the user may.
+Every refusal is said in the page's language, from the outcome the Storage Core names. ABOUT_STORAGE.txt
+lists every outcome.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------

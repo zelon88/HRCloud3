@@ -502,22 +502,28 @@ function pageAssetAddresses($pageSelection) {
 // / A function to list what a page may offer a user to choose between.
 // / Accepts what preparePages() chose. Returns the interfaces, the languages, by their code & endonym, & the colors on offer, keyed by those names.
 // / Only what a user may choose is listed, so a page that draws the lists offers nothing an administrator turned off.
+// / An interface is listed only where it can be used, from HRCloud3 v1.0.0, so a user is never offered one that would fall back.
+// / Each other interface offered is judged as a request for it would be, without a word, because -v says why one cannot be used.
 // / A language is listed only where the interface chosen carries its pack, or the base does.
 function pageChoices($pageSelection) {
   // / Set variables.
   global $EnableMemoryProtection;
   $PageChoices = array('Interfaces' => array(), 'Languages' => array(), 'Colors' => array());
-  $pageSettings = array();
-  $languageCode = $languageName = $colorName = $stringsPath = $stringsLayer = '';
-  $stringsWereFound = FALSE;
+  $pageSettings = $candidateRecord = $candidateProblem = array();
+  $languageCode = $languageName = $colorName = $stringsPath = $stringsLayer = $interfaceName = '';
+  $stringsWereFound = $candidateIsUsable = $candidateIsJudged = FALSE;
   $pageSettings = $pageSelection['Settings'];
-  if ($pageSettings['AllowInterfaceChoice']) $PageChoices['Interfaces'] = $pageSettings['SupportedInterfaces'];
+  if ($pageSettings['AllowInterfaceChoice']) foreach ($pageSettings['SupportedInterfaces'] as $interfaceName) {
+    if ($interfaceName === $pageSelection['Interface']['Name']) list ($candidateIsUsable, $candidateIsJudged) = array(TRUE, TRUE);
+    else list ($candidateIsUsable, $candidateRecord, $candidateProblem, $candidateIsJudged) = verifyInterfaceCandidate($pageSettings, $interfaceName);
+    if (!$candidateIsJudged) warningEntry('The interface '.printableText((string)$interfaceName, TRUE).' could not be judged, so it was not used.');
+    else if ($candidateIsUsable) $PageChoices['Interfaces'][] = (string)$interfaceName; }
   if ($pageSettings['AllowLanguageChoice']) foreach ($pageSettings['SupportedLanguages'] as $languageCode => $languageName) {
     list ($stringsWereFound, $stringsPath, $stringsLayer) = resolveInterfaceFile($pageSettings, $pageSelection['Interface']['Name'], 'Languages/'.$languageCode.'/languageStrings.php');
     if ($stringsWereFound) $PageChoices['Languages'][$languageCode] = $languageName; }
   if ($pageSettings['AllowColorChoice']) foreach ($pageSelection['Interface']['Colors'] as $colorName) if (count($pageSettings['SupportedColors']) === 0 or in_array($colorName, $pageSettings['SupportedColors'], TRUE)) $PageChoices['Colors'][] = $colorName;
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $pageSettings, $languageCode, $languageName, $colorName, $stringsPath, $stringsLayer, $stringsWereFound, $pageSelection);
+  purgeSensitiveMemory($EnableMemoryProtection, $pageSettings, $candidateRecord, $candidateProblem, $languageCode, $languageName, $colorName, $stringsPath, $stringsLayer, $interfaceName, $stringsWereFound, $candidateIsUsable, $candidateIsJudged, $pageSelection);
   return $PageChoices; }
 // / -----------------------------------------------------------------------------------
 

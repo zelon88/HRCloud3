@@ -376,6 +376,8 @@ $RequireEmailConfirmation = TRUE;
 // /   refused. Set it to 0 for no limit.
 // /   The listener keeps the quota, as it keeps the storage reserve, so it is kept only where
 // /   --Enable Resource Awareness-- is TRUE & the listener runs.
+// /   An application that offers libraries keeps it for every write to a user's own library
+// /   itself, listener or not, & counts their trash, because a trash still fills the disk.
 // /   Requires --Enable Authentication--.
 // /   Valid options are integers 0 and larger.
 // /   Default is 1024.
@@ -934,6 +936,8 @@ $LowStorageWarning = 10;
 // /   before the reserve was reached may still finish.
 // /   It keeps a disk from filling to nothing, which would stop the logs & the operating system as well.
 // /   Requires a running listener. See --Enable Resource Awareness--.
+// /   An application that offers libraries keeps it for every write to one itself, on the disk the
+// /   library is on, listener or not.
 // /   Set to 0 to refuse nothing.
 // /   Valid options are integers 0 and larger.
 // /   Default is 1024.

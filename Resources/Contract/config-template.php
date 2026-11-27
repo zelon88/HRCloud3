@@ -34,7 +34,7 @@
 // / HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 // /
 // / File Information ...
-// / v0.9.9.
+// / v1.0.0.
 // / This file contains the configuration information for HRCloud3.
 // / Fill out this file completely & accurately before running the application.
 // / Serious filesystem damage could occur from incorrect directory settings.
@@ -64,7 +64,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRCloud3-2: This 
 // /   The version of HRCloud3 in which this config file last gained or lost a setting.
 // /   The core refuses to run against a config file that is missing settings it requires.
 // /   Do not change this value by hand. An update & --config --repair keep it current.
-$ConfigVersion = 'v0.9.9';
+$ConfigVersion = 'v1.0.0';
 // / ------------------------------
 
 // / ------------------------------
@@ -125,4 +125,37 @@ $AllowUserSelectableColor = TRUE;
 // /   Valid options are TRUE or FALSE.
 // /   Default is FALSE.
 $MarkPageComponents = FALSE;
+// / ------------------------------
+
+// / ------------------------------
+// / ---Storage Information---
+// /
+// /  --Libraries--
+// /   The folders signed in users keep files in, each by its name, which a page shows as it is written.
+// /   A name is 1 to 32 letters, digits, dashes & underscores, & begins with a letter or a digit.
+// /   Kind is personal, where each user has a space of their own that no other user reaches, or shared,
+// /   which every signed in user reads.
+// /   Writers says who may write a shared library, & is admins, everyone or none. Default is admins.
+// /   Only an admin takes something out of a shared library's trash for good, so what a user deletes
+// /   there can still be put back.
+// /   Location is empty, which keeps the library in Libraries in the data location, made the first time
+// /   it is used, or the absolute path of a folder that is there already. A folder of your own must be
+// /   the web server account's to be written. It is never in the data location, the installation, the
+// /   document root or a folder the operating system keeps its own files in, & never holds one of them.
+// /   A library taken off this list or renamed keeps its files where they are, & nobody reaches them.
+// /   A library that cannot be used is left out & the log says why. Where none can be, a personal
+// /   library named Drive is used.
+// /   Run  php cloudCore.php -v  to see each library & whether it can be used.
+// /   Requires --Enable Authentication--.
+// /   Default is a personal library named Drive & a shared library named Shared that admins write.
+$Libraries = array(
+  'Drive' => array('Kind' => 'personal', 'Location' => ''),
+  'Shared' => array('Kind' => 'shared', 'Location' => '', 'Writers' => 'admins'));
+// /  --Trash Lifetime--
+// /   The days something deleted stays in a library's trash, where it can be put back, before it is
+// /   taken away for good. Set it to 0 to keep the trash until it is emptied.
+// /   Requires --Enable Authentication--.
+// /   Valid options are integers from 0 to 3650.
+// /   Default is 30.
+$TrashLifetime = 30;
 // / ------------------------------

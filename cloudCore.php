@@ -12,7 +12,7 @@
 // / It answers the Engine's commands, & draws its pages from the components of an interface through the Engine's Page Core.
 // /
 // / File information ...
-// / v0.9.9.
+// / v1.0.0.
 // / HRCloud3's entry point, begun from the HRProprietary Engine's Starter.
 // / It boots through the kernel as every application on the Engine does, & supplies only what the
 // / contract asks of an application: its pins, its name before config.php is read, its half of
@@ -44,27 +44,28 @@
 // / An application that serves pages also pins the Page Core, its interfaces & its language packs, as $RequiredPageCoreVersion,
 // / $RequiredInterfaceVersion & $RequiredLanguageVersion. An interface is an exact match, & a language pack is compared & warned about,
 // / because the Page Core loads it over a baseline pack string by string.
+// / An application that keeps its users' files in libraries pins the Storage Core, as $RequiredStorageCoreVersion, from v1.0.0.
 // / A pin ending ur names an Engine component HRCloud3 changed, which Documentation/ENGINE_RECONCILIATION_HRCLOUD3.txt says how.
 function verifyInstallation() {
   // / Set variables.
-  global $HRCloud3Version, $EngineApplicationVersion, $RequiredConfigVersion, $RequiredSetupCoreVersion, $RequiredDependencyCoreVersion, $RequiredDependsVersion, $RequiredPipelineCoreVersion, $RequiredWorkflowCoreVersion, $RequiredAuthenticationCoreVersion, $RequiredEmailCoreVersion, $RequiredEventCoreVersion, $RequiredEngineVersion, $RequiredConfigScript, $RequiredSecretVersion, $RequiredPageCoreVersion, $RequiredInterfaceVersion, $RequiredLanguageVersion, $CoreLoaded, $Version, $EnableMemoryProtection;
+  global $HRCloud3Version, $EngineApplicationVersion, $RequiredConfigVersion, $RequiredSetupCoreVersion, $RequiredDependencyCoreVersion, $RequiredDependsVersion, $RequiredPipelineCoreVersion, $RequiredWorkflowCoreVersion, $RequiredAuthenticationCoreVersion, $RequiredEmailCoreVersion, $RequiredEventCoreVersion, $RequiredEngineVersion, $RequiredConfigScript, $RequiredSecretVersion, $RequiredPageCoreVersion, $RequiredStorageCoreVersion, $RequiredInterfaceVersion, $RequiredLanguageVersion, $CoreLoaded, $Version, $EnableMemoryProtection;
   $InstallationIsVerified = FALSE;
   $ConfigFile = '';
   // / Every file of this application's own refuses to run unless this is set, so it is set before the kernel reads one.
   $CoreLoaded = TRUE;
   // / This application's own version, which Resources/versionInfo.php must report as well.
   // / It is handed to the Engine here, where it is defined, so there is only ever one copy.
-  $HRCloud3Version = 'v0.9.9';
+  $HRCloud3Version = 'v1.0.0';
   $HRCloud3Version = ltrim($HRCloud3Version, 'vV');
   $EngineApplicationVersion = $HRCloud3Version;
   // / The oldest config.php this file accepts. A newer one carrying every setting it needs is fine.
   // / Raise it only when this application adds or removes a setting of its own, with $ConfigVersion in its half of the template.
-  $RequiredConfigVersion = 'v0.9.9';
+  $RequiredConfigVersion = 'v1.0.0';
   $RequiredConfigVersion = ltrim($RequiredConfigVersion, 'vV');
   // / Each Engine core, & this application's half of the dependency manifest, is an exact match.
   // / A component built for another release may not be called safely, so it is judged before it is loaded.
   // / php cloudCore.php --build --pins --write writes each of these from the file it names, so none is moved by hand.
-  $RequiredSetupCoreVersion = 'v4.3.3';
+  $RequiredSetupCoreVersion = 'v4.3.3ur';
   $RequiredSetupCoreVersion = ltrim($RequiredSetupCoreVersion, 'vV');
   $RequiredDependencyCoreVersion = 'v4.3.4';
   $RequiredDependencyCoreVersion = ltrim($RequiredDependencyCoreVersion, 'vV');
@@ -82,10 +83,12 @@ function verifyInstallation() {
   $RequiredEventCoreVersion = ltrim($RequiredEventCoreVersion, 'vV');
   $RequiredPageCoreVersion = 'v4.3.4ur';
   $RequiredPageCoreVersion = ltrim($RequiredPageCoreVersion, 'vV');
+  $RequiredStorageCoreVersion = 'v4.3.4ur';
+  $RequiredStorageCoreVersion = ltrim($RequiredStorageCoreVersion, 'vV');
   // / Every interface, & every language pack, this release ships.
-  $RequiredInterfaceVersion = 'v0.9.9';
+  $RequiredInterfaceVersion = 'v1.0.0';
   $RequiredInterfaceVersion = ltrim($RequiredInterfaceVersion, 'vV');
-  $RequiredLanguageVersion = 'v0.9.9';
+  $RequiredLanguageVersion = 'v1.0.0';
   $RequiredLanguageVersion = ltrim($RequiredLanguageVersion, 'vV');
   // / The Engine is an exact match as well. It is bundled with this application rather than installed
   // / beside it, so the pin & the file it points at are replaced together. The build runs inside the
@@ -163,7 +166,8 @@ function verifyGlobals() {
 // / This array changes when this application's half of the template, Resources/Contract/config-template.php, changes.
 // / A section the Engine's half shares is one section, & its name must match config.php exactly.
 // / Each variable carries its Type, the variable it Depends on, & the Description config.php gives it.
-// / HRCloud3's own settings say which interfaces, languages & colors are offered, which the Page Core reads through the contract's map.
+// / HRCloud3's own settings say which interfaces, languages & colors are offered, which the Page Core reads through the contract's map,
+// / & which libraries users keep files in, which the Storage Core reads through it, from v1.0.0.
 function applicationConfigModel() {
   // / Set variables.
   global $EnableMemoryProtection;
@@ -183,7 +187,11 @@ function applicationConfigModel() {
       'SupportedColors' => array('Type' => 'array', 'Default' => 'array()', 'Depends' => '', 'Description' => 'Supported Colors'),
       'DefaultColor' => array('Type' => 'string', 'Depends' => '', 'Description' => 'Default Color'),
       'AllowUserSelectableColor' => array('Type' => 'bool', 'Depends' => '', 'Description' => 'Allow User Selectable Color'),
-      'MarkPageComponents' => array('Type' => 'bool', 'Depends' => '', 'Description' => 'Mark Page Components'))));
+      'MarkPageComponents' => array('Type' => 'bool', 'Depends' => '', 'Description' => 'Mark Page Components'))),
+    // / The libraries & how long a trash keeps what is deleted, which the Engine's Storage Core reads through the contract's map, from v1.0.0.
+    'Storage Information' => array('Writable' => TRUE, 'Variables' => array(
+      'Libraries' => array('Type' => 'array', 'Depends' => 'EnableAuthentication', 'Description' => 'Libraries'),
+      'TrashLifetime' => array('Type' => 'int', 'Depends' => 'EnableAuthentication', 'Description' => 'Trash Lifetime'))));
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
   // / $ConfigModel is not purged, because it is the return value.
   purgeSensitiveMemory($EnableMemoryProtection);
@@ -205,10 +213,23 @@ function applicationHelpInfo() {
         '  Documentation/CHANGELOG.txt                 Every change made to HRCloud3, newest first.',
         '  Documentation/ABOUT_AUTHENTICATION.txt      Accounts, & the  --account  commands that manage them.',
         '  Documentation/ABOUT_PAGES.txt               How a page is built from an interface, & what -v says of each.',
+        '  Documentation/ABOUT_STORAGE.txt             Libraries, the Files page, the trash & what each keeps.',
         '  Documentation/CREATING_INTERFACES.txt       What an interface of HRCloud3\'s is, & how to make one.',
         '  Documentation/ERROR_DESCRIPTIONS.txt        Every warning & numbered error, its cause & its fix.')),
     'Address' => 'https://github.com/zelon88/HRCloud3');
   return $HelpInfo; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to name the pages a user may go to, from v1.0.0.
+// / Accepts nothing. Returns their names.
+// / The Files page is offered only where this installation keeps libraries, which is the Engine's storageIsOn() to say, so a user is
+// / never sent to a page that can do nothing.
+function applicationPages() {
+  // / Set variables.
+  $PagesOffered = array('home', 'settings');
+  if (function_exists('storageIsOn') && storageIsOn()) $PagesOffered = array('home', 'files', 'settings');
+  return $PagesOffered; }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -223,7 +244,7 @@ function applicationPageData($pageName) {
   // / Set variables.
   global $ApplicationName, $ApplicationTitle, $HRCloud3Version, $Token1, $Token2, $PageRequested, $EnableMemoryProtection;
   $PageData = $pagesOffered = array();
-  $pagesOffered = array('home', 'settings');
+  $pagesOffered = applicationPages();
   $PageData = array('Application' => (string)$ApplicationName, 'Title' => (string)$ApplicationTitle, 'Version' => (string)$HRCloud3Version,
     'EntryPoint' => 'cloudCore.php', 'Tokens' => array('Token1' => (string)$Token1, 'Token2' => (string)$Token2), 'Pages' => $pagesOffered,
     'Resume' => (in_array($PageRequested, $pagesOffered, TRUE) ? (string)$PageRequested : 'home'));
@@ -249,7 +270,7 @@ function servePage($pageRequested, $interfaceRequested, $languageRequested, $col
   list ($pageCoreIsLoaded) = loadPageCore();
   if ($pageCoreIsLoaded) list ($pagesAreReady, $interfaceToUse, $languageToUse, $colorToUse) = preparePages($interfaceRequested, $languageRequested, $colorRequested);
   if ($pagesAreReady) {
-    $pageToDraw = (isset($EngineAnswer) && $EngineAnswer === 'page') ? 'engine' : (in_array($pageRequested, array('home', 'settings'), TRUE) ? (string)$pageRequested : 'home');
+    $pageToDraw = (isset($EngineAnswer) && $EngineAnswer === 'page') ? 'engine' : (in_array($pageRequested, applicationPages(), TRUE) ? (string)$pageRequested : 'home');
     list ($PageWasDrawn, $pageIsJudged) = buildEnginePage($pageToDraw); }
   if (!$PageWasDrawn) {
     warningEntry('A page could not be drawn, so the visitor was told so in plain text. The warnings & errors before this one say why.');

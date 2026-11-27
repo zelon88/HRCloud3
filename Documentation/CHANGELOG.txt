@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 
 FILE INFORMATION ...
-v0.9.9.
+v1.0.0.
 This file contains a list of itemized changes made in each iteration of the application.
 Entries from v0.9.7 down are the prototype's development notes, kept as they were written.
 
@@ -24,6 +24,27 @@ The authoritative list of dependencies is Resources/Engine/depends.php & Resourc
 <3 Open-Source
 -----------------------------------------------------------------------------------
 
+
+--------------------
+COMMIT 11/27/2026
+v1.0.0 - Files, kept in libraries by a new Engine core.
+
+-v1.0.0.
+-New Storage Core, Resources/Engine/Cores/storageCore.php (v4.3.4ur). It keeps what signed in users store in libraries & is the only part of the Engine that reaches them.
+-New --Libraries--: personal libraries, where each user has a space of their own, & shared ones, which admins, everyone or nobody writes. Drive & Shared by default.
+-Deleting moves to a trash. Put back, delete forever or empty. New --Trash Lifetime--, 30 days by default.
+-Names are kept exactly as written. A link is never followed. Nothing is ever replaced.
+-Downloads stream with Range support. The quota & storage reserve hold for every library write, with or without the listener.
+-Removing an account removes its library spaces. Authentication Manager v4.2.3ur.
+-New Files page & HRC3-Files.js: browse, upload & drop, download, new folder, rename, move, copy, trash.
+-HRCloud3 offers only the "keep" file lifetime. New $EngineFileLifetimes contract value. Authentication Core v4.2.3ur.
+-Setup Core v4.3.3ur: --config --repair adds a section the file lacks, & --config no longer calls the quota inert where libraries keep it.
+-Error 52000 & the library warnings are documented.
+-New ABOUT_STORAGE.txt. New test_storage-cli.php. test_hrcloud3-cli.php asks every library action of the loader.
+-A shared library records who added each file & folder. An admin, or whoever alone added something, deletes it forever. Only an admin empties its trash.
+-A shared library's own folder is named for the application, .hrcloud3.
+-Verbose logging ships on while HRCloud3 is in development.
+-The appearance form offers only interfaces that can be used.
 
 --------------------
 COMMIT 11/27/2026
