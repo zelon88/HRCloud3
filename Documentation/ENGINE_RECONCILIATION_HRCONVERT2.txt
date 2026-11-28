@@ -63,6 +63,13 @@ installation & compare the two folders.
   diff -r HRProprietary-Engine-v4.2.4/Resources/Engine Resources/Engine
 
 Each difference those print is explained in a section below, or it is a mistake.
+
+FROM v4.3.4 THE BASELINE IS THE HRPROPRIETARY ENGINE v4.3.3 STARTER KIT. Canon began at its v4.3.1 from
+HRConvert2's v4.3.0 starter kit, so it carries every change recorded below through v4.3.0. Those sections
+stay as the record. What differs from the v4.3.3 kit is what the v4.3.1, v4.3.2 & v4.3.4 sections list.
+
+  diff -r HRProprietary/Resources/Kernel Resources/Kernel
+  diff -r HRProprietary/Resources/Engine Resources/Engine
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -374,4 +381,379 @@ TWO OF THE ENGINE'S MESSAGES ARE NOT WHAT ERROR_DESCRIPTIONS.txt SAYS. 31007 is 
 role whose subcomponent could not be loaded as well as for one not recognized, & only the second is
 documented. 32011 is documented as naming the path it could not create, & names none. HRConvert2 v4.3.0
 found both comparing every message the code raises with the one documented under its number.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--v4.3.1--
+
+ONE ENGINE FILE CHANGED, & IT IS BACKWARD COMPATIBLE. SEVEN OF THE ENGINE'S MESSAGES ARE DOCUMENTED AGAIN.
+
+  Resources/Engine/Cores/pipelineCore.php     v4.2.4 to v4.3.1
+
+HRConvert2 v4.3.1 requires Pipeline Core v4.3.1. The Engine itself is v4.3.0, as before, & nothing
+else in it changed.
+
+--A converter that ran to its end is not asked again--
+
+WHAT CHANGED. The Pipeline Core has three new functions. pipelineRetryIsDue() takes the path a
+converter writes, the attempts made & the exit status of the last one, & is TRUE before the first
+attempt, & after it only where pipelineCommandWasStopped() says a signal ended the last one & where
+pipelineAttemptIsDue() allows another. pipelineCommandWasStopped() is TRUE for an exit status of 129
+through 159, which is 128 plus a signal numbered 1 through 31. runPipelineCommand() runs a command
+with its standard error sent to its standard output, & returns what it printed & its exit status.
+pipelineAttemptIsDue() is unchanged.
+
+WHY. Seventeen retry loops in fifteen of HRConvert2's pipelines asked a converter that ran to its end
+& left no file as many times as --File Operation Retry Count-- allows, five by default, with six
+seconds of waiting between them, & a converter given the same file did the same each time. The
+Document pipeline had the rule in its own code from v4.3.0. A rule every pipeline keeps belongs to the
+Pipeline Core, as pipelineAttemptIsDue() does, & the number a signal is told by is held in one place.
+Bubblewrap & the shell both report a process a signal ended as 128 plus the signal's number, which
+HRConvert2 measured with bubblewrap 0.9 & dash, inside a sandbox & out. A status above 159 is a
+converter's own. FFMPEG from 6.1 exits with its own error code, 183 for a file it reads nothing in &
+234, 254 or 255 for others, & msgconvert's Perl exits with 255 where it dies, so HRConvert2's own
+tests found both asked again for a file neither could read while the rule was above 128.
+
+HOW TO TAKE IT. Copy the three functions & raise the application's pin to the Pipeline Core. A
+pipeline that calls none of them is unaffected. Every pipeline in HRConvert2's library that retries
+calls them from v4.3.1, & libreOffice.php calls pipelineCommandWasStopped(), so an Engine that runs
+that library needs all three. HRProtect's own pipelines need nothing more.
+
+--The Engine's documents--
+
+ERROR_DESCRIPTIONS.txt documents 503, 504, 31007, 31018, 31019, 32011 & 34002 as the Engine raises
+them. v4.3.0 left 31007 & 32011 below for this file's maintainer, & the new messages check found the
+other five, each documented without the detail the Engine adds to it. Nothing in the Engine's code
+changed for any of them. 31007 is documented with both its messages, & 32011 without the path it
+never named.
+hrconvert2-doccheck.py gains that check, which compares every message the code raises with the ones
+documented under its number, & its entries check reads each reservation, which may call no documented
+number unused, as 41000's did once 41009 was documented. ABOUT_QUALITY_CONTROL.txt names both.
+ABOUT_PIPELINE_COMPONENTS.txt & CREATING_CONVERSION_PIPELINES.txt describe the three new functions.
+
+--What HRConvert2 now relies on, unchanged--
+
+Nothing below is a change to the Engine. Each is something the Engine already did that HRConvert2
+v4.3.1 depends on for the first time, so a reconciled Engine has to keep doing it.
+
+A PROFILE'S RequireSandbox IS READ AS v4.2.7 DEFINED IT. HRConvert2's imagemagick, tesseract & mat2
+profiles set it from v4.3.1, & the Engine refuses each wherever no sandbox can be built.
+
+A SECOND KIND OF PIPELINE DECLARES ffmpegDemuxers.php. The Metadata pipeline, an operation pipeline,
+declares it from v4.3.1, as Identify has since v4.3.0.
+
+--Seen, & left for the Engine's maintainer--
+
+A REFUSED COMMAND IS RETURNED AS IT WAS GIVEN. sandboxCommand() returns FALSE with the unwrapped
+command where it refuses one, so a caller that runs the command without testing the boolean runs it
+unprotected. HRConvert2's OCR page split did, with a warning, until v4.3.1, even where config.php
+required a sandbox. Returning an empty command with the refusal would make that mistake run nothing.
+Every caller of either application has to be read first, because a caller that names the command it
+was refused in a message would name nothing. HRConvert2's Metadata pipeline keeps whether it built a
+command apart from what sandboxCommand() returns, from v4.3.1, so it reports a refusal as one either
+way.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--v4.3.2--
+
+THREE ENGINE FILES CHANGED. EACH IS BACKWARD COMPATIBLE, & ONE NARROWS WHAT A PIPELINE RETRIES.
+
+  Resources/Engine/engine.php                 v4.3.0 to v4.3.2
+  Resources/Engine/Cores/dependencyCore.php   v4.2.5 to v4.3.2
+  Resources/Engine/Cores/pipelineCore.php     v4.3.1 to v4.3.2
+
+HRConvert2 v4.3.2 requires the Engine, Dependency Core & Pipeline Core at v4.3.2, & its manifest is
+v4.3.2. Nothing else in the Engine changed.
+
+Each of the three is HRConvert2's fork of the file, & is un-reconciled. Canon's v4.3.1 brings a
+lineage mark, r or ur, for a fork's stamp, & HRConvert2 v4.3.2's version parsers & checkers predate
+it, so these stamps carry none. A canon v4.3.2 of any of them would be a different file.
+
+--A Fallback may be used always--
+
+WHAT CHANGED. A manifest entry's Fallback may say 'Always' => TRUE. The new ownBuildIsAlways() is
+TRUE where this host can have the entry's own build & the Fallback it resolves to says so.
+resolveDependencyChoice() then reports the own build's state & nothing else. It is absent where
+nothing is at the own build's path, with a line saying only the own build is used, misconfigured
+where the own build is not root's alone or the conversion account cannot run it, & the own build's
+own state otherwise, & it never falls back to the package manager's copy. settleOwnBuild() never
+asks the package manager's copy & never takes the own build away for it. dependencyIsInstalled()
+counts only the own build in service. checkDepends() never says the package manager's copy
+qualifies. installOneDependency() installs nothing through the package manager, &
+believePackageInstall() builds the own copy as before. updateDepends() upgrades nothing through the
+package manager for such an entry, & counts it installed where the package manager's copy is, so a
+host that had the package gets the own build. uninstallDepends() is unchanged, & still removes the
+package with its subsystem.
+
+WHY. An own build was used only while the package manager's version fell outside the entry's window,
+so a host whose package manager caught up went back to the copy it keeps current. That is right for
+7-Zip, & wrong for a build whose point is what it leaves out. HRConvert2 builds Assimp with three
+importers, because Assimp chooses an importer by what a file holds where none claims its extension,
+so every importer it carries is reachable from an upload, & a distribution's carries seventy.
+Debian's sid carries 6.0.6, inside any window the entry could set.
+
+HOW TO TAKE IT. Copy ownBuildIsAlways() & the changes to the seven functions above, & raise the
+application's pin to the Dependency Core. An entry whose Fallback does not say 'Always' behaves
+exactly as before, which is every entry HRProtect has.
+
+--A sandbox profile may hold its tool's address space--
+
+WHAT CHANGED. A profile may say 'AddressSpaceLimit' => TRUE. limitCommand() then puts prlimit --as=
+in front of the command, with the memory the profile's type is allowed in bytes, inside any scope, &
+does so where per conversion limits are turned off too, because the profile asked for it & the host
+did not. prlimit is found with locateDependency(), & where it is missing a warning says so & the
+conversion runs without the ceiling, because limitCommand() never refuses. The new
+sandboxProfileAsks() says whether a profile gives a setting a true value, read as
+sandboxProfileFlags() reads MapToRoot. The verbose Conversion Scope line names the address space, &
+says off where per conversion limits are.
+
+WHY. A scope's MemoryMax kills a tool only once memory is used, & no scope can be made on a host
+whose kernel delegates no cgroup controller, where a conversion is only deprioritized. HRConvert2
+found a 20 byte glb that makes Assimp ask for 4.1 GiB. Under a 2048 MiB address space it fails at
+once with std::bad_alloc, having used 14 MiB. An address space is not the memory used, so a tool
+that reserves far more than it uses, as a JVM does, would be stopped by it, & only a profile
+measured under it asks for it.
+
+HOW TO TAKE IT. Copy sandboxProfileAsks() & limitCommand(). A profile that does not ask is limited
+exactly as before.
+
+--A profile mapping to root names one account--
+
+WHAT CHANGED. The new sandboxAccountFlags() returns the number of the Engine's own account & the
+--uid & --gid flags that choose it. sandboxIdentityFlags() takes the flags from it, &
+sandboxCommand() takes them away again for a profile whose MapToRoot is set, so that profile's --uid
+0 --gid 0 is the only account named.
+
+WHY. bubblewrap 0.9 prints Only the last --uid option will take effect, & the same of --gid, where
+either is given twice, & every MeshLab conversion carried both lines in its output from v4.3.0,
+which named the Engine's own account beside a profile's.
+
+HOW TO TAKE IT. Copy sandboxAccountFlags() & the changes to the other two. HRProtect declares no
+profile mapping to root.
+
+--A converter that crashed is not asked again--
+
+WHAT CHANGED. pipelineCommandWasStopped() is TRUE for 137 & 143 alone, which are KILL & TERM, where
+it was TRUE for 129 through 159. pipelineRetryIsDue() is unchanged, & reads it.
+
+WHY. A memory ceiling & a supervisor stop a converter with KILL or TERM, & an attempt made again may
+finish. A converter that crashed, with SEGV, ABRT, BUS, FPE or ILL, is given the same file again &
+crashes again. A model that crashed Assimp was converted, & crashed it, as many times as --File
+Operation Retry Count-- allows.
+
+HOW TO TAKE IT. Copy the function & raise the application's pin to the Pipeline Core. Every pipeline
+that retries asks a crashed converter once. HRConvert2's libreOffice.php asks the function whether
+something stopped LibreOffice, so a LibreOffice that crashed is asked once too, & its comment, & the
+Document pipeline's, say so.
+
+--The Engine's documents--
+
+ABOUT_DEPENDENCIES.txt documents 'Always'. ABOUT_RESOURCE_RATE_LIMITING documents AddressSpaceLimit,
+& convertCore.php's list of profile fields names it. ABOUT_PIPELINE_COMPONENTS.txt &
+CREATING_CONVERSION_PIPELINES.txt say what is asked again. ERROR_DESCRIPTIONS.txt says it of 7001 &
+9000.
+
+--What HRConvert2 now relies on, unchanged--
+
+Nothing below is a change to the Engine. Each is something the Engine already did that HRConvert2
+v4.3.2 depends on for the first time, so a reconciled Engine has to keep doing it.
+
+AN OWN BUILD'S VERSION IS COMPARED IN THREE PARTS. compareVersionMinimum() compares the patch level
+& reads one a version leaves out as 0, so an Assimp reporting 6.0, as every Assimp did before patch
+0008, is older than 6.0.6. The Assimp entry's floor, its Fallback's Version & what the own build
+reports are all 6.0.6.
+
+A FALLBACK MAY PIN NO CHECKSUM. buildOwnCopy() hands DEPENDENCY_SHA256 empty where the Fallback's
+Sha256 is, & build-assimp.sh pins its source by commit instead.
+
+--Seen, & left for the Engine's maintainer--
+
+A FALLBACK THAT CHANGES ONLY ITS PATCHES IS NOT BUILT AGAIN. settleOwnBuild() builds an own build
+again where it answers below the version pinned, & a build carrying a new patch on the same release
+answers the same version. HRConvert2's Assimp is such a build, & a patch added on 6.0.6 reaches a
+host that built 6.0.6 already only once its build is moved out of the builds folder &
+--install-depends is run again. A mark the build leaves of what made it, such as a checksum of the
+Fallback's BuildCommand & of the script & patches it runs, compared before a build is called
+unchanged, would catch it.
+
+A FALLBACK CANNOT PIN A COMMIT. The Engine hands over a version & a checksum, & a build fetched by
+commit holds its commit in its own script. A Commit field handed over as DEPENDENCY_COMMIT would put
+that pin in the manifest beside the others.
+
+A SUBSYSTEM TWO TOOLS SERVE IS JUDGED BY THE ONE THAT CAN BE ASKED. capabilityVerdict() reads every
+record naming a pipeline's subsystem, & one that could not answer adds nothing, so where one tool of
+two answers, its answer contradicts every format only the other handles. HRConvert2's 3D Models had
+Assimp answer for MeshLab, & v4.3.2 asks Assimp nothing instead, which is a change to its manifest &
+none to the Engine. A record could say which of a pipeline's formats it answers for, or a direction
+an installed tool of a subsystem cannot answer could leave the subsystem unknown, which would stop
+narrowing wherever such a tool is installed, so each subsystem would have to be read first.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--v4.3.4--
+
+HRCONVERT2 TAKES THE v4.3.3 STARTER KIT. THREE ENGINE FILES STILL CARRY ITS OWN CHANGES, & THEIR STAMPS SAY SO.
+
+  Resources/Engine/engine.php                 v4.3.3ur
+  Resources/Engine/Cores/dependencyCore.php   v4.3.3ur
+  Resources/Engine/Cores/pipelineCore.php     v4.3.2ur
+
+HRConvert2 v4.3.4 took the kit's kernel, Engine, Cores, Managers, documents, checkers & tests, & merged
+its own changes since v4.3.0 into them. The three files above are canon's with the changes the v4.3.1 &
+v4.3.2 sections record, & nothing else. Every other component of the Engine is canon's & carries r, as
+CODING_CONVENTIONS.txt says of an application's copy from the kit's v4.3.1, & HRConvert2 pins each mark
+exactly. The Pipeline Core shows why the mark exists. Canon's v4.3.2 & HRConvert2's v4.3.2 were two
+different files with one stamp, as the v4.3.2 section said they would be.
+
+--The Event Core's Suites Accept A Lineage Mark--
+
+test_events-cli.php, test_events_load-cli.php & test_events_engine-cli.php read the Event Core's pin &
+its stamp as three numbers alone. In an application's copy the core carries r, as CODING_CONVENTIONS.txt
+asks, so all three failed on the mark alone. test_events_load-cli.php found no pin, & 16 of its 27 checks
+failed, & test_events_engine-cli.php stopped. Each now accepts r or ur after the numbers, as
+compareVersionMinimum() & both checkers do. The kit's Example pins canon plainly, & passes as before.
+
+HOW TO TAKE IT. Copy the three suites. Each holds this change & nothing else.
+
+--The Engine's Suites, Run From HRConvert2--
+
+From HRConvert2's root, inside contained.sh, or contained-install.sh for test_install-cli.php, every
+check passed: test_events 440, test_events_load 27, test_events_engine 17, test_kernel 170,
+test_kernel_without_engine 11, test_install 66, test_schedule 185 & test_identity 50.
+test_quarantine-cli.php & test_starter-cli.php stop before they test anything, because HRConvert2 carries
+neither the Quarantine pipeline nor the Starter. Both are carried with the rest of the folder, as its
+README.txt asks, & both run from the kit's examples.
+
+--What HRConvert2 did not take--
+
+ENGINE_RECONCILIATION_HRPROTECT.txt, because it is another application's record. The Quarantine pipeline,
+because HRConvert2 carries only the pipelines it accepts, & it accepts no Quarantine pipeline.
+Documentation/Logos, which only the kit's README.md shows. Example/ & the kit's README files.
+
+The Example's config-template.php & depends.php predate HRConvert2 v4.2.5, & its versionInfo.php says
+v4.2.4, so HRConvert2 kept its own whole. The Example's convertCore.php & app-engine-config.php were
+HRConvert2 v4.3.0's, & their changes were merged: the Event Core's pin, the event record's root only
+folder, the five settings the scanner pipelines read, the kit's ClamAV & ScanCore pipelines, & warnings
+that say each outcome with a call of their own.
+
+--The Engine's documents--
+
+ERROR_DESCRIPTIONS.txt gains a line for each of two Engine warnings v4.3.2 added & left undocumented, which
+the kit's message checker found: an own build used always & not ready, & a profile asking for an address
+space limit where prlimit is missing. Two of the Model pipeline's warnings gain lines too. The line for an
+OCR page split run without a sandbox is gone, because HRConvert2's OCR pipeline has refused that since
+v4.3.1. The kit keeps it, because the kit's OCR pipeline still raises it.
+
+--Seen, & left for the Engine's maintainer--
+
+THE KIT LACKS Resources/Engine/Sandbox/passwd, group & machine-id. engine.php reads them to show a tool the
+Engine's own account & machine, & where they are missing it warns & shows the host's. HRConvert2 v4.3.0
+added them, & the kit has never carried them.
+
+THE KIT CARRIES Pipelines/ AT ITS ROOT AS WELL AS Resources/Pipelines, & the two differ. The kit's v4.3.1
+moved the library into Resources/.
+
+TWO MESSAGE CHECKERS. hrconvert2-doccheck.py has compared each error the code raises with the catalogue
+since HRConvert2 v4.3.1, & the kit's hrconvert2-messages-cli.php holds every warning & error to a line of its
+own. HRConvert2 runs both, & both pass. The second is the stricter, & found the four warnings above.
+
+THE MESSAGE CHECKER RUN AS ROOT DROPS TO NOBODY, & NOBODY CANNOT READ A TREE ONLY ROOT CAN READ, so it says
+it is not run from an application's root. SUDO_UID & SUDO_GID set to 0 keep root.
+
+A STAMP ENDING ur DOES NOT CHANGE WHERE AN APPLICATION CHANGES THE SAME FILE AGAIN BEFORE IT IS
+RECONCILED, so an exact pin cannot tell the two files apart. Each HRConvert2 release carries its whole
+Engine, so no file of one release meets a pin of another, & nothing needs doing yet. A counter after the
+mark would need compareVersionMinimum() & both checkers to read it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--v4.3.5--
+
+THREE ENGINE FILES CHANGED. EVERY COMMAND HAS A TIME LIMIT, & NOTHING AN INTERRUPTED COMMAND LEFT IS KEPT.
+
+  Resources/Engine/engine.php                 v4.3.3ur, changed again
+  Resources/Engine/Cores/pipelineCore.php     v4.3.2ur, changed again
+  Resources/Engine/config-template.php        v4.3.1r to v4.3.1ur
+
+The two already marked ur keep their stamps, as the note under v4.3.4 says a stamp ending ur does.
+Every change here is HRConvert2's & is un-reconciled. An application that takes them needs
+--config --repair once, because the template gains two settings the kernel then requires.
+
+--A time limit for every command--
+
+WHAT CHANGED. New resolveConversionRuntime($sandboxProfile) returns whether a time limit applies & its
+seconds. It reads the profile's type from new --Maximum Per Conversion Runtime-- & a type it does not
+name from new --Default Per Conversion Runtime--. 0 is no limit. An entry that is not a whole number of
+seconds is warned of & the default is used, & a default that is not one is warned of & 600 is used.
+limitCommand() puts timeout, found by locateDependency(), outside everything else it builds, for every
+command, whether or not --Enable Per Conversion Limits-- is TRUE. It sends TERM & never KILL, so a
+command it stops exits 124 & is never asked again. Where timeout is missing it warns & runs the command
+without one. The Engine's config model holds both settings, without a Default, so the template's is
+the one a reset writes.
+
+WHY. A converter that never finishes holds its worker for ever with resource awareness off. Seven of
+HRConvert2's pipelines bounded their own converter, each with its own figure, & the rest none, which the
+maintainer asked to have replaced by one clean, config driven limit at the Engine. Its own table, because the listener scales the resources table &
+hands it back as two figures, & a time limit must not shrink with load.
+
+HOW TO TAKE IT. Copy resolveConversionRuntime() & limitCommand(), & the two settings into the Engine's
+template & model. Each application's sandbox profiles name its types, & its table names the same
+types. A pipeline that ran a timeout of its own drops it & keeps its handling of 124.
+
+--A data limit where no scope can be made--
+
+WHAT CHANGED. Where per conversion limits are on & verifySystemdRun() reports no scope, limitCommand()
+adds prlimit --data, of the type's memory figure, nearest the command, beside the --as a profile may
+already ask for, so one prlimit sets both. Where prlimit is missing it warns, & a profile asking for
+an address space limit keeps its own warning. The two warnings verifySystemdRun() writes say the fallback
+is scheduling priority & a data limit on each process.
+
+WHY. Most hosts cannot make a scope for the web server account, so a conversion there had no memory
+ceiling at all. A data limit needs no permission & does not stop a tool that reserves more than it
+uses, as an address space limit does. Every case of HRConvert2's format suite converts under the
+template's figures. The figures measured are in DEVELOPMENT_NOTES.txt under Per Conversion Limits.
+
+--Nothing an interrupted command left is kept--
+
+WHAT CHANGED. The Pipeline Core gains pipelineCommandWasInterrupted($exitStatus), TRUE for 124 & for 129
+through 159, & discardInterruptedOutput($outputPath, $exitStatus), which removes a file an interrupted
+command left at the path & warns, & warns of the time limit whatever was left. pipelineRetryIsDue() calls
+it after every attempt, before it decides.
+
+WHY. A converter a ceiling killed after writing part of its file left the part, so no attempt followed
+& the part was offered as the result. The time limit makes a stopped command an ordinary event.
+
+HOW TO TAKE IT. Copy the two functions & pipelineRetryIsDue(). A pipeline that retries through it needs
+nothing more. One that runs a command another way runs it through runPipelineCommand() & hands the status
+to discardInterruptedOutput(). HRConvert2's OCR, Metadata, Archiver, PDF, Archive, Document & Model
+pipelines, & its libreOffice.php shared module, do.
+
+--A shell that stays--
+
+Ubuntu 24.04's dash keeps sh -c between PHP & a command, so bubblewrap's parent was the shell, & a pipeline
+that killed the shell took the sandbox with it. timeout is bubblewrap's parent now. A pipeline that kills a
+command it started has the shell replace itself, by starting the command with exec, as HRConvert2's Identify
+does, or stops every process under it, as its archive extraction does.
+
+--Seen, & left for the Engine's maintainer--
+
+THE MANIFEST DOES NOT NAME timeout OR prlimit. The Engine runs both, as it runs nice & systemd-run, &
+HRConvert2's copy of the manifest predates the 'system' type canon's v4.3.3 manifest declares Coreutils
+& Util-linux with. Canon's Coreutils names timeout. Its Util-linux names setsid alone, & needs prlimit,
+which HRConvert2's Engine has run since v4.3.2.
+
+THE SETUP CORE'S WARNING THAT A KERNEL DELEGATES NO CGROUP CONTROLLERS still says per conversion limits fall
+back to scheduling priority. They fall back to a data limit on each process too. The Setup Core is canon's,
+& unchanged here.
+
+THE ENGINE'S CONFIG MODEL GIVES --Maximum Per Conversion Resources-- A Default without Scan, which the
+template has, so a reset of that table writes one without it & the built-in Scan ceiling is used, with a
+warning. collectConfigModel() overwrites it with the template's wherever the template can be read.
+
+--Maximum Per Conversion Resources-- NAMES FIVE TYPES NO PROFILE HAS: Spreadsheet, Presentation, Audio,
+Subtitle & Stream. LibreOffice's work is Document's, & FFMPEG's is Video's, so the five are never read.
+The new runtime table names only the types the profiles name.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------

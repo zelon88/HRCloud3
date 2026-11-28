@@ -14,7 +14,7 @@
 // / install secret & derives a visitor's session from it.
 // /
 // / File Information ...
-// / v4.3.3.
+// / v5.0.1.
 // / The kernel. An application's entry point requires it first & pins it exactly via $RequiredKernelVersion.
 // / Error 35000 is the direct load guard every component shares.
 // / It is a file of its own, so every application runs identical kernel code & compares it by version.
@@ -87,7 +87,7 @@ if (count(get_included_files()) < 2) die('ERROR!!! Kernel-35000, The kernel cann
 // / The version of this kernel.
 // / The application reads it with a pattern BEFORE requiring this file, so a mismatched
 // / kernel is never executed. It cannot use readComponentVersion for that, which is below.
-$KernelVersion = 'v4.3.3';
+$KernelVersion = 'v5.0.1';
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -1144,7 +1144,7 @@ function readComponentVersion($componentRelativePath, $versionVariableName) {
 // / The -v argument can report it. A require inside a function lands its assignments in
 // / that function, not in global scope, so a component version read this way would
 // / otherwise be invisible to everything outside this call.
-// / Every core lives in a folder of its own under Resources, the same way ScanCore does.
+// / The Engine & each of its cores are files under Resources/Engine, & each is named by its path below Resources.
 // / DIRECTORY_SEPARATOR is used here rather than $DirSep, & that is deliberate.
 // / verifyInstallation() calls this function before verifyGlobals() has run, so $DirSep is
 // / not set yet at that point & would concatenate as an empty string.

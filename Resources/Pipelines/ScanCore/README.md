@@ -8,7 +8,7 @@ so it cannot drift from either. Do not edit it by hand.
 
 ## What it declares
 
-- **Version** v4.3.4
+- **Version** v5.0.1
 - **Kind** scanner
 - **Family** ScanCore
 - **Entry point** scanWithScanCore
@@ -22,7 +22,8 @@ so it cannot drift from either. Do not edit it by hand.
 - **Curl** (required, 7.0 or newer, curl). Fetches update packages & remote streams.
 - **Git** (optional, 2.0 or newer, GPL-2.0). Clones ScanCore's update repository, where ScanCore's UpdateMethod is git.
 - **PHP** (required, 8.0 or newer, PHP-3.01). Runs the application.
-- **ScanCore** (optional, 1.9 or newer, GPL-3.0). Scans every uploaded file. Written & distributed by this project.
+- **PHP Zlib** (optional, PHP-3.01). Lets ScanCore read compressed container members & png chunks, which it reports as incomplete without it.
+- **ScanCore** (optional, 2.0 or newer, GPL-3.0). Scans every uploaded file. Written & distributed by this project.
 
 ## Approval
 

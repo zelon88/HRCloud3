@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
 
 FILE INFORMATION ...
-v3.8.9ur.
+v3.8.9.
 This plain text file is the contract between an application and the Engine it bundles.
 
 HARDWARE REQUIREMENTS ...
@@ -609,7 +609,7 @@ workflow's worker through engineWorkerContext(), so the application changes noth
 worker. An application also pins $RequiredAuthenticationCoreVersion & $RequiredEmailCoreVersion, as
 it pins every Engine core, & -v reports both. See ABOUT_AUTHENTICATION.txt.
 
-AN APPLICATION MAY HAVE THE ENGINE BUILD ITS PAGES, FROM v4.3.4ur.
+AN APPLICATION MAY HAVE THE ENGINE BUILD ITS PAGES, FROM v5.0.0.
 The Page Core builds a page for a browser from the components of an interface, & an application
 that uses it pins $RequiredPageCoreVersion, $RequiredInterfaceVersion & $RequiredLanguageVersion &
 names five values in its contract, each read with isset() & each with a default.
@@ -629,9 +629,9 @@ DefaultLanguage, AllowUserSelectableLanguage, SupportedColors, DefaultColor, All
   buildEnginePage()            Builds the page it is handed & sends it. Where the Engine's answer was
                                page, the application hands it the page drawn from engineGui.php.
 -v reports every interface & language pack offered. See ABOUT_PAGES.txt. HRCloud3 is the first
-application that uses it, & names applicationPageData().
+application that uses it, & names a provider of its own in $EnginePageDataProvider.
 
-AN APPLICATION MAY KEEP ITS USERS' FILES IN LIBRARIES, FROM v4.3.4ur AS HRCLOUD3 v1.0.0 CARRIES IT.
+AN APPLICATION MAY KEEP ITS USERS' FILES IN LIBRARIES, FROM v5.0.0.
 The Storage Core keeps what signed in users store in libraries an administrator lists. An application
 that offers them sets $EngineEnableStorage TRUE in its contract, pins $RequiredStorageCoreVersion,
 declares LibraryLoc with the web role in $EngineManagedLocations, & maps LibraryLocation to LibraryLoc,
@@ -718,7 +718,7 @@ A capability that is enabled still degrades the way everything else in this proj
 degrades. Enabling it says this application uses it, not that it must be present.
 
   $EngineEnableAuthentication         Accounts. Off unless the application's contract offers them.
-  $EngineEnableStorage                Libraries, from v4.3.4ur. Off unless the application's contract offers them,
+  $EngineEnableStorage                Libraries, from v5.0.0. Off unless the application's contract offers them,
                                       & only where accounts are on.
 
 The list grows as applications need more. It does not grow speculatively. A gate with
@@ -798,9 +798,10 @@ They fall into three groups & each group has a different answer.
   worse than one that was never claimed.
 
   THE LIMIT GROUP, reached from limitCommand.
-  resolveConversionLimit & verifySystemdRun.
+  resolveConversionLimit, resolveConversionRuntime & verifySystemdRun.
   Small & mechanical. resolveConversionLimit reads the application's limit table, so the
   table becomes something the application supplies, the same way sandbox profiles are.
+  resolveConversionRuntime, from v5.0.0, reads the time limit table the same way.
 
   THE REMAINDER.
   verifyDataExposure asks whether a web server is serving a directory it should not be,

@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.3.1.
+// / v5.0.0.
 // / Holds the code & the error catalogue to each other, message by message.
 // /   php Documentation/Build/hrconvert2-messages-cli.php
 // / Run it from the root of an application, as the other checkers are run.
@@ -17,7 +17,8 @@
 // / It was HRProtect's tests/check_messages.php, from its v0.0.3, & reads the whole tree rather than HRProtect's own files from v4.3.1.
 // /
 // / It reads every warningEntry(), errorEntry() & quickDie() in the entry point & in Resources, with PHP's own tokenizer.
-// / Resources/ScanCore is a program of its own, with a catalogue of its own, & is not read.
+// / Resources/Pipelines/ScanCore/ScanCore is a program of its own, with a catalogue of its own, & is not read. It was
+// / Resources/ScanCore until v5.0.0.
 // / The third value handed to the Engine's refuseCommandForUser() is read as well, because that function logs it as a warning.
 // / The text of a call is its string literals, in order, with something unknown wherever anything else is joined to them.
 // / A text handed over in trim(), rtrim() or ltrim() is read from inside it. A text handed over as one variable is every text that
@@ -68,7 +69,7 @@ $entryPoint = (preg_match("/^\\\$EngineEntryPoint\\s*=\\s*'([A-Za-z0-9._-]+\\.ph
 if (!is_file($catalogue) or !is_file('Resources/Kernel/kernel.php') or !is_file($entryPoint)) { fwrite(STDERR, "Run this from the root of an application, beside ".$entryPoint." & Resources.\n"); exit(2); }
 $ownFiles = array($entryPoint);
 $walker = new RecursiveIteratorIterator(new RecursiveDirectoryIterator('Resources', FilesystemIterator::SKIP_DOTS));
-foreach ($walker as $found) if (substr($found->getPathname(), -4) === '.php' && strpos($found->getPathname(), 'Resources/ScanCore/') !== 0) $ownFiles[] = $found->getPathname();
+foreach ($walker as $found) if (substr($found->getPathname(), -4) === '.php' && strpos($found->getPathname(), 'Resources/Pipelines/ScanCore/ScanCore/') !== 0) $ownFiles[] = $found->getPathname();
 sort($ownFiles);
 
 // / Whether a token is one a text is not made of.

@@ -310,7 +310,15 @@ A COMMAND IS BUILT ONCE & WRAPPED, NEVER ASSEMBLED IN PIECES ACROSS FUNCTIONS.
 sandboxCommand() takes a finished command & returns a sandboxed one. limitCommand() takes
 that & returns a resource limited one. Each wrapper knows nothing about the command inside
 it, which is why adding the resource ceiling touched one line & covered all twenty three
-call sites at once.
+call sites at once, & why the time limit, from v5.0.0, covered every pipeline the same way.
+A new pipeline adds no timeout of its own. Seven of the library's carry one from before the
+Engine had a time limit, each with its own figure, & lose it as they are reconciled.
+
+A CONVERTER RUNS THROUGH runPipelineCommand(), SO HOW IT ENDED IS KNOWN.
+shell_exec() says nothing of how a command ended. A command the time limit stopped exits 124,
+& one a signal ended 128 plus its number, & what either left is not a result. A pipeline that
+retries through pipelineRetryIsDue() has it removed there. One that does not hands the exit
+status & the path it writes to discardInterruptedOutput() before it takes the file.
 
 A SANDBOX PROFILE NAMES ONE DEPENDENCY. The base sandbox carries what every dependency
 needs. Anything specific to one tool belongs in its profile, so a converter is never handed

@@ -1,0 +1,271 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+ScanCore, Copyright on 3/31/2024 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+BSD or MIT licensing is available. Reach out to @zelon88 for more information.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+This application is designed to scan files & folders for viruses.
+
+FILE INFORMATION ...
+v2.0.0.
+This plain text file describes the two tools that check ScanCore, what each one proves, what neither can see & how to prove that each can fail.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+This application requires PHP 8.0 or later, run from a command line on Linux or Windows.
+The zlib extension reads compressed container members & png chunks, which are reported as incomplete without it.
+An update uses Git, or downloads each file with PHP, or with cURL where PHP may not open a URL. None of them is needed to scan.
+The posix extension hands new files to the owner of the installation when ScanCore is run as root.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Running Them--
+
+  cd /path/to/ScanCore
+  php Documentation/Build/scancore-check-cli.php
+  php Documentation/Build/scancore-test-cli.php
+
+The first reads the tree & holds its parts to each other. The second runs ScanCore the way a caller does & judges
+what it prints, what it writes & how it exits. Both need PHP & nothing else, so whoever can run ScanCore can check it.
+
+Both are run from the root of an installation, beside ScanCore.php. Run from anywhere else, each one exits 2 & says so.
+It does not report that a tree it cannot see is clean.
+
+  --list            Both. Names every check, or every case, & runs nothing.
+  --only <word>     Both. Runs one check by its name, or every case whose name holds the word.
+  --quiet           The check only. Prints nothing & reports the answer in the exit status.
+  --release         The check only. Also holds every entry of the configuration file to its default, as a release must.
+  --keep            The test only. Keeps the scratch folder & says where it is.
+  --core <path>     The test only. Tests another ScanCore.php, such as an older release.
+
+EXIT STATUS
+  0     Everything passed.
+  1     Something was reported.
+  2     It could not run, & it says why.
+
+Nothing stops early. One run reports everything that there is to report.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Consistency Check--
+
+ScanCore says the same thing in several places. A default is written in the configuration file, in the comment above
+it, in the fallback of the core & in a document. A switch is read by the core, listed by -help & described twice.
+An error has a number, words, a file & two flags, in the code & in the catalogue.
+Nothing but a reader kept those in step until v2.0.0, & a reader misses things. scancore-check-cli.php holds them.
+
+  syntax        The interpreter parses every PHP file.
+  stamps        Every file that states a version states the version of the core, & the changelog opens with its entry.
+                An example in a document that shows a version shows that one.
+  config        The core accepts the configuration file beside it. Every entry reaches the core, is validated by it
+                & has a title. Every default is written the same way by the fallback of the core, by the check of an
+                override & by the comment above the entry. A default that a document states in a table is the same
+                number. With --release every entry is at its default as well.
+  switches      Every switch that the core reads is listed by -help & is named by README.md & by
+                ABOUT_COMMAND_LINE_ARGUMENTS.txt, & none of the three names a switch that is not read.
+                Every entry, default & minimum that the guide gives for a switch is the one that the code has.
+  errors        Every numbered error is in ERROR_DESCRIPTIONS.txt with the words it is raised with, the file that raises
+                it, whether it stops ScanCore & whether it is written to the report. A retired number is not raised.
+                The catalogue describes no error that nothing raises, & lists every reason that an error may give.
+  warnings      Every warning is in ERROR_DESCRIPTIONS.txt with the words it is raised with, & the catalogue describes
+                no warning that nothing raises.
+  reports       Every structural finding is in ABOUT_REPORTS.txt under the confidence that it is reported with. So is
+                every way of matching, every reason on an Incomplete line & every line of the summary, & the document
+                lists none that the core does not print.
+  classifiers   The types that ScanCore_Classifiers.def declares & the classifiers that the core switches on by
+                default are the same set. Every type has a handler record, & every line of the file is a record.
+  files         The files that the core subscribes an update to by default & the files of the tree are the same set.
+                Every folder holds an index.html, & every index.html is the same file.
+  text          Every text file is plain UTF-8 with line feeds, no tabs, nothing after the last character of a line
+                & one line feed at its end.
+  references    Every document that a file names is in the tree. So is every target of a link in a Markdown file,
+                & every configuration entry that is named by its title.
+
+IT READS THE CODE WITH THE TOKENIZER OF THE INTERPRETER
+  A search for text would read a comment as code & a string as a call. The tokenizer does neither.
+  The words of a message are the strings that it is written with. Whatever is joined to them is not known until
+  ScanCore runs, so it stands for anything. A document writes such a part in angle brackets, as <path>.
+  A message & a line of a document agree where either one could be the other.
+  A message with fewer than ten characters of its own would agree with nearly anything, so it is reported.
+  A count that countWithNoun() writes is read as its plural, which is how the documents write it.
+
+IT HOLDS EVERYTHING TO THE CORE
+  The core carries a copy of every default, so that an entry which is missing or broken can fall back to it.
+  Each check therefore holds what it reads to the core, & never to the value of an entry.
+  An installation whose configuration file was changed by its administrator passes, & is told which entries were changed.
+  A release must ship every entry at its default. Run the check with --release before a release is published.
+
+IT IS HELD IN BOTH DIRECTIONS
+  A switch that is not documented fails it. A document that describes a switch which is gone fails it as well.
+  The same holds for an error, a warning, a finding, a reason, a file & a classifier.
+  A document that is only ever added to goes stale as surely as one that is never updated.
+
+EVERY FINDING IS AN INSTRUCTION
+  A finding names the file & the line, says what is wrong & says what to do about it.
+  A check that could read nothing says so. It does not pass because it found nothing to compare.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About The Behaviour Test--
+
+scancore-test-cli.php runs ScanCore.php as a process of its own, with arguments, exactly as HRConvert2 & HRProtect do.
+It loads nothing of ScanCore, so it tests the program that ships & not a copy of its functions.
+
+EVERY FILE IT SCANS IS BUILT BY THE TEST
+  A scratch folder is made in the temporary folder of the system & is removed afterwards.
+  Each png, zip, gzip stream & tar in it is built byte by byte, so that each is wrong in exactly one way.
+  The scratch folder holds a configuration file of two entries, so every other entry falls back to its default.
+  That is also how the fallback of every entry is run on every case.
+
+IT WRITES NO REAL MALWARE & NO ANTIVIRUS TEST FILE
+  The sample that stands in for malware is a paragraph of harmless text, & the definitions of the test name it by
+  its hashes. ScanCore takes the same path for it as for any known sample.
+  A test that wrote the industry test file would set off whatever other scanner the machine runs.
+
+EVERY ANSWER WAS WRITTEN BY HAND
+  A case names the lines that must be printed, the texts that must not be, the counts of the summary, the exit status
+  & the verdict. None of them was copied from what ScanCore printed. A pass means that ScanCore did what was intended.
+  A line that is expected on the console is expected in the report as well, behind its time.
+  Anything the interpreter itself complains about fails the case, because every case is run with every diagnostic on.
+
+  definitions   Hashes, data, names, hosts & urls. Confidence, scope, malformed records, the index & the retired format.
+  chunks        A signature across the join of two chunks, & a longer name that the join must not cut into a match.
+  classify      Handlers, languages, the switches that limit them & a handler inside a document.
+  containers    A sample in a zip, a nested zip, a tar, a gzipped tar & a zip64 archive. What cannot be read.
+  bombs         Each kind of archive bomb, & sizes that no integer can hold.
+  images        A valid png, jpeg & gif. Each structural finding of a png. Code inside an image.
+  walk          Recursion, depth, links & a file that cannot be opened.
+  report        A long path, a name that holds a line break & a report that cannot be written.
+  limits        A memory limit that the work does not fit, & a value that is not a number.
+  answers       -version, -help & every refusal that happens before a scan begins.
+
+THE VERDICT IS READ AS A CALLER READS IT
+  readVerdict() in the test is the reader that Documentation/ABOUT_REPORTS.txt describes, & nothing more than that.
+  It is applied to the console & to the report of every case that names a verdict.
+  A change to ScanCore that a correct caller would misread fails here, whatever else still passes.
+
+IT SAYS WHAT IT LEFT OUT
+  A case that cannot be run where the test is running is left out, & a note says which & why.
+  Windows has no links & no modes, an account that can open every file cannot test a file that cannot be opened,
+  & an installation that the account cannot write to cannot show that nothing was written into it.
+  A pass is never more than the cases that ran.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Proving That They Can Fail--
+
+A check that cannot fail proves nothing. Its silence when it is broken is the same silence as when the code is right.
+So each tool was made to fail on purpose before it was trusted, & can be made to again.
+
+THE TEST FAILS AGAINST THE RELEASE BEFORE THIS ONE
+  php Documentation/Build/scancore-test-cli.php --core /path/to/ScanCore-v1.9/ScanCore.php
+
+  Every defect that v2.0.0 fixed is a case, & each of those cases fails against v1.9.
+  DEVELOPMENT_NOTES.txt lists the defects under --History--.
+  A case that is added for a new defect is run against the core that still has the defect first.
+
+THE CHECK FAILS ON A FAULT THAT IS PLANTED IN WHAT IT READS
+  Copy the tree, change one thing & run the one check. Each of these was done for v2.0.0, & each failed as it should.
+
+  syntax        A bracket that is never closed, in ScanCore_Config.php.
+  stamps        An older version under the File Information label of a PHP file, of a document & of the classifier
+                definitions. An older entry at the head of the changelog. An older version in an example.
+  config        A $ConfigVersion that the core refuses, & one newer than the core. A default that is changed in the
+                comment alone, in the fallback alone, in the check of an override alone & in a table of a document.
+                An entry that the core never
+                reads. A fallback with no entry. A title that is used twice. With --release, an entry that is not at
+                its default. Without it, the same tree passes & is told which entries were changed.
+  switches      A switch that is read & listed nowhere. A row taken out of the help. A switch taken out of the guide,
+                & out of README.md. A switch that only a document names. A default & a minimum that are changed in
+                the guide, & a default that is changed in README.md.
+  errors        An error that is raised under a number the catalogue lacks, under a retired number & with other words.
+                A block taken out of the catalogue. A block that nothing raises. A FATAL, a LOGGED & a FILE that are
+                changed in the catalogue. A reason that the catalogue does not list.
+  warnings      A warning whose words are changed in the code. A warning that is new. A warning that only the
+                catalogue has.
+  reports       A finding that is renamed in the code. A confidence that is changed. A reason that is new. A reason
+                & a summary line that only the document has. An embed record that is new.
+  classifiers   A type that is declared & not switched on. A default that names no type. A magic record for a type
+                that is not declared. A line that is no record.
+  files         A file that no update installs. A subscribed file that is missing. A folder with no index.html.
+                An index.html that differs from the others. A name that is subscribed twice.
+  text          A space at the end of a line, a tab, a carriage return, a byte order mark, a missing line feed at the
+                end of a file & a blank line at the end of one.
+  references    A document that does not exist, named in a document & linked from README.md. An entry that does not
+                exist, named by a title.
+
+A check that is added carries its own proof the same way. It is run against a tree that has the fault before it is
+run against one that does not.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About What They Do Not Do--
+
+NEITHER HOLDS THE CODING CONVENTIONS
+  ScanCore follows the conventions of HRConvert2, & the linters of HRConvert2 hold it to them.
+  hrconvert2-check.py & hrconvert2-check.sh check ScanCore as the copy that HRConvert2 bundles, in Resources/ScanCore.
+  A release of ScanCore is dropped into that folder & both linters are run before it is published.
+  The check here holds what those linters cannot know, which is whether the parts of ScanCore agree with each other.
+
+THE CHECK CANNOT SEE MEANING
+  It holds the words of an error to the catalogue. It cannot tell whether the description under them is true.
+  It cannot tell that a message can never be raised. One such message was found by reading & removed in v2.0.0.
+  It reads the shapes that the code is written in, such as  processOutput(text, level, number  &  $currentSwitch ===.
+  Code that is written in another shape is not read until the check is taught the shape.
+
+THE TEST DOES NOT UPDATE ANYTHING
+  An update needs a repository to download from, & the test reaches for no network.
+  For v2.0.0 both update methods were run by hand against repositories on the same machine. DEVELOPMENT_NOTES.txt
+  says what was run & what was not.
+
+NEITHER HAS BEEN RUN ON WINDOWS OR WHERE AN INTEGER HOLDS 32 BITS
+  Both are written for either. The test leaves out the cases that need a link or a mode on Windows.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Where They Live--
+
+Both tools are in Documentation/Build, & an update of the application installs them with everything else.
+Neither is loaded by ScanCore.php, & a scan runs the same without them.
+
+A copy of ScanCore that another application bundles sits inside the web root of that application.
+A PHP file there is run by the web server & is not served as text, so each tool carries the marks of a PHP build tool
+of the HRProprietary family.
+
+  Its name ends in -cli, so the constraint shows in a listing of the folder.
+  Its first statement refuses any interpreter but the command line one, with status 404 & no output.
+  Its second refuses an environment that carries a request, because a web server can start a command line interpreter.
+  It gives up root where root was given, the group before the user, & prints the user & the group that it kept.
+  It finds the tree in the folder it is run from & never from its own location, which no web request can arrange.
+
+Neither tool writes into the installation. The check writes nothing at all, & the test writes to its scratch folder.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About Adding To Them--
+
+A CASE IS ONE LINE OF A TABLE
+  scanCase() names the case, the file to scan, the switches, the lines that must be printed, the texts that must not
+  be, the counts of the summary & the verdict. answerCase() does the same for a run that scans nothing.
+  Build the file in the test, so that the test still needs nothing but itself.
+  Write the answer before ScanCore is run, & run the case against a core that has the fault before one that does not.
+
+A CHECK IS ONE FUNCTION
+  A check takes what was read from the tree & returns its findings, one sentence each.
+  Add it to the list in the main logic, with the name that --only takes & one line for --list.
+  Say what to do in every finding, & report a check that could read nothing.
+
+WHAT BELONGS WHERE
+  What ScanCore does when it is run belongs in the test.
+  What two files of ScanCore say about the same thing belongs in the check.
+  How the code is written belongs in the linters of HRConvert2, until ScanCore has linters of its own.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

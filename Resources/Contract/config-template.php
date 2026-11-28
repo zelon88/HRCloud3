@@ -34,7 +34,7 @@
 // / HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 // /
 // / File Information ...
-// / v1.0.0.
+// / v1.0.1.
 // / This file contains the configuration information for HRCloud3.
 // / Fill out this file completely & accurately before running the application.
 // / Serious filesystem damage could occur from incorrect directory settings.
@@ -64,7 +64,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRCloud3-2: This 
 // /   The version of HRCloud3 in which this config file last gained or lost a setting.
 // /   The core refuses to run against a config file that is missing settings it requires.
 // /   Do not change this value by hand. An update & --config --repair keep it current.
-$ConfigVersion = 'v1.0.0';
+$ConfigVersion = 'v1.0.1';
 // / ------------------------------
 
 // / ------------------------------

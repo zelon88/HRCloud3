@@ -1,0 +1,284 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+ScanCore, Copyright on 3/31/2024 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+BSD or MIT licensing is available. Reach out to @zelon88 for more information.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+This application is designed to scan files & folders for viruses.
+
+FILE INFORMATION ...
+v2.0.0.
+This plain text file describes every argument that ScanCore.php accepts, the configuration entry that each one overrides
+& what ScanCore does when an argument is missing or cannot be used.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+This application requires PHP 8.0 or later, run from a command line on Linux or Windows.
+The zlib extension reads compressed container members & png chunks, which are reported as incomplete without it.
+An update uses Git, or downloads each file with PHP, or with cURL where PHP may not open a URL. None of them is needed to scan.
+The posix extension hands new files to the owner of the installation when ScanCore is run as root.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--How ScanCore Is Run--
+
+  php /path/to/ScanCore.php /path/to/scan [switches]
+  php /path/to/ScanCore.php -version
+  php /path/to/ScanCore.php -help
+  php /path/to/ScanCore.php -updatedefinitions
+  php /path/to/ScanCore.php -updateapplication
+
+ScanCore runs from a command line & nowhere else. It refuses any other interpreter with error 1.
+
+The path to scan is the first argument, & every switch is written after it.
+A switch is a dash followed by letters. It is read without regard to case, so -R & -r are one switch.
+Each switch is written by itself. -r -v is two switches, & -rv is no switch at all.
+A switch that takes a value takes it from the argument after it, so -memorylimit 268435456 is two arguments.
+Where a switch is written twice, the last one is used.
+
+Every switch has a long form & a short form, which do the same thing.
+Most switches override one entry of ScanCore_Config.php for that run alone, & leave the file as it is.
+The entry is named below by its title in that file & by its variable.
+
+An argument is sanitized before it is used. A null byte or a control character in it is removed.
+
+A FALLBACK COMES BEFORE AN ERROR
+  A switch that needs a value & is the last argument keeps the configured value, & a warning is written to the report.
+  A number that is not a number, or is below its minimum, falls back to the built in default, with a warning.
+  A number is written in digits. A suffix such as K or M is not read, so 8M is not a number.
+  A switch that ScanCore does not know is ignored.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What Is Scanned--
+
+  /path/to/scan
+      A file or a folder. It is the first argument.
+      A relative path is read against the folder that ScanCore was run from.
+      With no arguments at all, --Scan Location--, $ScanLoc, is scanned, & a warning says so.
+      With no path & no $ScanLoc, ScanCore stops with errors 100 & 6.
+      A path that does not exist stops ScanCore with errors 300 & 6, & one that cannot be read with errors 310 & 6.
+
+  -recursion, -r
+      Scans the folders inside a folder as well.
+  -norecursion, -nr
+      Scans the files of a folder & opens none of the folders inside it. This is the default.
+
+  -maxdepth NUMBER, -md NUMBER
+      Overrides --Maximum Scan Depth--, $MaxScanDepth. Default 64. Minimum 1.
+      The number of folders, one inside another, that a recursive scan opens below the folder it was given.
+      A folder that sits deeper is not opened, & a warning that names it is printed & written to the report.
+
+  -followsymlinks, -fs
+      Follows a symbolic link that is found inside a scanned folder.
+  -nofollowsymlinks, -nfs
+      Overrides --Follow Symbolic Links--, $FollowSymlinks. Skips every link. This is the default.
+      A path that is itself a link is always followed, because it was named by whoever ran the scan.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Information--
+
+  -version, -ver
+      Prints the version, where the installation is, which files it uses & where it updates from.
+      The first line opens with  ScanCore vX.Y.Z by  & a caller reads the version from it.
+  -help, -h
+      Prints every switch.
+
+Neither scans anything, & neither writes anything to the report. Both exit 0.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Report--
+
+  -reportfile /path/to/file, -rf /path/to/file
+  -logfile /path/to/file, -lf /path/to/file
+      Overrides --Report Location-- & --Report File Name--, $ReportDir & $ReportFileName.
+      Names the file that this run writes its report to. The four forms do the same thing.
+      A relative path is read against the report folder.
+      The file is appended to. ScanCore creates the file, & never the folder it is in.
+      The report folder of the installation is the exception. It is created when the first entry is written to it.
+      The report file is settled before anything is logged, so nothing of a run is written to any other report.
+      A report that cannot be written does not stop a scan. Error 910 is printed once & the scan reports on the console.
+
+  -maxlogsize BYTES, -ml BYTES
+      Overrides --Default Maximum Log Size--, $DefaultMaxLogSize. Default 33554432. Minimum 4096.
+      A report file that would grow past this is renamed with the date & a number, & a new one is started.
+
+  -debug, -d
+      Overrides --Enable Debug Mode--, $Debug. Writes every entry to the report.
+  -verbose, -v
+      Overrides --Enable Verbose Mode--, $Verbose. Prints every entry to the console.
+
+  -suspicious, -sus
+      Overrides --Report Suspicious Findings--, $ReportSuspicious. Reports a detection of medium or low confidence
+      as a Suspicious line. This is the default.
+  -nosuspicious, -nsus
+      Reports detections of high confidence alone. No Suspicious line & no suspicious count is printed.
+
+Documentation/ABOUT_REPORTS.txt describes every line of the report.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Memory--
+
+  -memorylimit BYTES, -m BYTES
+      Overrides --Memory Limit--, $DefaultMemoryLimit. Default 536870912. Minimum 65536.
+      The memory that a scan may use. It is handed to the interpreter as its memory limit.
+
+  -chunksize BYTES, -c BYTES
+      Overrides --Chunk Size--, $DefaultChunkSize. Default 8388608. Minimum 4096.
+      The number of bytes of a file that are read & searched at a time.
+
+THREE BUDGETS ARE HELD TO THE MEMORY LIMIT
+  A budget that would not fit is lowered for the run, & a warning that names both numbers is written to the report.
+    ChunkSize              a quarter of the memory limit at most.
+    MaxArchiveEntrySize    the memory limit, divided by four & by one more than MaxArchiveDepth, at most.
+    MaxImageChunkSize      a sixteenth of the memory limit at most.
+  None of the three is lowered at the default memory limit.
+  A member that is larger than a lowered budget is inspected in part, & its file is reported as incomplete.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Definitions & Configuration--
+
+  -configfile /path/to/file, -cf /path/to/file
+      Loads this configuration file in place of ScanCore_Config.php.
+      A relative path is read against the folder that holds ScanCore.php.
+      A file that does not exist, or does not parse, stops ScanCore with error 2.
+      A file that is older than the core requires stops it with error 4.
+
+  -defsfile /path/to/file, -df /path/to/file
+      Overrides --Definitions File--, $DefsFile. Scans against this definitions file.
+      A relative path is read against the folder that holds ScanCore.php.
+      A file that does not exist stops ScanCore with error 3.
+
+  -mindatasignature NUMBER, -mds NUMBER
+      Overrides --Minimum Data Signature Length--, $MinimumDataSignatureLength. Default 4. Minimum 1.
+      A data signature that holds fewer bytes is not searched for, & a warning says how many were left out.
+
+  -nohashindex, -nhi
+      Overrides --Use Hash Index--, $UseHashIndex. Reads the definitions file & neither loads nor builds an index.
+      A hash costs about seven hundred bytes of memory without an index, so a very large definitions file needs one.
+  -rebuildindex, -ri
+      Builds the index again, whether or not the one on disk is still good.
+  -hashindexthreshold NUMBER, -hit NUMBER
+      Overrides --Hash Index Threshold--, $HashIndexThreshold. Default 10000. Minimum 1.
+      The number of hash definitions that a definitions file must hold before an index is built for it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Classification--
+
+  -classify, -cy
+      Overrides --Classify Content--, $ClassifyContent. Classifies every scanned file. This is the default.
+  -noclassify, -ncy
+      Classifies nothing. No Classified line & neither of the two classification counts is printed.
+
+  -classifiers LIST, -cl LIST
+      Overrides --Enabled Classifiers--, $EnabledClassifiers.
+      A comma separated list of the classifiers to switch on, such as  scad,pdf,language  & no others are loaded.
+      A name is read without regard to case. A comma by itself switches every classifier off.
+
+  -minlanguagesignatures NUMBER, -mls NUMBER
+      Overrides --Minimum Language Signatures--, $MinimumLanguageSignatures. Default 2. Minimum 1.
+      The number of signatures of one language that a file with an unclaimed extension must carry to be reported as code.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Containers--
+
+  -inspectarchives, -ia
+      Overrides --Inspect Archived Content--, $InspectArchivedContent. Opens zip, gzip & tar containers. This is the default.
+  -noinspectarchives, -nia
+      Opens no container. A container is then scanned as the one file that it is.
+
+  -maxarchivedepth NUMBER, -mad NUMBER
+      Overrides --Maximum Archive Depth--, $MaxArchiveDepth. Default 5. Minimum 1.
+      A container that is nested deeper is reported as infected & is not opened.
+  -maxarchiveentries NUMBER, -mae NUMBER
+      Overrides --Maximum Archive Entries--, $MaxArchiveEntries. Default 4096. Minimum 1.
+      The members that are inspected inside one scanned file. A file that holds more is reported as incomplete.
+  -maxarchiveentrysize BYTES, -maes BYTES
+      Overrides --Maximum Archive Entry Size--, $MaxArchiveEntrySize. Default 8388608. Minimum 1024.
+      The bytes that are read from any one member. A larger member is inspected in part.
+  -maxarchivetotalsize BYTES, -mats BYTES
+      Overrides --Maximum Archive Total Size--, $MaxArchiveTotalSize. Default 67108864. Minimum 1024.
+      The bytes that are read from the members of one scanned file in total.
+  -maxarchiveratio NUMBER, -mar NUMBER
+      Overrides --Maximum Archive Compression Ratio--, $MaxArchiveCompressionRatio. Default 200. Minimum 2.
+      The number of times that a member may expand beyond its stored size.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Images--
+
+  -inspectimages, -ii
+      Overrides --Inspect Images--, $InspectImages. Checks the structure of a png & searches every png, jpeg & gif
+      for embedded code. This is the default.
+  -noinspectimages, -nii
+      Inspects no image.
+
+  -maximagepixels NUMBER, -mip NUMBER
+      Overrides --Maximum Image Pixels--, $MaxImagePixels. Default 268435456. Minimum 1.
+      The largest image, as its width multiplied by its height, that is not reported as infected.
+  -maximagechunksize BYTES, -mics BYTES
+      Overrides --Maximum Image Chunk Size--, $MaxImageChunkSize. Default 8388608. Minimum 1024.
+      The bytes that a compressed chunk of a png may expand to.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Ownership--
+
+These three do something only when ScanCore is run as root.
+
+  -owner NAME, -ow NAME
+      Overrides --Owner User--, $OwnerUser. The user that owns anything ScanCore creates.
+  -group NAME, -gr NAME
+      Overrides --Owner Group--, $OwnerGroup. The group that owns anything ScanCore creates.
+      A name that the system does not know falls back to the owner of the installation directory, with a warning.
+  -nopreserveownership, -npo
+      Overrides --Preserve Ownership--, $PreserveOwnership. Leaves whatever root creates owned by root.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Updates--
+
+  -updatedefinitions, -ud
+      Downloads the subscribed definition categories, combines them, verifies the result & swaps it in.
+      The definitions file that was installed is put back if the new one fails its test.
+  -updateapplication, -ua
+      Downloads every subscribed application file, verifies the whole set & swaps it in.
+      Every file that was installed is put back if the new core does not answer -version.
+      ScanCore_Config.php is replaced with the published one, & a numbered backup of the old one is kept beside it.
+
+  -updatemethod METHOD, -um METHOD
+      Overrides --Update Method--, $UpdateMethod. METHOD is git or raw. Anything else falls back to git, with a warning.
+      git clones the repository. raw downloads each subscribed file by itself, with PHP where PHP may open a URL & with
+      curl where it may not. An update by git that produces nothing falls back to raw before it fails.
+  -connectiontimeout SECONDS, -ct SECONDS
+      Overrides --Connection Timeout--, $ConnectionTimeout. Default 15. Minimum 1.
+
+Neither update scans anything. Both may be asked for in one run, & the definitions are then updated first.
+An update that is switched off in ScanCore_Config.php is refused with a warning, & with error 7 or 8.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Exit Status--
+
+  0     ScanCore did what it was asked. A scan that found something exits 0, exactly as one that found nothing does.
+  1     ScanCore could not do what it was asked, & a numbered error says why.
+
+Any other status is the interpreter's own, such as 255 where PHP itself stopped.
+A status other than 0 is never a verdict. Nothing may be concluded about a file from it.
+What a scan found is read from its output. Documentation/ABOUT_REPORTS.txt says how.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

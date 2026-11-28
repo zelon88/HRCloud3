@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.2.3ur.
+// / v5.0.0.
 // / The Authentication Core, one of the Engine's cores.
 // / It keeps accounts, signs users in & out, confirms an address, recovers an account & limits how often each may be tried.
 // / A signed in page holds a key in its memory & nowhere a browser keeps for a site, so no cookie is ever set.
@@ -17,7 +17,7 @@
 // / Each is read as text & never executed, & each is changed under a lock on the file itself.
 // / A signed in user's files are kept in a folder of their own below Users, which no sweep removes.
 // / A signed in user may choose how long their files are kept, from v4.2.3, & the Authentication Manager's sweep removes a file kept longer.
-// / A signed in user may change their own password & their own address, from HRCloud3 v0.9.9, with the password they have now.
+// / A signed in user may change their own password & their own address, from v5.0.0, with the password they have now.
 // / The Email Core sends each code. Without it, signing in with valid credentials still works, & every email that would
 // / have been sent & every incorrect password is a warning in the log.
 // / The application pins it exactly via $RequiredAuthenticationCoreVersion, & the Engine loads it where authentication is on.
@@ -39,7 +39,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, A c
 
 // / -----------------------------------------------------------------------------------
 // / The version of this component. Read by the application without executing this file.
-$AuthenticationCoreVersion = 'v4.2.3ur';
+$AuthenticationCoreVersion = 'v5.0.0';
 // / -----------------------------------------------------------------------------------
 
 
@@ -613,7 +613,7 @@ function accountByUsername($accountUsername) {
 // / A function to keep a new code for an account, & only its hash, with anything the purpose must remember until it is used.
 // / Accepts the account's record name, the purpose, how many seconds it may be used for & what it must remember. Returns whether it was kept & the code, in that order.
 // / The purpose is confirm, recover or address, & a new code replaces the account's last one for the same purpose.
-// / address remembers the new address a signed in user asked for, from HRCloud3 v0.9.9, because the account keeps its old one until the code is used.
+// / address remembers the new address a signed in user asked for, from v5.0.0, because the account keeps its old one until the code is used.
 // / A code is ten characters from 32 that cannot be mistaken for each other, so it carries 50 bits & is easy to type.
 function keepAccountCode($accountName, $codePurpose, $codeLifetime, $codeMemory) {
   // / Set variables.
@@ -660,7 +660,7 @@ function issueAccountCode($accountName, $codePurpose, $codeLifetime) {
 // / What was found is correct, wrong, expired or missing. A code is spent when it is right, & removed once it expires or has been tried five times.
 // / The fifth wrong try is answered as expired, because the code can no longer be used & the user must ask for another.
 // / Five tries of 50 bits each is a chance too small to matter, & the count of a request's failures stops anybody trying more codes.
-// / What it remembered is handed back only for a code that was right, from HRCloud3 v0.9.9.
+// / What it remembered is handed back only for a code that was right, from v5.0.0.
 function spendAccountCode($accountName, $codePurpose, $accountCode) {
   // / Set variables.
   global $EnableMemoryProtection;
@@ -1118,7 +1118,7 @@ function signOutKey($signInKey) {
 // / A function to list how long a signed in user may choose to keep their files, from v4.2.3.
 // / Accepts nothing. Returns the lifetimes in seconds, 0 first, which keeps them until the user deletes them.
 // / The choices are fixed, so a page can name each in its own language, & 0 is every account's until its user chooses another.
-// / An application offers fewer by naming them in $EngineFileLifetimes in its contract, from HRCloud3 v1.0.0, as HRCloud3 offers only 0.
+// / An application offers fewer by naming them in $EngineFileLifetimes in its contract, from v5.0.0.
 // / A lifetime the Engine does not offer is never offered, & 0 always is, so a contract cannot take a user's choice of keeping away.
 // / A file is removed once it has gone unchanged for longer than its account's lifetime. See expireAccountFiles().
 function accountFileLifetimes() {
@@ -1164,7 +1164,7 @@ function setAccountFileLifetime($signInKey, $fileLifetime) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to tell the owner of an account it was changed, from HRCloud3 v0.9.9.
+// / A function to tell the owner of an account it was changed, from v5.0.0.
 // / Accepts the account, as it holds the address the notice goes to, & the sentence that says what was changed. Returns TRUE when it was handed to the mail system.
 // / A notice is how an owner learns of a change somebody else made with their password, so a notice that could not be sent is a warning.
 function sendAccountNotice($accountRecord, $noticeChange) {
@@ -1183,7 +1183,7 @@ function sendAccountNotice($accountRecord, $noticeChange) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to give a signed in user's account a new password, with the password it has now, from HRCloud3 v0.9.9.
+// / A function to give a signed in user's account a new password, with the password it has now, from v5.0.0.
 // / Accepts the key of the page asking, the password the account has now & the new one. Returns what happened, as one of the outcomes the page names.
 // / password-changed means the account holds the new password. Its generation moves on, so every sign in it had is over, this one included,
 // / & the user signs in again with the new password, by the one way anybody signs in. A notice goes to the account's address.
@@ -1239,7 +1239,7 @@ function changeAccountPassword($signInKey, $currentPassword, $newPassword) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to begin changing a signed in user's address, with the password their account has now, from HRCloud3 v0.9.9.
+// / A function to begin changing a signed in user's address, with the password their account has now, from v5.0.0.
 // / Accepts the key of the page asking, the password the account has now & the new address. Returns what happened, as one of the outcomes the page names.
 // / A code is sent to the new address, & the account keeps the address it has until the code is entered, so an address nobody reads
 // / never replaces one somebody does. address-code-sent means it was sent, & address-unsent that it could not be.
@@ -1289,7 +1289,7 @@ function requestAddressChange($signInKey, $currentPassword, $newAddress) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to finish changing a signed in user's address with the code sent to the new one, from HRCloud3 v0.9.9.
+// / A function to finish changing a signed in user's address with the code sent to the new one, from v5.0.0.
 // / Accepts the key of the page asking & the code. Returns what happened, as one of the outcomes the page names.
 // / address-changed means the account holds the new address, & a notice went to the old one, so an owner whose password somebody
 // / else used learns of it where they still read their email. Every wrong code is counted against the request's address.
@@ -1365,7 +1365,7 @@ function accountFolderPath($accountRecord) {
 // / A field the action needs that cannot be used is answered as the matching failure, without anything being tried.
 // / An action that would tell a stranger whether a username exists answers the same either way.
 // / lifetime keeps how long a signed in user's files are kept, from v4.2.3, & is answered lifetime-invalid for a lifetime not offered.
-// / password, address & address-confirm change a signed in user's own password & address, from HRCloud3 v0.9.9. Each takes the page's key,
+// / password, address & address-confirm change a signed in user's own password & address, from v5.0.0. Each takes the page's key,
 // / & the first two take the password the account has now, so a page left signed in cannot change either alone.
 // / A sanity check a function hands back is consumed here. One that fails names its outcome unavailable, & is a warning.
 function answerAuthenticationAction($authenticationAction) {
@@ -1482,7 +1482,7 @@ function sendOpenerPolicy() {
 // / A request presenting a key that signs it in names its account in $SignedInAccount, & its files are kept in $SignedInFolder.
 // / $EnginePageState holds everything a page may show about it, & nothing a page could use to sign in.
 // / It holds FileLifetimes, the lifetimes a signed in user may choose for their files, & FileLifetime, the one their account holds, from v4.2.3.
-// / It holds Address, the address the signed in user's account keeps, from HRCloud3 v0.9.9.
+// / It holds Address, the address the signed in user's account keeps, from v5.0.0.
 // / A visitor who must sign in where nobody can, because the accounts folder is missing, is error 43000. The page still says signing in is unavailable.
 // / Only a web request served as the web server account is judged. The command line signs nobody in.
 // / Every such request is sent Cross-Origin-Opener-Policy first, from v4.2.1, as sendOpenerPolicy() says why.
@@ -1523,7 +1523,7 @@ function adoptAuthenticationIdentity() {
         $SignedInFolder = $folderPath;
         list ($EnginePageState['SignedIn'], $EnginePageState['Username'], $EnginePageState['Role']) = array(TRUE, $SignedInAccount['Username'], $SignedInAccount['Role']);
         $EnginePageState['FileLifetime'] = in_array((int)($accountRecord['FileLifetime'] ?? 0), accountFileLifetimes(), TRUE) ? (int)($accountRecord['FileLifetime'] ?? 0) : 0;
-        // / The address the account keeps, so the signed in user's own page can show it, from HRCloud3 v0.9.9. It is never logged.
+        // / The address the account keeps, so the signed in user's own page can show it, from v5.0.0. It is never logged.
         $EnginePageState['Address'] = (string)($accountRecord['Email'] ?? ''); }
       if (!$EnginePageState['SignedIn'] && $actionIsUsable && $pageIsUsable) list ($EnginePageState['Page'], $EngineAnswer) = array($requestedPage, 'page');
       else if (!$EnginePageState['SignedIn'] && !$authenticationSettings['AllowAnonymous']) list ($EnginePageState['Page'], $EngineAnswer) = array('signin', 'page');

@@ -1,5 +1,5 @@
 <?php
-// HRCloud3 v1.0.0. HRCloud3's acceptance test. It installs HRCloud3 & runs it as an administrator & a user would.
+// HRCloud3 v1.0.1. HRCloud3's acceptance test. It installs HRCloud3 & runs it as an administrator & a user would.
 //
 //   cd /path/to/HRCloud3
 //   sudo bash Documentation/Build/Tests/contained-install.sh php Documentation/Build/Tests/test_hrcloud3-cli.php
@@ -13,12 +13,14 @@
 // page, signing in, home, settings, changing the address & the password, the log of what each page was built from, the component
 // markers & a base interface of the wrong version. From v1.0.0 it asks the libraries every action a page's script asks, as an
 // administrator & as a user who is not, through multipart forms & ranges as Apache would hand them over. It removes the accounts, with
-// their spaces, & runs the installed copy in strict contract mode with its contract whole & with two values left out.
+// their spaces, & runs the installed copy in strict contract mode with its contract whole & with two values left out. From v1.0.1 it
+// gives the installed copy the folder v1.0.0 kept ScanCore in, for -fp to take away, & sweeps every session with -c now.
 // It reads every version it checks from the tree's own files.
 // Mail is handed to a stand-in in the scratch folder that keeps every message, so nothing leaves the machine.
 // It removes nothing of its own. config.php, the contract, the base interface's version file & a trash record are changed only in the
-// copy in memory, & each is put back as it was. --account --remove removes the accounts the suite made, which is what that command is for,
-// & the Storage Core removes what the suite asks it to, in the libraries in memory.
+// copy in memory, & each is put back as it was. --account --remove removes the accounts the suite made, -fp the folder it gave the
+// installed copy & -c now every session, which is what each command is for, & the Storage Core removes what the suite asks it to, in the
+// libraries in memory.
 
 if (PHP_SAPI !== 'cli') { if (!headers_sent()) http_response_code(404); die(); }
 
@@ -39,6 +41,23 @@ $configVersion = $versionIn('Resources/Contract/config-template.php', 'ConfigVer
 $interfaceVersion = $versionIn('UI/Default/uiVersionInfo.php', 'InterfaceVersion');
 $languageVersion = $versionIn('UI/Default/Languages/en/languageStrings.php', 'LanguageVersion');
 if ($release === '' or $configVersion === '' or $interfaceVersion === '' or $languageVersion === '') testStop('The tree does not say which versions it is.');
+// From v1.0.1 the kernel, the Engine & each of its cores are read from the tree as well, each from the version its file declares, so an
+// Engine a release takes changes nothing here. A ur is read with the rest. A pin in cloudCore.php that is not the version its file
+// declares stops the suite, because every row below says the two are the same.
+$declaredIn = function ($relativePath, $variableName) use ($tree) {
+  return (preg_match('/^[ \t]*\$'.$variableName.' = \'v([0-9]+\.[0-9]+\.[0-9]+(?:u?r)?)\';/m', (string)@file_get_contents($tree.'/'.$relativePath), $versionMatch) === 1) ? $versionMatch[1] : ''; };
+$componentVersions = array();
+foreach (array('Kernel' => 'Resources/Kernel/kernel.php', 'Engine' => 'Resources/Engine/engine.php', 'SetupCore' => 'Resources/Engine/Cores/setupCore.php',
+  'DependencyCore' => 'Resources/Engine/Cores/dependencyCore.php', 'PipelineCore' => 'Resources/Engine/Cores/pipelineCore.php', 'WorkflowCore' => 'Resources/Engine/Cores/workflowCore.php',
+  'AuthenticationCore' => 'Resources/Engine/Cores/authenticationCore.php', 'EmailCore' => 'Resources/Engine/Cores/emailCore.php', 'PageCore' => 'Resources/Engine/Cores/pageCore.php',
+  'StorageCore' => 'Resources/Engine/Cores/storageCore.php', 'EventCore' => 'Resources/Engine/Cores/eventCore.php') as $componentName => $componentFile) {
+  $componentVersions[$componentName] = $declaredIn($componentFile, $componentName.'Version');
+  if ($componentVersions[$componentName] === '' or $declaredIn('cloudCore.php', 'Required'.$componentName.'Version') !== $componentVersions[$componentName])
+    testStop('cloudCore.php pins '.$componentFile.' at '.$declaredIn('cloudCore.php', 'Required'.$componentName.'Version').', & it declares '.$componentVersions[$componentName].'.'); }
+$environmentVersion = $declaredIn('Resources/Engine/Cores/environmentCore.php', 'EnvironmentCoreVersion');
+$environmentPin = (preg_match('/\'environmentCore\.php\' => \'v([0-9]+\.[0-9]+\.[0-9]+(?:u?r)?)\'/', (string)@file_get_contents($tree.'/Resources/Engine/engine.php'), $environmentMatch) === 1) ? $environmentMatch[1] : '';
+if ($environmentVersion === '' or $environmentPin !== $environmentVersion) testStop('The Engine pins its Environment Core at '.$environmentPin.', & it declares '.$environmentVersion.'.');
+$engineRow = "  Engine     ".$componentVersions['Engine'].", requires ".$componentVersions['Engine'];
 $stampOf = function ($relativePath) use ($tree) {
   return (preg_match('/^[ \t]*(?:\/\/ \/|\/\/|\*|#|<!--)?[ \t]*v([0-9]+\.[0-9]+\.[0-9]+(?:u?r)?)\.[ \t]*(?:-->)?[ \t]*\r?$/m', (string)@file_get_contents($tree.'/UI/Default/'.$relativePath, FALSE, NULL, 0, 8192), $stampMatch) === 1) ? $stampMatch[1] : 'unstamped'; };
 
@@ -173,12 +192,14 @@ function lastMailedCode() {
   preg_match_all('/ is ([A-HJ-NP-Z2-9]{10})\b/', (string)file_get_contents($GLOBALS['mailbox']), $codeMatches);
   return (count($codeMatches[1]) > 0) ? (string)end($codeMatches[1]) : ''; }
 
-// The rows -v prints for each tier & each of the Engine's cores, as HRCloud3 pins them. The Engine & the cores HRCloud3 changed carry ur.
-$tierRows = array("HRCloud3 ".$release."\n", "  Kernel     4.3.3, requires 4.3.3\n", "  Engine     4.3.4ur, requires 4.3.4ur\n",
-  "             & its Environment Core 4.3.3, requires 4.3.3\n", "  Config     ".$configVersion.", requires ".$configVersion." or later\n");
-$coreRows = array("  Setup Core                  OK, 4.3.3ur\n", "  Dependency Core             OK, 4.3.4\n", "  Pipeline Core               OK, 4.3.2\n",
-  "  Workflow Core               OK, 4.3.1\n", "  Authentication Core         OK, 4.2.3ur\n", "  Email Core                  OK, 4.2.0ur\n", "  Page Core                   OK, 4.3.4ur\n",
-  "  Storage Core                OK, 4.3.4ur\n", "  Event Core                  OK, 4.3.1\n");
+// The rows -v prints for each tier & each of the Engine's cores, as HRCloud3 pins them. A component HRCloud3 changed carries ur.
+$tierRows = array("HRCloud3 ".$release."\n", "  Kernel     ".$componentVersions['Kernel'].", requires ".$componentVersions['Kernel']."\n", $engineRow."\n",
+  "             & its Environment Core ".$environmentVersion.", requires ".$environmentPin."\n", "  Config     ".$configVersion.", requires ".$configVersion." or later\n");
+$coreRows = array("  Setup Core                  OK, ".$componentVersions['SetupCore']."\n", "  Dependency Core             OK, ".$componentVersions['DependencyCore']."\n",
+  "  Pipeline Core               OK, ".$componentVersions['PipelineCore']."\n", "  Workflow Core               OK, ".$componentVersions['WorkflowCore']."\n",
+  "  Authentication Core         OK, ".$componentVersions['AuthenticationCore']."\n", "  Email Core                  OK, ".$componentVersions['EmailCore']."\n",
+  "  Page Core                   OK, ".$componentVersions['PageCore']."\n", "  Storage Core                OK, ".$componentVersions['StorageCore']."\n",
+  "  Event Core                  OK, ".$componentVersions['EventCore']."\n");
 $noPipelines = "  Pipelines                   NONE, this application accepts none\n";
 $interfaceRows = array("Installed interfaces\n  Default                     OK, ".$interfaceVersion.", the base\n", "Language packs\n  Default                     1 of 1 OK\n");
 
@@ -251,6 +272,16 @@ check('Accounts & Users are made, the web server account\'s & 0700', is_array($w
   && fileowner('/DATA/HRCloud3/Accounts') === $webAccount['uid'] && fileowner('/DATA/HRCloud3/Users') === $webAccount['uid']
   && (fileperms('/DATA/HRCloud3/Accounts') & 0777) === 0700 && (fileperms('/DATA/HRCloud3/Users') & 0777) === 0700, implode(' ', namesIn('/DATA/HRCloud3')));
 check('-fp says nothing of the kit\'s examples', !namesAnExample($said), $said);
+// From v1.0.1, an installation a v1.0.0 release left ScanCore in, beside the Kernel & the Engine. No release ships that folder now.
+$retiredScanCore = mustBeInstallFolder($installed.'/Resources/ScanCore');
+if (!mkdir(mustBeInstallFolder($retiredScanCore.'/Logs'), 0755, TRUE)) testStop($retiredScanCore.' could not be made.');
+rewriteInstalled($retiredScanCore.'/ScanCore.php', "<?php\n");
+rewriteInstalled($retiredScanCore.'/Logs/index.html', "\n");
+list ($status, $said) = hrcloud3($installed, array('-fp'));
+clearstatcache();
+check('-fp takes away the folder v1.0.0 kept ScanCore in, & leaves ScanCore in the ScanCore pipeline\'s folder', $status === 0
+  && strpos($said, '  REMOVED     '.$retiredScanCore.', which no release of HRCloud3 ships.'."\n") !== FALSE && !file_exists($retiredScanCore)
+  && is_file($installed.'/Resources/Pipelines/ScanCore/ScanCore/ScanCore.php') && !phpComplained($said), $said);
 
 
 // Part 6. The installed copy, & the loader that runs it.
@@ -317,7 +348,7 @@ check('signed in, settings shows her account, offers to change the password & th
   && strpos($page, '<title>Settings - HRCloud3</title>') !== FALSE && strpos($page, '>alice@example.com</dd>') !== FALSE && strpos($page, "data-hrc3-action='password'") !== FALSE
   && strpos($page, "data-hrc3-action='address'") !== FALSE && strpos($page, 'SignInFileLifetime') === FALSE && $complaint === '' && !phpComplained($page), $page.$complaint);
 $builtFrom = function ($label, $relativePath) use ($fingerprintOf, $stampOf) { return $label.' from Default '.$stampOf($relativePath).' #'.$fingerprintOf($relativePath); };
-$settingsLine = 'Built the settings page with the Page Core 4.3.4ur for HRCloud3 '.$release.'. Interface Default '.$interfaceVersion.', language en '.$languageVersion.', color blue. Components: '
+$settingsLine = 'Built the settings page with the Page Core '.$componentVersions['PageCore'].' for HRCloud3 '.$release.'. Interface Default '.$interfaceVersion.', language en '.$languageVersion.', color blue. Components: '
   .$builtFrom('header.php', 'header.php').', '.$builtFrom('taskbar.php', 'taskbar.php').', '.$builtFrom('settingsGui.php', 'settingsGui.php').', '.$builtFrom('footer.php', 'footer.php')
   .', '.$builtFrom('styleCore.php', 'styleCore.php').', '.$builtFrom('Languages/en', 'Languages/en/languageStrings.php').'. Assets: '.$builtFrom('Stylesheet', 'Resources/CSS/HRCloud3.css')
   .', '.$builtFrom('Library', 'Resources/JS/HRC3-Functions.js').', '.$builtFrom('SignIn', 'Resources/JS/HRC3-SignIn.js').', '.$builtFrom('SignInTimer', 'Resources/JS/HRC3-SignInTimer.js')
@@ -401,7 +432,7 @@ check('-fp made Libraries in the data location, the web server account\'s & 0700
   && ($librariesStatus['mode'] & 0170000) === 0040000 && $librariesStatus['uid'] === $webAccount['uid'] && ($librariesStatus['mode'] & 0777) === 0700, implode(' ', namesIn($librariesFolder)));
 check('the web requests above made no library, & left only the time of their last sweep in Libraries', namesIn($librariesFolder) === array('swept'), implode(' ', namesIn($librariesFolder)));
 list ($status, $said) = hrcloud3($installed, array('-v'));
-check('-v names each library, where it is made, & how long the trash keeps what it holds', allIn(array("  Storage Core                OK, 4.3.4ur\n",
+check('-v names each library, where it is made, & how long the trash keeps what it holds', allIn(array("  Storage Core                OK, ".$componentVersions['StorageCore']."\n",
   "Libraries\n  Drive                       OK, personal, made on first use at /DATA/HRCloud3/Libraries/Drive\n",
   "  Shared                      OK, shared, made on first use at /DATA/HRCloud3/Libraries/Shared\n", "  Trash                       Emptied after 30 day(s)\n"), $said)
   && !phpComplained($said), $said);
@@ -656,12 +687,12 @@ list ($status, $headers, $page, $complaint) = webRequest('GET', '', array());
 check('a request sweeps the libraries once ten minutes have passed, taking what the trash kept past its lifetime & an upload that never finished', !file_exists($oldEntry)
   && file_exists($bobSpace.'/Trash/'.$bobTrash[1]) && !file_exists($leftover) && webLogSays(array('Swept 2 entry or entries from the trash & the unfinished uploads of every library.')),
   implode(' ', namesIn($bobSpace.'/Trash')).' '.webLogLinesWith('Swept'));
-if (substr_count($shippedConfig, "\n\$DeleteThreshold = 60;\n") !== 1) testStop('The installed config.php does not delete sessions after 60 minutes, as HRCloud3 ships it.');
-rewriteInstalled($configPath, str_replace("\n\$DeleteThreshold = 60;\n", "\n\$DeleteThreshold = 0;\n", $shippedConfig));
-list ($status, $headers, $page, $complaint) = webRequest('GET', '', array());
-check('the session sweep never reaches a library, even where every session has expired', $status === 200 && is_file($bobSpace.'/Files/Photos/greeting.txt')
-  && is_file($bobSpace.'/Files/hello world.txt') === FALSE && is_dir($librariesFolder.'/Shared/Team') && count(namesIn($bobSpace.'/Trash')) === 1, implode(' ', namesBeneath($bobSpace)));
-rewriteInstalled($configPath, $shippedConfig);
+// A threshold of 0 keeps every session, from the Engine's v5.0.0, so -c now is what sweeps them all, from v1.0.1.
+list ($status, $said) = hrcloud3($installed, array('-c', 'now'));
+check('the session sweep never reaches a library, even where -c now sweeps every session', $status === 0
+  && strpos($said, "  Data location        OK, removed expired sessions\n") !== FALSE && is_file($bobSpace.'/Files/Photos/greeting.txt')
+  && is_file($bobSpace.'/Files/hello world.txt') === FALSE && is_dir($librariesFolder.'/Shared/Team') && count(namesIn($bobSpace.'/Trash')) === 1
+  && !phpComplained($said), $said.' '.implode(' ', namesBeneath($bobSpace)));
 
 if (substr_count($shippedConfig, "\$Libraries = array(\n  'Drive' => array('Kind' => 'personal', 'Location' => ''),\n") !== 1) testStop('The installed config.php does not list Drive as HRCloud3 ships it.');
 rewriteInstalled($configPath, str_replace("\$Libraries = array(\n  'Drive' => array('Kind' => 'personal', 'Location' => ''),\n", "\$Libraries = array(\n  'Drive' => array('Kind' => 'personal', 'Location' => ''),\n"
@@ -718,19 +749,19 @@ if (substr_count($shippedContract, "\n\$EngineEntryPoint = 'cloudCore.php';\n") 
   or preg_match('/^\$EngineStrictContract = TRUE;$/m', $shippedContract) !== 1) testStop('The installed contract is not HRCloud3\'s as it ships.');
 list ($status, $said) = hrcloud3($installed, array('-v'));
 check('HRCloud3 ships in strict contract mode, sets every value it requires, & the Engine starts', $status === 0
-  && strpos($said, "  Engine     4.3.4ur, requires 4.3.4ur\n") !== FALSE && strpos($said, 'did not start') === FALSE && !phpComplained($said), $said);
+  && strpos($said, $engineRow."\n") !== FALSE && strpos($said, 'did not start') === FALSE && !phpComplained($said), $said);
 check('& nothing in root\'s log says 31027', !engineLogSays(array('HRCloud3-31027, ')), implode(' ', namesIn('/DATA/HRCloud3/Engine')));
 $incompleteContract = str_replace(array("\n\$EngineEntryPoint = 'cloudCore.php';\n", "\n\$EngineApplicationLayout = array("),
   array("\n// \$EngineEntryPoint = 'cloudCore.php';\n", "\n  \$EngineApplicationLayout = array("), $shippedContract);
 rewriteInstalled($contractPath, $incompleteContract);
 list ($status, $said) = hrcloud3($installed, array('-v'));
 check('with $EngineEntryPoint commented out & $EngineApplicationLayout indented the Engine does not start, & -v says so & counts it as failed', $status === 0
-  && strpos($said, "  Engine     4.3.4ur, requires 4.3.4ur, & did not start\n") !== FALSE && strpos($said, '1 check(s) failed.') !== FALSE && !phpComplained($said), $said);
+  && strpos($said, $engineRow.", & did not start\n") !== FALSE && strpos($said, '1 check(s) failed.') !== FALSE && !phpComplained($said), $said);
 check('& root\'s log names both, with ERROR 31027', engineLogSays(array('HRCloud3-31027, ', 'does not set $EngineEntryPoint, $EngineApplicationLayout.')),
   implode(' ', namesIn('/DATA/HRCloud3/Engine')));
 rewriteInstalled($contractPath, $shippedContract);
 list ($status, $said) = hrcloud3($installed, array('-v'));
-check('with its contract as it shipped, the installed copy starts the Engine', $status === 0 && strpos($said, "  Engine     4.3.4ur, requires 4.3.4ur\n") !== FALSE
+check('with its contract as it shipped, the installed copy starts the Engine', $status === 0 && strpos($said, $engineRow."\n") !== FALSE
   && strpos($said, 'did not start') === FALSE && (string)file_get_contents($contractPath) === $shippedContract, $said);
 
 finish('test_hrcloud3');

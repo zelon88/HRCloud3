@@ -23,7 +23,8 @@ so it cannot drift from either. Do not edit it by hand.
 
 - **ClamAV** (optional, 0.103 or newer, GPL-2.0). Scans uploads. Only used when virus scanning is enabled.
 - **Git** (optional, 2.0 or newer, GPL-2.0). Clones ScanCore's update repository, where ScanCore's UpdateMethod is git.
-- **ScanCore** (optional, 1.9 or newer, GPL-3.0). Scans every uploaded file. Written & distributed by this project.
+- **PHP Zlib** (optional, PHP-3.01). Lets ScanCore read compressed container members & png chunks, which it reports as incomplete without it.
+- **ScanCore** (optional, 2.0 or newer, GPL-3.0). Scans every uploaded file. Written & distributed by this project.
 
 ## Approval
 

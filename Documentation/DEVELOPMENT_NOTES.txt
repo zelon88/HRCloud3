@@ -238,6 +238,46 @@ later do. Older bubblewrap runs a tool as the web server's account, which only t
 names, so it shows the host's passwd & group as before, & -v's Sandbox identity line says so. /opt is
 no longer shown, & the calibre profile shows /opt/calibre. The web server's environment is still
 passed in, & ENGINE_RECONCILIATION_HRCONVERT2.txt leaves it for the Engine's maintainer.
+
+A PROFILE MAY HOLD ITS TOOL'S ADDRESS SPACE, AS HRCONVERT2'S ASSIMP PROFILE DOES. v5.0.0.
+HRConvert2 ran Assimp under the meshlab profile until its v4.3.2, as the library's Model pipeline
+still does. That profile maps its tool to root, shows MeshLab's folders & makes room for Xvfb, &
+Assimp needs none of it. HRConvert2's assimp profile runs it as the Engine's own account,
+requires a sandbox, & asks for an address space limit, which prlimit sets at the memory a model
+conversion is allowed, 2048 MiB by default. A 20 byte glb whose JSON chunk claims 4 GiB had Assimp
+take 4.1 GiB & two seconds before it gave up. Under the limit it fails at once with std::bad_alloc,
+having used 14 MiB. A scope's MemoryMax would have let it use 2 GiB first, & a host where no scope
+can be made would not have stopped it. The limit holds with per conversion limits off, because the
+profile asked for it & the host did not. An address space is not the memory used, so only a profile
+measured under it asks, & HRConvert2's Model suite converts every model it holds under it. meshlabserver
+converted a small model under 512 MiB of address space, & reached 939 MiB without a limit, so the
+meshlab profile may ask too, once large models & PyMeshLab are measured under it.
+
+A PROFILE THAT MAPS TO ROOT NAMES ONE ACCOUNT. v5.0.0.
+From v4.3.0 the base sandbox runs its tool as the Engine's own account, 1000, & the meshlab profile
+maps to root on top of it, so bubblewrap was handed --uid & --gid twice. bubblewrap 0.9 takes the
+last of each, & prints Only the last --uid option will take effect, & the same of --gid, so every
+MeshLab conversion carried two warnings in its output. The Engine's own pair is taken away where a
+profile maps to root.
+
+THE ENGINE SAYS WHETHER IT BUILT A SANDBOX. v5.0.0.
+sandboxCommand() returned the command it was handed where no sandbox could be built, & the shared
+LibreOffice module told the two apart by comparing them, because without a sandbox it builds its
+command again, with a private profile & the output folder named outright. limitCommand() wraps every
+command that may run, so with per conversion limits on the two always differed, & with the time limit
+they differ on every host. An unsandboxed LibreOffice was taken for a sandboxed one, wrote into the
+folder PHP was running in & used the shared profile in /tmp. sandboxWasBuilt() keeps the answer
+sandboxCommand() reached, because a third value would change what sandboxCommand() returns, & asking
+verifySandboxLauncher() again could answer otherwise on a loaded host, where its probe can time out.
+The command built again is limited as well, as every other command is.
+
+A REFUSED COMMAND IS NEVER RUN, THE OCR PAGE SPLIT'S INCLUDED. v5.0.0.
+sandboxCommand() refuses only where a sandbox is required & none can be built, & a refused command is
+neither sandboxed nor limited. The OCR page split ran it anyway, reasoning that ImageMagick's policy
+is a weaker control than a sandbox rather than none. That holds where no sandbox is required, & there
+sandboxCommand() lets the command run, under the policy. Where one is required, the administrator or
+the profile has said no, so the page split is refused as every other OCR command is. HRConvert2's OCR
+pipeline has refused it since its v4.3.1.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -531,6 +571,15 @@ A SCANNER CHANGES NOTHING & WRITES NOTHING A USER SEES.
 An earlier ScanCore wrote straight into the user facing report, so the scanner decided what a
 user saw, & the application could not filter, order or consolidate any of it.
 
+THE SCANCORE PROGRAM LIVES IN ITS PIPELINE'S FOLDER. v5.0.0.
+It was Resources/ScanCore, beside the Kernel & the Engine, though only the ScanCore pipeline runs it,
+so adopting the pipeline took a second folder an application had to be told about. It is ScanCore/
+in the pipeline's folder now, as OCR & Identify keep Policy/ in theirs, & the pipeline runs the copy
+beside it. It is still bundled. Fetching it at install time, as Dasel or yq are, waits for a ScanCore
+release with an asset a checksum can be pinned to, & for ScanCore's updater, which installs over its
+own folder, to stop rewriting a copy the Dependency Core would pin. The checkers know it by its new
+path, & an application names Resources/ScanCore in $EngineRetiredPaths so -fp takes an old copy away.
+
 ARCHIVING A SELECTION & SCANNING FOR A USER ARE OPERATION PIPELINES. v4.1.6.
 archiveFiles & the user scan helpers were the last operations left in convertCore.php. The
 Archiver & Scan pipelines took them, with every error number they raised, & the core keeps a thin
@@ -585,7 +634,29 @@ ScanCore refuses a path it cannot read before it scans, & exits 1, which is no v
 is reported as not scanned at all. Once a scan has begun it logs error 610 for a file it could not open
 & 600 for one whose read failed partway, writes Incomplete for neither & goes on. HRConvert2 reads
 both as Incomplete, because each would otherwise have been called clean.
-The minimum ScanCore is 1.9, so a copy an older ScanCore replaced is reported rather than trusted.
+The minimum ScanCore was 1.9, & is 2.0 from v5.0.1, so a copy an older ScanCore replaced is reported
+rather than trusted.
+
+SCANCORE v2.0.0 IS BUNDLED AS IT IS TAGGED. v5.0.1.
+ScanCore tagged v2.0.0 on GitHub, the first tag since v1.0, & its folder in the ScanCore pipeline is
+that tag's tree. The drop-in handed over held only what changed, so the tag's LICENSE & its definitions
+file, which is the one v1.9 was bundled with byte for byte, come from the tag. v1.9's Logs folder is
+gone, because v2.0.0 makes its report folder on first write. v2.0.0 holds still what a caller reads,
+in its Documentation/ABOUT_REPORTS.txt, & the pipeline already read a report its way, so the pipeline's
+code is unchanged. A file it cannot open or inspect now draws an Incomplete line, which the pipeline
+already read as incomplete, as it reads errors 600 & 610. It names zlib among what it needs, so PHP Zlib
+is declared. Its folders show its own protection pages, which canon replaced with the Engine's at
+v4.3.1, when the copy then bundled had a malformed meta tag. The folder is ScanCore's release as
+published, its pages are well formed, & its updater installs them again, so they stay. It carries a
+consistency check & a behaviour test of its own, which pass here, contained, with 98 cases. The test
+scans as nobody & makes its folder in /tmp, so contained.sh opens its /tmp to every account, as a real
+one is. How its code is written is still this project's linters' to check, because ScanCore has no
+linter of its own.
+It stays bundled rather than fetched at install time, as decided at v5.0.0. A tagged release is now
+there to pin to, & its updater still installs over its own folder.
+The copy of v1.9 that the move at v5.0.0 nested inside the folder is removed with git rm, & is not
+named in $EngineRetiredPaths. ScanCore downloads an update of itself into a folder of that name, & -fp
+would otherwise remove a folder another program owns, perhaps while it was in use.
 
 A SCANCORE LINE IS READ BY ITS EARLIEST WORD, BEFORE ITS PATH. v4.2.3.
 A line was a detection wherever it held Infected:, & ScanCore names a member of an archive as the
@@ -1298,6 +1369,14 @@ it, so a link swapped in at the right moment sent all three wherever it pointed.
 This & every web request were handed the session folder of the request making them rather than the
 DATA folder, so no expired session in DATA was ever removed.
 
+A THRESHOLD OF 0 KEEPS FILES FOREVER. v5.0.0.
+config.php has always said --File Deletion Age Threshold-- of 0 keeps files forever, & cleanDataLocation()
+expired every session at 0, because every session is older than nothing. Every request, a bare -c &
+the Resource Manager's sweep handed it the setting, so an administrator who set 0 lost every session
+on the next request, one being converted included. HRCloud3 found the two disagreeing. Its own suite
+set 0 to make every session expire. resolveDeleteThreshold() reads the setting for all three, & a 0
+sweeps nothing. cleanDataLocation() still expires everything at 0, because -c now & -c 0 ask for it.
+
 EVERY EXPENSIVE OPERATION TAKES A BUDGET, & EVERY FAILURE RETURNS IT.
 Only convertFiles() once asked permission. Archiving, OCR & the user virus scan ran unmetered, so
 a host saturated by them reported itself idle & kept approving conversions.
@@ -1772,6 +1851,40 @@ pipelineCore.php.
 A COMPLETE INSTALL STATES ITS STAGE COUNT ONCE.
 The second permissions pass of runCompleteInstall was added without its summary line, which went on
 saying six stages while every stage heading said seven.
+
+A CONVERTER THAT RAN TO ITS END NEED NOT BE ASKED AGAIN. v5.0.0.
+Seventeen retry loops in fifteen of HRConvert2's pipelines asked a converter as many times as --File
+Operation Retry Count-- allows, five by default, & waited a second longer before each attempt, six
+seconds in all, whether or not another attempt could change anything, & the library's still do. A
+converter given the same file does the same again, so pipelineRetryIsDue() allows another attempt only
+where a signal stopped the last one, as a memory ceiling, a supervisor or a crash does. HRConvert2's
+Document pipeline kept that rule from its v4.3.0, & its other pipelines took it at its v4.3.1.
+runPipelineCommand() runs a command & returns its exit status, which shell_exec() never gave, &
+pipelineCommandWasStopped() is the one place a signal is told from an exit, so no pipeline holds the
+numbers. Bubblewrap & the shell report a process a signal ended as 128 plus the signal's number. That
+was measured with bubblewrap 0.9 & dash, for a process killed inside a sandbox & out, for one killed
+from outside & for one that faulted. Only 129 through 159 is read as a signal, the signals numbered 1
+through 31, because a converter may exit with more on its own. FFMPEG from 6.1 exits with its own
+error code, 183 for a file it reads nothing in, 234 for an argument or a demuxer it refuses, 254 for a
+file it cannot find, 228 for a full disk & 255 for a file it may not open, & msgconvert's Perl exits
+with 255 where it dies. Each was measured. HRConvert2's Document read anything above 128 as a signal
+from its v4.3.0, & so did its v4.3.1 until its tests found FFMPEG & msgconvert asked again for files
+neither could read.
+FFMPEG & 7-Zip exit with 255 after catching a signal too, & are not asked again either. No converter
+is stopped by a real time signal. In HRConvert2 a Model attempt runs one stage or two, & is made again
+where a signal stopped either, as its modelAttemptStatus() says. Its Graph, Markup, Email & LaTeX
+still stop at a timeout, LaTeX at an error TeX logged & Data at a structure it refuses, as before.
+The library's pipelines take the rule as they are reconciled with HRConvert2's.
+
+A CONVERTER A CRASH STOPPED IS NOT ASKED AGAIN EITHER. v5.0.0.
+HRConvert2's v4.3.1 read 129 through 159 as a signal & asked a converter again after any of them. A converter
+that crashed, with SEGV, ABRT, BUS, FPE or ILL, is handed the same file again & crashes again, so a
+model that crashed Assimp was converted, & crashed it, as many times as
+--File Operation Retry Count-- allows, & meshlabserver aborted as often on every obj the bridge
+handed it. Only KILL & TERM, 137 & 143, are asked again, which a memory ceiling, a timeout & a
+supervisor send, & after which an attempt may finish. An address space limit makes a tool fail
+rather than be killed, so the attempt that reaches one is not made again either, & the next would
+reach it too.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1967,6 +2080,14 @@ start a unit, & a failed stop was rotated past.
 THE MODEL KNOWS EVERY SETTING A REPAIR MAY ADD.
 The Environment Manager settings were added to config.php alone at first, & --config --repair then
 reported that it would add nothing while the file was demonstrably short of them.
+
+A MODEL'S OWN DEFAULT IS ITS TEMPLATE'S VALUE. v5.0.1.
+collectConfigModel() writes each template's values over the defaults a model gives itself, so a
+model's own default is written only when its template cannot be read. A stale one shows nowhere
+else, & the Engine's for --Maximum Per Conversion Resources-- was found without Scan by reading it at
+v5.0.0. Both code checkers hold every one to its template from v5.0.1. Whitespace & comments outside a
+string do not decide a value, so they are not compared, & a difference inside a string is. The fifty
+three defaults the Example's two models hold all matched when the check was written.
 
 AN OUTPUT WHOSE NAME IS TAKEN IS GIVEN THE NEXT FREE ONE.
 Until v4.1.0 verifyFile() deleted the file holding the name, except for a document, an archive or
@@ -2683,7 +2804,71 @@ because no test can set that time to the past & a deletion nobody can test is no
 
 A KERNEL THAT DELEGATES NO CGROUP CONTROLLERS CANNOT HOLD A PER CONVERSION LIMIT.
 That is the kernel's decision, & it is normal on a NAS or an appliance. Conversions there are
-still bounded by scheduling priority.
+still bounded by scheduling priority, & from v5.0.0 by a data limit on each process.
+
+EVERY COMMAND HAS A TIME LIMIT, & IT IS THE ENGINE'S. v5.0.0.
+Seven pipelines bounded their own converter, Graph, LaTeX, Markup & Scad from a setting each &
+Resvg, Email & Data from a figure in the code, & every other converter could run for ever. A
+converter that never finishes holds its worker, & with resource awareness off nothing reaps it.
+limitCommand() wraps every command sandboxCommand() returns, so HRConvert2 put the time limit there
+at its v4.3.5, & its seven lost theirs. Each figure they used is the shipped figure for its type,
+but Resvg's, which is SVG's 300, because Inkscape had none & the two share a type. The library's
+seven keep theirs, inside the sandbox, until they are reconciled, & whichever comes first stops a
+command, so an administrator who raises one of their settings raises the type's figure too.
+
+IT HAS A TABLE OF ITS OWN, & NOT A THIRD FIGURE IN --Maximum Per Conversion Resources--.
+The listener scales that table by load & hands it back as two figures, & parseConversionLimit()'s
+two figures are read by the Resource Manager & by --Minimum Per Conversion Resources-- too. A time
+limit must never shrink with load, because a loaded host makes a conversion slower, not cheaper.
+
+IT IS ON WHATEVER --Enable Per Conversion Limits-- SAYS. The seven timeouts held with the setting
+off, & a hang is not something an operator turns the ceilings off to allow.
+
+timeout IS OUTSIDE EVERYTHING & SENDS TERM ONLY. Outside, it stops the scope, nice & prlimit with the
+sandbox, & TERM to bubblewrap is never ignored, where a tool inside may catch it. A command it
+stops exits 124, which pipelineCommandWasStopped() does not count. With -k a stubborn command would
+be KILLed, & timeout then reports 137, which is asked again, so one hang would be three.
+systemd-run --scope, nice & prlimit each replace themselves with what they run, so bubblewrap's
+parent is timeout in every mode, & a supervisor that kills timeout still takes the sandbox down.
+
+THIS HOST'S SHELL DOES NOT REPLACE ITSELF WITH A COMMAND. Ubuntu 24.04's dash 0.5.12 keeps sh -c
+between PHP & the command, for exec(), shell_exec() & proc_open() alike. Killing that shell took
+bubblewrap down only because bubblewrap's parent was the shell. With timeout between them it left
+timeout running, & the sandbox under it until the limit. Identify's watchdog killed the shell, so
+it starts its command with exec, in HRConvert2 & in the library from v5.0.0. The archive extraction
+stops every process under the shell, & the stream supervisor kills the PID a backgrounded job
+reports, which is timeout's.
+
+NOTHING AN INTERRUPTED COMMAND LEFT IS KEPT, WHERE A PIPELINE ASKS. A converter a ceiling killed after
+writing part of its file leaves that part, so pipelineAttemptIsDue() sees a file & asks no more, & the
+part is offered. HRConvert2 found its LibreOffice module, OCR, Metadata, Archiver & PDF keeping a part
+the same way, & Model's second stage reading a part the first left. pipelineRetryIsDue() sees the
+path & the last status after every attempt, so the rule went there, & sixteen of HRConvert2's
+pipelines needed nothing. Its others run their command through runPipelineCommand(), which says how
+it ended where shell_exec() did not, & hand the status to discardInterruptedOutput(). 124 & 129
+through 159 count, & FFMPEG's 183, 234, 254 & 255 do not. A crash counts, so Dia's 139 on cgm removes
+the empty file it left at once. The library's pipelines still ask pipelineAttemptIsDue() alone, so
+a part an interrupted converter leaves there is still taken for a result until they are reconciled.
+
+A DATA LIMIT, NOT AN ADDRESS SPACE LIMIT, WHERE NO SCOPE CAN BE MADE. v5.0.0.
+HRConvert2 measured it with prlimit before it shipped. Chromium fails under an address space limit of
+2G & runs under a data limit of 2G, because it reserves far more than it touches. Each process gets
+its type's whole memory figure. Every case of HRConvert2's format suite converts under the shipped
+figures, & the least each heavy converter needed was: LibreOffice under 128M, Inkscape, Resvg, Dia &
+mat2 under 128M, FFMPEG at 1080p under 512M, Calibre's PDF output, which is Chromium, 192M to 384M,
+XeLaTeX 256M to 288M whatever the document, because TeX's arrays are fixed, & PyMeshLab under 768M
+for a million triangles. XeLaTeX is the closest to its figure, LaTeX's & Markup's default 512M. A
+ClamAV database could not be measured there.
+
+A USER SCOPE'S VARIABLES REACH systemd-run THROUGH env. v5.0.0.
+A user manager is found by XDG_RUNTIME_DIR & DBUS_SESSION_BUS_ADDRESS, & verifySystemdRun() hands them
+back as assignments for the shell, which limitCommand() wrote in front of systemd-run. With timeout
+outside everything the assignments followed timeout's figure, & timeout runs the word after it as a
+program, so every command a user scope held exited 127 before anything ran. timeout 5 FOO=x /bin/true
+exits 127, & timeout 5 env FOO=x /bin/true exits 0. env takes the assignments & becomes systemd-run,
+as an unsandboxed command already took its variables, so bubblewrap's parent is still timeout, & no
+command limitCommand() returns begins with an assignment. Found merging HRConvert2's copy, which
+carries the fault. Its suites never made a user scope.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2738,6 +2923,14 @@ functions & its settings. In an application nothing defines those names, so the 
 Engine distributes failed the Engine's own check before the application had written a line. The
 checker's REFERENCE_NAMES & REFERENCE_LABELS list each name with the reason it is cited. The other
 course was to rewrite the documents, which takes from them.
+
+A SETTING ONLY ONE APPLICATION LABELS IS NAMED BY ITS SHARED NAME. v5.0.0.
+HRCloud3 wrote the Page & Storage Cores' documents with the labels of its own settings, which no other
+application's config.php holds. The reference application's settings are examples of
+what a setting does, which is why they pass by a list. These are the settings the cores themselves
+read, & each is read by a shared name $EngineSettingNames maps to whatever an application calls it, so
+the documents name the shared name, as ABOUT_ENGINE_CONTRACT.txt already did. A message the Storage
+Core writes names its setting in plain words, because the Engine cannot know the label.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -25,6 +25,80 @@ What the Engine itself needs is Resources/Engine/depends.php, & --setup installs
 
 
 --------------------
+COMMIT 11/27/2026
+v5.0.1 - Quality pass. ScanCore v2.0.0 is bundled, a model's own defaults are checked, & a kernel comment is corrected.
+
+-v5.0.1.
+-ScanCore v2.0.0, as tagged on GitHub, is bundled at Resources/Pipelines/ScanCore/ScanCore. v1.9's Logs folder is gone, because v2.0.0 makes its own.
+-ScanCore's files carry no executable bit, as tagged. Seven of v1.9's carried one here.
+-The ScanCore pipeline is v5.0.1 & names PHP Zlib, which ScanCore reads compressed members & png chunks with. Its code is unchanged.
+-The Example's half of the manifest is v5.0.1. ScanCore's minimum is 2.0, & PHP Zlib is new & not required. The Example pins both.
+-The kernel is v5.0.1. A comment said each core has a folder of its own under Resources, as ScanCore had. Both examples pin it.
+-Both code checkers are v5.0.1. The config check holds every default a configuration model gives itself to its template's value.
+-The Python checker's header names ScanCore's own consistency check & behaviour test.
+-contained.sh opens its /tmp to every account, as a real one is, so ScanCore's own test runs inside it.
+-test_depends-cli.php knows runShellCommand(), which ScanCore v2.0.0 starts every command it runs through. test_starter-cli.php expects the kernel at v5.0.1.
+-The Scan & ScanCore pipelines' approval records & README.md files are written again from the manifest. PHP Zlib is a first approval in each.
+-The documents name ScanCore v2.0.0 where they named v1.9 as the one bundled.
+
+--------------------
+COMMIT 11/27/2026
+v5.0.0 - Canon's own fixes. A user scope's command runs, a threshold of 0 keeps files forever, the library obeys the time limit, & ScanCore lives in its pipeline's folder.
+
+-v5.0.0.
+-limitCommand() hands a user scope its variables through env. timeout ran the first assignment as a program, so every command a user scope held exited 127. HRConvert2's copy carries the fault.
+-New resolveDeleteThreshold(). A --File Deletion Age Threshold-- of 0 keeps files forever, as config.php says. The request sweep, a bare -c & the Resource Manager's sweep each swept every session at 0. -c now & -c 0 still sweep everything. A threshold that is not a whole number of minutes is warned of, & 60 is used.
+-The Resource Manager is v5.0.0. The Engine pins it.
+-New sandboxWasBuilt() says whether sandboxCommand() built a sandbox for the last command it returned.
+-The shared LibreOffice module is v5.0.0. It asks sandboxWasBuilt() rather than comparing commands, & limits the command it builds again without a sandbox. A limited command was taken for a sandboxed one, so LibreOffice wrote into PHP's working folder with the shared profile.
+-Identify is v5.0.0. Its shell gives way to the command it runs, so its watchdog's kill reaches timeout & the sandbox under it.
+-OCR is v5.0.0. A page split a required sandbox cannot isolate is refused with 15012, as every other OCR command is. It ran unsandboxed & unlimited. Its warning is retired.
+-Stream is v5.0.0. Its comments name timeout as the process it captures.
+-The Example pins Identify, OCR, Stream & libreOffice.php at v5.0.0.
+-The Setup Core's notes on a kernel that delegates no cgroup controllers name the data limit.
+-The configuration model's Default for --Maximum Per Conversion Resources-- gains Scan, as the template has it.
+-The Storage Core's messages name its settings in plain words. The Engine's documents name the Page & Storage Cores' settings by their shared names, not HRCloud3's labels.
+-ABOUT_PAGES.txt names displayCore & displayManager for the compositor.
+-Every release number HRConvert2 & HRCloud3 wrote into the Engine's code & documents is v5.0.0. Their reconciliation files keep their own.
+-The ScanCore program moved from Resources/ScanCore into the ScanCore pipeline's folder, at Resources/Pipelines/ScanCore/ScanCore. It is unchanged.
+-The ScanCore pipeline is v5.0.0 & runs the copy beside it. The Example's half of the manifest is v5.0.0 & runs its version from there. The Example pins both, & names Resources/ScanCore in $EngineRetiredPaths, so -fp takes an old copy away.
+-Both code checkers & hrconvert2-messages-cli.php know ScanCore by its new path & are v5.0.0. assemble-example.sh & test_depends-cli.php follow.
+-The Engine's half of the manifest names exec among the Shell's builtins, which Identify starts its command with. test_depends-cli.php knows it, & checks that ScanCore is where its pipeline & the manifest look.
+-New test_limits-cli.php runs a command a user scope holds, & checks sandboxWasBuilt(), the LibreOffice module, the OCR page split, Identify's watchdog & the three sweeps at a threshold of 0.
+
+--------------------
+COMMIT 11/27/2026
+v5.0.0 - HRCloud3's Engine changes to its v1.0.0 are merged. The Page & Storage Cores are the Engine's.
+
+-v5.0.0.
+-HRCloud3's changes are merged, as ENGINE_RECONCILIATION_HRCLOUD3.txt records them, & the file is carried.
+-New Page Core, Resources/Engine/Cores/pageCore.php, v5.0.0. It draws every page from an interface's components. New loadPageCore().
+-New Storage Core, Resources/Engine/Cores/storageCore.php, v5.0.0. It keeps each user's files in libraries, each with a trash. $EngineEnableStorage is FALSE as shipped.
+-The Authentication Core & Manager & the Email Core are v5.0.0. A user changes their own password & address, an application names the lifetimes it offers in $EngineFileLifetimes, & an account an administrator removes takes its libraries with it.
+-The Engine's half of config.php gains four email settings, & engineConfig.php the Page Core's five values.
+-verifyRequiredDirs() protects the data location only where an application declares the served role.
+-A --config --repair adds a section a release adds.
+-listEnginePins() knows the Page & Storage Cores.
+-ABOUT_PAGES.txt & ABOUT_STORAGE.txt are new. test_pages-cli.php & test_storage-cli.php are the Engine's own.
+-51000 to 51019 belong to the Page Core & 52000 to 52019 to the Storage Core.
+-engineConfig.php & the Setup Core are v5.0.0. Both examples pin the Setup, Authentication & Email Cores at v5.0.0.
+
+--------------------
+COMMIT 11/27/2026
+v5.0.0 - HRConvert2's Engine changes to its v4.3.5 are merged. Every command has a time limit.
+
+-v5.0.0.
+-HRConvert2's changes are merged, as ENGINE_RECONCILIATION_HRCONVERT2.txt records them, & the file is carried.
+-limitCommand() puts timeout outside everything & sends TERM only, for the time --Maximum Per Conversion Runtime-- gives a type or --Default Per Conversion Runtime--, both new in the Engine's half of config.php. New resolveConversionRuntime().
+-A conversion no scope can hold has a data limit on each process, & a profile setting AddressSpaceLimit holds its tool's address space, through prlimit.
+-A profile that maps to root names one account.
+-The Pipeline Core gains runPipelineCommand(), pipelineRetryIsDue(), pipelineCommandWasStopped(), pipelineCommandWasInterrupted() & discardInterruptedOutput(). The library's pipelines do not call them yet.
+-A Fallback with Always uses its own copy whatever the package manager's is. New ownBuildIsAlways().
+-The Engine's half of the manifest declares Prlimit, which is not required.
+-hrconvert2-doccheck.py gains the messages & reservation checks. The Event Core's suites accept a lineage mark.
+-engine.php, config-template.php, depends.php & the Dependency & Pipeline Cores are v5.0.0. Both examples pin them, & their configuration, at v5.0.0.
+
+--------------------
 COMMIT 11/26/2026
 v4.3.4 - Strict contract mode works, & both code checkers hold every contract to it.
 

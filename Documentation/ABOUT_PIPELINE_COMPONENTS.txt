@@ -107,6 +107,7 @@ which is not known to be clean. runVirusScan() returns them as its fifth value, 
 it knows & no more than 100 lines of 2000 bytes each, so a scanner returning three values still works.
 ScanCore returns them, & Scan writes their lines into the user's report. ClamAV returns none.
 From v4.2.3 ScanCore v1.9 is bundled, & its Incomplete lines & its errors 600 & 610 make a file incomplete.
+From v5.0.1 ScanCore v2.0.0 is bundled, which holds what a caller reads still from one release to the next.
 Both kinds are verified, pinned, ordered & loaded identically. ONLY DISPATCH DIFFERS.
 
 A SHARED MODULE is a file two or more pipelines both need & neither can own. It is not a
@@ -397,9 +398,16 @@ Contracts 1 through 3 are unchanged & still live in CREATING_CONVERSION_PIPELINE
         pair, & error 34010 once none can. Until v4.0.6 anything at the path was offered, an
         empty icon & a folder included.
     4k. Every pipeline that retries asks pipelineAttemptIsDue(), from v4.0.6, so every one
-        makes --File Operation Retry Count-- attempts, & always one. Until v4.0.6 most made one
-        attempt more than that & raised their error after the attempt that used it up, whether
-        that attempt worked or not.
+        makes --File Operation Retry Count-- attempts at most, & always one. Until v4.0.6 most
+        made one attempt more than that & raised their error after the attempt that used it up,
+        whether that attempt worked or not. From v5.0.0 a pipeline may ask pipelineRetryIsDue()
+        instead, which asks pipelineAttemptIsDue() only where something outside the converter
+        stopped the last attempt, so a converter that ran to its end & left nothing is asked once.
+        runPipelineCommand() runs a command & returns its exit status, & pipelineCommandWasStopped()
+        says whether KILL or TERM ended it, which a memory ceiling or a supervisor sends. A converter
+        that crashed, with SEGV, ABRT, BUS, FPE or ILL, is not asked again either, because it would
+        crash again on the same file. HRConvert2's pipelines ask it. The library's still ask
+        pipelineAttemptIsDue() alone.
 
   5. A NON-ZERO $WorkerPID MEANS THE CORE MUST STAY ALIVE AFTER SERVING THE USER.
 
@@ -641,7 +649,10 @@ The other three pieces are already written & are not yours to touch.
 
   THE TIMEOUT IS AN ADMINISTRATOR'S SETTING & NOT A SUGGESTION. $StreamWatchTimeout bounds
   every detached worker on the installation. Do not read it, do not extend it, & do not
-  implement a second timeout inside your pipeline.
+  implement a second timeout inside your pipeline. From v5.0.0 the Engine's time limit for the
+  worker's type bounds it too, as it bounds every command, & the worker ends at whichever comes
+  first. The PID a shell reports is then timeout's, & killing it takes the sandbox down, because
+  bubblewrap dies with its parent.
 
   max_execution_time HAS TO EXCEED IT. A PHP worker is held for the whole supervision
   window. verifyPhpConfiguration() already derives the limit from $StreamWatchTimeout &

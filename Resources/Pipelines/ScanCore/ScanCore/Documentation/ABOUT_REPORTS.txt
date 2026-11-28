@@ -1,0 +1,276 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+ScanCore, Copyright on 3/31/2024 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+BSD or MIT licensing is available. Reach out to @zelon88 for more information.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+This application is designed to scan files & folders for viruses.
+
+FILE INFORMATION ...
+v2.0.0.
+This plain text file describes everything that ScanCore prints & writes, & what a program that runs ScanCore may rely on.
+It is the contract between ScanCore & whatever calls it.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+This application requires PHP 8.0 or later, run from a command line on Linux or Windows.
+The zlib extension reads compressed container members & png chunks, which are reported as incomplete without it.
+An update uses Git, or downloads each file with PHP, or with cURL where PHP may not open a URL. None of them is needed to scan.
+The posix extension hands new files to the owner of the installation when ScanCore is run as root.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What Is Printed & What Is Written--
+
+ScanCore says what it found in two places, which hold the same findings.
+
+  The console     What a person or a calling program reads as ScanCore runs.
+  The report      A plain text file that is appended to. It is Logs/ScanCore_Report.txt inside the installation
+                  unless ScanCore_Config.php or the -reportfile switch names another.
+
+An entry is one line. In the report, every entry opens in one of three ways.
+
+  <time>, <text>                                  Normal activity.
+  WARNING!!! ScanCore on <time>, <text>           Something an administrator should know, which stopped nothing.
+  ERROR!!! ScanCore-<number> on <time>, <text>    A failure that changed what ScanCore did. The number is documented
+                                                  in ERROR_DESCRIPTIONS.txt.
+
+The time is written as  November 27, 2026, 5:12 pm  & never holds a slash.
+
+On the console, an entry is printed as its text alone, with no time & no label in front of it.
+Three kinds of entry are printed with their label, because nothing else would say what they are.
+
+  An error raised before the report can be used    ERROR!!! ScanCore-<number>, <text>
+                                                   These are errors 1, 2, 3, 4 & 11.
+  The report file could not be written             ERROR!!! ScanCore-910 on <time>, <text>
+  A warning or error the report could not take     The same line that would have been written to the report.
+
+NOT EVERY ENTRY GOES TO BOTH PLACES
+  A finding, the summary & most errors go to both.
+  A warning goes to the report. A few are printed as well, such as the one for a folder that could not be read.
+  Routine activity goes to the report, or nowhere. -debug writes all of it, & -verbose prints all of it.
+  A scan whose report cannot be written loses nothing that matters. Every finding is still printed.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Four Finding Lines--
+
+A finding is a line that opens with one of four words. Both the console & the report hold it.
+
+  Infected: <path> (<name>, <how>: <what>)
+  Infected: <path> (<name>, <how>: <what> in <member>)
+      A detection of high confidence. A whole file hash is an exact match, so it is one by default.
+      A decompression bomb & PHP inside an image are structural findings of high confidence.
+
+  Suspicious: <path> (<name>, <how>: <what>)
+  Suspicious: <path> (<name>, <how>: <what> in <member>)
+      A detection of medium or low confidence. It is a heuristic & is not proof.
+      -nosuspicious leaves these out.
+
+  Classified: <path> (File may contain executable code - Detected Language: <language>)
+  Classified: <path> (File may contain file or URL handlers - Type: <types>, Handlers: <handlers>)
+      What a file is able to do. It is information & is never a threat by itself.
+      -noclassify leaves these out.
+
+  Incomplete: <path> (<reason>)
+  Incomplete: <path> (<reason>; <reason>)
+      Part of the file could not be inspected, for the reasons given. As many as six reasons are named.
+      A file that was not inspected in full is not known to be clean.
+
+WHAT EACH PART IS
+  <path>      The path of the file, exactly as ScanCore was handed it. Inside a scanned folder it is the folder,
+              a separator & the name of the file. A path is never shortened.
+  <name>      The name of the definition that matched, or the name of a structural finding, such as
+              Bomb.Archive.TotalExpansion. Every structural finding is listed below.
+  <how>       One of  MD5 Hash Match, SHA1 Hash Match, SHA256 Hash Match, Data Match, Name Match, Host Match,
+              URL Match & Structure Match.
+  <what>      The hash, the signature, the indicator or the measurement that matched.
+  <member>    Where inside the file the detection was made. Each level of nesting is joined with  >  as in
+              backups.zip > 2026/invoice.zip > invoice.pdf.exe
+              A gzip stream is named  gzip stream,  a zip behind another format  appended archive,  & a chunk of
+              a png by its type, as  zTXt chunk.
+
+HOW MANY LINES ONE FILE DRAWS
+  Any number of Infected & Suspicious lines, one for each different detection. A detection is never repeated.
+  One Incomplete line at most, & one Classified line at most.
+  They are printed in that order, & the lines of one file are never mixed with the lines of another.
+
+A NAME CANNOT FORGE A LINE
+  A control character in a path or in the name of a member is written as the escape that names it, so a line break
+  is written as \x0a. A caller that hands ScanCore such a path looks for the path with the same escapes in it.
+  The name of a member that is longer than 255 bytes is shortened & ends in three dots. A path never is.
+  A byte of a signature that has no printable form is written as an escape as well.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--How A Caller Reads A Verdict--
+
+A caller that scans one path at a time needs four steps & no pattern matching beyond them.
+
+  1. Run ScanCore with the path. Give it a report file of its own with -reportfile, or read the console, or both.
+  2. Stop where the exit status is not 0. That is not a verdict, & the path is not known to be clean.
+  3. For each line, find the first of these six words that the line holds before its first slash.
+
+       Infected:    Suspicious:    Classified:    Incomplete:    ScanCore-600    ScanCore-610
+
+     Each is followed by one space. A line that holds none of them before its first slash says nothing about a file.
+     The words are looked for before the first slash because everything after it may be a name, & a name may hold
+     any of these words.
+  4. Take the line only where it names the path. The path follows the word & is followed by a space.
+     In a ScanCore-600 or a ScanCore-610 line the path is the end of the line, after a colon & two spaces.
+
+The verdict is the worst thing that any such line says.
+
+  infected      An Infected line names the path.
+  suspicious    A Suspicious line names it, & no Infected line does.
+  incomplete    An Incomplete line names it, or error 600 or 610 does, & nothing worse does.
+  clean         None of the above.
+
+A Classified line changes no verdict. It is there to be shown, or to be acted on by a caller that cares what a
+file is able to do.
+
+Documentation/Build/scancore-test-cli.php holds this reader as the function readVerdict() & applies it to every
+case that it runs. A caller in another language can be checked against it.
+
+A CALLER THAT SCANS A FOLDER
+  The same lines are printed, each naming the file it is about by the folder, a separator & the name.
+  The summary says how many files there were of each kind.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Summary--
+
+A scan that finishes closes with these lines, on the console & in the report, in this order.
+
+  Scanned <n> files in <n> folders.
+  Found <n> files that may contain file or URL handlers.
+  Found <n> files that may contain executable code.
+  Found <n> files that could not be fully inspected.
+  Found <n> suspicious files.
+  Found <n> infected files.
+
+A count of one is written in the singular, as  Found 1 infected file.
+The two classification lines are left out by -noclassify, & the suspicious line by -nosuspicious.
+A file is counted once, as infected where any of its detections is of high confidence & as suspicious otherwise.
+A file that is skipped is not counted as scanned. The definitions file in use, a copy of it & the report file in
+use are skipped, because each of them quotes signatures by design.
+A scan that does not finish prints no summary, raises error 10 & exits 1.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Exit Status--
+
+  0     ScanCore did what it was asked. A scan that found something exits 0, exactly as one that found nothing does.
+  1     ScanCore could not do what it was asked, & a numbered error says why.
+
+Any other status is the interpreter's own. PHP exits 255 where it stops on a fatal error of its own, such as a memory
+limit that was set too low for the work, & a process that is killed reports the signal that killed it.
+
+A status other than 0 is never a verdict. A caller that sees one treats every path it handed over as not scanned.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Version Line--
+
+  php ScanCore.php -version
+
+The first line that this prints opens with the name & the version, as  ScanCore v2.0.0 by
+A caller reads the version from there. A caller that needs a minimum version compares it number by number,
+after the v, & never as text.
+
+-version & -help scan nothing, exit 0 & write nothing to the report.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What Will Not Change--
+
+A caller is written once & must keep working, so these are held still from one release to the next.
+
+  The four words that open a finding, each with its colon & its space.
+  The path directly after the word, followed by a space & an opening bracket.
+  ScanCore-600 & ScanCore-610, with the path at the end of the line.
+  The three ways an entry opens in the report, & a time that holds no slash.
+  The exit status, which is 0 for a finished scan whatever it found.
+  The opening of the version line.
+  The wording of the six summary lines.
+  The number of every error. A number that is retired is never used again.
+
+What is inside the brackets of a finding may gain detail. A new structural finding may be added, a new reason may be
+added to an Incomplete line & a new warning may be written. A caller that follows the four steps above reads all of
+them correctly without knowing them.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Structural Findings--
+
+A structural finding is made by inspecting a file & needs no definition. Its <how> is always Structure Match.
+
+  HIGH CONFIDENCE, REPORTED AS INFECTED
+    Bomb.Archive.CompressionRatio       A member of a container declares, or produces, far more than it holds.
+    Bomb.Archive.TotalExpansion         The members of a zip declare far more between them than the archive holds.
+    Bomb.Archive.OverlappingEntries     Members of a zip share the same stored bytes.
+    Bomb.Archive.NestingDepth           Containers are nested deeper than MaxArchiveDepth.
+    Bomb.PNG.PixelFlood                 The header of a png declares more pixels than MaxImagePixels.
+    Bomb.PNG.ChunkExpansion             A compressed chunk of a png expands past MaxImageChunkSize.
+    Bomb.PNG.DataOverrun                The image data of a png inflates far past what its header declares.
+    Embedded.PHP                        PHP code inside a png, a jpeg or a gif.
+
+  MEDIUM CONFIDENCE, REPORTED AS SUSPICIOUS
+    Embedded.Script                     Markup that runs script, inside an image.
+    Embedded.Shell                      A shell command or an interpreter line, inside an image.
+    Embedded.Execution                  A call that runs code or a command, inside an image.
+    Malformed.PNG                       A png that a strict decoder would refuse. The reason is given.
+    Malformed.Archive.HeaderMismatch    The two headers that describe one member of a zip disagree.
+    Polyglot.PNG.TrailingData           Bytes follow the end of a png.
+    Polyglot.Archive.Hidden             A zip archive sits behind the header of an image.
+    Masquerade.PNG                      A file is named as a png & does not begin as one.
+
+The Embedded findings come from the embed records of ScanCore_Classifiers.def. A record that is added there adds a
+finding named Embedded. & the name of the record, with the confidence the record gives it.
+An archive bomb stops the inspection of its file, because reading any further is what the bomb was built for.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Why A File Is Incomplete--
+
+Each reason is written in the brackets of the Incomplete line, as it is here.
+
+  THE FILE ITSELF
+    the file could not be opened
+        Error 610 is written as well. The file was met inside a folder, after the scan had begun.
+    the file could not be read in full
+        Error 600 is written as well. No hash of the file was matched, because a hash of part of a file means nothing.
+    the inspection stopped on an internal fault
+        Error 640 is written as well, with what the interpreter said. This is a fault in ScanCore & is worth reporting.
+
+  A CONTAINER
+    an encrypted member cannot be inspected
+    a member uses a compression method that is not read
+    a damaged member could not be read
+    a zip directory could not be read
+    a zip directory is damaged
+    a tar archive ends before its last member does
+    a bzip2 stream is not read
+    a gzip stream cannot be read without the zlib extension
+
+  A BUDGET
+    a member larger than the entry budget was inspected in part
+    a compressed stream larger than the entry budget was inspected in part
+    a nested archive larger than the entry budget was not opened
+    an archive lists <n> entries, which is more than the entry budget of <n>
+    the entry budget of <n> was reached
+    the total decompression budget of <n> bytes was reached
+
+A budget is raised with the switch that Documentation/ABOUT_COMMAND_LINE_ARGUMENTS.txt names for it.
+A folder that could not be read, & a folder that was not opened because it sits past the maximum depth, is said in
+a warning that names the folder. It draws no Incomplete line, because that line is about one file.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

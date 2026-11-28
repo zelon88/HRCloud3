@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 
 FILE INFORMATION ...
-v1.0.0.
+v1.0.1.
 This plain text file records every difference between the HRProprietary Engine this application carries & the Engine as it is distributed, with the reason for each, so that each can be taken upstream or dropped deliberately.
 
 HARDWARE REQUIREMENTS ...
@@ -18,7 +18,7 @@ This application requires at least a Raspberry Pi Model B+ or greater.
 This application will run on just about any x86 or x64 computer.
 
 DEPENDENCY REQUIREMENTS ...
-This file describes the Engine the application carries, which is the HRProprietary Engine v4.3.4, by what it changed in the Engine v4.3.4 its starter kit distributes. Run  php cloudCore.php -v  to see what this installation has.
+This file describes the Engine the application carries, which is the HRProprietary Engine v5.0.1 as canon distributes it, with no change of HRCloud3's. Run  php cloudCore.php -v  to see what this installation has.
 
 <3 Open-Source
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -40,20 +40,21 @@ application, asks nothing of one that the contract does not already ask, & leave
 reference application behaving as it did.
 
 A versioned Engine file this application changes is stamped with the version it was taken at &
-ur, for un-reconciled, as v4.3.4ur. A file it carries unchanged keeps the kit's stamp. The
+ur, for un-reconciled, as v5.0.0ur. A file it carries unchanged keeps canon's stamp. The
 HRProprietary conversation merges every application's copy into canon, & only canon is stamped
 plainly.
 
-The baseline is the HRProprietary repository at 2c576bb, the v4.3.4 starter kit. Its kernel is
-v4.3.3, its Engine v4.3.4, with the Setup Core at v4.3.3, the Dependency Core at v4.3.4, the
-Pipeline Core at v4.3.2, the Workflow & Event Cores at v4.3.1, the Environment Core at v4.3.3,
-the Authentication Core at v4.2.3 & the Email Core at v4.2.0.
+The baseline is canon v5.0.1, which is the HRProprietary repository at 1f5e243 with drop-in 35
+applied as its status says. Its kernel is v5.0.1, its Engine v5.0.0, with the Setup, Dependency,
+Pipeline, Authentication, Email, Page & Storage Cores at v5.0.0, the Workflow & Event Cores at
+v4.3.1 & the Environment Core at v4.3.3. Until v1.0.1 the baseline was 2c576bb, the v4.3.4 starter
+kit, & every change HRCloud3 made to it is canon's from v5.0.0.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 --What This Application Took From The Kit--
 
-HRCloud3 v0.9.8 took, unchanged:
+HRCloud3 v1.0.1 took canon v5.0.1, unchanged:
   Resources/Kernel/                 The kernel.
   Resources/Engine/                 engine.php, engineConfig.php, config-template.php, depends.php, every Core,
                                     every Manager, Sandbox/ & UI/.
@@ -61,13 +62,19 @@ HRCloud3 v0.9.8 took, unchanged:
                                     does not copy.
   LICENSE                           The GNU GPLv3.
 
-  Resources/Pipelines/              Every pipeline the kit carries, & its shared modules.
-  Resources/ScanCore/               ScanCore v1.9.
+  Resources/Pipelines/              Every pipeline canon carries, & its shared modules, with ScanCore v2.0.0 in
+                                    the ScanCore pipeline's folder, Resources/Pipelines/ScanCore/ScanCore.
 
-HRCloud3 v0.9.8 accepts no pipeline. Its contract's allowlist is empty, so no pipeline is ever read,
-required or enumerated. They are carried as the kit's assembled Starter carries them, because the message
-checker attributes each block of ERROR_DESCRIPTIONS.txt to the files it names, & the pipelines' blocks are
-reported stale in a tree that does not hold them. The build that first accepts a pipeline names it.
+v0.9.8 took the v4.3.4 starter kit at 2c576bb the same way, with ScanCore v1.9 in Resources/ScanCore, beside
+the Kernel & the Engine. Canon moved it into the ScanCore pipeline's folder at v5.0.0. HRCloud3's contract
+names Resources/ScanCore in $EngineRetiredPaths from v1.0.1, so -fp takes away the copy an installation of
+v1.0.0 holds.
+
+HRCloud3 accepts no pipeline. Its contract's allowlist is empty, so no pipeline is ever read, required or
+enumerated, & nothing runs either copy of ScanCore. They are carried as the kit's assembled Starter carries
+them, because the message checker attributes each block of ERROR_DESCRIPTIONS.txt to the files it names, &
+the pipelines' blocks are reported stale in a tree that does not hold them. The build that first accepts a
+pipeline names it.
 
 Its entry point, cloudCore.php, its versionInfo.php & its three contract files began as the kit's
 Example/Starter, & are HRCloud3's own.
@@ -77,17 +84,29 @@ To these documents HRCloud3 added CHANGELOG.txt, this file, test_hrcloud3-cli.ph
 its own, WARNINGS ABOUT HRCLOUD3. The seven entries for the kernel's errors 3 to 9 name cloudCore.php
 beside convertCore.php & app.php, because the kernel raises each from whichever entry point boots it.
 Build/Tests/README.txt gains a section naming test_hrcloud3-cli.php. Nothing of the Engine's was removed
-from any document.
+from any document. v1.0.1 puts these lines into canon's copies of both documents.
 
-HRCloud3 v0.9.9 added UI/, its interfaces, & CREATING_INTERFACES.txt, which are its own. What it added to
-& changed in the Engine & the Engine's documents is entered below.
+HRCloud3 v0.9.9 added UI/, its interfaces, & CREATING_INTERFACES.txt, which are its own.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Changes To The Engine--
 
-v0.9.8 changed nothing. v0.9.9 & v1.0.0 change what follows. Every other file of the Engine's is the kit's, byte
-for byte, & keeps the kit's stamp, so comparing the tree against the kit shows exactly these.
+v1.0.1 changes nothing. Every file of the Engine's is canon v5.0.1's byte for byte, but for HRCloud3's own lines
+in the two documents above, so comparing the tree against canon shows only those.
+
+WHAT CANON TOOK, AT v5.0.0. Every change v0.9.9 & v1.0.0 made to the Engine, entered below as it was made, is
+canon's own from v5.0.0 & stamped v5.0.0. Canon took them with these differences, which HRCloud3 now carries:
+  The Storage Core's three warnings name their settings in plain words, & the Engine's documents name the Page &
+  Storage Cores' settings by their shared names in $EngineSettingNames, because the Engine cannot know the label
+  an application gives a setting. HRCloud3's labels, --Libraries-- & --Trash Lifetime-- among them, are its own.
+  test_storage-cli.php names its application TestApp, so the shared library's own folder there is .testapp.
+  51000 to 51019 are the Page Core's & 52000 to 52019 the Storage Core's, as proposed.
+  displayCore & displayManager are the compositor's names, as proposed.
+  A --File Deletion Age Threshold-- of 0 keeps files forever. See below.
+  No example pins the Page or the Storage Core.
+
+THE CHANGES, AS v0.9.9 & v1.0.0 ENTERED THEM. The stamps are the ones they carried then.
 
 THE STORAGE CORE. NEW IN v1.0.0. Resources/Engine/Cores/storageCore.php, v4.3.4ur.
   What. A Core that keeps what signed in users store in libraries an administrator lists, & the only part of
@@ -222,7 +241,7 @@ DOCUMENTS & TESTS.
 
 STILL TO PROPOSE. Each is entered here in the build that makes it.
   Encryption at rest, inside the Storage Core, which every file passes through, with a key each user holds.
-  A file shared by a link, or with one other user, & who put each file in a shared library.
+  A file shared by a link, or with one other user.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -265,9 +284,11 @@ Proposed, each keeping the Engine free of markup & strings:
      as a string a pack lacks is taken from the baseline pack today.
 Until one of these is canon, HRCloud3's interfaces carry their own copy of the interface half, taken from HRConvert2
 v4.3.4's Default interface with only its names changed, & say so in each file it took.
-Where it stands at v0.9.9. Proposals 3 & 4 are in this copy as the Page Core, above. HRC3-SignIn.js has the shape
+Where it stood at v0.9.9. Proposals 3 & 4 are in this copy as the Page Core, above. HRC3-SignIn.js has the shape
 proposal 1 asks for, its endpoint & prefix handed in by the page, & is still carried by the interface. Proposals
 1 & 2 are left to the HRProprietary conversation.
+Where it stands at v1.0.1. Proposals 3 & 4 are canon's from v5.0.0, as the Page Core. Proposals 1 & 2 are on
+canon's list for a later bite, so HRC3-SignIn.js is still the interface's.
 
 AN APPLICATION THAT DRAWS PAGES MAY SERVE NO LOCATION. Met in v0.9.9.
 The warning on every page is fixed in engine.php, above. Two quieter assumptions remain, in files left plain.
@@ -275,6 +296,8 @@ The warning on every page is fixed in engine.php, above. Two quieter assumptions
 whose contract gives no location the served role, where Not served would be true. And every web request
 makes the hosted DATA folder & its session folders, $ConvertTemp, which such an application never writes.
 Proposed: say Not served, & make the hosted DATA folder only for an application that serves it.
+Where it stands at v1.0.1. The fix in verifyRequiredDirs() is canon's from v5.0.0. Not served, & the hosted DATA
+folder, are on canon's list for a later bite.
 
 THE FILE LIFETIME SWEEP REACHES EVERY PLAIN FILE AT THE TOP OF A USER'S FOLDER. Met in v0.9.9.
 The Engine lets a signed in user choose how long their files are kept, & the Authentication Manager removes
@@ -285,19 +308,48 @@ folders an application names.
 Where it stands at v1.0.0. A library is never in Users, so the sweep never reaches one, & a library's trash
 has a lifetime of its own. HRCloud3's contract names $EngineFileLifetimes = array(0), so the Engine offers its
 users no other lifetime, & the sweep applies none.
+Where it stands at v1.0.1. $EngineFileLifetimes is canon's from v5.0.0.
 
 A RELEASE THAT ADDS A SECTION TO config.php. Met in v1.0.0.
 Fixed in setupCore.php, above. HRCloud3's --Libraries-- & --Trash Lifetime-- are a section of their own.
+Where it stands at v1.0.1. The fix is canon's from v5.0.0.
 
 --File Deletion Age Threshold-- SAYS 0 KEEPS FILES FOREVER, & THE SESSION SWEEP READS 0 AS EXPIRE EVERYTHING. Met in v1.0.0.
 The Engine's half of the template says 0 keeps files forever, & cleanDataLocation() says a threshold of zero
 expires everything, because every session is older than nothing, & does so. test_hrcloud3-cli.php sets it to 0
 to make every session expire, & checks that no library is reached. Left plain, because it is not this build's,
 & reported to the HRProprietary conversation: one of the two is wrong.
+Where it stands at v1.0.1. Canon decided at v5.0.0 that 0 keeps files forever, so the request sweep, a bare -c &
+the Resource Manager's sweep keep every session at 0, & -c now still sweeps them all. test_hrcloud3-cli.php
+sweeps with -c now, & checks that it removed sessions & reached no library.
 
 THE DOCUMENTATION CHECKER KNOWS ONLY THE EXAMPLE'S CODE. Met in v0.9.8.
 hrconvert2-doccheck.py reports 38 names in ERROR_DESCRIPTIONS.txt, labels & functions only HRConvert2's
 code has, as it does from the kit's assembled Starter. The message checker already attributes each block
 to the files it names & sets aside what another application raises. The documentation checker could learn
 the same rule. Left to the HRProprietary conversation, which owns both checkers, & unchanged here.
+Where it stands at v1.0.1. Canon's documents name the Page & Storage Cores' settings by their shared names from
+v5.0.0, so none of HRCloud3's labels is in them. From the root of the v1.0.1 tree it reports the same 38 names,
+all HRConvert2's, as canon reports from its Starter by design.
+
+THE PIN BUILD EXPECTS A BOOTSTRAP SCRIPT. Met in v1.0.1.
+--build --pins builds $RequiredConfigScript from Documentation/Build/<application>-setup.sh, the bootstrap script
+an application ships, & reports CANNOT BUILD where there is none, which fails the check whatever every other pin
+says. HRCloud3 ships none, as the kit's Starter ships none, so --build --pins exits 1 for both with every other pin
+matching. HRCloud3's pins for v1.0.1 were moved until it reported nothing else. Left to the HRProprietary
+conversation: a pin whose file the application does not ship could be reported apart, & leave the check passing.
+
+A RELEASE THAT RETIRES CODE IS REFUSED WHERE IT IS UNPACKED OVER THE HOSTED LOCATION. Met in v1.0.1.
+codeMissingFromTree() holds every PHP file an installation keeps in Resources & UI against the tree -fp would
+install, so a drop-in of changed files is never installed in place of the whole application. It does not read
+$EngineRetiredPaths. A release whose contract retires code, as v1.0.1 retires Resources/ScanCore & the kit's
+HRConvert2 does from v5.0.0, is refused by -fp run from the hosted location, naming ScanCore.php as missing,
+though -fp in the installation takes that folder away itself. ABOUT_MANAGED_LOCATIONS.txt says a release that
+removes code on purpose installs once Application has been moved aside by hand, & that route also installs a
+config.php of defaults. Unpacked into Application, followed by --config --repair & -fp, as the same document
+says for a drop-in, v1.0.1 installs over v1.0.0, keeps every value an administrator set & every account, & -fp
+takes Resources/ScanCore away. Seen from a v1.0.0 installation, & README.md says to upgrade that way. Proposed:
+codeMissingFromTree() leaves out every path at or beneath one the running tree's contract retires, since those
+are the code a release drops on purpose & says so. Left plain, because the route that keeps an administrator's
+configuration works.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------

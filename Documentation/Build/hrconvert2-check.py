@@ -12,7 +12,7 @@
 # / on a server for users of any web browser without authentication.
 # /
 # / File Information ...
-# / v4.2.4.
+# / v5.0.1.
 # / This file checks the source for faults a human reading it will not reliably see.
 # /
 # / Run it from the installation root, beside the application's entry point, convertCore.php for HRConvert2.
@@ -36,7 +36,8 @@
 # /   python3 Documentation/Build/hrconvert2-check.py --only pins
 # /
 # / ScanCore is checked with everything else, because it is HRProprietary software & has no
-# / tooling of its own yet. --no-scancore leaves Resources/ScanCore out of every check.
+# / linter of its own yet. Its own consistency check & behaviour test, from ScanCore v2.0.0, are in
+# / its Documentation/Build. --no-scancore leaves Resources/Pipelines/ScanCore/ScanCore out of every check.
 # /   python3 Documentation/Build/hrconvert2-check.py --no-scancore
 # /
 # / Run --list for every check. Each one is described above the function that performs it,
@@ -86,11 +87,11 @@ import sys
 
 # / The bundled ScanCore program, relative to the installation root. It runs as a process of
 # / its own & is a different program from the ScanCore pipeline, which is application code.
-SCANCORE_FOLDER = os.path.join('Resources', 'ScanCore') + os.sep
+SCANCORE_FOLDER = os.path.join('Resources', 'Pipelines', 'ScanCore', 'ScanCore') + os.sep
 # / Whether ScanCore is checked. It is unless --no-scancore says otherwise. Set by main.
 INCLUDE_SCANCORE = True
 # / A finding whose message names a file in the bundled ScanCore program.
-SCANCORE_MESSAGE = re.compile(r'Resources[/\\]ScanCore[/\\]|\bScanCore(?:_Config)?\.php\b')
+SCANCORE_MESSAGE = re.compile(r'Resources[/\\]Pipelines[/\\]ScanCore[/\\]ScanCore[/\\]|\bScanCore(?:_Config)?\.php\b')
 # / The application's entry point & the function that models its half of config.php, read from its contract by main.
 # / They begin as the Engine's defaults for an application that declares neither, app.php & no model.
 ENTRY_POINT = 'app.php'
@@ -1103,6 +1104,63 @@ def check_component_guard(root, report):
 
 
 # / -----------------------------------------------------------------------------------
+# / A function to reduce a PHP value to what decides it, so two spellings of one value compare equal.
+# / Accepts the text of a value. Returns it without the whitespace & comments outside its strings.
+# / A string is kept exactly, so two values that differ inside one are still told apart.
+def squeeze_php(value_text):
+    kept = []
+    quote = ''
+    position = 0
+    while position < len(value_text):
+        character = value_text[position]
+        if quote:
+            kept.append(character)
+            if character == '\\' and position + 1 < len(value_text):
+                kept.append(value_text[position + 1])
+                position += 2
+                continue
+            if character == quote:
+                quote = ''
+        elif character in '\'"':
+            quote = character
+            kept.append(character)
+        elif value_text.startswith('//', position) or character == '#':
+            newline = value_text.find('\n', position)
+            position = len(value_text) if newline < 0 else newline
+            continue
+        elif value_text.startswith('/*', position):
+            closing = value_text.find('*/', position + 2)
+            position = len(value_text) if closing < 0 else closing + 2
+            continue
+        elif not character.isspace():
+            kept.append(character)
+        position += 1
+    return ''.join(kept)
+
+
+# / -----------------------------------------------------------------------------------
+# / A function to read the value a configuration template gives each of its settings.
+# / Accepts the template's path. Returns a dictionary of setting name to the text of its value.
+# / It reads a template as collectConfigModel() in engine.php does, so a value is the one a repair writes.
+def template_values(template):
+    text = open(template, encoding='utf-8').read()
+    return dict((match.group(1), match.group(2).strip()) for match in re.finditer(r'^\$([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?);\s*$', text, re.M | re.S))
+
+
+# / -----------------------------------------------------------------------------------
+# / A function to read the default a configuration model gives each of its settings itself.
+# / Accepts the lines of the model's function. Returns a list of pairs of setting name & default.
+# / A default is a PHP string in single quotes, where a backslash escapes only a quote or a backslash.
+def model_defaults(lines):
+    defaults = []
+    for line in lines:
+        match = re.match(r"^[ \t]*'([A-Za-z_]\w*)' => array\('Type' => '\w+'.*?'Default' => '((?:[^'\\]|\\.)*)'", line)
+        if match:
+            defaults.append((match.group(1), re.sub(r"\\([\\'])", r'\1', match.group(2))))
+    return defaults
+
+
+# / -----------------------------------------------------------------------------------
 # / CHECK THIRTEEN. Every setting the two configuration templates hold is modelled, & is held once.
 # / config.php has two halves, the Engine's & the application's, & each has a template & a model.
 # /   The Engine's       Resources/Engine/config-template.php & engineConfigModel() in Resources/Engine/engine.php.
@@ -1121,6 +1179,10 @@ def check_component_guard(root, report):
 # / config.php & in a reset, so a default named for any other setting is never written & is reported.
 # / A model is read by pattern, as one entry per line beginning with its name in quotes. The defaults are read the same way,
 # / as one entry per line indented by two spaces, which is how the contract writes them.
+# / From v5.0.1 a default a model gives a setting itself is held to the template's value. collectConfigModel()
+# / writes the template's value over it, so it is written only when the template cannot be read, & a stale one
+# / shows nowhere else. The Engine's for $MaximumPerConversionResources was found without Scan by reading it at v5.0.0.
+# / Whitespace & comments outside a string do not decide a value, so they are not compared.
 def check_config_globals(root, report):
     halves = (
         ('the Engine\'s', os.path.join(root, 'Resources', 'Engine', 'config-template.php'), os.path.join(root, 'Resources', 'Engine', 'engine.php'), 'engineConfigModel'),
@@ -1146,6 +1208,12 @@ def check_config_globals(root, report):
         for name in sorted(model_names - template_names):
             report('CONFIG', '$' + name + ' is in ' + function + '() & not in ' + os.path.relpath(template, root) + ', so a repair has no default to write for it')
             faults += 1
+        values = template_values(template)
+        for name, default in model_defaults(record['original']):
+            if name in values and squeeze_php(default) != squeeze_php(values[name]):
+                report('CONFIG', '$' + name + ' has a default in ' + function + '() that is not its value in ' + os.path.relpath(template, root)
+                       + ', so a repair made while the template cannot be read writes another. Make the two the same')
+                faults += 1
         for name in template_names:
             held.setdefault(name, []).append(half)
     for name in sorted(held):
@@ -1457,7 +1525,8 @@ def check_argument_counts(files, report):
 # / not reported.
 # / ScanCore is a program of its own & defines its own sanitize(), which returns one value.
 # / Functions are therefore matched within one program, ScanCore or everything else.
-# / Only Resources/ScanCore is ScanCore. The ScanCore pipeline is application code & loads
+# / Only Resources/Pipelines/ScanCore/ScanCore is ScanCore, from v5.0.0, & Resources/ScanCore was
+# / until then. The ScanCore pipeline's own files are application code & load
 # / into this application's process. An earlier test matched any folder named ScanCore &
 # / counted the pipeline as part of the scanner.
 def program_of(path):
@@ -1784,7 +1853,7 @@ def main():
         ('guard', 'every component refuses to load directly', lambda: check_component_guard(root, report)),
         ('contract', 'the Engine never calls application code', lambda: check_engine_independence(root, report)),
         ('kernel', 'the kernel calls only itself, PHP & a guarded Engine', lambda: check_kernel_independence(root, files, report)),
-        ('config', 'every setting a configuration template holds is modelled, & held once', lambda: check_config_globals(root, report)),
+        ('config', 'every setting a configuration template holds is modelled, held once & defaulted alike', lambda: check_config_globals(root, report)),
         ('stray', 'nothing ships that is not part of the application', lambda: check_stray_files(root, report)),
         ('logo', 'the Engine\'s own logo is the file it was distributed with', lambda: check_engine_logo(root, report)),
         ('spacing', 'separators & blank lines follow the house shape', lambda: check_file_spacing(files, report)),
@@ -1819,7 +1888,7 @@ def main():
     if not quiet:
         print('Checking ' + str(len(files)) + ' PHP files under ' + root + '.')
         if not INCLUDE_SCANCORE:
-            print('Resources/ScanCore is left out, because --no-scancore was given.')
+            print('Resources/Pipelines/ScanCore/ScanCore is left out, because --no-scancore was given.')
         print()
     total = 0
     for name, description, runner in checks:
@@ -1845,7 +1914,7 @@ def main():
             # / lost among the ones ScanCore is carrying.
             in_scancore = len([message for kind, message in findings if SCANCORE_MESSAGE.search(message)])
             if in_scancore:
-                print(str(in_scancore) + ' of them are in Resources/ScanCore & ' + str(len(findings) - in_scancore)
+                print(str(in_scancore) + ' of them are in Resources/Pipelines/ScanCore/ScanCore & ' + str(len(findings) - in_scancore)
                       + ' are in the application. --no-scancore leaves ScanCore out.')
     if fail_on:
         blocking = [kind for kind, message in findings if kind in fail_on]

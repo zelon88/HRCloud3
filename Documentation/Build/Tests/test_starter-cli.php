@@ -80,10 +80,10 @@ function namesIn($folderPath) {
   return $folderNames; }
 
 // The rows -v prints for each tier & each of the Engine's cores, as the Starter pins them.
-$tierRows = array("Starter 4.3.2\n", "  Kernel     4.3.3, requires 4.3.3\n", "  Engine     4.3.4, requires 4.3.4\n",
-  "             & its Environment Core 4.3.3, requires 4.3.3\n", "  Config     4.3.2, requires 4.3.2 or later\n");
-$coreRows = array("  Setup Core                  OK, 4.3.3\n", "  Dependency Core             OK, 4.3.4\n", "  Pipeline Core               OK, 4.3.2\n",
-  "  Workflow Core               OK, 4.3.1\n", "  Authentication Core         OK, 4.2.3\n", "  Email Core                  OK, 4.2.0\n", "  Event Core                  OK, 4.3.1\n");
+$tierRows = array("Starter 4.3.2\n", "  Kernel     5.0.1, requires 5.0.1\n", "  Engine     5.0.0, requires 5.0.0\n",
+  "             & its Environment Core 4.3.3, requires 4.3.3\n", "  Config     5.0.0, requires 5.0.0 or later\n");
+$coreRows = array("  Setup Core                  OK, 5.0.0\n", "  Dependency Core             OK, 5.0.0\n", "  Pipeline Core               OK, 5.0.0\n",
+  "  Workflow Core               OK, 4.3.1\n", "  Authentication Core         OK, 5.0.0\n", "  Email Core                  OK, 5.0.0\n", "  Event Core                  OK, 4.3.1\n");
 $noPipelines = "  Pipelines                   NONE, this application accepts none\n";
 
 list ($madeStatus, $madeSaid) = runCommand(array('mkdir', '-p', $hosted));
@@ -105,7 +105,7 @@ check('--config --repair writes config.php from both halves of the template', $s
   && preg_match('/Wrote [0-9]+ setting\(s\), all defaults\./', $said) === 1 && !phpComplained($said), $said);
 $configText = (string)@file_get_contents($hosted.'/Resources/config.php');
 check('config.php holds the Starter\'s own setting & version, & the defaults the Starter gives the Engine\'s', strpos($configText, "\$Greeting = 'Hello from the Starter.';") !== FALSE
-  && strpos($configText, "\$ConfigVersion = 'v4.3.2';") !== FALSE && strpos($configText, "\$ConvertLoc = '/DATA/Starter';") !== FALSE && strpos($configText, "\$ApplicationName = 'Starter';") !== FALSE);
+  && strpos($configText, "\$ConfigVersion = 'v5.0.0';") !== FALSE && strpos($configText, "\$ConvertLoc = '/DATA/Starter';") !== FALSE && strpos($configText, "\$ApplicationName = 'Starter';") !== FALSE);
 
 
 // Part 3. -v, before the Starter is installed.
@@ -170,7 +170,7 @@ check('the loader hands the Starter\'s own command to the installed copy', $stat
 moveFile(mustBeInstallFolder($installed.'/'.$environmentCore), mustBeScratch(scratchPath('starter/environmentCore-installed.php')));
 list ($status, $said) = starter($installed, array('-v'));
 check('without its Environment Core the Engine loads & does not start, & -v says so & counts it as failed', $status === 0
-  && strpos($said, "  Engine     4.3.4, requires 4.3.4, & did not start\n") !== FALSE && strpos($said, 'The Engine loaded & did not start, so nothing else can be reported. Its log says why.') !== FALSE
+  && strpos($said, "  Engine     5.0.0, requires 5.0.0, & did not start\n") !== FALSE && strpos($said, 'The Engine loaded & did not start, so nothing else can be reported. Its log says why.') !== FALSE
   && strpos($said, '1 check(s) failed.') !== FALSE && !phpComplained($said), $said);
 list ($status, $said) = starter($installed, array('-h'));
 check('-h still answers, without the Engine\'s commands', $status === 0 && strpos($said, 'The Engine could not be loaded, so none of its commands are listed.') !== FALSE
@@ -186,13 +186,13 @@ $coreText = (string)file_get_contents($installed.'/'.$environmentCore);
 if (substr_count($coreText, "\$EnvironmentCoreVersion = 'v4.3.3';") !== 1) testStop('The installed Environment Core does not declare v4.3.3 once.');
 rewriteInstalled($installed.'/'.$environmentCore, str_replace("\$EnvironmentCoreVersion = 'v4.3.3';", "\$EnvironmentCoreVersion = 'v4.3.0';", $coreText));
 list ($status, $said) = starter($installed, array('-v'));
-check('an Environment Core of another version stops the Engine starting, & -v says so', $status === 0 && strpos($said, "  Engine     4.3.4, requires 4.3.4, & did not start\n") !== FALSE
+check('an Environment Core of another version stops the Engine starting, & -v says so', $status === 0 && strpos($said, "  Engine     5.0.0, requires 5.0.0, & did not start\n") !== FALSE
   && strpos($said, '1 check(s) failed.') !== FALSE && !phpComplained($said), $said);
 list ($status, $said) = starter($installed, array('--setup'));
 check('--setup is refused with status 1', $status === 1 && strpos($said, 'This command needs the Engine, which could not be loaded.') !== FALSE && !phpComplained($said), $said);
 rewriteInstalled($installed.'/'.$environmentCore, $coreText);
 list ($status, $said) = starter($installed, array('-v'));
-check('with its Environment Core as it shipped, the installed copy starts the Engine again', $status === 0 && strpos($said, "  Engine     4.3.4, requires 4.3.4\n") !== FALSE
+check('with its Environment Core as it shipped, the installed copy starts the Engine again', $status === 0 && strpos($said, "  Engine     5.0.0, requires 5.0.0\n") !== FALSE
   && strpos($said, 'did not start') === FALSE && strpos($said, $noPipelines) !== FALSE, $said);
 
 
@@ -208,13 +208,13 @@ $incompleteContract = str_replace(array("\n\$EngineEntryPoint = 'app.php';\n", "
 rewriteInstalled($contractPath, $strictContract);
 list ($status, $said) = starter($installed, array('-v'));
 check('in strict contract mode the Starter\'s contract sets every value the mode requires, & the Engine starts', $status === 0
-  && strpos($said, "  Engine     4.3.4, requires 4.3.4\n") !== FALSE && strpos($said, 'did not start') === FALSE && strpos($said, $noPipelines) !== FALSE
+  && strpos($said, "  Engine     5.0.0, requires 5.0.0\n") !== FALSE && strpos($said, 'did not start') === FALSE && strpos($said, $noPipelines) !== FALSE
   && !phpComplained($said), $said);
 check('& nothing in root\'s log says 31027', !engineLogSays(array('Starter-31027, ')), implode(' ', namesIn('/DATA/Starter/Engine')));
 rewriteInstalled($contractPath, $incompleteContract);
 list ($status, $said) = starter($installed, array('-v'));
 check('with $EngineEntryPoint commented out & $EngineApplicationLayout indented the Engine does not start, & -v says so & counts it as failed', $status === 0
-  && strpos($said, "  Engine     4.3.4, requires 4.3.4, & did not start\n") !== FALSE && strpos($said, 'Its log says why.') !== FALSE
+  && strpos($said, "  Engine     5.0.0, requires 5.0.0, & did not start\n") !== FALSE && strpos($said, 'Its log says why.') !== FALSE
   && strpos($said, '1 check(s) failed.') !== FALSE && !phpComplained($said), $said);
 check('& root\'s log names both, with ERROR 31027', engineLogSays(array('Starter-31027, ', 'does not set $EngineEntryPoint, $EngineApplicationLayout.')),
   implode(' ', namesIn('/DATA/Starter/Engine')));
@@ -225,11 +225,11 @@ list ($status, $said) = starter($installed, array('-fp'));
 check('-fp is refused with status 1', $status === 1 && strpos($said, 'This command needs the Engine, which could not be loaded.') !== FALSE && !phpComplained($said), $said);
 rewriteInstalled($contractPath, str_replace("\n\$EngineStrictContract = TRUE;\n?>", "\n?>", $incompleteContract));
 list ($status, $said) = starter($installed, array('-v'));
-check('without strict contract mode the same contract starts the Engine, on its defaults', $status === 0 && strpos($said, "  Engine     4.3.4, requires 4.3.4\n") !== FALSE
+check('without strict contract mode the same contract starts the Engine, on its defaults', $status === 0 && strpos($said, "  Engine     5.0.0, requires 5.0.0\n") !== FALSE
   && strpos($said, 'did not start') === FALSE && !phpComplained($said), $said);
 rewriteInstalled($contractPath, $shippedContract);
 list ($status, $said) = starter($installed, array('-v'));
-check('with its contract as it shipped, the installed copy starts the Engine', $status === 0 && strpos($said, "  Engine     4.3.4, requires 4.3.4\n") !== FALSE
+check('with its contract as it shipped, the installed copy starts the Engine', $status === 0 && strpos($said, "  Engine     5.0.0, requires 5.0.0\n") !== FALSE
   && strpos($said, 'did not start') === FALSE && (string)file_get_contents($contractPath) === $shippedContract, $said);
 
 finish('test_starter');

@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.3.1.
+// / v5.0.0.
 // / This file scans files with ScanCore & reports what it found.
 // /
 // / It changes nothing.
@@ -16,6 +16,8 @@
 // / It returns findings & a verdict for every path, infected, suspicious, incomplete or clean, with what ScanCore said about it,
 // / each line with the scanned file's own name & no control character, so a caller may hand the lines on.
 // / ScanCore writes a scratch log of its own, which is read back for findings.
+// / ScanCore ships in this pipeline's folder, at ScanCore/, from v5.0.0, so adopting the pipeline adopts the scanner.
+// / Until then it was Resources/ScanCore, beside the Kernel & the Engine.
 // / It names no application. What it needs is read through the kernel's applicationSetting(), as ScannerScratchFolder,
 // / ScanCoreMemoryLimit, ScanCoreChunkSize, ScanCoreVerbose & ScanCoreDebug.
 // /
@@ -118,12 +120,12 @@ function readScanCoreLines($logLines, $pathToScan) {
 // / A path ScanCore could not be run against is incomplete, because a path nothing scanned is not known to be clean.
 // / A path that no longer exists is passed over & given no verdict, because there is nothing to say about it.
 // /
-// / ScanCore ships inside the application, so it needs no dependency check beyond the file existing.
+// / ScanCore ships inside this pipeline's folder, so it needs no dependency check beyond the file existing.
 // / It is still sandboxed, because it reads a file somebody else supplied.
 // / Each switch is handed to ScanCore on its own, because ScanCore reads a switch whole & matches -rv to nothing.
 function scanWithScanCore($pathsToScan) {
   // / Set variables.
-  global $InstLoc, $DirSep, $MaxLogSize, $Verbose, $EnableMemoryProtection;
+  global $DirSep, $MaxLogSize, $Verbose, $EnableMemoryProtection;
   $ScanCompleted = FALSE;
   $ThreatWasFound = FALSE;
   $ScanFindings = $ScanVerdicts = array();
@@ -133,7 +135,7 @@ function scanWithScanCore($pathsToScan) {
   $commandExitCode = $memoryLimit = $chunkSize = 0;
   $commandMayRun = FALSE;
   if (!is_array($pathsToScan)) $pathsToScan = array($pathsToScan);
-  $scanCoreDir = $InstLoc.$DirSep.'Resources'.$DirSep.'ScanCore';
+  $scanCoreDir = dirname(__FILE__).$DirSep.'ScanCore';
   $scanCoreFile = $scanCoreDir.$DirSep.'ScanCore.php';
   $scratchFolder = (string)applicationSetting('ScannerScratchFolder', '');
   if (!file_exists($scanCoreFile)) {

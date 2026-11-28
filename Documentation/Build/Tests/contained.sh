@@ -9,6 +9,7 @@
 # It runs COMMAND inside bubblewrap, the sandbox the Engine itself depends on, with:
 #   - everything this machine has mounted bound read only, so nothing on it can be changed or removed;
 #   - an empty /sys & /run, a new /dev, /proc & /tmp, & a new /mnt that holds /mnt/scratch;
+#   - /tmp open to every account, as a real one is, from v5.0.1, because ScanCore's own test scans as nobody & makes a folder there;
 #   - a second new filesystem at /mnt/other, for what a suite must do across two filesystems;
 #   - process numbers of its own, so nothing outside can be signalled, & no network.
 # Everything new is memory, & it is gone when COMMAND ends.
@@ -39,6 +40,11 @@ if ! command -v bwrap >/dev/null 2>&1; then
   exit 69
 fi
 
+# The first step inside. It opens /tmp to every account, then becomes COMMAND.
+# bubblewrap makes a new tmpfs that root alone can write, & --perms, which would open it, is not in every bubblewrap the Engine accepts.
+INSIDE='chmod 1777 /tmp || { echo "contained.sh: /tmp could not be opened to every account inside, & nothing was run." >&2; exit 70; }
+exec "$@"'
+
 exec bwrap \
   --die-with-parent \
   --unshare-pid \
@@ -58,4 +64,4 @@ exec bwrap \
   --setenv HRP_CONTAINED 1 \
   --setenv HRP_SCRATCH /mnt/scratch \
   --setenv HRP_OTHER /mnt/other \
-  -- "$@"
+  -- /bin/sh -c "$INSIDE" contained.sh "$@"

@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.3.4.
+// / v5.0.0.
 // / THIS IS THE ENGINE'S HALF OF THE DEPENDENCY MANIFEST, & it lists what the Engine needs whatever application bundles it.
 // / This file is data. It defines nothing & does nothing.
 // / The Engine's verifyDependsManifest() reads it, & nothing else may.
@@ -50,7 +50,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, The
 
 // / -----------------------------------------------------------------------------------
 // / The version of this half. The Engine reads it without executing the file, & pins it exactly.
-$EngineDependsVersion = 'v4.3.4';
+$EngineDependsVersion = 'v5.0.0';
 // / -----------------------------------------------------------------------------------
 
 
@@ -63,7 +63,7 @@ $EngineDependsManifest = array(
   array('Name' => 'Shell', 'Binary' => 'sh', 'Type' => 'system', 'Package' => 'dash',
     'MinimumVersion' => '', 'VersionCommand' => '', 'VersionPattern' => '',
     'Required' => TRUE, 'Subsystem' => 'Core', 'Requires' => array(),
-    'License' => 'BSD-3-Clause', 'Source' => 'https://git.kernel.org/pub/scm/utils/dash/dash.git', 'Purpose' => 'Runs every command the Engine & an application start, & its builtins cd, command, echo, exit, export, kill, test & umask.'),
+    'License' => 'BSD-3-Clause', 'Source' => 'https://git.kernel.org/pub/scm/utils/dash/dash.git', 'Purpose' => 'Runs every command the Engine & an application start, & its builtins cd, command, echo, exec, exit, export, kill, test & umask.'),
   // / head & tr are run by a version source an application's half writes, & by pipelines, & are always part of coreutils.
   array('Name' => 'Coreutils', 'Binary' => 'rm', 'Programs' => array('chmod', 'chown', 'cp', 'env', 'head', 'nice', 'nohup', 'timeout', 'tr', 'true', 'uname'), 'Type' => 'system', 'Package' => 'coreutils',
     'MinimumVersion' => '', 'VersionCommand' => 'rm --version', 'VersionPattern' => '/\(GNU coreutils\) (\d+\.\d+)/',
@@ -77,6 +77,12 @@ $EngineDependsManifest = array(
     'MinimumVersion' => '', 'VersionCommand' => 'setsid --version', 'VersionPattern' => '/util-linux (\d+\.\d+)/',
     'Required' => TRUE, 'Subsystem' => 'Core', 'Requires' => array(),
     'License' => 'GPL-2.0-or-later', 'Source' => 'https://github.com/util-linux/util-linux', 'Purpose' => 'Starts a worker in a session of its own, so it outlives the request that started it.'),
+  // / prlimit is apart from Util-linux, because a host can have setsid without it, & limitCommand() warns & runs a conversion
+  // / without the limit where it is missing, so it is not required.
+  array('Name' => 'Prlimit', 'Binary' => 'prlimit', 'Type' => 'system', 'Package' => 'util-linux',
+    'MinimumVersion' => '', 'VersionCommand' => 'prlimit --version', 'VersionPattern' => '/util-linux (\d+\.\d+)/',
+    'Required' => FALSE, 'Subsystem' => 'Core', 'Requires' => array(),
+    'License' => 'GPL-2.0-or-later', 'Source' => 'https://github.com/util-linux/util-linux', 'Purpose' => 'Holds a conversion to the address space its sandbox profile asks for, & to a data limit where no resource scope can be made.'),
   // / procps is apt rather than system, because a slim container image has none & installing it is harmless.
   // / It is in Core, so --uninstall-depends never removes it.
   array('Name' => 'Procps', 'Binary' => 'ps', 'Programs' => array('pgrep'), 'Type' => 'apt', 'Package' => 'procps',

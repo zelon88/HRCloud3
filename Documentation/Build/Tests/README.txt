@@ -38,6 +38,8 @@ WHAT IS HERE.
                                      lifts real functions out of the tree under test.
   contained.sh                       Runs a command in bubblewrap, with everything this machine has mounted bound read only,
                                      two scratch filesystems in memory & no network. Root inside, because what is tested is root's.
+                                     From v5.0.1 its /tmp is open to every account, as a real one is, so ScanCore's own test,
+                                     which scans as nobody, runs inside it too.
   contained-install.sh               contained.sh with an installation's folders in memory as well, /DATA & /var/www/html, for
                                      a test that installs & runs a whole application. Both folders must exist on this machine,
                                      & an empty one is enough. Nothing is ever written to either.
@@ -71,29 +73,34 @@ WHAT IS HERE.
   test_contract-cli.php              Strict contract mode: the six values, what sets one in a contract's text, & an Engine that
                                      does not start without one. Each code checker's check named strict, run as a program from
                                      folders the suite writes, must name exactly what the Engine names.
-  test_pages-cli.php                 The Page Core, from v4.3.4ur, against interfaces it writes: names, the contract's pages &
+  test_pages-cli.php                 The Page Core, from v5.0.0, against interfaces it writes: names, the contract's pages &
                                      assets, the interface, language & color ladders, inheritance from the base, exact versions,
                                      building a page, the interfaces a page offers, the provenance log, component markers & what
                                      -v reports.
-  test_storage-cli.php               The Storage Core, from v4.3.4ur as HRCloud3 v1.0.0 carries it, against libraries it makes:
+  test_storage-cli.php               The Storage Core, from v5.0.0, against libraries it makes:
                                      names, folders, ranges, the libraries an administrator lists & every one refused, spaces &
                                      who may write them, links that lead out of a space, nothing replaced, copies, the quota &
                                      the reserve, the trash & a tampered record, who added what to a shared library & who
                                      may delete it forever, sweeps, removals, a request's fields & -v.
+  test_limits-cli.php                The limits a command runs under, from v5.0.0: a command a user scope holds, run for real
+                                     through a stand-in systemd-run, & the time limit, whether sandboxCommand() built a
+                                     sandbox & what sandboxWasBuilt() keeps, the LibreOffice module's command with & without
+                                     one, the OCR page split refused, Identify's watchdog leaving nothing running, & the three
+                                     sweeps --File Deletion Age Threshold-- decides, which sweep nothing at 0.
 
 The library, both runners, test_events-cli.php & test_kernel-cli.php were HRProtect's, from its v0.0.7. test_events_load-cli.php
 is HRProtect's suite of that name for the Engine's copy of its functions. The rest are the Engine's own, from v4.3.1.
 test_install-cli.php is from v4.3.2. So are test_schedule-cli.php, the Engine's half of HRProtect's suite of that name, &
 test_quarantine-cli.php, HRProtect's suite of that name with a section of the Engine's own. test_starter-cli.php is the
 Engine's own, from v4.3.2. test_identity-cli.php is the Engine's own, from v4.3.3. test_depends-cli.php &
-test_contract-cli.php are the Engine's own, from v4.3.4. test_pages-cli.php is the Engine's own, from v4.3.4ur, which HRCloud3
-v0.9.9 added with the Page Core, & no example of the kit carries a Page Core yet. test_storage-cli.php is the Engine's own, from
-v4.3.4ur, which HRCloud3 v1.0.0 added with the Storage Core.
+test_contract-cli.php are the Engine's own, from v4.3.4. test_pages-cli.php & test_storage-cli.php are the Engine's own, from
+v5.0.0, HRCloud3's suites for the Page & Storage Cores, & no example of the kit carries either core yet. test_limits-cli.php is
+the Engine's own, from v5.0.0.
 
 
 WHAT HAS BEEN RUN.
 
-Each has been run from the root of the Example, assembled from the v4.3.4 kit, inside contained.sh, with PHP 8.3.6.
+Each has been run from the root of the Example, assembled from the v5.0.1 kit, inside contained.sh, with PHP 8.3.6.
 
   test_events-cli.php                440 checks, every one passed.
   test_events_load-cli.php           27 checks, every one passed. Four planted faults in engine.php, each failed it.
@@ -106,17 +113,35 @@ Each has been run from the root of the Example, assembled from the v4.3.4 kit, i
                                      survived HRProtect's checks, & its section 21 holds what kills each.
   test_starter-cli.php               34 checks, every one passed, from the Starter's assembly inside contained-install.sh.
                                      Three planted faults, two in the Engine & one in the Starter, each failed it. Five more
-                                     in strict contract mode, from v4.3.4, each failed it.
+                                     in strict contract mode, from v4.3.4, each failed it. Its first run at v5.0.1 found
+                                     ScanCore v2.0.0's files writable by root's group, as GitHub's tarball of the tag holds
+                                     them, & root refused the copy with 28008 until each was given the mode the rest have.
   test_identity-cli.php              50 checks, every one passed, from the Example's assembly & from the Starter's. Twenty
                                      planted faults in the kernel, engine.php & the Setup, Dependency & Environment Cores, each
                                      failed it. Its Part 9, repeated by hand on v4.3.2, found root without posix running a tree
                                      another account could change.
-  test_depends-cli.php               46 checks, every one passed, from the Example's assembly, & 44 from the Starter's, which
+  test_depends-cli.php               47 checks, every one passed, from the Example's assembly, & 44 from the Starter's, which
                                      ships no ScanCore. Twenty six planted faults in the Dependency Core, both halves of the
                                      manifest, six pipelines & engine.php, each failed it. Its first run found the Document
-                                     pipeline running xpstopdf, which nothing declared.
+                                     pipeline running xpstopdf, which nothing declared. From v5.0.0 two more, the ScanCore
+                                     pipeline & the manifest each looking where ScanCore was, each failed it, & its first run
+                                     at v5.0.0 found Identify starting its command with exec, which the Shell's entry did not
+                                     name among its builtins. From v5.0.1 four more, ScanCore's pipeline leaving out Git &
+                                     then Curl, the manifest losing PHP Zlib, & the suite not knowing runShellCommand(), each
+                                     failed it. The last is how ScanCore v2.0.0 first failed it.
   test_contract-cli.php              34 checks, every one passed, from the Example's assembly & from the Starter's. Nineteen
                                      planted faults, ten in engine.php & nine in the two code checkers, each failed it.
+  test_pages-cli.php                 54 checks, every one passed, from the Example's assembly & from the Starter's.
+  test_storage-cli.php               72 checks, every one passed, from the Example's assembly & from the Starter's. One
+                                     planted fault, the trash lifetime's warning naming HRCloud3's label again, failed it.
+  test_limits-cli.php                31 checks, every one passed, from the Example's assembly & from the Starter's. Fifteen
+                                     planted faults in engine.php, the Resource Manager, the LibreOffice module & the OCR &
+                                     Identify pipelines, each failed it. The first, a user scope's variables written after
+                                     timeout, is the fault HRConvert2's copy carries, & it failed with 127.
+
+ScanCore's own scancore-check-cli.php & scancore-test-cli.php have been run from its folder in the Example's assembly,
+inside contained.sh, from v5.0.1. Every check passed, & all 98 cases. With /tmp writable by root alone, as contained.sh left it
+until v5.0.1, the test could not make its scratch folder & stopped.
 
 Run anywhere but inside contained.sh, each stops before it runs anything, & says why.
 
@@ -139,15 +164,27 @@ HRCLOUD3'S OWN.
                                      From v1.0.0 it asks the loader every library action as a page's script does, multipart
                                      uploads & ranges included, as an administrator & as a user, & who may delete forever in a
                                      library everyone writes. It checks the sweep, the repair of an older config.php, a library
-                                     that cannot be used, removing an account's spaces & the interfaces settings offers. It reads
-                                     every version it checks from the tree, so a release changes it only where its checks change.
-                                     It installs, so it runs inside contained-install.sh, from the root of the HRCloud3 tree.
+                                     that cannot be used, removing an account's spaces & the interfaces settings offers. From
+                                     v1.0.1 it checks that -fp takes away the folder v1.0.0 kept ScanCore in, & sweeps every
+                                     session with -c now. It reads every version it checks from the tree, the kernel's, the
+                                     Engine's & each core's among them from v1.0.1, so a release changes it only where its checks
+                                     change. It installs, so it runs inside contained-install.sh, from the root of the HRCloud3
+                                     tree.
 
     cd /path/to/HRCloud3
     sudo bash Documentation/Build/Tests/contained-install.sh php Documentation/Build/Tests/test_hrcloud3-cli.php
 
 test_starter-cli.php needs the kit's Starter, which HRCloud3 does not carry, so it is run from the kit. Every other suite is run from
 the root of the HRCloud3 tree, as the Starter's assembly runs them.
+
+From the root of the HRCloud3 v1.0.1 tree, on canon v5.0.1, with PHP 8.3.6 & bubblewrap 0.9.0:
+  test_hrcloud3-cli.php              128 checks, every one passed, inside contained-install.sh. Three planted faults, each failed
+                                     it: no Resources/ScanCore in $EngineRetiredPaths, -c now sweeping by 60 minutes, & a core
+                                     declaring a version its pin does not name, which stops it before it runs anything. Its first
+                                     run failed 8 checks that held the v1.0.0 Engine's versions written into them.
+  Every other suite but test_starter-cli.php passed, inside contained.sh, test_install-cli.php inside contained-install.sh,
+  1,377 checks, test_limits-cli.php's 31 among them.
+  ScanCore's own scancore-check-cli.php & scancore-test-cli.php passed, from its folder, inside contained.sh, all 98 cases.
 
 From the root of the HRCloud3 v1.0.0 tree, with PHP 8.3.6 & bubblewrap 0.9.0:
   test_hrcloud3-cli.php              127 checks, every one passed, inside contained-install.sh. Fifteen planted faults, fourteen

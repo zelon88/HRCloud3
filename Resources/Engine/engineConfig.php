@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.3.4ur.
+// / v5.0.0.
 // / This file configures the Engine for the application that bundles it.
 // /
 // / This file is NOT the administrator's configuration & is not edited by a user.
@@ -50,7 +50,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, The
 // / The version of this configuration. Matched as a MINIMUM by the Engine, the same way
 // / an application matches its own configuration. A newer file carrying every required
 // / setting is fine, because a setting this Engine does not know is simply not read.
-$EngineConfigVersion = 'v4.3.4ur';
+$EngineConfigVersion = 'v5.0.0';
 // / -----------------------------------------------------------------------------------
 
 
@@ -106,7 +106,7 @@ $EngineApplicationSlug = 'application';
 $EngineEnableAuthentication = FALSE;
 // /
 // /  --Engine Enable Storage--
-// /   Libraries a signed in user keeps files in, from HRCloud3 v1.0.0. A library is a folder an
+// /   Libraries a signed in user keeps files in, from v5.0.0. A library is a folder an
 // /   administrator lists in the application's config.php, personal, where each user has a space no
 // /   other user reaches, or shared, which every signed in user reads.
 // /   It needs --Engine Enable Authentication--, because a library is kept for a signed in user, &
@@ -120,7 +120,7 @@ $EngineEnableStorage = FALSE;
 // /
 // /  --Engine File Lifetimes--
 // /   The lifetimes, in seconds, a signed in user may choose to keep the files in their own folder for,
-// /   from HRCloud3 v1.0.0. Each is one the Engine offers, 0, 3600, 86400, 604800 or 2592000, & 0, which
+// /   from v5.0.0. Each is one the Engine offers, 0, 3600, 86400, 604800 or 2592000, & 0, which
 // /   keeps a file until its user deletes it, is always offered. An application that keeps every file
 // /   until its user deletes it offers array(0).
 // /   Default is every one the Engine offers.
@@ -138,7 +138,7 @@ $EngineFileLifetimes = array(0, 3600, 86400, 604800, 2592000);
 // / Each may name {APPLICATION}, {USERNAME}, {CODE}, {MINUTES} & {ADDRESS}, & each is
 // / replaced before the email is sent. {CODE} is what the reader types into the page, &
 // / {MINUTES} is how long it may be used for. The notice may name {CHANGE} as well, the
-// / sentence that says what was changed, from HRCloud3 v0.9.9.
+// / sentence that says what was changed, from v5.0.0.
 // / An email carries a code rather than a link, because a mail system that checks links
 // / opens each one before the reader does, & would spend a link that works once.
 // /
@@ -159,21 +159,21 @@ $EngineEmailRecoverySubject = '{APPLICATION}: recover your account';
 $EngineEmailRecoveryBody = "Hello {USERNAME},\n\nYour recovery code for {APPLICATION} is {CODE}\n\nEnter it on the page where you asked to recover your account, with the new password you want. It can be used for {MINUTES} minutes.\n\nIf you did not ask to recover an account at {ADDRESS}, you can ignore this email. Your password has not changed.\n";
 
 // /  --Engine Email Address Subject--
-// /   The subject of the email that confirms the new address a signed in user gave their account, from HRCloud3 v0.9.9.
+// /   The subject of the email that confirms the new address a signed in user gave their account, from v5.0.0.
 // /   It is sent to the new address, & the account keeps its old one until the code is entered.
 $EngineEmailAddressSubject = '{APPLICATION}: confirm your new address';
 
 // /  --Engine Email Address Body--
-// /   The text of the email that confirms a new address, from HRCloud3 v0.9.9.
+// /   The text of the email that confirms a new address, from v5.0.0.
 $EngineEmailAddressBody = "Hello {USERNAME},\n\nYour code to confirm this address for {APPLICATION} is {CODE}\n\nEnter it in your account's settings. It can be used for {MINUTES} minutes.\n\nIf you did not ask for this at {ADDRESS}, you can ignore this email. Your account has not changed.\n";
 
 // /  --Engine Email Notice Subject--
-// /   The subject of the email that tells the owner of an account it was changed, from HRCloud3 v0.9.9.
+// /   The subject of the email that tells the owner of an account it was changed, from v5.0.0.
 // /   It is sent when a signed in user changes their password, & to the old address when they change their address.
 $EngineEmailNoticeSubject = '{APPLICATION}: your account was changed';
 
 // /  --Engine Email Notice Body--
-// /   The text of the email that tells the owner of an account it was changed, from HRCloud3 v0.9.9.
+// /   The text of the email that tells the owner of an account it was changed, from v5.0.0.
 // /   {CHANGE} is the sentence the Authentication Core writes, which says what was changed.
 $EngineEmailNoticeBody = "Hello {USERNAME},\n\n{CHANGE}\n\nIf you made this change, you need do nothing. If you did not, tell the administrator of {ADDRESS} at once.\n";
 // / -----------------------------------------------------------------------------------
@@ -182,7 +182,7 @@ $EngineEmailNoticeBody = "Hello {USERNAME},\n\n{CHANGE}\n\nIf you made this chan
 // / -----------------------------------------------------------------------------------
 // / --Engine Pages--
 // /
-// / The Page Core builds a page for a browser from the components of an interface, from HRCloud3 v0.9.9.
+// / The Page Core builds a page for a browser from the components of an interface, from v5.0.0.
 // / An application that serves pages through it pins $RequiredPageCoreVersion, & sets the values
 // / below in its contract. One that serves none pins nothing & needs none of them.
 // / See Documentation/ABOUT_PAGES.txt.

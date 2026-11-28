@@ -12,7 +12,7 @@
 // / a server for users of any web browser without authentication.
 // /
 // / File Information ...
-// / v4.3.0.
+// / v5.0.0.
 // / The Stream pipeline's converter. pipelineCore.php loads it only to dispatch a Stream conversion.
 // / Error block 21000 through 21002 belongs to this pipeline.
 // / This is the reference implementation of a detached worker pipeline.
@@ -438,7 +438,8 @@ function convertStreams($pathname, $newPathname) {
         .$streamCodec.' '.escapeshellarg($newPathname);
       // / This command is sandboxed, & bwrap is PID 1 in the PID namespace --unshare-all creates.
       // / When bwrap dies the kernel kills every process inside, & it lives exactly as long as its child.
-      // / Its identifier is the right handle, so waitForStream & terminateWorkerProcess work unchanged.
+      // / The identifier captured is timeout's, from v5.0.0, which lives exactly as long as bwrap, & bwrap dies with it.
+      // / It is the right handle, so waitForStream & terminateWorkerProcess work unchanged.
       // / The network is granted, because a stream is fetched from a remote address.
       // / The namespace binds the resolver configuration only when the network is granted.
       // / The playlist was resolved & refused unless publicly routable, then fetched & inspected for addresses.
@@ -471,8 +472,9 @@ function convertStreams($pathname, $newPathname) {
       // / The segments it names are fetched over the granted network, by the addresses pinned above.
       // / sandboxCommand returns whether the command may run & the command, in that order.
       list ($commandMayRun, $ffmpegCommand) = sandboxCommand($ffmpegCommand, $pathname, $newPathname, TRUE, 'ffmpeg', '', array(), $pinnedHostsFile);
-      // / The command is backgrounded OUTSIDE the sandbox, so the identifier captured is the
-      // / one the shell started, which is bwrap.
+      // / The command is backgrounded OUTSIDE the sandbox, so the identifier captured is that of its first program.
+      // / That is timeout, from v5.0.0, because the Engine's time limit goes outside everything, & it is bwrap's parent.
+      // / A supervisor that kills it takes the sandbox down, because bwrap dies with its parent.
       $ffmpegCommand = $ffmpegCommand.' > /dev/null 2>&1 & echo $!';
       // / A command that may not run is not run, & the launch check below reports it.
       if ($commandMayRun) $returnData = shell_exec($ffmpegCommand);

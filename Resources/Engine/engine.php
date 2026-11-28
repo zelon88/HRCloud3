@@ -13,7 +13,7 @@
 // / that carries it.
 // /
 // / File Information ...
-// / v4.3.4ur.
+// / v5.0.0.
 // / The Engine. It provides the environment an application runs in.
 // / The application pins it exactly via $RequiredEngineVersion.
 // / Error block 35000 through 35019 is reserved. 35000 is the direct load guard every component shares, the kernel's included.
@@ -44,7 +44,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, The
 
 // / -----------------------------------------------------------------------------------
 // / The version of this Engine. Read by the application WITHOUT executing this file.
-$EngineVersion = 'v4.3.4ur';
+$EngineVersion = 'v5.0.0';
 // / -----------------------------------------------------------------------------------
 
 
@@ -546,9 +546,9 @@ function showVersionReport() {
   $reportFunction = (isset($EngineReportProvider) && is_string($EngineReportProvider)) ? trim($EngineReportProvider) : '';
   if ($reportFunction !== '' && function_exists($reportFunction)) $reportSections = array_merge($reportSections, (array)$reportFunction());
   else if ($reportFunction !== '') warningEntry('A report provider named '.$reportFunction.' was declared & does not exist. The report carries nothing of the application\'s own.');
-  // / An application that serves pages through the Page Core pins it, from HRCloud3 v0.9.9, & the Engine reports its interfaces & their language packs.
-  // / They come before the application's own sections, where a report provider placed its interfaces until then.
-  // / An application that offers libraries has the Engine report each, from HRCloud3 v1.0.0, after its interfaces. It is loaded where
+  // / An application that serves pages through the Page Core pins it, from v5.0.0, & the Engine reports its interfaces & their language packs.
+  // / They come before the application's own sections, so a report provider need not describe its interfaces.
+  // / An application that offers libraries has the Engine report each, from v5.0.0, after its interfaces. It is loaded where
   // / accounts are off as well, so a library that is wrong is said before anybody signs in to it.
   $storageIsOffered = storageIsOffered();
   if ($storageIsOffered) list ($storageCoreIsLoaded) = loadStorageCore(TRUE);
@@ -596,7 +596,7 @@ function showVersionReport() {
     'Email Core' => array(readComponentVersion('Engine'.$DirSep.'Cores'.$DirSep.'emailCore.php', 'EmailCoreVersion'), $RequiredEmailCoreVersion));
   // / The Page Core is reported only where the application pins it, because an application that serves no pages needs none.
   if ($pageCoreIsPinned) $componentChecks['Page Core'] = array(readComponentVersion('Engine'.$DirSep.'Cores'.$DirSep.'pageCore.php', 'PageCoreVersion'), $RequiredPageCoreVersion);
-  // / The Storage Core is reported only where the application offers libraries, from HRCloud3 v1.0.0.
+  // / The Storage Core is reported only where the application offers libraries, from v5.0.0.
   if ($storageIsOffered) $componentChecks['Storage Core'] = array(readComponentVersion('Engine'.$DirSep.'Cores'.$DirSep.'storageCore.php', 'StorageCoreVersion'), $RequiredStorageCoreVersion);
   foreach ($componentChecks as $componentName => $componentPair) {
     if (ltrim((string)$componentPair[0], 'vV') === ltrim((string)$componentPair[1], 'vV')) print('  '.str_pad($componentName, 28).'OK, '.ltrim((string)$componentPair[0], 'vV').$Lol);
@@ -701,7 +701,7 @@ function showVersionReport() {
     else {
       if (isset($EngineSettingNames['EnableWorkflowBuilder']) && !applicationSetting('EnableWorkflowBuilder', FALSE)) $disabledFeatures[] = array('Workflow builder', 'Enable Workflow Builder');
       if (isset($EngineSettingNames['EnableWorkflowImportExport']) && !applicationSetting('EnableWorkflowImportExport', FALSE)) $disabledFeatures[] = array('Workflow import & export', 'Enable Workflow Import & Export'); } }
-  // / Libraries need accounts, so an application that offers them names them here while accounts are off, from HRCloud3 v1.0.0.
+  // / Libraries need accounts, so an application that offers them names them here while accounts are off, from v5.0.0.
   if ($storageIsOffered && !authenticationIsOn()) $disabledFeatures[] = array('Libraries', 'Enable Authentication');
   if (!$EnvironmentManagerMayRepair) $disabledFeatures[] = array('Environment repair', 'Environment Manager May Repair');
   if (!$EnablePerConversionLimits) $disabledFeatures[] = array('Per conversion limits', 'Enable Per Conversion Limits');
@@ -1120,10 +1120,10 @@ function getAcceptedManagers() {
   $AcceptedManagers = array();
   $AcceptedManagers = array(
     'coreManager.php' => 'v4.1.3',
-    'resourceManager.php' => 'v4.2.0',
+    'resourceManager.php' => 'v5.0.0',
     'workerManager.php' => 'v4.0.8',
     'requestManager.php' => 'v4.1.3',
-    'authenticationManager.php' => 'v4.2.3ur');
+    'authenticationManager.php' => 'v5.0.0');
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
   // / $AcceptedManagers is not purged, because it is the return value.
   purgeSensitiveMemory($EnableMemoryProtection);
@@ -1141,7 +1141,7 @@ function getAcceptedEngineManifest() {
   global $EnableMemoryProtection;
   $AcceptedManifest = array();
   $AcceptedManifest = array(
-    'depends.php' => 'v4.3.4');
+    'depends.php' => 'v5.0.0');
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
   // / $AcceptedManifest is not purged, because it is the return value.
   purgeSensitiveMemory($EnableMemoryProtection);
@@ -1699,6 +1699,8 @@ function resolveDataLocation($dailyHash, $sessionHash, $primaryPath, $activePath
 // / Only what the sweeping account owns is swept, so an account identifyRunningAccount cannot identify sweeps nothing.
 // / The sweep runs as the web server account, which made every session & cannot remove what another account put there.
 // / Such a folder is left, is not a failure, & -fp names it.
+// / --File Deletion Age Threshold-- reaches this through resolveDeleteThreshold(), from v5.0.0, which keeps files forever at 0 &
+// / never hands this a 0 of its own. A 0 handed here is a caller asking for every session, as -c now does.
 function cleanDataLocation($dataLoc, $locationName, $deleteThreshold, $protectedRootDirs, $authorizedPaths) {
   // / Set variables.
   global $DirSep, $Verbose, $EnableMemoryProtection;
@@ -1789,6 +1791,29 @@ function cleanDataLocation($dataLoc, $locationName, $deleteThreshold, $protected
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
   purgeSensitiveMemory($EnableMemoryProtection, $authorizedPaths, $defaultApps, $protectedRootDirs, $dailyDirs, $dailyDir, $dailyPath, $sessionDirs, $sessionDir, $sessionPath, $entryStatus, $sweeperUid, $now, $dataLoc, $locationName, $deleteThreshold, $cleanAuthorized, $directoryIterator, $iterator, $fileObject, $realPath);
   return array($CleanedLocation, $LocationDeepCleaned); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to read the age past which a session is swept, from v5.0.0.
+// / Accepts nothing. Returns whether sessions are swept at all & that age in minutes, in that order.
+// / --File Deletion Age Threshold-- of 0 keeps files forever, as its template entry says, so nothing is swept.
+// / Until v5.0.0 a 0 reached cleanDataLocation(), where every session is older than nothing, so every request & every
+// / scheduled sweep removed every session, one still being converted included.
+// / A value that is not a whole number of minutes is warned of, & the default of 60 is used in its place.
+// / -c now hands cleanDataLocation() a 0 of its own & asks this nothing, because it asks for every session.
+function resolveDeleteThreshold() {
+  // / Set variables.
+  global $DeleteThreshold, $EnableMemoryProtection;
+  $SessionsAreSwept = TRUE;
+  $ThresholdMinutes = 60;
+  $thresholdIsWhole = FALSE;
+  $thresholdIsWhole = (isset($DeleteThreshold) && (is_int($DeleteThreshold) or (is_string($DeleteThreshold) && ctype_digit($DeleteThreshold))) && (int)$DeleteThreshold >= 0);
+  if (!$thresholdIsWhole) warningEntry('--File Deletion Age Threshold-- is not a whole number of minutes, so sessions older than '.$ThresholdMinutes.' minutes are swept. Set it in config.php, or set it to 0 to keep files forever.');
+  else if ((int)$DeleteThreshold === 0) $SessionsAreSwept = FALSE;
+  else $ThresholdMinutes = (int)$DeleteThreshold;
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $thresholdIsWhole);
+  return array($SessionsAreSwept, $ThresholdMinutes); }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -2257,7 +2282,7 @@ function loadAuthenticationCores($loadWhenOff) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to load the Page Core, which builds a page for a browser from an interface's components, from HRCloud3 v0.9.9.
+// / A function to load the Page Core, which builds a page for a browser from an interface's components, from v5.0.0.
 // / Accepts nothing. Returns whether it is loaded.
 // / An application that serves pages pins it via $RequiredPageCoreVersion, as every Engine core is pinned, & calls this as it
 // / decides to draw a page. It is loaded once, & verifyCoreComponent() names what was refused & why.
@@ -2275,7 +2300,7 @@ function loadPageCore() {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to say whether this application offers its users libraries to keep files in, from HRCloud3 v1.0.0.
+// / A function to say whether this application offers its users libraries to keep files in, from v5.0.0.
 // / Accepts nothing. Returns TRUE where its contract turns storage on & it pins a Storage Core.
 // / A capability a missing Engine configuration leaves unset counts as on, as every other capability does, & an application that pins
 // / no Storage Core offers none, whatever its contract says. Whether accounts are on is storageIsOn()'s to say.
@@ -2287,7 +2312,7 @@ function storageIsOffered() {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to say whether this installation keeps its users' files in libraries, from HRCloud3 v1.0.0.
+// / A function to say whether this installation keeps its users' files in libraries, from v5.0.0.
 // / Accepts nothing. Returns TRUE where the application offers libraries & accounts are on, because a library is kept for a signed in user.
 function storageIsOn() {
   // / Set variables.
@@ -2296,7 +2321,7 @@ function storageIsOn() {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to load the Storage Core, which keeps signed in users' files in libraries, from HRCloud3 v1.0.0.
+// / A function to load the Storage Core, which keeps signed in users' files in libraries, from v5.0.0.
 // / Accepts whether to load it where accounts are off, as removing an account & -v do, so a library is never left unreached.
 // / Returns whether it is loaded. It is loaded once, at the version the application pins, as every Engine core is, & verifyCoreComponent()
 // / names what was refused & why. An application that offers no libraries never loads it.
@@ -2312,7 +2337,7 @@ function loadStorageCore($loadWhenOff) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to name the folder libraries are kept in, from HRCloud3 v1.0.0.
+// / A function to name the folder libraries are kept in, from v5.0.0.
 // / Accepts nothing. Returns TRUE where it was named.
 // / It is Libraries in the data location, beside Accounts & Users, & is named whether or not storage is on, as the kernel names every
 // / data location. An application that offers libraries declares LibraryLoc in its contract with the web role, so -fp makes it & gives it
@@ -2327,7 +2352,7 @@ function establishStorageLocation() {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to answer a request that asks a library for something, from HRCloud3 v1.0.0.
+// / A function to answer a request that asks a library for something, from v5.0.0.
 // / Accepts nothing. Returns answered where it was answered, & an empty string where the request did not ask or libraries are off.
 // / A request asks by sending StorageAction, & is answered with what the library says & nothing drawn, signed in or not, so the script
 // / that asked can always read what happened. A Storage Core that could not be loaded answers nothing, & the page is drawn as it would
@@ -2345,7 +2370,7 @@ function answerStorageWhenAsked() {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to sweep the trash & the unfinished uploads of every library, where libraries are on & a sweep is due, from HRCloud3 v1.0.0.
+// / A function to sweep the trash & the unfinished uploads of every library, where libraries are on & a sweep is due, from v5.0.0.
 // / Accepts the fewest seconds since the last sweep. Returns how many entries were removed.
 // / Only a web request served as the web server account sweeps, because the libraries are that account's, as sweepAccountsWhenDue()
 // / says of accounts, & root never works by path inside a folder another account can change.
@@ -2362,7 +2387,7 @@ function sweepStorageWhenDue($sweepInterval) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to take away the space a removed account kept in every personal library, from HRCloud3 v1.0.0.
+// / A function to take away the space a removed account kept in every personal library, from v5.0.0.
 // / Accepts the account's folder, its random identifier. Returns TRUE when none is left, or where this application offers no libraries.
 // / The Authentication Manager calls it as an administrator removes the account, so what the user kept goes with them wherever accounts
 // / are now on or off. A Storage Core that could not be loaded leaves every space where it is, & that is a warning.
@@ -2532,7 +2557,7 @@ function answerEngineRequest() {
   else if (!$authenticationIsLoaded && $RunningFromCLI !== TRUE && authenticationIsOn() && applicationSetting('AllowAnonymousVisitors', TRUE) !== TRUE) {
     list ($EnginePageState['Enabled'], $EnginePageState['Page'], $EnginePageState['Available'], $EngineAnswer) = array(TRUE, 'signin', FALSE, 'page');
     errorEntry('A visitor must sign in & nobody can, because the Authentication Core could not be loaded!', 43002, FALSE); }
-  // / A page that asks a library for something is answered here, from HRCloud3 v1.0.0, once the request is known to be signed in or not.
+  // / A page that asks a library for something is answered here, from v5.0.0, once the request is known to be signed in or not.
   // / It is answered even where a visitor must sign in first, so its script reads signed-out rather than a page, & a request one of the
   // / Authentication Core's actions answered never reaches a library. Libraries are swept from here as accounts are.
   if ($authenticationIsLoaded && $EngineAnswer !== 'answered') $storageAnswer = answerStorageWhenAsked();
@@ -2881,7 +2906,7 @@ function startEngineSteps() {
   if ($RunningFromCLI && isset($_SERVER['argv'][1]) && $_SERVER['argv'][1] === '--run-workflow') $WorkflowSessionAdopted = adoptWorkflowSession();
   // / $EngineAnswer is empty for a request the application serves, page for one it draws the Engine's page for & runs no operation for,
   // / & answered for one the Engine wrote the whole answer to, which draws nothing & runs nothing. What a page may show is in $EnginePageState.
-  // / The folder libraries are kept in is named before anything may ask a library for something, & before -fp makes it, from HRCloud3 v1.0.0.
+  // / The folder libraries are kept in is named before anything may ask a library for something, & before -fp makes it, from v5.0.0.
   $storageLocationIsNamed = establishStorageLocation();
   $EnginePageState = array();
   $EngineAnswer = answerEngineRequest();
@@ -3117,30 +3142,35 @@ function verifyRequiredDirs() {
 // / A function to make a web request ready to be served, once the kernel has admitted it.
 // / Accepts nothing. Returns TRUE once the request may be served.
 // / The folders it needs are made, & expired sessions are swept from the served folder & from the data location.
+// / A --File Deletion Age Threshold-- of 0 keeps files forever, so nothing is swept, from v5.0.0.
 // / A sweep that cannot finish does not stop a request, because a session it missed is retried by the next one.
 // / The build environment is removed by -fp as root, & an update runs -fp as it ends.
 // / It was the application's main logic until v4.2.4.
 function prepareWebRequest() {
   // / Set variables.
-  global $ConvertTemp, $ConvertLoc, $DeleteThreshold, $ProtectedRootDirs, $RequiredDirs, $Verbose, $EnableMemoryProtection;
-  $RequestIsPrepared = $requiredDirsExist = $temporaryFilesAreCleaned = $temporaryFilesAreDeepCleaned = $dataLocationIsCleaned = $dataLocationIsDeepCleaned = FALSE;
-  $requiredDirsVerified = 0;
+  global $ConvertTemp, $ConvertLoc, $ProtectedRootDirs, $RequiredDirs, $Verbose, $EnableMemoryProtection;
+  $RequestIsPrepared = $requiredDirsExist = $temporaryFilesAreCleaned = $temporaryFilesAreDeepCleaned = $dataLocationIsCleaned = $dataLocationIsDeepCleaned = $sessionsAreSwept = FALSE;
+  $requiredDirsVerified = $thresholdMinutes = 0;
   list ($requiredDirsExist, $RequiredDirs, $requiredDirsVerified) = verifyRequiredDirs();
   if (!$requiredDirsExist) errorEntry('Could not verify required directories!', 12, TRUE);
   // / One line rather than one per directory. It says how many, so a count that drops is
   // / visible without every path being printed on every request.
   else if ($Verbose) logEntry('Verified '.$requiredDirsVerified.' required directories.');
-  // / The following code removes old files from the whole DATA folder.
-  list ($temporaryFilesAreCleaned, $temporaryFilesAreDeepCleaned) = cleanDataLocation($ConvertTemp, 'Temporary files', $DeleteThreshold, $ProtectedRootDirs, array($ConvertTemp));
-  if (!$temporaryFilesAreCleaned) warningEntry('Could not fully clean the temporary location. Some expired sessions may remain & will be retried next request. Serving this request anyway.');
-  else if ($Verbose) logEntry('Cleaned temporary location.');
-  // / The following code removes old files from the $ConvertLoc.
-  list ($dataLocationIsCleaned, $dataLocationIsDeepCleaned) = cleanDataLocation($ConvertLoc, 'Data location', $DeleteThreshold, $ProtectedRootDirs, array($ConvertLoc));
-  if (!$dataLocationIsCleaned) warningEntry('Could not fully clean the data location. Some expired sessions may remain & will be retried next request. Serving this request anyway.');
-  else if ($Verbose) logEntry('Cleaned convert location.');
+  list ($sessionsAreSwept, $thresholdMinutes) = resolveDeleteThreshold();
+  if (!$sessionsAreSwept) {
+    if ($Verbose) logEntry('--File Deletion Age Threshold-- is 0, so files are kept forever & nothing was swept.'); }
+  else {
+    // / The following code removes old files from the whole DATA folder.
+    list ($temporaryFilesAreCleaned, $temporaryFilesAreDeepCleaned) = cleanDataLocation($ConvertTemp, 'Temporary files', $thresholdMinutes, $ProtectedRootDirs, array($ConvertTemp));
+    if (!$temporaryFilesAreCleaned) warningEntry('Could not fully clean the temporary location. Some expired sessions may remain & will be retried next request. Serving this request anyway.');
+    else if ($Verbose) logEntry('Cleaned temporary location.');
+    // / The following code removes old files from the $ConvertLoc.
+    list ($dataLocationIsCleaned, $dataLocationIsDeepCleaned) = cleanDataLocation($ConvertLoc, 'Data location', $thresholdMinutes, $ProtectedRootDirs, array($ConvertLoc));
+    if (!$dataLocationIsCleaned) warningEntry('Could not fully clean the data location. Some expired sessions may remain & will be retried next request. Serving this request anyway.');
+    else if ($Verbose) logEntry('Cleaned convert location.'); }
   $RequestIsPrepared = TRUE;
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $requiredDirsExist, $temporaryFilesAreCleaned, $temporaryFilesAreDeepCleaned, $dataLocationIsCleaned, $dataLocationIsDeepCleaned, $requiredDirsVerified);
+  purgeSensitiveMemory($EnableMemoryProtection, $requiredDirsExist, $temporaryFilesAreCleaned, $temporaryFilesAreDeepCleaned, $dataLocationIsCleaned, $dataLocationIsDeepCleaned, $requiredDirsVerified, $sessionsAreSwept, $thresholdMinutes);
   return $RequestIsPrepared; }
 // / -----------------------------------------------------------------------------------
 
@@ -5141,6 +5171,48 @@ function resolveConversionLimit($sandboxProfile) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
+// / A function to decide how long one conversion command may run, from v5.0.0.
+// / Accepts the sandbox profile about to run.
+// / Returns whether a time limit applies & the seconds it allows, in that order.
+// / The figure is read under the profile's type from --Maximum Per Conversion Runtime--, & a type it does not name takes
+// / --Default Per Conversion Runtime--. A figure of 0 sets no time limit for that type.
+// / A figure that is not a whole number of seconds is reported & the default is used. A default that is not one is reported &
+// / this function's own is used, which configuration cannot change, so a mistake never leaves a conversion without a limit.
+// / The listener never scales a time limit as it scales a ceiling. A loaded host makes a conversion slower rather than cheaper, &
+// / a smaller limit would stop the very work the load is slowing.
+function resolveConversionRuntime($sandboxProfile) {
+  // / Set variables.
+  global $MaximumPerConversionRuntime, $DefaultPerConversionRuntime, $Verbose, $EnableMemoryProtection;
+  $RuntimeIsLimited = FALSE;
+  $RuntimeSeconds = 0;
+  $conversionType = $runtimeSource = '';
+  $runtimeFigure = NULL;
+  // / A local fallback configuration cannot overwrite, for a default that is missing or is not a whole number of seconds.
+  $defaultRuntime = 600;
+  $conversionType = conversionTypeForProfile($sandboxProfile);
+  if (is_array($MaximumPerConversionRuntime) && isset($MaximumPerConversionRuntime[$conversionType])) {
+    $runtimeFigure = $MaximumPerConversionRuntime[$conversionType];
+    $runtimeSource = 'config.php'; }
+  // / A figure that cannot be read takes the default, & never no limit at all.
+  if ($runtimeSource !== '' && !(is_int($runtimeFigure) && $runtimeFigure >= 0) && !(is_string($runtimeFigure) && ctype_digit(trim($runtimeFigure)))) {
+    warningEntry('The '.$conversionType.' time limit in --Maximum Per Conversion Runtime-- is not a whole number of seconds, so --Default Per Conversion Runtime-- is used.');
+    $runtimeSource = ''; }
+  if ($runtimeSource === '') {
+    $runtimeFigure = isset($DefaultPerConversionRuntime) ? $DefaultPerConversionRuntime : NULL;
+    $runtimeSource = 'config.php default'; }
+  if (!(is_int($runtimeFigure) && $runtimeFigure >= 0) && !(is_string($runtimeFigure) && ctype_digit(trim($runtimeFigure)))) {
+    warningEntry('--Default Per Conversion Runtime-- is missing or is not a whole number of seconds, so '.$defaultRuntime.' is used.');
+    $runtimeFigure = $defaultRuntime;
+    $runtimeSource = 'core built-in'; }
+  $RuntimeSeconds = (int)trim((string)$runtimeFigure);
+  $RuntimeIsLimited = ($RuntimeSeconds > 0);
+  if ($Verbose) logEntry('Conversion Time Limit: '.$conversionType.', '.($RuntimeIsLimited ? $RuntimeSeconds.' seconds' : 'none').', Source: '.$runtimeSource.'.');
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $conversionType, $runtimeSource, $runtimeFigure, $defaultRuntime, $sandboxProfile);
+  return array($RuntimeIsLimited, $RuntimeSeconds); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
 // / A function to say whether this kernel will delegate cgroup controllers to a user.
 // / Accepts nothing. Returns TRUE when a user scope could hold a real limit.
 // /
@@ -5213,7 +5285,7 @@ function verifySystemdRun() {
     $ScopeEnvironment = $probedEnvironment; }
   else {
     $locatedBinary = locateDependency('systemd-run');
-    if ($locatedBinary === '') warningEntry('systemd-run is not installed. Per conversion limits fall back to scheduling priority only.');
+    if ($locatedBinary === '') warningEntry('systemd-run is not installed. Per conversion limits fall back to scheduling priority & a data limit on each process.');
     else {
       // / Build the environment a user manager needs. Without these systemd-run cannot find
       // / the bus for this account & falls straight through to the system bus.
@@ -5247,9 +5319,9 @@ function verifySystemdRun() {
         // / A NAS or appliance kernel frequently ships without cgroup controllers delegated
         // / to a user, & nothing an administrator does will change that. Telling them to run
         // / -fp sends them round a loop that cannot end.
-        // / Scheduling priority still applies either way, so a conversion is still bounded,
+        // / Scheduling priority & a data limit on each process still apply either way, so a conversion is still bounded,
         // / just less precisely.
-        else warningEntry('A resource scope could not be created. '.(cgroupDelegationIsAvailable() ? 'Run the -fp argument as root to enable lingering for '.$ApacheUser.'.' : 'This kernel does not delegate cgroup controllers, which many NAS & appliance kernels do not. There is nothing to fix here & no scope can be made on this host.').' Per conversion limits fall back to scheduling priority alone.'); } }
+        else warningEntry('A resource scope could not be created. '.(cgroupDelegationIsAvailable() ? 'Run the -fp argument as root to enable lingering for '.$ApacheUser.'.' : 'This kernel does not delegate cgroup controllers, which many NAS & appliance kernels do not. There is nothing to fix here & no scope can be made on this host.').' Per conversion limits fall back to scheduling priority & a data limit on each process.'); } }
     $probedMode = $ScopeMode;
     $probedBinary = $ScopeBinary;
     $probedEnvironment = $ScopeEnvironment; }
@@ -5335,55 +5407,113 @@ function sandboxProfileFlags($sandboxProfile) {
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
-// / A function to wrap a command in a transient systemd scope carrying its limits.
+// / A function to say whether a sandbox profile turns one of its settings on, from v5.0.0.
+// / Accepts the profile name & the setting's name, in that order. Returns TRUE where the profile gives that setting a true value.
+// / A setting is read as sandboxProfileFlags() reads MapToRoot, so both answer alike. A profile this application does not declare
+// / turns nothing on, which leaves the base sandbox & the host's limits as they are.
+function sandboxProfileAsks($sandboxProfile, $settingName) {
+  // / Set variables.
+  // / The profile array is supplied by the application, for the reason given above.
+  global $EngineSandboxProfiles, $EnableMemoryProtection;
+  $ProfileAsks = FALSE;
+  $cleanProfile = strtolower(trim((string)$sandboxProfile));
+  $cleanSetting = (string)$settingName;
+  $ProfileAsks = (isset($EngineSandboxProfiles) && is_array($EngineSandboxProfiles) && isset($EngineSandboxProfiles[$cleanProfile][$cleanSetting]) && (bool)$EngineSandboxProfiles[$cleanProfile][$cleanSetting]);
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $cleanProfile, $cleanSetting, $sandboxProfile, $settingName);
+  return $ProfileAsks; }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to wrap a command in its time limit & its resource ceilings.
 // / Accepts the command to wrap & the sandbox profile about to run, in that order.
-// / Returns the wrapped command, or the command unchanged when limiting is unavailable.
-// / The scope wraps the SANDBOX, not the tool inside it, so the ceiling covers bubblewrap
+// / Returns the wrapped command, or the command unchanged where nothing applies or nothing can be applied.
+// / Everything wraps the SANDBOX, not the tool inside it, so each limit covers bubblewrap
 // / & every process it goes on to create.
+// / The time limit is applied to every command, from v5.0.0, whatever --Enable Per Conversion Limits-- says, because a converter
+// / that never finishes holds its worker for ever. resolveConversionRuntime() decides it, & timeout enforces it from outside
+// / everything else, so the scope, the niceness & the ceilings are stopped with the sandbox.
+// / timeout sends TERM & never KILL. Bubblewrap ends on TERM, & the sandbox ends with it. A command it stops exits 124, which
+// / pipelineCommandWasStopped() does not count, so it is not attempted again, because it would run out of time again. A command KILL
+// / ends exits 137, which is attempted again, so KILL would have made one hang into as many hangs as attempts are allowed.
+// / The process a shell reports for the command is timeout. One that supervises it, as waitForStream() does, may kill it, because
+// / bubblewrap dies with its parent & takes everything in the sandbox with it. systemd-run, nice & prlimit each become the command
+// / they run, so bubblewrap's parent is timeout whichever of them is used. env does too, & hands a user scope the variables its
+// / manager is found by, because timeout runs the word after its figure as a program. An assignment there names no program, so
+// / every command a user scope held failed with 127 until v5.0.0 put env in front of them.
 // / CPUQuota is a percentage of ONE processor. 200% is two whole cores.
 // / MemoryMax is a hard ceiling. A conversion that reaches it is killed by the kernel &
 // / will report a conversion failure rather than a memory error, which is why the
 // / configured ceilings should be generous.
-// / With no scope mechanism the command is merely deprioritized, which needs no permission
-// / at all & still keeps a conversion from starving the web server under contention.
-// / This never refuses. A resource ceiling is a courtesy to the host & not a security
-// / control, so an unavailable limiter runs the conversion anyway.
+// / With no scope mechanism the command is deprioritized, which needs no permission at all & still keeps a conversion from starving
+// / the web server under contention. From v5.0.0 its memory is held as well, to the same figure, as a data limit on each process, set
+// / by prlimit, which needs no permission either. A data limit counts the memory a process has allocated to write to, & not address
+// / space it has only reserved, so a tool that reserves far more than it uses still runs under one, as it would not under an address
+// / space limit. A tool that reaches it is refused the memory it asked for & fails at once. Each process has the whole figure, where
+// / a scope holds them all to it together.
+// / This never refuses. A ceiling or a time limit that cannot be applied is warned of, & the conversion runs without it.
+// / A profile setting AddressSpaceLimit is given an address space ceiling as well, from v5.0.0, of the memory its type is allowed.
+// / prlimit sets it on the command it runs, & every process beneath that inherits it, so the ceiling holds per process where no
+// / scope can be made, & with per conversion limits turned off, because the profile asked for it & the host did not.
+// / It goes nearest the command, inside any scope, so the scope's own processes are never limited by it. The data limit goes with it.
+// / A tool that reserves far more address space than it uses would be stopped by it, so only a profile that has been measured asks.
+// / A tool that reaches it is refused the memory it asked for & fails at once, where the scope's ceiling kills only once memory is used.
 function limitCommand($command, $sandboxProfile) {
   // / Set variables.
   global $EnablePerConversionLimits, $Verbose, $EnableMemoryProtection;
   $LimitedCommand = (string)$command;
-  $scopeMode = $scopeBinary = $scopeEnvironment = $scopePrefix = '';
-  $limitIsValid = FALSE;
-  $cpuPercentage = $memoryMegabytes = $nicePriority = 0;
-  if (!$EnablePerConversionLimits) $LimitedCommand = (string)$command;
-  else {
+  $scopeMode = $scopeBinary = $scopeEnvironment = $scopePrefix = $prlimitBinary = $prlimitFlags = $memoryNote = $timeoutBinary = '';
+  $limitIsValid = $addressSpaceIsAsked = $dataLimitIsWanted = $runtimeIsLimited = FALSE;
+  $cpuPercentage = $memoryMegabytes = $nicePriority = $runtimeSeconds = 0;
+  $addressSpaceIsAsked = sandboxProfileAsks($sandboxProfile, 'AddressSpaceLimit');
+  if ($EnablePerConversionLimits or $addressSpaceIsAsked) {
     list ($limitIsValid, $cpuPercentage, $memoryMegabytes) = resolveConversionLimit($sandboxProfile);
     if (!$limitIsValid) warningEntry('No usable per conversion limit could be resolved. This conversion runs unlimited.');
     else {
-      list ($scopeMode, $scopeBinary, $scopeEnvironment) = verifySystemdRun();
+      if ($EnablePerConversionLimits) list ($scopeMode, $scopeBinary, $scopeEnvironment) = verifySystemdRun();
+      else $scopeMode = 'off';
+      // / The memory a scope would hold is held per process where no scope can be made.
+      $dataLimitIsWanted = ($scopeMode === 'none');
+      // / Both ceilings are numbers of bytes, & prlimit is found as every other tool the Engine runs is found.
+      if ($addressSpaceIsAsked or $dataLimitIsWanted) {
+        $prlimitBinary = locateDependency('prlimit');
+        if ($prlimitBinary === '' && $addressSpaceIsAsked) warningEntry('The '.strtolower(trim((string)$sandboxProfile)).' sandbox profile asks for an address space limit & prlimit is not installed, so its conversion runs without one. util-linux provides prlimit.');
+        else if ($prlimitBinary === '') warningEntry('No resource scope can be made & prlimit is not installed, so this conversion runs with no memory ceiling. util-linux provides prlimit.');
+        else {
+          if ($addressSpaceIsAsked) $prlimitFlags = ' --as='.((int)$memoryMegabytes * 1048576);
+          if ($dataLimitIsWanted) $prlimitFlags = $prlimitFlags.' --data='.((int)$memoryMegabytes * 1048576);
+          $LimitedCommand = escapeshellarg($prlimitBinary).$prlimitFlags.' -- '.$LimitedCommand;
+          $memoryNote = ($addressSpaceIsAsked ? ', address space '.(int)$memoryMegabytes.'M per process' : '').($dataLimitIsWanted ? ', data '.(int)$memoryMegabytes.'M per process' : ''); } }
       // / --quiet keeps the unit name off stderr, which several callers capture as output.
       // / --collect releases the unit when it exits, so a failed conversion leaves nothing.
       // / Swap is pinned to zero so a memory ceiling cannot be evaded by swapping.
       if ($scopeMode === 'user' or $scopeMode === 'system') {
-        $scopePrefix = $scopeEnvironment.escapeshellarg($scopeBinary)
+        // / The variables a user manager is found by go to env, never in front of systemd-run, because timeout comes first.
+        $scopePrefix = ($scopeEnvironment === '' ? '' : 'env '.$scopeEnvironment).escapeshellarg($scopeBinary)
           .($scopeMode === 'user' ? ' --user' : '')
           .' --scope --quiet --collect'
           .' -p CPUQuota='.(int)$cpuPercentage.'%'
           .' -p MemoryMax='.(int)$memoryMegabytes.'M'
           .' -p MemorySwapMax=0'
           .' -- ';
-        $LimitedCommand = $scopePrefix.$command; }
-      else {
-        // / No cgroup is available, so the ceiling cannot be enforced. The conversion is
+        $LimitedCommand = $scopePrefix.$LimitedCommand; }
+      else if ($scopeMode === 'none') {
+        // / No cgroup is available, so the processor share cannot be enforced. The conversion is
         // / deprioritized instead, which is weaker but needs nothing from the operator.
         // / A smaller processor share becomes a larger niceness.
         $nicePriority = (int)round(19 - (($cpuPercentage / 100) * 19));
         if ($nicePriority < 0) $nicePriority = 0;
         if ($nicePriority > 19) $nicePriority = 19;
-        $LimitedCommand = 'nice -n '.$nicePriority.' '.$command; }
-      if ($Verbose) logEntry('Conversion Scope: '.$scopeMode.', CPU '.$cpuPercentage.'%, Memory '.$memoryMegabytes.'M'.($scopeMode === 'none' ? ', enforced as niceness '.$nicePriority.' only' : '').'.'); } }
+        $LimitedCommand = 'nice -n '.$nicePriority.' '.$LimitedCommand; }
+      if ($Verbose) logEntry('Conversion Scope: '.$scopeMode.', CPU '.$cpuPercentage.'%, Memory '.$memoryMegabytes.'M'.($scopeMode === 'none' ? ', the processor share enforced as niceness '.$nicePriority : '').$memoryNote.'.'); } }
+  // / The time limit goes outside everything else, whatever else applies.
+  list ($runtimeIsLimited, $runtimeSeconds) = resolveConversionRuntime($sandboxProfile);
+  if ($runtimeIsLimited) {
+    $timeoutBinary = locateDependency('timeout');
+    if ($timeoutBinary === '') warningEntry('timeout is not installed, so this conversion runs with no time limit. coreutils provides timeout.');
+    else $LimitedCommand = escapeshellarg($timeoutBinary).' '.(int)$runtimeSeconds.' '.$LimitedCommand; }
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $scopeMode, $scopeBinary, $scopeEnvironment, $scopePrefix, $limitIsValid, $cpuPercentage, $memoryMegabytes, $nicePriority, $command, $sandboxProfile);
+  purgeSensitiveMemory($EnableMemoryProtection, $scopeMode, $scopeBinary, $scopeEnvironment, $scopePrefix, $prlimitBinary, $prlimitFlags, $memoryNote, $timeoutBinary, $limitIsValid, $addressSpaceIsAsked, $dataLimitIsWanted, $runtimeIsLimited, $cpuPercentage, $memoryMegabytes, $nicePriority, $runtimeSeconds, $command, $sandboxProfile);
   return $LimitedCommand; }
 // / -----------------------------------------------------------------------------------
 
@@ -5744,7 +5874,7 @@ function engineConfigModel() {
       'EmailConfirmationBody' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Confirmation Body'),
       'EmailRecoverySubject' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Recovery Subject'),
       'EmailRecoveryBody' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Recovery Body'),
-      // / The emails a signed in user's own change of address or password sends, from HRCloud3 v0.9.9.
+      // / The emails a signed in user's own change of address or password sends, from v5.0.0.
       'EmailAddressSubject' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Address Subject'),
       'EmailAddressBody' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Address Body'),
       'EmailNoticeSubject' => array('Type' => 'string', 'Depends' => 'EnableAuthentication', 'NamedWhenChanged' => TRUE, 'Description' => 'Email Notice Subject'),
@@ -5761,9 +5891,11 @@ function engineConfigModel() {
       'PermittedPrivateRanges' => array('Type' => 'array', 'Depends' => '', 'Description' => 'Permitted Private Ranges'))),
     'Resource Management Information' => array('Writable' => TRUE, 'Variables' => array(
       'EnablePerConversionLimits' => array('Type' => 'bool', 'Depends' => '', 'Description' => 'Enable Per Conversion Limits'),
-      'MaximumPerConversionResources' => array('Type' => 'array', 'Default' => 'array( \'Document\'     => \'50,512\', \'Spreadsheet\'  => \'50,512\', \'Presentation\' => \'50,768\', \'Image\'        => \'75,1024\', \'Video\'        => \'90,2048\', \'Audio\'        => \'50,512\', \'Archive\'      => \'50,512\', \'Model\'        => \'75,2048\', \'Scad\'         => \'75,1024\', \'Drawing\'      => \'50,512\', \'SVG\'          => \'50,512\', \'Subtitle\'     => \'25,256\', \'Stream\'       => \'90,2048\', \'OCR\'          => \'75,1024\', \'Ebook\'        => \'50,768\')', 'Depends' => 'EnablePerConversionLimits', 'Description' => 'Maximum Per Conversion Resources'),
+      'MaximumPerConversionResources' => array('Type' => 'array', 'Default' => 'array( \'Document\'     => \'50,512\', \'Spreadsheet\'  => \'50,512\', \'Presentation\' => \'50,768\', \'Image\'        => \'75,1024\', \'Video\'        => \'90,2048\', \'Audio\'        => \'50,512\', \'Archive\'      => \'50,512\', \'Model\'        => \'75,2048\', \'Scad\'         => \'75,1024\', \'Drawing\'      => \'50,512\', \'SVG\'          => \'50,512\', \'Subtitle\'     => \'25,256\', \'Stream\'       => \'90,2048\', \'OCR\'          => \'75,1024\', \'Ebook\'        => \'50,768\', \'Scan\'         => \'50,2048\')', 'Depends' => 'EnablePerConversionLimits', 'Description' => 'Maximum Per Conversion Resources'),
       'DefaultPerConversionResources' => array('Type' => 'string', 'Depends' => 'EnablePerConversionLimits', 'Description' => 'Default Per Conversion Resources'),
       'MinimumPerConversionResources' => array('Type' => 'string', 'Depends' => 'EnablePerConversionLimits', 'Description' => 'Minimum Per Conversion Resources'),
+      'MaximumPerConversionRuntime' => array('Type' => 'array', 'Depends' => '', 'Description' => 'Maximum Per Conversion Runtime'),
+      'DefaultPerConversionRuntime' => array('Type' => 'int', 'Depends' => '', 'Description' => 'Default Per Conversion Runtime'),
       'EnableResourceAwareness' => array('Type' => 'bool', 'Depends' => '', 'Description' => 'Enable Resource Awareness'),
       'RequireResourceAwareness' => array('Type' => 'bool', 'Depends' => 'EnableResourceAwareness', 'Conflict' => 'so every request & every command but --config is refused with error 31013.', 'Description' => 'Require Resource Awareness'),
       'CoreManagerSubprocessPollInterval' => array('Type' => 'int', 'Depends' => '', 'Description' => 'Core Manager Subprocess Poll Interval'),
@@ -5778,7 +5910,7 @@ function engineConfigModel() {
       'DefaultConversionCost' => array('Type' => 'int', 'Depends' => '', 'Description' => 'Default Conversion Cost'),
       'DefaultExpectedRuntime' => array('Type' => 'int', 'Depends' => '', 'Description' => 'Default Expected Runtime'),
       'LowStorageWarning' => array('Type' => 'int', 'Depends' => 'EnableResourceAwareness', 'Description' => 'Low Storage Warning'),
-      // / An application that offers libraries keeps the reserve for every write to one, listener or not, from HRCloud3 v1.0.0, so it depends on nothing there.
+      // / An application that offers libraries keeps the reserve for every write to one, listener or not, from v5.0.0, so it depends on nothing there.
       'StorageReserve' => array('Type' => 'int', 'Depends' => (storageIsOffered() ? '' : 'EnableResourceAwareness'), 'Description' => 'Storage Reserve'),
       'MaxWorkflowSteps' => array('Type' => 'int', 'Depends' => '', 'Description' => 'Maximum Workflow Steps'),
       'MaxWorkflowFiles' => array('Type' => 'int', 'Depends' => 'EnableWorkflows', 'Description' => 'Maximum Workflow Files'),
@@ -6193,16 +6325,17 @@ function sandboxRequiredProfiles() {
 // / needs --unshare-user. Elsewhere a tool runs as the web server's account, which only the host's passwd names, so it is shown the
 // / host's passwd & group, as before, & -v says so. The machine-id & the host name are the Engine's either way.
 // / A file missing from Resources/Engine/Sandbox is warned of & the host's is shown in its place, so a conversion still runs.
+// / The account's flags are sandboxAccountFlags()'s, from v5.0.0, so sandboxCommand() can take them away for a profile mapping to root.
 function sandboxIdentityFlags($launcherMakesUserNamespace) {
   // / Set variables.
   global $InstLoc, $DirSep, $ApacheUser, $EnableMemoryProtection;
   $IdentityIsOwn = FALSE;
   $IdentityFlags = $IdentityReason = '';
-  $identityFolder = $identityName = '';
+  $identityFolder = $identityName = $accountFlags = '';
   $missingFiles = array();
   $accountIsOwn = $machineIsOwn = FALSE;
-  // / The account's number matches the one passwd & group name, & is the only one the namespace maps.
-  $sandboxAccount = 1000;
+  $sandboxAccount = 0;
+  list ($sandboxAccount, $accountFlags) = sandboxAccountFlags();
   $identityFolder = rtrim((string)$InstLoc, $DirSep).$DirSep.'Resources'.$DirSep.'Engine'.$DirSep.'Sandbox';
   foreach (array('passwd', 'group', 'machine-id') as $identityName) if (!is_file($identityFolder.$DirSep.$identityName) or !is_readable($identityFolder.$DirSep.$identityName)) $missingFiles[] = $identityName;
   if (count($missingFiles) > 0) warningEntry('The Engine\'s own '.implode(', ', $missingFiles).' for a sandbox could not be read from '.$identityFolder.', so a sandbox shows the host\'s in place of each.');
@@ -6210,7 +6343,7 @@ function sandboxIdentityFlags($launcherMakesUserNamespace) {
   $machineIsOwn = !in_array('machine-id', $missingFiles, TRUE);
   // / --unshare-all always makes the namespace the host name lives in, so the host name is the Engine's in every sandbox.
   $IdentityFlags = ' --hostname sandbox';
-  if ($accountIsOwn) $IdentityFlags = $IdentityFlags.' --uid '.$sandboxAccount.' --gid '.$sandboxAccount
+  if ($accountIsOwn) $IdentityFlags = $IdentityFlags.$accountFlags
     .' --ro-bind '.escapeshellarg($identityFolder.$DirSep.'passwd').' /etc/passwd'
     .' --ro-bind '.escapeshellarg($identityFolder.$DirSep.'group').' /etc/group';
   else $IdentityFlags = $IdentityFlags.' --ro-bind-try /etc/passwd /etc/passwd --ro-bind-try /etc/group /etc/group';
@@ -6221,8 +6354,43 @@ function sandboxIdentityFlags($launcherMakesUserNamespace) {
   else if (!$accountIsOwn && !(bool)$launcherMakesUserNamespace) $IdentityReason = 'a tool runs as '.$ApacheUser.' & sees the host\'s passwd & group, because bubblewrap here cannot make a user namespace of its own. Bubblewrap 0.8 & later can.';
   else $IdentityReason = 'a tool sees the host\'s '.implode(', ', $missingFiles).', because '.$identityFolder.' is missing '.(count($missingFiles) === 1 ? 'it' : 'them').'.';
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $identityFolder, $identityName, $missingFiles, $accountIsOwn, $machineIsOwn, $sandboxAccount, $launcherMakesUserNamespace);
+  purgeSensitiveMemory($EnableMemoryProtection, $identityFolder, $identityName, $accountFlags, $missingFiles, $accountIsOwn, $machineIsOwn, $sandboxAccount, $launcherMakesUserNamespace);
   return array($IdentityIsOwn, $IdentityFlags, $IdentityReason); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to name the account a sandbox runs its tool as, from v5.0.0.
+// / Accepts nothing. Returns the account's number & the bubblewrap flags choosing it, in that order.
+// / The number matches the one account Resources/Engine/Sandbox's passwd & group name besides root & nobody, sandbox, & is the only
+// / one the namespace maps. sandboxIdentityFlags() names it, & sandboxCommand() takes the flags away for a profile mapping to root,
+// / because bubblewrap 0.9 warns where --uid or --gid is given twice, & that warning reached the output of every MeshLab conversion.
+function sandboxAccountFlags() {
+  // / Set variables.
+  $AccountNumber = 1000;
+  $AccountFlags = ' --uid '.$AccountNumber.' --gid '.$AccountNumber;
+  return array($AccountNumber, $AccountFlags); }
+// / -----------------------------------------------------------------------------------
+
+// / -----------------------------------------------------------------------------------
+// / A function to say whether the last command sandboxCommand() returned runs in a sandbox, from v5.0.0.
+// / Accepts the answer, which sandboxCommand() alone passes, or nothing, to ask. Returns the answer.
+// / sandboxCommand() limits every command it lets run, sandboxed or not, so the command it returns is never the one it was
+// / handed, & comparing the two says nothing. A caller that builds its command differently where no sandbox was built,
+// / as the shared LibreOffice module does, asks this straight after sandboxCommand() returns.
+// / A refused command is never a sandboxed one, & nothing is sandboxed until sandboxCommand() has said so.
+// / A sandbox a pipeline builds for itself, as Scad's does, is not sandboxCommand()'s, & this says nothing of it.
+function sandboxWasBuilt($builtAnswer = NULL) {
+  // / Set variables.
+  global $EnableMemoryProtection;
+  // / The answer survives the call, so a caller reads what sandboxCommand() set.
+  // / It is never purged, because purging a static empties it. It holds one boolean & nothing secret.
+  static $lastAnswer = FALSE;
+  $SandboxWasBuilt = FALSE;
+  if ($builtAnswer !== NULL) $lastAnswer = ($builtAnswer === TRUE);
+  $SandboxWasBuilt = $lastAnswer;
+  // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
+  purgeSensitiveMemory($EnableMemoryProtection, $builtAnswer);
+  return $SandboxWasBuilt; }
 // / -----------------------------------------------------------------------------------
 
 // / -----------------------------------------------------------------------------------
@@ -6238,8 +6406,10 @@ function sandboxIdentityFlags($launcherMakesUserNamespace) {
 // / A sandbox that was built returns TRUE with a bwrap command.
 // / A sandbox that could not be built returns FALSE when sandboxing is required, so every
 // / caller refuses without any caller needing to know why.
-// / A sandbox that could not be built returns TRUE with the unwrapped command when
+// / A sandbox that could not be built returns TRUE with the command unsandboxed when
 // / sandboxing is not required, & writes a warning naming the conversion as unprotected.
+// / Every command that may run is limited by limitCommand(), sandboxed or not, so the command returned is never
+// / the one handed in. sandboxWasBuilt() says which a caller got, from v5.0.0.
 // / A profile setting RequireSandbox is refused whenever no sandbox could be built, whatever the settings say,
 // / because its tool reads a file an upload names, & a warning names the profile.
 // / A container blocks the namespaces bubblewrap needs unless it was started with
@@ -6276,16 +6446,24 @@ function sandboxCommand($command, $inputPath, $outputPath, $allowNetwork, $sandb
   $sandboxIsRequired = TRUE;
   // / The same is true of this one, for the same reason.
   $profileRequiresSandbox = TRUE;
-  $SandboxedCommand = $networkFlag = $mountFlags = $workingDir = $profileFlags = $resourceFlags = $overlayFlags = $sandboxLauncher = $identityFlags = '';
+  $SandboxedCommand = $networkFlag = $mountFlags = $workingDir = $profileFlags = $resourceFlags = $overlayFlags = $sandboxLauncher = $identityFlags = $accountFlags = '';
   $environmentFlags = $environmentPrefix = $environmentName = $environmentValue = '';
   $launcherMakesUserNamespace = $identityIsOwn = FALSE;
   $rewriteSearch = $rewriteReplace = array();
   $inputDir = $outputDir = $sandboxInput = $sandboxOutput = '';
+  $sandboxAccount = 0;
+  $accountAt = FALSE;
   // / The launcher is what built the proving sandbox, so it is what builds this one. On a kernel that
   // / restricts unprivileged namespaces it is this application's own copy of bubblewrap.
   list ($bwrapBinary, $sandboxLauncher, , $launcherMakesUserNamespace) = verifySandboxLauncher();
   // / The account, the machine & the host name a tool sees are the Engine's, from v4.3.0, & never the host's where the launcher allows it.
   list ($identityIsOwn, $identityFlags) = sandboxIdentityFlags($launcherMakesUserNamespace);
+  // / A profile mapping its tool to root chooses that account itself, so the Engine's own is not chosen as well, from v5.0.0.
+  // / Only the first occurrence is taken, which is where sandboxIdentityFlags() put it, ahead of every path it binds.
+  if (sandboxProfileAsks($sandboxProfile, 'MapToRoot')) {
+    list ($sandboxAccount, $accountFlags) = sandboxAccountFlags();
+    $accountAt = strpos($identityFlags, $accountFlags);
+    if ($accountAt !== FALSE) $identityFlags = substr_replace($identityFlags, '', $accountAt, strlen($accountFlags)); }
   // / Collect the mounts this one dependency needs. Nothing else receives them.
   $profileFlags = sandboxProfileFlags($sandboxProfile);
   // / The files the calling pipeline carries in place of host files, such as its own policy.
@@ -6420,8 +6598,10 @@ function sandboxCommand($command, $inputPath, $outputPath, $allowNetwork, $sandb
   // / An unsandboxed command is still limited, because the host deserves protection even
   // / when the administrator has turned the sandbox off.
   if ($CommandMayRun) $SandboxedCommand = limitCommand($SandboxedCommand, $sandboxProfile);
+  // / The answer is kept for a caller that builds its command differently where no sandbox was built.
+  sandboxWasBuilt($CommandMayRun && $bwrapBinary !== FALSE);
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $pinnedHostsFile, $environmentFlags, $environmentPrefix, $environmentName, $environmentValue, $environmentVariables, $resourceFlags, $rewriteSearch, $rewriteReplace, $readOnlyResourcePath, $bwrapBinary, $sandboxLauncher, $launcherMakesUserNamespace, $identityIsOwn, $identityFlags, $overlayFlags, $sandboxIsRequired, $profileRequiresSandbox, $networkFlag, $mountFlags, $profileFlags, $workingDir, $inputDir, $outputDir, $sandboxInput, $sandboxOutput, $command, $inputPath, $outputPath, $allowNetwork, $sandboxProfile);
+  purgeSensitiveMemory($EnableMemoryProtection, $pinnedHostsFile, $environmentFlags, $environmentPrefix, $environmentName, $environmentValue, $environmentVariables, $resourceFlags, $rewriteSearch, $rewriteReplace, $readOnlyResourcePath, $bwrapBinary, $sandboxLauncher, $launcherMakesUserNamespace, $identityIsOwn, $identityFlags, $accountFlags, $sandboxAccount, $accountAt, $overlayFlags, $sandboxIsRequired, $profileRequiresSandbox, $networkFlag, $mountFlags, $profileFlags, $workingDir, $inputDir, $outputDir, $sandboxInput, $sandboxOutput, $command, $inputPath, $outputPath, $allowNetwork, $sandboxProfile);
   return array($CommandMayRun, $SandboxedCommand); }
 // / -----------------------------------------------------------------------------------
 
@@ -7315,15 +7495,18 @@ function runEngineRootCommand($cliCommand, $cliTarget) {
 // / Accepts the threshold the operator supplied, if any. Returns the exit status.
 // / The caller has already refused this to anybody but root & the web server account.
 // /
+// / A bare -c sweeps by --File Deletion Age Threshold--, & sweeps nothing where it is 0, which keeps files forever, from v5.0.0.
+// / -c now & -c with a number of minutes sweep by what they name, 0 included, because the operator named it.
 // / Root does not sweep, & hands the sweep to the web server account instead.
 // / Every name in a session folder belongs to that account, which could swap it for a link between examination & removal.
 // / Run through runAsAccount, the sweep can only remove what that account could already remove.
 // / The temporary location is swept whole, not one request's session folder.
 function runEngineCleanCommand($cliTarget) {
   // / Set variables.
-  global $Lol, $InstLoc, $DirSep, $DeleteThreshold, $ConvertTemp, $ConvertLoc, $ProtectedRootDirs, $RunningAsRoot, $ApacheUser, $EnableMemoryProtection;
+  global $Lol, $InstLoc, $DirSep, $ConvertTemp, $ConvertLoc, $ProtectedRootDirs, $RunningAsRoot, $ApacheUser, $EnableMemoryProtection;
   $CommandStatus = 0;
   $cliTempCleaned = $cliTempDeepCleaned = $cliDataCleaned = $cliDataDeepCleaned = FALSE;
+  $sessionsAreSwept = TRUE;
   $cliThreshold = 0;
   $accountOutput = array();
   $accountExitCode = 1;
@@ -7335,26 +7518,31 @@ function runEngineCleanCommand($cliTarget) {
     if ($accountExitCode !== 0) $CommandStatus = 1; }
   else {
     logEntry('Command line invocation. Performing a manual clean.');
-    $cliThreshold = $DeleteThreshold;
     // / A threshold of zero expires everything, because every session is older than nothing.
     if ($cliTarget === 'now') $cliThreshold = 0;
     // / ctype_digit rather than is_numeric, because is_numeric accepts a negative & a
     // / negative threshold would expire every session while looking like a normal number.
     else if ($cliTarget !== '' && ctype_digit($cliTarget)) $cliThreshold = (int)$cliTarget;
-    else if ($cliTarget !== '') {
-      warningEntry('An unrecognized clean threshold was supplied. Using the configured default.');
-      print($Lol.'Unrecognized threshold. Supply a whole number of minutes, or now.'.$Lol); }
-    print($Lol.'Cleaning sessions older than '.$cliThreshold.' minute(s).'.$Lol);
-    logEntry('Manual clean requested. Threshold set to '.$cliThreshold.' minute(s).');
-    list ($cliTempCleaned, $cliTempDeepCleaned) = cleanDataLocation($ConvertTemp, 'Temporary files', $cliThreshold, $ProtectedRootDirs, array($ConvertTemp));
-    print('  Temporary location   '.($cliTempCleaned ? 'OK' : 'FAILED').($cliTempDeepCleaned ? ', removed expired sessions' : ', nothing was expired').$Lol);
-    list ($cliDataCleaned, $cliDataDeepCleaned) = cleanDataLocation($ConvertLoc, 'Data location', $cliThreshold, $ProtectedRootDirs, array($ConvertLoc));
-    print('  Data location        '.($cliDataCleaned ? 'OK' : 'FAILED').($cliDataDeepCleaned ? ', removed expired sessions' : ', nothing was expired').$Lol);
-    if (!$cliTempCleaned or !$cliDataCleaned) print($Lol.'One or more locations could not be cleaned. See the log for the reason.'.$Lol);
-    if (!$cliTempCleaned or !$cliDataCleaned) $CommandStatus = 1;
-    print($Lol); }
+    else {
+      if ($cliTarget !== '') {
+        warningEntry('An unrecognized clean threshold was supplied. Using the configured default.');
+        print($Lol.'Unrecognized threshold. Supply a whole number of minutes, or now.'.$Lol); }
+      list ($sessionsAreSwept, $cliThreshold) = resolveDeleteThreshold(); }
+    if (!$sessionsAreSwept) {
+      print($Lol.'--File Deletion Age Threshold-- is 0, which keeps files forever, so nothing was swept. Supply a number of minutes, or now, to sweep anyway.'.$Lol.$Lol);
+      logEntry('Manual clean requested. --File Deletion Age Threshold-- is 0, which keeps files forever, so nothing was swept.'); }
+    else {
+      print($Lol.'Cleaning sessions older than '.$cliThreshold.' minute(s).'.$Lol);
+      logEntry('Manual clean requested. Threshold set to '.$cliThreshold.' minute(s).');
+      list ($cliTempCleaned, $cliTempDeepCleaned) = cleanDataLocation($ConvertTemp, 'Temporary files', $cliThreshold, $ProtectedRootDirs, array($ConvertTemp));
+      print('  Temporary location   '.($cliTempCleaned ? 'OK' : 'FAILED').($cliTempDeepCleaned ? ', removed expired sessions' : ', nothing was expired').$Lol);
+      list ($cliDataCleaned, $cliDataDeepCleaned) = cleanDataLocation($ConvertLoc, 'Data location', $cliThreshold, $ProtectedRootDirs, array($ConvertLoc));
+      print('  Data location        '.($cliDataCleaned ? 'OK' : 'FAILED').($cliDataDeepCleaned ? ', removed expired sessions' : ', nothing was expired').$Lol);
+      if (!$cliTempCleaned or !$cliDataCleaned) print($Lol.'One or more locations could not be cleaned. See the log for the reason.'.$Lol);
+      if (!$cliTempCleaned or !$cliDataCleaned) $CommandStatus = 1;
+      print($Lol); } }
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $cliTempCleaned, $cliTempDeepCleaned, $cliDataCleaned, $cliDataDeepCleaned, $cliThreshold, $accountOutput, $accountExitCode, $cliTarget);
+  purgeSensitiveMemory($EnableMemoryProtection, $cliTempCleaned, $cliTempDeepCleaned, $cliDataCleaned, $cliDataDeepCleaned, $cliThreshold, $sessionsAreSwept, $accountOutput, $accountExitCode, $cliTarget);
   return $CommandStatus; }
 // / -----------------------------------------------------------------------------------
 

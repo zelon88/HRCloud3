@@ -10,11 +10,11 @@ APPLICATION INFORMATION ...
 The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
 
 FILE INFORMATION ...
-v4.3.4ur.
+v5.0.0.
 This file documents the Storage Core, which keeps what signed in users store in libraries an administrator names. It describes a
 library, a user's space in one, the names a request may use, what a page may ask a library for & what it is answered, a download,
 an upload, the trash, the quota & the storage reserve, what happens to a removed account's files, & what -v says of each library.
-The Storage Core is new in v4.3.4ur, which HRCloud3 v1.0.0 added to the Engine. It is not yet part of the Engine's own releases.
+The Storage Core is new in v5.0.0. HRCloud3 built it, & the Engine took it at that release.
 For the values an application names in its contract, see ABOUT_ENGINE_CONTRACT.txt. For each warning & error, see ERROR_DESCRIPTIONS.txt.
 
 HARDWARE REQUIREMENTS ...
@@ -55,7 +55,8 @@ where accounts are on, because a library is kept for a signed in user. See --For
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Libraries--
 
-AN ADMINISTRATOR LISTS EACH LIBRARY IN --Libraries--, by its name, with its settings.
+AN ADMINISTRATOR LISTS EACH LIBRARY IN THE SETTING StorageLibraries NAMES, by its name, with its
+settings. HRCloud3 names $Libraries.
 
   $Libraries = array(
     'Drive' => array('Kind' => 'personal', 'Location' => ''),
@@ -160,7 +161,7 @@ cannot open a folder by a handle it has already checked, so give such a program 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Who Added What--
 
-A SHARED LIBRARY RECORDS WHICH ACCOUNT ADDED EACH FILE & FOLDER, from HRCloud3 v1.0.0, so that account
+A SHARED LIBRARY RECORDS WHICH ACCOUNT ADDED EACH FILE & FOLDER, so that account
 may delete it forever. An upload, a new folder & a copy are recorded as the signed in account's, a copy
 & everything in it alike, because a copy is new. A personal library records nothing, because its owner
 added everything in it.
@@ -319,8 +320,8 @@ restore anywhere it should not. An entry whose record cannot be read is not list
 once its folder is as old as the trash's lifetime. In a shared library the record also names the one
 account that added what was deleted, & everything in it, where one did. See --Who Added What--.
 
-THE TRASH KEEPS WHAT IT HOLDS FOR --Trash Lifetime-- DAYS, which is 30 by default, & 0 keeps it until it
-is emptied. A user empties their own trash, & takes one entry out of it for good, at any time. In a
+THE TRASH KEEPS WHAT IT HOLDS FOR THE DAYS TrashLifetime NAMES, which is 30 by default, & 0 keeps it until
+it is emptied. A user empties their own trash, & takes one entry out of it for good, at any time. In a
 shared library an admin who may write it does, & any other user who may write it takes out for good
 only an entry they alone added.
 
@@ -359,7 +360,7 @@ the quota by as much as the smaller of them. The quota is a limit on what a user
 --Removing An Account--
 
 AN ACCOUNT'S FILES GO WITH IT. sudo php <entry point> --account --remove <USERNAME> -y  removes the
-account, its folder in Users, & its space in every personal library --Libraries-- lists now, its trash
+account, its folder in Users, & its space in every personal library StorageLibraries lists now, its trash
 included. Nothing it wrote in a shared library is removed, because a shared library is nobody's.
 A link in a space is removed as a link, & nothing it leads to is touched.
 
@@ -369,7 +370,7 @@ A LIBRARY THAT IS NO LONGER LISTED IS NOT REACHED, so a space the account kept i
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 --What -v Says--
 
--v NAMES THE STORAGE CORE WITH THE ENGINE'S OTHER CORES, AS  Storage Core  OK, 4.3.4ur, & EACH LIBRARY
+-v NAMES THE STORAGE CORE WITH THE ENGINE'S OTHER CORES, AS  Storage Core  OK, 5.0.0, & EACH LIBRARY
 IN A SECTION OF ITS OWN, Libraries, after the interfaces.
 
   Libraries
@@ -395,7 +396,7 @@ with the features that are installed & switched off, because a library is kept f
 AN APPLICATION OFFERS LIBRARIES with these, in its contract & its entry point.
 
   $EngineEnableStorage = TRUE;                   In its contract. The Engine's default is FALSE.
-  $RequiredStorageCoreVersion = 'v4.3.4ur';      In its entry point, as every Engine core is pinned exactly.
+  $RequiredStorageCoreVersion = 'v5.0.0';        In its entry point, as every Engine core is pinned exactly.
   'LibraryLoc' => 'web'                          In $EngineManagedLocations, so -fp makes Libraries & gives it to the web server account.
   'LibraryLocation' => 'LibraryLoc'              In $EngineSettingNames. The Engine names $LibraryLoc as it starts.
   'StorageLibraries' => '<its setting>'          In $EngineSettingNames, the setting that lists its libraries.

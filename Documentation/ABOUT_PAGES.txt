@@ -10,11 +10,11 @@ APPLICATION INFORMATION ...
 The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
 
 FILE INFORMATION ...
-v4.3.4ur.
+v5.0.0.
 This file documents the Page Core, which builds a page for a browser from the components of an interface. It describes what an
 interface holds, how one inherits from the base, how the interface, the language & the color of a page are chosen, how a page is
 built, & how a fault in a page is traced to the one file that caused it.
-The Page Core is new in v4.3.4ur, which HRCloud3 v0.9.9 added to the Engine. It is not yet part of the Engine's own releases.
+The Page Core is new in v5.0.0. HRCloud3 built it, & the Engine took it at that release.
 For the values an application names in its contract, see ABOUT_ENGINE_CONTRACT.txt. For each warning & error, see ERROR_DESCRIPTIONS.txt.
 
 HARDWARE REQUIREMENTS ...
@@ -105,17 +105,17 @@ folders. One level keeps it to two.
 --Choosing The Interface, The Language & The Color--
 
 EACH IS A LADDER, & THE FIRST RUNG THAT CAN BE USED WINS.
-  Interface   The one the request asked for, then --Default Interface--, then the base.
-  Language    The one the request asked for, then --Default Language--, then English.
-  Color       The one the request asked for, then --Default Color--, then the first the interface offers.
+  Interface   The one the request asked for, then DefaultInterface, then the base.
+  Language    The one the request asked for, then DefaultLanguage, then English.
+  Color       The one the request asked for, then DefaultColor, then the first the interface offers.
 
 A REQUEST'S CHOICE IS A RUNG ONLY WHERE THE ADMINISTRATOR ALLOWS IT & OFFERS IT. The administrator
-offers interfaces, languages & colors with --Supported Interfaces--, --Supported Languages-- &
---Supported Colors--, & lets users choose with --Allow User Selectable Interface--, --Allow User
-Selectable Language-- & --Allow User Selectable Color--. Each setting is the application's, read
-through $EngineSettingNames, so an application calls them what it likes. The base & English are
-always offered, because they are the last rungs. An empty list of colors offers every color the
-interface does.
+offers interfaces, languages & colors with SupportedInterfaces, SupportedLanguages & SupportedColors,
+& lets users choose with AllowUserSelectableInterface, AllowUserSelectableLanguage &
+AllowUserSelectableColor. Each is a shared name in $EngineSettingNames, & the setting it names is
+the application's, so an application calls them what it likes. The base & English are always
+offered, because they are the last rungs. An empty list of colors offers every color the interface
+does.
 
 A REQUEST ASKING FOR WHAT IS NOT OFFERED IS PASSED OVER WITHOUT A WORD. Choosing is not an error.
 
@@ -147,7 +147,7 @@ A PACK DECLARES $LanguageVersion & $LanguageDirection, which is ltr or rtl. A co
 direction into the page, & a stylesheet written with start & end rather than left & right is drawn
 the other way round for a language that reads right to left.
 
-A LANGUAGE NAMES ITSELF IN ITS OWN LANGUAGE. --Supported Languages-- maps each code to its endonym,
+A LANGUAGE NAMES ITSELF IN ITS OWN LANGUAGE. SupportedLanguages maps each code to its endonym,
 such as fr to Français, so a user who landed on a language they cannot read still recognizes theirs.
 
 A PACK IS UTF-8 WITH NO BYTE ORDER MARK, because a byte order mark is output before any header.
@@ -173,7 +173,7 @@ BEFORE THE FIRST COMPONENT, THE PAGE CORE SETS WHAT EVERY COMPONENT READS.
   $InterfaceToUse     The interface chosen, & $LanguageToUse & $ColorToUse the language & the color.
   $InterfaceAssets    The address of each asset, keyed by the name the contract gives it.
   $PageChoices        The interfaces, the languages, by code & endonym, & the colors a user may choose between. An
-                      interface is listed only where it can be used, from HRCloud3 v1.0.0, & -v says why one cannot.
+                      interface is listed only where it can be used, & -v says why one cannot.
   $EnginePageState    What the Engine says about the request, as the Authentication Core sets it.
 A component reads these, the language strings & nothing else. It never reads a request, so what a
 page can show is decided by the application & by the Engine, & a component can be replaced without
@@ -198,14 +198,14 @@ file. These two make finding that file a matter of reading.
 WHERE $Verbose IS TRUE, EVERY PAGE IS LOGGED BEFORE IT IS DRAWN, as one Op-Act entry naming every
 file it is built from. A page that stops part way still names what it was being built from.
 
-  Built the settings page with the Page Core 4.3.4ur for HRCloud3 0.9.9. Interface Default 0.9.9,
-  language en 0.9.9, color blue. Components: header.php from Default 0.9.9 #d6581ecd0a0f, ...
-  Assets: Stylesheet from Default 0.9.9 #4329f1d45692, ...
+  Built the settings page with the Page Core 5.0.0 for MyApp 1.0.0. Interface Default 1.0.0,
+  language en 1.0.0, color blue. Components: header.php from Default 1.0.0 #d6581ecd0a0f, ...
+  Assets: Stylesheet from Default 1.0.0 #4329f1d45692, ...
 
 Each file is named with the interface it was found in, the version stamp in its header & its
 fingerprint, the first 12 hexadecimal digits of its SHA-256. Components come in the order they are
 drawn, then styleCore.php, the chosen pack & the pack under it. An interface that inherits says so,
-as Interface Mine 0.9.9 over Default 0.9.9.
+as Interface Mine 1.0.0 over Default 1.0.0.
 
 A STAMP SAYS WHICH VERSION A FILE WAS LAST CHANGED IN, & A FINGERPRINT SAYS WHETHER IT IS THE SAME
 BYTES. Two installations whose log lines differ only in one fingerprint differ only in that file. A
@@ -213,11 +213,11 @@ file that was edited by hand keeps its stamp & changes its fingerprint. The stam
 of a file's header holding nothing but a version & a full stop, inside a comment, & a file with none
 is named unstamped. Neither decides anything, so neither is a check.
 
-WHERE --Mark Page Components-- IS TRUE, EVERY COMPONENT IS MARKED IN THE PAGE ITSELF, by an HTML
+WHERE MarkPageComponents IS TRUE, EVERY COMPONENT IS MARKED IN THE PAGE ITSELF, by an HTML
 comment before it & after it, so a browser's view of the source shows which component wrote each
 line.
 
-  <!-- Page component begins: settingsGui.php from Default 0.9.9 #7999dd79ec03 -->
+  <!-- Page component begins: settingsGui.php from Default 1.0.0 #7999dd79ec03 -->
   <!-- Page component ends: settingsGui.php -->
 
 A marker names a component exactly as the log does, so a marker found in a page is found in the log.
@@ -234,10 +234,10 @@ file that interface carries itself, & the line names which those are.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 --What -v Reports--
 
--v lists every interface --Supported Interfaces-- offers, under Installed interfaces, & says
+-v lists every interface SupportedInterfaces offers, under Installed interfaces, & says
 whether each could draw every page, with its version & what it inherits from. A failed one says
 why, as MISSING, a version that does not match, a component or an asset that is missing, or no color.
-Under Language packs, -v counts for each interface the packs --Supported Languages-- offers that it
+Under Language packs, -v counts for each interface the packs SupportedLanguages offers that it
 or its base carries at the version the application requires, & names each that fails. A failed row
 is counted with every other failure. -v draws nothing & logs nothing.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -245,12 +245,13 @@ is counted with every other failure. -v draws nothing & logs nothing.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Why The Page Core Is Named For Pages--
 
-The Engine keeps interfaceCore & interfaceManager for a low level display server, a Wayland
-compositor, so a core that builds web pages needs a name of its own. The Engine already speaks of
+A core that builds web pages needs a name no other surface claims. The Engine already speaks of
 pages. The Authentication Core sets $EnginePageState, & answerEngineRequest() answers page where an
 application draws the page the Engine names. So the core that builds them is the Page Core.
 
 Interface keeps one meaning on every surface. It is a set of components an administrator selects or
-replaces. ENGINE_RECONCILIATION_HRCLOUD3.txt proposes displayCore & displayManager for the
-compositor, which is a display server, so neither word is asked to mean two things.
+replaces. A low level display server, a Wayland compositor, is the Engine's displayCore &
+displayManager when it is built, from v5.0.0, as ENGINE_RECONCILIATION_HRCLOUD3.txt proposed, because
+it is a display server, so neither word is asked to mean two things. Until then the compositor's
+core & manager were to be interfaceCore & interfaceManager.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------

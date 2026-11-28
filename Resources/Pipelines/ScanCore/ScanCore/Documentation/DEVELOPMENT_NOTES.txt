@@ -1,0 +1,560 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+ScanCore, Copyright on 3/31/2024 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+BSD or MIT licensing is available. Reach out to @zelon88 for more information.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+This application is designed to scan files & folders for viruses.
+
+FILE INFORMATION ...
+v2.0.0.
+This plain text file records the reasoning & the engineering intent behind each part of ScanCore, & the history that explains it.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+This application requires PHP 8.0 or later, run from a command line on Linux or Windows.
+The zlib extension reads compressed container members & png chunks, which are reported as incomplete without it.
+An update uses Git, or downloads each file with PHP, or with cURL where PHP may not open a URL. None of them is needed to scan.
+The posix extension hands new files to the owner of the installation when ScanCore is run as root.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About This File--
+
+CODE & OUTPUT SAY WHAT HAPPENS. THIS FILE SAYS WHY.
+A code comment & a line of output state a fact. The reasoning behind it, & what came before it, is kept here,
+so that neither has to carry it.
+
+  This file                  Why a part of ScanCore is shaped the way it is, & what it replaced.
+  ABOUT_ documents           How a part works now.
+  CHANGELOG.txt              What changed in each release.
+  ERROR_DESCRIPTIONS.txt     Every numbered error & every warning, its cause & its remedy.
+
+Each entry opens with the decision in capitals, followed by its reason.
+A release is named where one is known.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Output Contract--
+
+A FINDING WORD OPENS THE LINE & THE PATH FOLLOWS IT.
+ScanCore is run by programs more often than by people. HRConvert2 & HRProtect both read what it prints & what
+it writes, & both were written against the words Infected, Suspicious, Classified & Incomplete.
+Those words, the path after them, the three ways a report entry opens, the exit status & the opening of the
+version line are therefore held still. ABOUT_REPORTS.txt is the written form of that promise, & from v2.0.0
+the behaviour test holds a reader that checks it on every case.
+
+WHY A BOMB IS REPORTED AS INFECTED
+A caller stops what it is doing on an Infected line. A bomb exists to take down whatever opens it next, so it
+must stop a conversion. Bombs are therefore of high confidence. Damage & oddity are of medium confidence &
+are reported as Suspicious, because broken files are common & mostly innocent.
+
+  High     Bomb.PNG.PixelFlood           Bomb.Archive.NestingDepth
+           Bomb.PNG.ChunkExpansion       Bomb.Archive.OverlappingEntries
+           Bomb.PNG.DataOverrun          Bomb.Archive.TotalExpansion
+           Embedded.PHP                  Bomb.Archive.CompressionRatio
+  Medium   Malformed.PNG                 Malformed.Archive.HeaderMismatch
+           Polyglot.PNG.TrailingData     Polyglot.Archive.Hidden
+           Masquerade.PNG                Embedded.Script, .Shell, .Execution
+
+WHY THE WORD INCOMPLETE EXISTS
+v1.8 stopped reading at a budget & said nothing. A caller could not tell a clean archive from one that ScanCore
+gave up on, & padding an archive with 512 small members hid everything after them. Incomplete is a neutral word.
+It is never Infected, because an encrypted zip or a large backup is ordinary.
+A caller that needs certainty treats Incomplete as not scanned.
+From v2.0.0 a file that cannot be opened, a file that cannot be read to its end & a file that ScanCore itself
+failed on draw the same line. v1.9 said the first two in errors 600 & 610 alone, & 610 was not printed, so a
+scan whose report could not be written lost it altogether.
+
+A PATH IS NEVER SHORTENED.
+v1.9 shortened any name longer than 255 bytes, so that one member of an archive could not flood the report.
+It shortened the path of the scanned file the same way. A caller finds its file in a line by the whole path that
+it handed over, so a file with a long enough name was reported in a line that no caller could match, & read as
+clean. From v2.0.0 the name of a member is shortened & a path never is.
+
+A NAME IS ESCAPED WHEREVER IT IS PRINTED.
+v1.8 wrote names to the report raw, so a name could forge a line or carry terminal escapes. v1.9 escaped the
+names of files & members. v2.0.0 escapes the names of folders as well, which were still written raw by the walk.
+
+A FILE WHOSE NAME HOLDS A FINDING WORD IS NOT A FINDING.
+A file named  Infected: x  appears in the Scanning file entry of the report. A caller that searched a whole line
+for the word read a clean file as infected. The words are looked for before the first slash of a line, because
+everything after it may be a name. ABOUT_REPORTS.txt tells a caller so, & HRConvert2 reads that way.
+
+THE EXIT STATUS IS NOT A VERDICT.
+Finding a threat is a scan that worked, so it exits 0. A status other than 0 means that ScanCore could not do what
+it was asked, & says nothing about any file.
+
+ONE FAULT IS ONE FILE.
+v1.9 had a zip reader that divided by a size it had read from the file. A zip64 record of 400 bytes that declared
+a size no integer can hold stopped the interpreter with a TypeError, & with it the whole scan. In a folder scan,
+every file after it went unscanned, & with display_errors off nothing at all was printed.
+v2.0.0 removes the division. It also catches any fault raised while one file is inspected, raises error 640
+with what the interpreter said, reports that file as incomplete & goes on. A scan of ten thousand files does not
+end at the thirty seventh because of a mistake in ScanCore.
+
+A QUESTION WRITES NOTHING.
+An application asks ScanCore for its version every time it starts. v1.9 wrote the whole answer to the report each
+time, & created the report folder to do it. From v2.0.0 -version & -help are answered on the console alone.
+
+A LINE THE REPORT CANNOT TAKE IS PRINTED AS IT WOULD HAVE BEEN WRITTEN.
+On the console an entry is its text alone. Where the report cannot be written, a warning or an error is printed
+with its label & its time, because a caller that reads the console is then the only reader there is.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Starting Up--
+
+THE REPORT FILE IS SETTLED BEFORE ANYTHING IS LOGGED.
+v1.9 read -reportfile with the other arguments, after the configuration had been checked. A warning about the
+configuration, & a warning about any argument written ahead of -reportfile, went to the default report of the
+installation. A caller that gave ScanCore a report of its own never saw them.
+v2.0.0 finds the configuration file, the definitions file & the report file among the arguments first, in
+loadConfig(), through one function. Nothing of a run is written anywhere but the report that was named.
+
+THE REPORT FOLDER IS CREATED WHEN IT IS FIRST WRITTEN TO.
+v1.9 created the report folder before it read its arguments, & stopped with error 5 where it could not.
+An installation owned by another account, or mounted read only, could not print its own help. A scan that had
+been given a report elsewhere still needed the folder.
+v2.0.0 creates the folder when the first entry is written into it. Error 5 is retired. A folder that cannot be
+created is a report that cannot be written, which is error 910, & the scan goes on.
+ScanCore never creates the folder of a report that -reportfile names. That folder belongs to the caller.
+
+A CONFIGURATION VERSION SAYS WHICH ENTRIES A FILE HOLDS.
+Through v1.9 a configuration file had to be as new as the core. Every release therefore refused every existing
+configuration file, whether or not anything about it had changed, & an application that keeps its own copy of
+the file had to edit it by hand at each release.
+From v2.0.0 the core carries two versions. $Version is the release. $RequiredConfigVersion is the last release
+that added or removed a configuration entry, which is v1.9. $ConfigVersion in the file says the same thing from
+the other side. A v1.9 configuration file runs a v2.0.0 core, because it holds every entry that the core reads.
+This is how HRConvert2 & HRProtect version their own configuration files.
+
+A CONFIGURATION FILE THAT DOES NOT PARSE IS CAUGHT.
+The file is PHP & is loaded by the interpreter. v1.9 let a syntax error in it end the run with the interpreter's
+own message. v2.0.0 catches it & raises error 2 with what the interpreter said & the line it said it about.
+
+NOTHING BUT AN UPDATE RUNS ANOTHER PROGRAM.
+A scan runs no shell & no other program. An update may run git, curl & the PHP binary. Every one of them is run
+through runShellCommand(), which first asks whether the interpreter may run a command at all.
+v1.9 called shell_exec() directly, & an interpreter with that function switched off ended an update with an
+uncaught error. v2.0.0 reports a check that could not be performed as exactly that & carries on.
+
+THE PATH COMES FIRST.
+-m 100 /path reads -m as the path to scan. The path is the first argument, as the help says, & a switch is
+never looked for there. This lets a file that is named like a switch be scanned.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Memory--
+
+A CHUNK IS HELD TWICE, & WAS HELD THREE TIMES.
+v1.9 kept the last chunk & the last search window while it read the next chunk, so three chunks were alive at
+once. v2.0.0 releases both before it reads. The read loop lives in scanFileContent(), & when it returns nothing
+of the file is held, so the structure pass starts with the whole budget.
+
+THE BUDGETS ARE FITTED TO THE MEMORY LIMIT.
+The budgets were independent settings, & nothing related them to the limit they had to fit inside.
+Five stored zips, one inside another, around 7 megabytes that do not compress, took v1.9 103 megabytes to
+inspect, & under a limit of 64 megabytes the interpreter stopped with a fatal error & no verdict.
+v2.0.0 holds a chunk to a quarter of the limit, an image chunk to a sixteenth, & a member to the limit divided by
+four & by one more than the nesting depth, because each level of nesting holds a member of its own.
+A member that is larger than its budget is inspected in part & reported as incomplete, which is an answer.
+Under the same limit v2.0.0 finishes that file in 40 megabytes & reports it as incomplete.
+Nothing is lowered at the default limit of 512 megabytes, or at the 256 megabytes HRConvert2 asks for.
+
+HOSTS & URLS ARE MATCHED ONE AT A TIME.
+v1.9 collected every host shaped run of a chunk into an array & then looked each one up. Text made of nothing but
+short host shaped words produced an array many times the size of the chunk. 8 megabytes of the shortest such
+words took 130 megabytes, & stopped the interpreter under a limit of 64. v2.0.0 takes one match, looks it up &
+takes the next, & the same file takes 50 megabytes, of which 31 are the interpreter by itself. This only ever
+mattered to a definitions file that holds host or url indicators, which the published one does not yet.
+
+WHY PURGING DOES NOT SHRED.
+purgeSensitiveMemory() sets each target to NULL. It does not overwrite the bytes first. PHP gives a program no
+dependable way to do that: a string is shared between every variable that was assigned from it until one of
+them changes, so writing over one variable writes a copy. Setting NULL releases this function's hold at once,
+which is as much as a script can promise. The call is also the discipline that the conventions ask for, in that
+every local is named where it ends.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Join Between Two Chunks--
+
+A NAME IS NEVER READ IN HALVES.
+A file is read in chunks, & the end of each chunk is carried into the next so that a signature across the join
+is found. Three things were wrong with how v1.9 did that, & all three were found while v2.0.0 was written.
+
+  A name could be read from its middle. The carried end began at a fixed number of bytes, wherever that fell.
+  Where it fell after the first three letters of notevil.example.com, the next chunk began with evil.example.com
+  & a host indicator of that name matched. A handler was read the same way, so mysurface( became surface(.
+
+  A name could be read short of its end. A chunk that ended after evil.example.com matched that host, although
+  the file went on to say evil.example.community.
+
+  A host or a url across the join could be missed. The carried end was as long as the longest data signature, &
+  the hosts & the urls were not measured. With no data signature loaded, nothing was carried at all.
+
+v2.0.0 measures hosts & urls with the rest. A full chunk hands back the run of text it ends inside, by seeking
+back over it, so the next chunk reads that run whole. The end that is carried begins at a break in the text.
+A break is a space, a control character, a quote, a bracket, a backslash or a byte that is not text.
+
+WHY 255 BYTES.
+A host name is at most 253 bytes long, so a run that long with no break in it is not a host name. Such a run is
+left where the chunk cuts it, which keeps a file with no breaks at all from being read a byte at a time.
+What is looked up from a run that long begins after its first dot, so even then no label is read from its middle.
+
+WHY THE RUN IS HANDED BACK & NOT KEPT.
+Keeping the run & joining it to the next chunk would hold a third copy of a chunk for a moment. Seeking back over
+at most 255 bytes costs nothing & keeps the hashes simple, because every byte is still hashed once & in order.
+The behaviour test scans a file of forty four chunks & finds it by the hash of the whole.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Virus Definitions--
+
+NOTHING IS POSITIONAL.
+The format that ScanCore read before v1.8 was tab delimited, with a column for each kind of indicator. It shipped
+with 49 hashes in the wrong column, & nobody could tell by looking. v1.8 names the kind on every line.
+A file in the old format is refused with error 540 & is not read as nothing.
+
+A HASH IS CHECKED WHEN IT IS READ.
+v1.9 accepted any value as a hash. One that was not hexadecimal raised a PHP warning for every scan. Worse, the
+packed index is a run of records of a fixed width, so one md5 written with 30 digits put every record after it
+out of step, & a known sample was reported as clean while the index was in use. -nohashindex still found it.
+v2.0.0 reads a hash only where it is hexadecimal & is the length of its kind. Anything else is a malformed
+record, & the warning says how many there were.
+
+THREE ATTRIBUTES ARE READ & NO OTHERS.
+v1.9 copied any attribute it recognised into the record, & recognised every field of the record, so a line
+that ended with kind=data or name=Renamed rewrote the definition it trailed. v2.0.0 reads confidence, scope &
+src. Any other attribute is ignored, so a feed can carry notes of its own.
+
+A CONFIDENCE IS READ IN EITHER CASE.
+confidence=High was compared with the word high as it was written, did not equal it, & reported a whole file
+hash as Suspicious. It is now read without regard to case, & a word that is none of the three falls back to
+the default of the kind.
+
+THE MINIMUM DATA SIGNATURE LENGTH IS ENFORCED.
+The setting & its switch survived the v1.8 rewrite of the definitions loader, & the check they controlled did
+not, so a data signature of two bytes was searched for in every file. v2.0.0 leaves the short ones out when the
+definitions are loaded. The index keeps them all, so the switch can be changed without the index being rebuilt.
+
+WHY THE INDEX IS PACKED.
+A hash held in a PHP array costs far more than the hash, because the array holds a whole record for every one.
+A million of them took a gigabyte & eleven seconds to parse. The same million as one string of packed records
+take 34 megabytes & fifteen milliseconds, because the string is read straight off the disk. Each record is the
+hash & the offset of its line, so the name of a definition is read from the definitions file only when its hash
+has matched.
+On v2.0.0 the index of a million hashes is built once, in under five seconds & 234 megabytes. Every scan after
+that starts in about half a second & 68 megabytes, & most of that time is spent checking that the index still
+belongs to the definitions file. Without an index a hash costs about seven hundred bytes of memory, so a set of
+that size does not fit the default memory limit & is one that -nohashindex cannot be used with.
+
+THE INDEX FORMAT IS SCIDX2.
+An index that v1.9 built from a file with a malformed hash is out of step, & nothing in it says so. The format
+was renamed so that v2.0.0 never loads one, & builds its own.
+
+A COPY OF THE DEFINITIONS IS RECOGNISED BEFORE IT IS READ.
+The definitions file quotes every data, host & url indicator there is, so a backup of it would light up from
+end to end. v1.9 scanned a copy, printed every line, noticed afterwards what it had scanned & left the file out
+of its counts, so the lines said one thing & the summary another. v2.0.0 compares the size first & the hash
+second, before anything is read for matching, & says nothing about a file it is not scanning.
+
+THE INDEX IS WRITTEN BESIDE WHATEVER DEFINITIONS FILE IS IN USE.
+That includes a file named with -defsfile. An index that cannot be written is error 550, & the scan is the same.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Hosts & Urls--
+
+A HOST IS FOUND IN THE DATA & LOOKED UP.
+Searching the data once for each indicator means that the cost grows with the feed. Four hundred hosts took eight
+seconds & fifty thousand took twenty minutes. Pulling every host shaped run out of the data once, & looking each
+one up, costs the same however large the feed becomes. It is the same trick that makes a hash cost nothing.
+
+THE HOST PATTERN IS LINEAR.
+The pattern of v1.8 was quadratic on a long run of name characters. 200 kilobytes of padding took 74 seconds, &
+2 megabytes exhausted the backtrack limit, at which point the search returned FALSE & read as no hosts found.
+Each part of the pattern now takes its run in one step & gives nothing back. A search that fails is a warning.
+
+A HOST MATCHES ON A LABEL.
+An indicator of evil.example matches www.evil.example, because the leftmost label is removed after each miss.
+It matches neither notevil.example nor evil.example.org.
+
+A URL IS MATCHED WHOLE.
+A url indicator matches a url that is the same from its scheme to its end. A url pattern accepts any byte that
+is not whitespace or a quoting character, so a url inside binary data runs on into whatever follows it & does
+not match. That is a known gap & is listed as one.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Classification--
+
+THE CLASSIFIER REPORTS & DOES NOT PROTECT.
+Saying that a file carries a handler does not stop the handler. HRConvert2 rewrites an OpenSCAD source before it
+renders it, & renders it inside a sandbox, & the sandbox is its boundary. A Classified line is information for
+a caller that wants it, & it never opens with the word Infected.
+
+A TRANSPORT STREAM IS KNOWN BY ITS SYNC BYTES.
+The extension first asked for was .tx. It was .ts, the MPEG transport stream, which shares its extension with
+TypeScript source. The two have nothing else in common, so a magic record tells them apart by the sync bytes
+that open each packet, & a magic match outranks an extension.
+
+TSV IS NOT A TRANSPORT STREAM.
+v1.9 listed tsv among the extensions of the transport type. A file of tab separated values was therefore
+reported as Type: transport whenever it held a url. A real stream is known by its sync bytes whatever it is
+named, so the extension added nothing but that mistake, & v2.0.0 removes it.
+
+AN IMAGE IS NOT CLASSIFIED.
+Compressed pixels are close to random & hold every short token by chance. v1.8 reported ordinary jpeg files as
+PHP or Shell source. An image is recognised by its opening bytes & is never handed to the classifier.
+
+WHY EMBED SIGNATURES UNDER SIX BYTES ONLY MATCH DECODED TEXT
+Three megabytes of compressed pixels hold the three bytes that open a PHP short tag about a fifth of the time.
+Six bytes turn up by chance once in 2^48 positions. A short signature is still tested against the text chunks of
+a png, which are text once they are decoded.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Containers--
+
+WHY THE ZIP READER IS OUR OWN
+ZipArchive & the unzip binary both decide for themselves how much to read. ZipArchive trusts the central
+directory. The unzip fallback of v1.8 also received member names as arguments, so a member named -x or * steered
+the command. The reader needs only zlib. It reads the central directory, seeks to each local header & inflates
+through inflate_add() in pieces. Output stops at the byte limit whatever either header claims. There is no shell.
+
+WHY AN ARCHIVE RATIO NEEDS A SIZE AS WELL
+A small text file of one repeated character exceeds any ratio & is harmless. A declared member is only a bomb
+when it is both larger than $MaxArchiveEntrySize & over $MaxArchiveCompressionRatio. A declared total is only a
+bomb when it is both larger than $MaxArchiveTotalSize & over the ratio against the whole archive. A large
+archive of photographs trips neither. A member whose headers lie is caught by measurement. Reading it reaches
+the entry limit from a few kilobytes of input.
+
+WHY NESTING DEPTH IS A FINDING & NOT A BUDGET
+A zip quine contains itself & never ends. Depth is the only limit that stops one. Nothing honest nests six
+containers deep, so exceeding $MaxArchiveDepth is reported as Bomb.Archive.NestingDepth & not as Incomplete.
+
+A SIZE IS MULTIPLIED & NEVER DIVIDED.
+A zip64 record holds sizes of 64 bits. PHP has no unsigned integer, so a size with its top bit set was read as a
+negative number & passed every limit, & a size past the largest integer became a float, which intdiv() refuses
+with a TypeError. v2.0.0 reads each 64 bit number as two halves. A number that fits an integer is one, & a number
+that does not is a float that is never negative. A ratio is tested by multiplying the smaller size, so nothing
+is divided & no size can stop the comparison. A size that large is printed in full & not with an exponent.
+Reading in halves is also what an interpreter with 32 bit integers needs, where even a 32 bit field comes back
+negative past two gigabytes.
+
+DAMAGED IS NOT OVER BUDGET.
+A deflated member that was cut short ran out of input before its stream ended. v1.9 reported it as a member
+larger than the entry budget, which sent an administrator to raise a budget that had nothing to do with it.
+A member is over budget only where what was read reached the budget.
+
+A LONG NAME NAMES ONE ENTRY.
+A GNU tar stores a long name as an entry of its own, ahead of the entry that it names. v1.9 kept the name until
+the next file. Where the long name belonged to a folder, the next file was reported under the folder's name.
+The name is now dropped after the one entry that follows it, whatever kind of entry that is.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Images--
+
+WHY THERE IS NO PNG COMPRESSION RATIO TEST
+A blank image compresses at the highest ratio deflate can reach, which is about 1030 to 1. An honest 8000 by 8000
+screenshot of nothing cannot be told from a bomb by its ratio. The pixel count is the policy instead. Set
+$MaxImagePixels to what your decoder can afford.
+Bomb.PNG.DataOverrun is different. It is raised when the image data inflates $MaxImageChunkSize past what the
+header itself declares, which no honest encoder does.
+
+THE IMAGE ARITHMETIC IS DONE IN FLOATING POINT.
+The size that a header declares is a width, a height & a depth multiplied together, each of which may be any 32
+bit number. The sum is done in floating point, & is handed back as an integer where it fits one.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Ownership--
+
+WHY ROOT LEAVES A LINK ALONE
+Root hands what it creates to the owner of the installation by name. That owner can write the folders that root
+writes into, so it could put a link where root's file was to go, & chown would follow it & hand over whatever it
+led to. lchown & lchgrp never follow a link, & a link or a file with a second hard link is left alone. The check
+& the change are still two steps, & the mode is still set by name, so a link that is swapped in between them is
+reached. Keep the folders of the installation writable by the account that runs ScanCore & nobody else, & keep
+fs.protected_hardlinks on.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Updates--
+
+AN UPDATE IS STAGED, VERIFIED, SWAPPED & TESTED.
+A download is written beside its target, verified, & only then moved into place, with the file it replaces kept
+aside until the new one has proven itself. A failed verification leaves the installation untouched. A new core
+that does not answer -version is undone, file by file.
+
+AN UPDATE FALLS BACK BEFORE IT FAILS.
+The git method is the default, & through v1.9 an installation with no git binary could not update until its
+configuration was changed by hand, although the README had long said that every optional program has a fallback.
+From v2.0.0 a clone that produces nothing is followed by the raw method, which needs nothing but PHP or curl.
+A warning says so, & the update fails only where both methods do.
+
+AN UPDATE INSTALLS THE INDEX.HTML THAT IT DOWNLOADED.
+The folder that an update downloads into is given an index.html, so that it is never listed while it exists.
+Through v1.9 the installed index.html was copied there over the one that had just been downloaded, & the copy was
+then staged & installed. An update of the application therefore never replaced that one file.
+From v2.0.0 it is copied only where the download brought none. The consistency check found this, in a tree that
+had been updated from v1.9: every index.html is the same file, & one of them was not.
+
+AN UPDATE THAT IS UNDONE LEAVES NOTHING NEW BEHIND.
+Through v1.9 a file that an update brought for the first time stayed where it was when the update was undone,
+because there was nothing to put back in its place. v2.0.0 remembers which files are new & removes them.
+
+A RELEASE THAT ADDS FILES ARRIVES IN TWO UPDATES.
+An update installs the files that the installed configuration subscribes to. A release that ships new files
+names them in its own configuration file, which the first update installs. The second update reads that list &
+brings the rest. Updating from v1.9 to v2.0.0 is the first time that this matters.
+The first of the two is performed by the core of v1.9, so it is the second that replaces index.html as well.
+
+A SUBSCRIPTION THAT POINTS OUTSIDE THE INSTALLATION IS NEVER DOWNLOADED.
+The raw method of v1.9 downloaded each subscription to a temporary folder before the name was checked, so a name
+that held two dots was written outside that folder first & refused second. It is now refused first.
+
+THE DEFAULT DEFINITION SUBSCRIPTION IS WHAT IS PUBLISHED.
+v1.9 subscribed to Virus, Malware & PUP. The definitions repository publishes Virus. Every update therefore
+warned that one file of three had been installed. The default is now Virus alone.
+
+AN UPDATE IS TRUSTED ON THE CERTIFICATE OF ITS HOST.
+Neither the core nor the definitions carry a signature of their own. This is a known gap.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Quality Control--
+
+HOW v2.0.0 WAS CHECKED.
+  The core of v1.9 & the core of v2.0.0 were run side by side over 97 cases, which are the 56 crafted
+  fixtures of v1.9, a fixture for every defect listed below, folder scans & every switch. 16 cases differ, &
+  every difference is one that this file or the changelog describes.
+  The behaviour test passes every one of its 99 cases, as an account that owns the installation.
+  The same test, pointed at the core of v1.9, fails 30 of them. A test that cannot fail proves nothing.
+  The consistency check passes as a release. 77 faults were planted in a copy of the tree, one at a time, & each
+  one was reported. A copy whose configuration file had been changed passed, & was told what had been changed.
+  A fault was planted in the zip reader to prove that error 640 reports it & that the scan goes on.
+  An update was run from local repositories by both methods, & from v1.9 to v2.0.0. It was run without git,
+  without a shell, against a repository with a file that does not parse & against one with a file missing.
+  It was undone on purpose, with a core that does not answer -version.
+  Both linters of HRConvert2 pass on the tree, as the bundled copy of ScanCore in that application.
+  1171 images & 2936 archives found on a development machine were scanned by both cores. v2.0.0 says of them
+  what v1.9 said. None is infected, six png files are suspicious & are the deliberately invalid test images of the
+  Go source tree, & 24 archives are incomplete.
+
+WHAT WAS NOT RUN.
+  An interpreter with 32 bit integers. The arithmetic was written for one & was not executed on one.
+  Windows. Nothing in v2.0.0 is specific to either system, & the cases that need a link or a mode are left out there.
+  An update from GitHub itself. The same code was run against local repositories.
+  The behaviour test says what it left out each time it is run.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Known Gaps--
+
+  bzip2 is recognised & reported as incomplete. No reader for it has been tested, & an untested reader does not ship.
+  7z, rar, xz & zstd are not recognised.
+  Only the first stream of a gzip file that holds several is read.
+  A v7 tar, which has no ustar signature, is not recognised.
+  The fdAT frames of an animated png are checksummed & are not inflated.
+  A jpeg & a gif are searched for embedded code. Their structure is not checked.
+  A zip with a wrong base offset or directory size, which some extractors tolerate, is reported as incomplete.
+  A url inside binary data, with no break after it, is not matched.
+  A run of text longer than 255 bytes with no break in it may still be cut where a chunk ends.
+  A signature written in eight bit text does not match the same text in a sixteen bit encoding.
+  An update carries no signature of its own.
+  A definitions file of a million hashes needs 234 megabytes once, to build its index, & cannot be loaded at all
+  without one inside the default memory limit.
+  A folder that cannot be read draws a warning & no Incomplete line, because that line is about one file.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--History--
+
+v2.0.0  REVIEW OF v1.9
+Fixed in v2.0.0. Each was reproduced against v1.9 first.
+
+  1. A zip64 record that declared a size no integer can hold stopped the interpreter. A scan of a folder ended
+     there, & nothing after that file was scanned.
+  2. A zip64 size with its top bit set was read as a negative number & passed every limit.
+  3. A hash definition that was not the length of its kind put the packed index out of step, & a known sample was
+     reported as clean.
+  4. -mindatasignature & its configuration entry had done nothing since v1.8.
+  5. confidence=High reported a whole file hash as Suspicious.
+  6. A trailing kind=, name= or value= rewrote the definition it trailed.
+  7. An interpreter that may not run a command ended an update with an uncaught error.
+  8. A copy of the definitions file drew Suspicious lines that the summary then did not count.
+  9. A long name that belonged to a folder in a tar was given to the next file.
+ 10. A member that was cut short was reported as larger than its budget.
+ 11. A file that could not be opened or read drew no Incomplete line, & error 610 was not printed.
+ 12. Five nested archives of 7 megabytes stopped the interpreter under a memory limit of 64 megabytes.
+ 13. A host or a url across the join of two chunks was missed where no data signature was loaded.
+ 14. A host name, & a handler, could be read from its middle where a carried end began inside it.
+ 15. A host name could be read short of its end where a chunk ended inside it.
+ 16. A chunk of host shaped text needed many times its own size in memory once a host indicator was loaded.
+ 17. A path longer than 255 bytes was shortened in the line that reported it, so no caller could match it.
+ 18. The name of a folder was written to the report raw, & could forge a line.
+ 19. A warning written before -reportfile was read went to the default report of the installation.
+ 20. An installation that could not create its report folder could not print its help.
+ 21. -version & -help wrote their answer to the report.
+ 22. The raw update method wrote a subscription that held two dots outside its temporary folder before refusing it.
+ 23. An update that was undone left behind the files it had brought for the first time.
+ 24. -logfile & -lf were accepted & were in neither the help nor the README.
+ 25. The transport type claimed the tsv extension.
+ 26. The default definition subscriptions named two categories that the repository does not publish.
+ 27. A png chunk with an impossible name was reported as one that runs past the end of the file.
+ 28. An update by the git method failed where git could not be run, although the raw method needs no git.
+ 29. The warning for a configuration version that cannot be read was gathered & could never be shown.
+ 30. An update of the application never replaced index.html, because the installed copy was written over the
+     downloaded one before it was staged.
+
+v1.9  REVIEW OF v1.8
+Fixed in v1.9.
+
+  1. Hash index, building run. loadDefs() kept full records only while the record count was under
+     $HashIndexThreshold & did not switch to the packed index until the next run. Every hash past the threshold
+     was unmatched on the run that built the index.
+  2. Hash index, mixed sets. The same counter counted string indicators. A set with many host records & few
+     hashes dropped the later hashes on every run.
+  3. Host pattern. The pattern was quadratic on a long run of name characters. 200 KB of padding took 74 seconds.
+     2 MB exhausted the backtrack limit & preg_match_all() returned FALSE, which read as "no hosts found".
+  4. Container members were classified & never matched against definitions. A known sample inside a zip was clean.
+  5. A ratio refusal logged error 620 & produced no finding. HRConvert2 saw a clean file.
+  6. Entries past the entry limit were skipped without a word.
+  7. Member names reached the unzip command line.
+  8. Container inspection only ran when classification was enabled.
+  9. normalizeSwitch() stripped characters, so the relative path -ua.jpg became the update switch.
+ 10. unserialize() of the index file allowed objects.
+ 11. File & member names were written to the report raw. A name could forge a report line or carry terminal escapes.
+ 12. A quoted definition value ended at the first quote, escaped or not.
+ 13. fopen() failing after is_readable() passed aborted the scan with error 10 & no summary.
+ 14. The $ApplicationUpdateSubscriptions fallback had drifted from the config.
+ 15. Ordinary jpeg files were classified as source code.
+
+Test results of v1.9.
+
+  56 crafted fixtures covering every finding of that release, run under E_ALL.
+  1171 images & 2936 archives found on a development machine. No file was reported Infected. Six png files were
+  reported Suspicious & all six were deliberately invalid test images from the Go source tree.
+  Peak memory across the fixture directory was 32 MB.
+
+Left as it was in v1.9, & what became of each.
+
+  A file whose own name contains a finding word.     Closed. See The Output Contract.
+  Updates are trusted on TLS alone.                   Open. See Known Gaps.
+  The index is written beside whatever -df names.     Kept. See Virus Definitions.
+  The core is assumed to be named ScanCore.php.       Kept. The name is written once, & an update installs that name.
+  -m 100 /path reads -m as the scan path.             Kept. See Starting Up.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

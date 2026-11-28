@@ -1,5 +1,5 @@
 <?php
-// HRProprietary Engine v4.3.4ur, from HRCloud3 v0.9.9. The unit suite of the Page Core, held to every rule ABOUT_PAGES.txt says it has.
+// HRProprietary Engine v5.0.0. The unit suite of the Page Core, held to every rule ABOUT_PAGES.txt says it has.
 //
 //   sudo bash Documentation/Build/Tests/contained.sh php Documentation/Build/Tests/test_pages-cli.php
 // Run it from the root of the application under test. A tree named after it is tested instead, & must be that root.
@@ -19,7 +19,7 @@ require 'Documentation/Build/Tests/testlib-cli.php';
 $tree = testTree(isset($argv[1]) ? $argv[1] : (string)getcwd());
 requireContainment();
 $pageCoreFile = $tree.'/Resources/Engine/Cores/pageCore.php';
-if (!is_file($pageCoreFile)) testStop($tree.' has no Page Core. This suite tests Resources/Engine/Cores/pageCore.php, from v4.3.4ur.');
+if (!is_file($pageCoreFile)) testStop($tree.' has no Page Core. This suite tests Resources/Engine/Cores/pageCore.php, from v5.0.0.');
 
 // What the kernel, the Engine & the application would have set before the Page Core was loaded.
 $EnableMemoryProtection = TRUE;
@@ -310,7 +310,7 @@ check('a string the chosen pack lacks is read from the pack under it', $printed 
 preparePages('Night', 'fr', 'night');
 check('no string of the pack is left where anything outside the page can read it', !isset($TextHello) && !isset($GLOBALS['TextHello']) && !isset($GLOBALS['TextOnlyEnglish']));
 $fingerprintOf = function ($relativePath) use ($InstLoc) { return substr(hash_file('sha256', $InstLoc.'/UI/'.$relativePath), 0, 12); };
-$provenance = 'Op-Act: Built the main page with the Page Core 4.3.4ur for TestApp 0.9.9. Interface Night 0.9.9 over Default 0.9.9, language fr 0.9.9 over en, color night. '
+$provenance = 'Op-Act: Built the main page with the Page Core '.ltrim((string)$PageCoreVersion, 'vV').' for TestApp 0.9.9. Interface Night 0.9.9 over Default 0.9.9, language fr 0.9.9 over en, color night. '
   .'Components: header.php from Default 0.9.9 #'.$fingerprintOf('Default/header.php').', body.php from Night 0.9.9 #'.$fingerprintOf('Night/body.php')
   .', footer.php from Default 0.9.9 #'.$fingerprintOf('Default/footer.php').', styleCore.php from Night 0.9.9 #'.$fingerprintOf('Night/styleCore.php')
   .', Languages/fr from Default 0.9.9 #'.$fingerprintOf('Default/Languages/fr/languageStrings.php').', Languages/en from Default 0.9.9 #'.$fingerprintOf('Default/Languages/en/languageStrings.php')

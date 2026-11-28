@@ -1,0 +1,10 @@
+# What a running installation makes for itself. None of it belongs in the repository.
+Logs/
+*.idx
+*.new
+*.old
+ScanCore_Config.php_Backup_*.php
+
+# The folders that an update downloads into, which it removes when it is done.
+/ScanCore/
+/ScanCore_Definitions/

@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
 
 FILE INFORMATION ...
-v3.8.8ur.
+v3.8.8.
 This plain text file describes how HRConvert2 is divided into components, how each one is verified, and what happens when one is missing or does not match.
 
 HARDWARE REQUIREMENTS ...
@@ -87,8 +87,8 @@ the core does not have on its own.
   Email Core        Sending an email through the host's own mail system.
   Environment Core  The sandbox, the Apache configuration, the data location's protection & -fp's repair.
   Event Core        The record of what the application did & found, from v4.3.1.
-  Page Core         Building a page for a browser from an interface's components, from v4.3.4ur.
-  Storage Core      The libraries signed in users keep files in, from v4.3.4ur as HRCloud3 v1.0.0 carries it.
+  Page Core         Building a page for a browser from an interface's components, from v5.0.0.
+  Storage Core      The libraries signed in users keep files in, from v5.0.0.
   Core Manager      Resource awareness & the manager processes.
 
 FOUR PROPERTIES SEPARATE A CORE FROM ANYTHING ELSE IN THIS APPLICATION.
@@ -197,10 +197,10 @@ component it will not call. Only the Engine, its Environment Core & the Pipeline
   emailCore.php          Resolved with the Authentication Core.
   eventCore.php          Resolved by the first event a command keeps or reads, where --Record Events-- is TRUE.
   pageCore.php           Resolved by the Engine's loadPageCore(), when an application that pins it draws a page,
-                         from v4.3.4ur. See ABOUT_PAGES.txt.
+                         from v5.0.0. See ABOUT_PAGES.txt.
   storageCore.php        Resolved by the Engine's loadStorageCore(), where an application offers libraries &
                          accounts are on, to answer a page that asks a library for something & to sweep, & by
-                         -v & removing an account whether or not they are. From v4.3.4ur. See ABOUT_STORAGE.txt.
+                         -v & removing an account whether or not they are. From v5.0.0. See ABOUT_STORAGE.txt.
   setupCore.php          Loaded by --config, & by -fp for resource limits & the service unit.
   dependencyCore.php     Loaded by --setup.
   Managers/<role>.php    Loaded by loadEngineManager, only in a process running as that role.

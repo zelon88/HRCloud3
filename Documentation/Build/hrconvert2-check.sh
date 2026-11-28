@@ -12,7 +12,7 @@
 # / on a server for users of any web browser without authentication.
 # /
 # / File Information ...
-# / v4.2.4.
+# / v5.0.1.
 # / This file is a SECOND OPINION on the source & is not the authoritative one.
 # / hrconvert2-check.py is authoritative. This exists so two implementations written in
 # / two languages can be asked the same question, & so a disagreement between them is a
@@ -26,7 +26,7 @@
 # /   bash Documentation/Build/hrconvert2-check.sh --quiet
 # /   bash Documentation/Build/hrconvert2-check.sh --no-scancore
 # / ScanCore is checked with everything else, as the Python checks it. --no-scancore leaves
-# / Resources/ScanCore out of every check.
+# / Resources/Pipelines/ScanCore/ScanCore out of every check. It was Resources/ScanCore until v5.0.0.
 # /
 # / It exits zero when every check passes, one when any of them does not & two when it was
 # / asked something it could not answer, exactly as the Python does.
@@ -148,10 +148,10 @@ php_files() {
 }
 
 # / Passes a list of paths through, less the bundled ScanCore program when --no-scancore
-# / was given. Only Resources/ScanCore is ScanCore. The ScanCore pipeline is application code.
+# / was given. Only Resources/Pipelines/ScanCore/ScanCore is ScanCore. The ScanCore pipeline's own files are application code.
 scancore_filter() {
   if [ "$SKIP_SCANCORE" -eq 1 ]; then
-    grep -v '^\./Resources/ScanCore/' || true
+    grep -v '^\./Resources/Pipelines/ScanCore/ScanCore/' || true
   else
     cat
   fi
@@ -204,7 +204,7 @@ check_duplicate() {
   while IFS= read -r file; do
     awk -v name="$file" '/^function /{ split($0, a, "("); sub(/^function /, "", a[1]); print a[1] "|" name "|" NR }' "$(blanked_of "$file")"
   done < <(php_files) | awk -F'|' '
-    { program = (index($2, "./Resources/ScanCore/") == 1) ? "scancore" : "application"
+    { program = (index($2, "./Resources/Pipelines/ScanCore/ScanCore/") == 1) ? "scancore" : "application"
       key = program SUBSEP $1
       if (key in seen) printf "DUPLICATE|%s() is defined in %s and again in %s:%s\n", $1, seen[key], $2, $3
       else seen[key] = $2 }' | while IFS='|' read -r kind message; do report "$kind" "$message"; done
@@ -378,7 +378,7 @@ check_guard() {
     # / run anywhere except a command line. The literal is blanked, so the comparison is found
     # / in the blanked copy & the word cli is read from the same line of the original.
     case "$file" in
-      ./Resources/ScanCore/*)
+      ./Resources/Pipelines/ScanCore/ScanCore/*)
         refusing=0
         while IFS= read -r number; do
           if sed -n "${number}p" "$file" | grep -q "'cli'"; then refusing=1; fi
@@ -628,6 +628,9 @@ check_logo() {
 # / each disagreement matters. A model is read as one entry per line beginning with its name in quotes.
 # / A default the contract gives must name one of the Engine's settings, because no other is given one.
 # / The defaults are read as one entry per line indented by two spaces, as the contract writes them.
+# / From v5.0.1 a default a model gives a setting itself is its template's value, with whitespace & comments
+# / outside a string left out of the comparison. A template value ends at the first line ending in a semicolon,
+# / as collectConfigModel() reads it. The python tool says why a stale default shows nowhere else.
 check_config() {
   for half in 'Resources/Engine/config-template.php|Resources/Engine/engine.php|engineConfigModel' "Resources/Contract/config-template.php|$ENTRY|$MODEL"; do
     template=${half%%|*}; rest=${half#*|}; source=${rest%%|*}; model=${rest#*|}
@@ -651,6 +654,47 @@ check_config() {
     done
     comm -13 "$WORKDIR/template.names" "$WORKDIR/model.names" | while IFS= read -r name; do
       report 'CONFIG' "\$$name is in $model() & not in $template, so a repair has no default to write for it"
+    done
+    awk -v want="$model" -v template="$template" -v marker="'Default' => '" '
+      function squeeze(text,   kept, quote, position, size, character, closing) {
+        kept = ""; quote = ""; size = length(text)
+        for (position = 1; position <= size; position++) {
+          character = substr(text, position, 1)
+          if (quote != "") {
+            kept = kept character
+            if (character == "\\" && position < size) { position++; kept = kept substr(text, position, 1) }
+            else if (character == quote) quote = ""
+            continue }
+          if (character == "\047" || character == "\"") { quote = character; kept = kept character; continue }
+          if (substr(text, position, 2) == "//" || character == "#") {
+            closing = index(substr(text, position), "\n"); if (closing == 0) break; position += closing - 1; continue }
+          if (substr(text, position, 2) == "/*") {
+            closing = index(substr(text, position + 2), "*/"); if (closing == 0) break; position += closing + 2; continue }
+          if (character !~ /[[:space:]]/) kept = kept character }
+        return kept }
+      function unquote(text, start,   decoded, position, character, following) {
+        decoded = ""
+        for (position = start; position <= length(text); position++) {
+          character = substr(text, position, 1)
+          if (character == "\\") {
+            following = substr(text, position + 1, 1)
+            if (following == "\\" || following == "\047") { decoded = decoded following; position++; continue } }
+          else if (character == "\047") return decoded
+          decoded = decoded character }
+        return decoded }
+      FILENAME == template {
+        if (name == "" && match($0, /^\$[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=/)) {
+          name = substr($0, 2, RLENGTH - 1); sub(/[[:space:]]*=$/, "", name); value = substr($0, RLENGTH + 1) }
+        else if (name != "") value = value "\n" $0
+        if (name != "" && value ~ /;[[:space:]]*$/) { sub(/;[[:space:]]*$/, "", value); held[name] = value; name = "" }
+        next }
+      $0 ~ "^function " want "\\(" { inside = 1 }
+      inside == 1 && /^  return / { inside = 0 }
+      inside == 1 && match($0, /^[[:space:]]*\047[A-Za-z_][A-Za-z0-9_]*\047 => array\(\047Type\047/) && index($0, marker) > 0 {
+        setting = substr($0, RSTART, RLENGTH); sub(/^[[:space:]]*\047/, "", setting); sub(/\047.*/, "", setting)
+        if ((setting in held) && squeeze(unquote($0, index($0, marker) + length(marker))) != squeeze(held[setting])) print setting }' \
+      "$template" "$source" | sort -u | while IFS= read -r name; do
+      report 'CONFIG' "\$$name has a default in $model() that is not its value in $template, so a repair made while the template cannot be read writes another. Make the two the same"
     done
     cat "$WORKDIR/template.names" >> "$WORKDIR/held.names"
     [ "$model" = 'engineConfigModel' ] && cp "$WORKDIR/template.names" "$WORKDIR/engine.names"
@@ -775,7 +819,7 @@ prepare
 
 if [ "$QUIET" -eq 0 ]; then
   printf 'Checking %s PHP files under %s.\n' "$(php_files | wc -l | tr -d ' ')" "$(pwd)"
-  if [ "$SKIP_SCANCORE" -eq 1 ]; then printf 'Resources/ScanCore is left out, because --no-scancore was given.\n'; fi
+  if [ "$SKIP_SCANCORE" -eq 1 ]; then printf 'Resources/Pipelines/ScanCore/ScanCore is left out, because --no-scancore was given.\n'; fi
   printf '\n'
 fi
 
@@ -789,7 +833,7 @@ SCANCOREFILE="$WORKDIR/scancore"
 : > "$SCANCOREFILE"
 report() {
   printf '%s\n' "$1" >> "$COUNTFILE"
-  if printf '%s' "$2" | grep -qE 'Resources/ScanCore/|\bScanCore(_Config)?\.php\b'; then printf '%s\n' "$1" >> "$SCANCOREFILE"; fi
+  if printf '%s' "$2" | grep -qE 'Resources/Pipelines/ScanCore/ScanCore/|\bScanCore(_Config)?\.php\b'; then printf '%s\n' "$1" >> "$SCANCOREFILE"; fi
   if [ "$QUIET" -eq 0 ]; then
     printf '  %-10s %s\n' "$1" "$2"
   fi
@@ -814,7 +858,7 @@ if [ "$QUIET" -eq 0 ]; then
     printf 'says which patterns it reports that are not.\n'
     INSCANCORE=$(wc -l < "$SCANCOREFILE" | tr -d ' ')
     if [ "$INSCANCORE" -gt 0 ]; then
-      printf '%s of them are in Resources/ScanCore & %s are in the application. --no-scancore leaves ScanCore out.\n' "$INSCANCORE" "$((FINDINGS - INSCANCORE))"
+      printf '%s of them are in Resources/Pipelines/ScanCore/ScanCore & %s are in the application. --no-scancore leaves ScanCore out.\n' "$INSCANCORE" "$((FINDINGS - INSCANCORE))"
     fi
   fi
 fi

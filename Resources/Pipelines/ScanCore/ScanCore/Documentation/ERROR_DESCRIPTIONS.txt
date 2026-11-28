@@ -1,0 +1,998 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+ScanCore, Copyright on 3/31/2024 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+BSD or MIT licensing is available. Reach out to @zelon88 for more information.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+This application is designed to scan files & folders for viruses.
+
+FILE INFORMATION ...
+v2.0.0.
+This plain text file describes every numbered error that ScanCore can raise, & every warning that it can write.
+
+ADDITIONAL INFORMATION ...
+An error carries a number, & the number never changes. A number that is retired is not used again.
+A warning carries no number. It says that something happened & stops nothing.
+To find an error, search this file for its number, written as it is printed, such as ScanCore-610.
+To find a warning, search this file for the words of it that do not change.
+Documentation/ABOUT_REPORTS.txt says how an entry is written to the report & how it is printed.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+This application requires PHP 8.0 or later, run from a command line on Linux or Windows.
+The zlib extension reads compressed container members & png chunks, which are reported as incomplete without it.
+An update uses Git, or downloads each file with PHP, or with cURL where PHP may not open a URL. None of them is needed to scan.
+The posix extension hands new files to the owner of the installation when ScanCore is run as root.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--How To Read An Entry--
+
+ERROR MESSAGE
+  The error as it is written to the report. A part in angle brackets is filled in when the error is raised.
+
+FILE
+  The file that raises it.
+
+FATAL
+  YES where ScanCore stops & exits 1. NO where it carries on.
+  An error that is not fatal is often followed by one that is, which is named in the description.
+
+LOGGED
+  YES where the error is written to the report. NO where it is raised before the report can be used,
+  & is printed on the console alone.
+
+ERROR DESCRIPTION
+  What happened, why, & what to do about it.
+
+Errors 1 to 99 stop ScanCore. Errors from 100 up say what went wrong in one part of it.
+
+  100    Arguments.                      500    Definitions & classifiers.         800    The configuration backup.
+  300    The path to scan.               600    Reading a file.                    900    The report & the update guard.
+  400    Definition updates.             700    Application updates.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-1, Cannot verify the ScanCore installation!  <reason>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  YES
+
+LOGGED
+  NO
+
+ERROR DESCRIPTION
+  ScanCore checks where it is running before it does anything else, & one of four things was wrong.
+
+    ScanCore only runs from a command line interpreter
+        It was reached through a web server or another interface. Run it with the php command.
+    ScanCore requires PHP 8.0 or later, found <version>
+        Run it with a newer interpreter.
+    A required PHP function is unavailable:  <function>
+        The function is switched off in php.ini, under disable_functions, or its extension is not loaded.
+    Cannot resolve the ScanCore installation directory
+        The folder that holds ScanCore.php could not be resolved to a real path.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-2, Cannot load the configuration file located at:  <path>
+  <reason>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  YES
+
+LOGGED
+  NO
+
+ERROR DESCRIPTION
+  The configuration file could not be loaded. The second line says why.
+
+    The file does not exist.
+        Restore ScanCore_Config.php, or name the right file with -configfile.
+    The interpreter said:  <message> on line <number>.
+        The file is not valid PHP. Correct the line that is named, or restore the file from the release.
+    The file returned FALSE.
+        The file ended by returning FALSE. A configuration file returns nothing.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-3, Cannot verify the definitions file located at:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  YES
+
+LOGGED
+  NO
+
+ERROR DESCRIPTION
+  The virus definitions file does not exist where --Definitions File--, $DefsFile, or the -defsfile switch says it is.
+  Run ScanCore with -updatedefinitions to download it, or name the right file.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-4, Cannot verify the configuration file version located at:  <path>
+  The file reports <version> & this core accepts <version> or newer.
+
+FILE
+  /ScanCore.php
+
+FATAL
+  YES
+
+LOGGED
+  NO
+
+ERROR DESCRIPTION
+  The configuration file is older than this core requires, or reports no version that can be read.
+  An older file lacks entries that this core needs, so it is refused where it would otherwise be half used.
+
+  Take ScanCore_Config.php from the same release as ScanCore.php & copy your own values into it.
+  Do not change $ConfigVersion by hand. It says which entries the file holds.
+  A configuration file that is newer than the core requires is accepted.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ScanCore-5
+
+  Retired in v2.0.0. The number is not used again.
+  It was raised where the report folder could not be created, & it stopped ScanCore.
+  The report folder is now created when the first entry is written to it. A folder that cannot be created is
+  reported by ScanCore-910, & the scan goes on without a report.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-6 on <time>, Cannot verify supplied arguments!
+
+FILE
+  /ScanCore.php
+
+FATAL
+  YES
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The arguments did not ask for anything that ScanCore could do.
+  ScanCore-100, ScanCore-300 or ScanCore-310 is raised first & says which argument was wrong.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-7 on <time>, Cannot install definition update!
+
+FILE
+  /ScanCore.php
+
+FATAL
+  YES
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  A definition update was asked for & was not installed. The definitions that were installed are still in place.
+  An error from 400 to 450, or the warning that definition updates are disabled, is written first & says why.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-8 on <time>, Cannot install application update!
+
+FILE
+  /ScanCore.php
+
+FATAL
+  YES
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  An application update was asked for & was not installed. The application that was installed is still in place.
+  An error from 700 to 760, ScanCore-800 & ScanCore-900, or the warning that application updates are disabled,
+  is written first & says why.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-9 on <time>, Cannot load definitions!
+
+FILE
+  /ScanCore.php
+
+FATAL
+  YES
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The virus definitions file held nothing that could be used, so there was nothing to scan against.
+  ScanCore-510 or ScanCore-540 is raised first & says what was wrong with the file.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-10 on <time>, Cannot complete the requested scan!
+
+FILE
+  /ScanCore.php
+
+FATAL
+  YES
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The scan did not finish, so no summary is written.
+  ScanCore-300 is raised first where the path to scan was removed after the scan began.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-11, The configuration file can only be read by ScanCore from a command line!
+
+FILE
+  /ScanCore_Config.php
+
+FATAL
+  YES
+
+LOGGED
+  NO
+
+ERROR DESCRIPTION
+  The configuration file was opened by something other than a command line interpreter, such as a web server.
+  It holds settings & nothing else, & it refuses to be read that way.
+  Nothing is wrong with the installation. Keep the installation outside any folder that a web server serves.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-100 on <time>, There were no arguments set!
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  ScanCore was run with no arguments, & --Scan Location--, $ScanLoc, is empty, so there was nothing to scan.
+  ScanCore-6 follows & stops ScanCore.
+  Run  php ScanCore.php -help  to see what can be asked for.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-300 on <time>, The specified file was not found! The first argument must be a valid file or directory path!
+  ERROR!!! ScanCore-300 on <time>, The requested scan path no longer exists:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The first message is raised where the first argument is not the path of a file or a folder.
+  The path to scan comes first & every switch comes after it. ScanCore-6 follows & stops ScanCore.
+
+  The second message is raised where a path was removed after the scan began. ScanCore-10 follows & stops ScanCore.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-310 on <time>, The specified path cannot be read:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The path to scan exists, & the account that runs ScanCore is not allowed to read it.
+  ScanCore-6 follows & stops ScanCore.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-400 on <time>, Cannot verify network connectivity for definition updates!
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  --Definition Update Domain--, $DefinitionUpdateDomain, did not accept a connection on port 443 within
+  --Connection Timeout-- seconds. Nothing was downloaded. ScanCore-7 follows & stops ScanCore.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-410 on <time>, Cannot download the definition subscription:  <category>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  One subscribed category could not be downloaded, with PHP or with curl.
+  The repository may not publish that category. See --Definition Subscriptions--, $DefinitionsUpdateSubscriptions.
+  The other categories are still downloaded, & the update is installed from those that arrived.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-420 on <time>, The combined definition data was empty, the existing definitions were kept!
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  No subscribed category yielded a definition. The definitions that were installed are untouched.
+  ScanCore-7 follows & stops ScanCore.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-430 on <time>, Cannot write the staged definitions file:  <path>
+  ERROR!!! ScanCore-430 on <time>, Cannot move the staged definitions into place:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The new definitions could not be written beside the installed file, or could not be moved into its place.
+  The folder that holds the definitions file must be writable by the account that runs the update.
+  The definitions that were installed are untouched. ScanCore-7 follows & stops ScanCore.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-440 on <time>, The staged definitions failed verification, the existing definitions were kept because <reason>!
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  What was downloaded is not a definitions file, & the reason is given. It is one of these.
+
+      the staged file is missing
+          The definitions were combined & could not be written beside the definitions file.
+      the staged file is empty
+          What was downloaded held nothing.
+      the staged file carries a repository not found page
+          The repository answered with the page that it shows where it does not hold a file.
+      the staged definitions file contains nothing matchable
+          What was downloaded holds no definition that can be read.
+
+  Nothing that was installed had been touched. ScanCore-7 follows & stops ScanCore.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-450 on <time>, The installed definitions failed their test & the previous definitions were restored!
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The new definitions passed verification, & the file that ended up in place did not.
+  That points at the disk or at permissions, & not at what was downloaded.
+  The previous definitions were put back. ScanCore-7 follows & stops ScanCore.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-500 on <time>, Cannot load the definitions file:  <path>
+  ERROR!!! ScanCore-500 on <time>, Cannot open the definitions file for reading:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  YES
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The virus definitions file was there when ScanCore started & could not be read when the scan began.
+  The account that runs ScanCore must be able to read it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-510 on <time>, The definitions file contains no usable definitions:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The file was read, & every line of it was blank, a comment or malformed.
+  Documentation/ABOUT_SCANNING.txt describes the format. ScanCore-9 follows & stops ScanCore.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-520 on <time>, Cannot load the classifier definitions file, content classification is disabled:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The classifier definitions file is not beside the core. Check --Classifier File Name--, $ClassifierFileName.
+  The scan goes on. Files are still matched against the virus definitions, & nothing is classified.
+  An image is still checked for its structure, & is not searched for embedded code.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-530 on <time>, The classifier definitions file contains no usable records:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The file was read, & no record of an enabled classifier was found in it.
+  Check --Enabled Classifiers--, $EnabledClassifiers, & the -classifiers switch. The scan goes on as it does for ScanCore-520.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-540 on <time>, The definitions file holds <n> records in the retired tab delimited format, which is no longer read. Rebuild it with the ScanCore_Definitions builder.
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The file is in the format that ScanCore read before v1.8, which is no longer read.
+  Run ScanCore with -updatedefinitions to replace it, or rebuild it with the builder in the definitions repository.
+  A file that holds nothing else has no usable definition, so ScanCore-510 & ScanCore-9 follow.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-550 on <time>, Cannot write the definitions index, so the definitions will be parsed on every scan:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The packed index could not be written beside the virus definitions file.
+  The scan goes on & finds exactly what it would have found. A large definitions file is slow to load every time.
+  Make the folder that holds the definitions file writable, or set --Use Hash Index--, $UseHashIndex, to FALSE.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-600 on <time>, Cannot read the whole of a file, results may be incomplete:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  A read failed part of the way through a file. What was read was searched, & no hash of the file was matched.
+  The file is reported on an Incomplete line as well, & the scan goes on to the next file.
+  A caller treats the file as not scanned.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-610 on <time>, Cannot open a file for reading, it was skipped:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  A file that was met inside a scanned folder could not be opened by the account that runs ScanCore.
+  The file is reported on an Incomplete line as well, & the scan goes on to the next file.
+  A caller treats the file as not scanned.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ScanCore-620
+
+  Retired in v1.9. The number is not used again.
+  A member of a container that expands past --Maximum Archive Compression Ratio-- is reported as the finding
+  Bomb.Archive.CompressionRatio.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ScanCore-630
+
+  Retired in v1.9. The number is not used again.
+  A container that cannot be opened is reported on an Incomplete line, which gives the reason.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-640 on <time>, Cannot finish inspecting a file, the interpreter said <message> on line <number>:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  ScanCore itself failed while it inspected one file. This is a fault in ScanCore & not in the file.
+  The file is reported on an Incomplete line, & the scan goes on to the next file.
+
+  Please report it, with the message, the line number & if possible the file, as Documentation/SECURITY.md describes.
+  A file that can stop a scanner is worth a private report.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-700 on <time>, Cannot verify network connectivity for application updates!
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  --Application Update Domain--, $ApplicationUpdateDomain, did not accept a connection on port 443 within
+  --Connection Timeout-- seconds. Nothing was downloaded. ScanCore-8 follows & stops ScanCore.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-710 on <time>, Cannot download the application file:  <file>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  One subscribed file could not be downloaded, with PHP or with curl.
+  An update is installed whole or not at all, so the update is abandoned before any installed file is touched.
+  Check that --Application Subscriptions--, $ApplicationUpdateSubscriptions, names only files that the repository holds.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-720 on <time>, Cannot install the application file:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  A verified file could not be moved into place.
+  The installation directory must be writable by the account that runs the update.
+  Every file that had already been moved is put back, & ScanCore-750 & ScanCore-8 follow.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-730 on <time>, Refused an application subscription that points outside the installation directory:  <name>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  An entry of --Application Subscriptions--, $ApplicationUpdateSubscriptions, holds two dots in a row.
+  Such a name would be written outside the installation directory, so it is never downloaded & never installed.
+  The whole update is abandoned before any installed file is touched. Correct the entry.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-740 on <time>, A staged application file failed verification because <reason>:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  A downloaded file is not what it should be, & the reason is given. It is one of those that ScanCore-440 lists, or this one.
+
+      the staged file does not parse:  <what the interpreter said>
+          The file is a PHP file & is not valid PHP.
+
+  The whole update is abandoned before any installed file is touched.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-750 on <time>, The updated application failed its test & the previous application was restored:  <what the new core printed>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  Every file was installed, & the new core did not answer -version as a working core does.
+  Every file that had been moved aside was put back, & every file that the update brought for the first time
+  was removed. The installation is as it was found. ScanCore-8 follows & stops ScanCore.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-760 on <time>, Cannot restore the previous file, it remains at:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  An update was being undone, & one file could not be put back.
+  The previous version of that file is at the path given, with .old on the end of its name.
+  Move it back by hand, by removing .old from its name.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-800 on <time>, Cannot backup the existing configuration file to:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  An application update replaces ScanCore_Config.php, so it keeps a copy first, & the copy could not be written.
+  The installation directory must be writable by the account that runs the update.
+  ScanCore-900 follows.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-900 on <time>, Application update was aborted because the existing configuration file could not be backed up!
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  YES
+
+ERROR DESCRIPTION
+  The update was stopped before anything was downloaded, because the configuration file could not be copied first.
+  ScanCore-800 says where the copy was to go. ScanCore-8 follows & stops ScanCore.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ERROR MESSAGE
+  ERROR!!! ScanCore-910 on <time>, Cannot write to the report file:  <path>
+
+FILE
+  /ScanCore.php
+
+FATAL
+  NO
+
+LOGGED
+  NO
+
+ERROR DESCRIPTION
+  The report file could not be written, or the report folder of the installation could not be created.
+  The error is printed once. The scan goes on, & every finding is still printed on the console.
+  Every warning & every error is printed from then on as it would have been written, with its label & its time.
+
+  Make the report folder writable by the account that runs ScanCore, or name another file with -reportfile.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Warnings--
+
+A warning is written to the report as it is shown here. A part in angle brackets is filled in when it is written.
+A warning never stops ScanCore, & none of them needs an answer unless the description says so.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+WARNINGS ABOUT THE CONFIGURATION
+
+    WARNING!!! ScanCore on <time>, Configuration entry $<name> is missing or invalid, using the built in default instead.
+        An entry of ScanCore_Config.php is absent, or is not of the kind that it should be.
+        The default that is built into the core was used for this run. Correct the entry, or restore it from the release.
+
+    WARNING!!! ScanCore on <time>, Configuration entry $InstallDir does not contain <core>, using <folder> instead.
+        The configuration file was loaded from another folder & names a folder that does not hold the core.
+        The folder that does hold it was used. Set $InstallDir in that file to the folder that holds ScanCore.php.
+
+    WARNING!!! ScanCore on <time>, Configuration entry $UpdateMethod is not git or raw, using git instead.
+        Set --Update Method-- to 'git' or to 'raw'.
+
+    WARNING!!! ScanCore on <time>, Configuration entry $DefsFile does not exist, using the file beside the core instead.
+        The definitions file that the configuration names is not there, & one with the configured name sits beside the core.
+
+    WARNING!!! ScanCore on <time>, The -configfile argument was supplied without a path, using the default instead.
+        -configfile was the last argument. ScanCore_Config.php was loaded.
+
+    WARNING!!! ScanCore on <time>, The -defsfile argument was supplied without a path, using the configured file instead.
+        -defsfile was the last argument. The configured definitions file was used.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+WARNINGS ABOUT ARGUMENTS
+
+    WARNING!!! ScanCore on <time>, The <switch> argument was supplied without a value, using the configured value instead.
+        A switch that takes a value was the last argument.
+
+    WARNING!!! ScanCore on <time>, The <setting> value is missing or below the minimum of <n>, using <n> instead.
+        A number was not a number, or was too small to work with. A number is written in digits & carries no suffix.
+
+    WARNING!!! ScanCore on <time>, The <budget> of <n> does not fit the MemoryLimit, using <n> instead.
+        ChunkSize, MaxArchiveEntrySize or MaxImageChunkSize was lowered for this run so that the scan fits its memory limit.
+        A file that is larger than the lowered budget is inspected in part & is reported as incomplete.
+        Raise -memorylimit, or lower the budget, to stop the warning.
+
+    WARNING!!! ScanCore on <time>, The UpdateMethod override is not git or raw, using git instead.
+        -updatemethod takes git or raw.
+
+    WARNING!!! ScanCore on <time>, No scan path was supplied, falling back to the configured ScanLoc.
+        ScanCore was run with no arguments, & scanned --Scan Location--.
+
+    WARNING!!! ScanCore on <time>, Cannot build version information!
+        The answer to -version or -help could not be put together. This is not expected to happen.
+
+    WARNING!!! ScanCore on <time>, Cannot apply the configured MemoryLimit to the interpreter.
+        PHP refused the memory limit, & kept the one that php.ini gives it.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+WARNINGS ABOUT OWNERSHIP
+
+    WARNING!!! ScanCore on <time>, Cannot resolve the configured OwnerUser, falling back to the installation directory owner:  <name>
+        --Owner User--, or -owner, names a user that this system does not have.
+
+    WARNING!!! ScanCore on <time>, Cannot resolve the configured OwnerGroup, falling back to the installation directory group:  <name>
+        --Owner Group--, or -group, names a group that this system does not have.
+
+    WARNING!!! ScanCore on <time>, Running as root & cannot work out who should own new files, so they will stay owned by root.
+        The posix extension is not loaded, or the owner of the installation directory could not be read.
+        A report file that root creates may then be one that the usual account cannot write to.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+WARNINGS ABOUT DEFINITIONS & CLASSIFIERS
+
+    WARNING!!! ScanCore on <time>, Ignored <n> malformed definition records.
+        Lines of the virus definitions file could not be read as a definition & were left out.
+        A hash that is not hexadecimal, or is not the length of its kind, is the usual cause.
+
+    WARNING!!! ScanCore on <time>, Ignored <n> data signatures shorter than the MinimumDataSignatureLength of <n>.
+        Data signatures that are too short to trust were not searched for. See --Minimum Data Signature Length--.
+
+    WARNING!!! ScanCore on <time>, Ignored <n> malformed classifier records.
+        Lines of the classifier definitions file could not be read & were left out.
+
+    WARNING!!! ScanCore on <time>, The enabled classifier named <name> has no handlers declared in the classifier definitions file.
+        --Enabled Classifiers--, or -classifiers, names a classifier that the file does not declare. Check the spelling.
+
+    WARNING!!! ScanCore on <time>, Content classification is disabled because no classifier definitions could be loaded.
+        ScanCore-520 or ScanCore-530 was raised first & says why.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+WARNINGS ABOUT A SCAN
+
+    WARNING!!! ScanCore on <time>, Cannot read the contents of a folder, it was skipped:  <path>
+        The account that runs ScanCore may not list the folder. Nothing in it was scanned. This is printed as well.
+
+    WARNING!!! ScanCore on <time>, Reached the maximum scan depth, this folder was not opened:  <path>
+        The folder sits deeper than --Maximum Scan Depth--. Nothing in it was scanned. This is printed as well.
+
+    WARNING!!! ScanCore on <time>, Cannot search a block of data for <kind> indicators, so any in it were not matched.
+        The pattern engine gave up on one block of one file, so its hosts or its urls were not looked up.
+        This is not expected to happen. Raising pcre.backtrack_limit in php.ini is the remedy if it does.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+WARNINGS ABOUT UPDATES
+
+    WARNING!!! ScanCore on <time>, Definition updates are disabled in the configuration file.
+        --Allow Definition Updates-- is FALSE. ScanCore-7 follows.
+
+    WARNING!!! ScanCore on <time>, Application updates are disabled in the configuration file.
+        --Allow Application Updates-- is FALSE. ScanCore-8 follows.
+
+    WARNING!!! ScanCore on <time>, Cannot reach the configured update host:  <host>
+        The host did not accept a connection. ScanCore-400 or ScanCore-700 follows.
+
+    WARNING!!! ScanCore on <time>, Cannot find a usable git binary.
+        The git method was asked for & git could not be run. The raw method is tried next.
+        Install git, or set --Update Method-- to 'raw', to stop this warning.
+
+    WARNING!!! ScanCore on <time>, The git clone operation did not produce a directory:  <what git printed>
+        git ran & downloaded nothing. What it printed says why. The raw method is tried next.
+
+    WARNING!!! ScanCore on <time>, The git update method produced nothing, falling back to the raw update method.
+        Each subscribed file is now downloaded by itself. The update fails only where that fails as well.
+
+    WARNING!!! ScanCore on <time>, Cannot stage a downloaded file at:  <path>
+        A downloaded file could not be copied beside the file it is to replace. The update is abandoned.
+
+    WARNING!!! ScanCore on <time>, Cannot syntax check a staged file, continuing without that check:  <reason>
+        A downloaded PHP file could not be checked before it was installed.
+        The reason is  no shell is available to lint with  where PHP may not run a command on this system,
+        or  the lint command returned nothing  where the command ran & printed nothing.
+        The new core is still asked for its version afterwards where that is possible.
+
+    WARNING!!! ScanCore on <time>, Cannot move the installed file aside:  <path>
+        An installed file could not be renamed, so its replacement was not moved into place. ScanCore-720 follows.
+
+    WARNING!!! ScanCore on <time>, Cannot remove the retired file, it remains at:  <path>
+        The update worked, & the copy of the file that it replaced could not be removed. It may be removed by hand.
+
+    WARNING!!! ScanCore on <time>, The update does not hold the subscribed application file:  <file>
+        The repository does not hold a file that --Application Subscriptions-- names. The update is abandoned.
+
+    WARNING!!! ScanCore on <time>, The application update was abandoned before any installed file was touched.
+        Something was wrong with what was downloaded. The entry before this one says what.
+
+    WARNING!!! ScanCore on <time>, Cannot test the installed application, continuing without that check:  <reason>
+        The new core could not be asked for its version, so the update stands without that test.
+        The reason is  no shell is available to test with  where PHP may not run a command on this system,
+        the installed core is missing  where ScanCore.php is not in the installation directory after the update,
+        or  the installed core returned nothing  where the core ran & printed nothing.
+
+    WARNING!!! ScanCore on <time>, Only <n> of <n> subscribed definition files were installed.
+        Some subscribed categories did not arrive. The definitions were installed from the ones that did.
+
+    WARNING!!! ScanCore on <time>, Only <n> of <n> subscribed application files were installed.
+        The update was abandoned or undone. The errors before this one say why.
+
+    WARNING!!! ScanCore on <time>, Refused to clean a path outside the installation directory:  <path>
+        A temporary update folder resolved to somewhere outside the installation, so it was not removed.
+        Check --Application Repository Name-- & --Definition Repository Name--.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

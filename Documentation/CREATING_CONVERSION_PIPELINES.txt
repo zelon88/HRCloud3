@@ -203,7 +203,8 @@ Read these before writing code. They are preconditions, not steps.
 3. Reserve a block of error numbers before writing any code.
   3a. Check `ERROR_DESCRIPTIONS.txt` for the highest block. Take the next.
   3b. Reserve at least six numbers. You will want the room later.
-  3c. A pipeline needs a timeout, a version failure & a sandbox refusal at minimum.
+  3c. A pipeline needs a version failure & a sandbox refusal at minimum, & a time out where its converter can loop. The time limit
+      itself is the Engine's, from v5.0.0, so a pipeline only says that its converter ran out of time, on exit status 124.
   3d. Write the `ERROR_DESCRIPTIONS.txt` entries as you write the code.
   3e. An undocumented error number is worse than none. It looks documented.
 
@@ -312,8 +313,11 @@ Read these before writing code. They are preconditions, not steps.
   8d. CONTRACT 6. A PIPELINE NEVER PRINTS. Not once. It returns & the core decides.
   8e. `sandboxCommand()` returns whether the command MAY RUN, not whether a sandbox exists.
       FALSE means the core refused it & it must not be executed. The case where sandboxing
-      is not required returns TRUE with the command unwrapped & warns from inside itself,
-      unless the profile sets RequireSandbox, from v4.2.7.
+      is not required returns TRUE with the command unsandboxed & warns from inside itself,
+      unless the profile sets RequireSandbox, from v4.2.7. Every command that may run is
+      limited, sandboxed or not, so never compare the command returned with the one handed
+      in. A pipeline that builds its command differently without a sandbox asks
+      `sandboxWasBuilt()` straight after, from v5.0.0, as the shared LibreOffice module does.
   8f. ROUTE ON WHAT A TOOL CAN WRITE, NOT ON WHAT IT CAN READ. Assimp reads OFF & has no OFF
       exporter, & an input based route retried an impossible command until it timed out.
   8g. Gate on `verifiedToolPath()` first. Error out with your reserved number.
@@ -321,10 +325,19 @@ Read these before writing code. They are preconditions, not steps.
   8h. Build the command once, before the retry loop. It never changes.
   8i. Sandbox the command, then test the permission boolean.
   8j. Refuse with your reserved sandbox number when that boolean is FALSE.
-  8k. Retry while `pipelineAttemptIsDue($newPathname, $stopper)` says so. It allows
-      `$RetryCount` attempts, & always one, & stops as soon as the output exists. Sleep
-      before every attempt but the first. Raise your error once, after the loop, when the
-      output still does not exist, & name the number of attempts made.
+  8k. Run the command with `runPipelineCommand()`, which returns what it printed & its exit
+      status, & retry while `pipelineRetryIsDue($newPathname, $stopper, $exitStatus)` says so,
+      from v5.0.0. It always allows the first attempt, & another only where KILL or TERM
+      stopped the last one, as a memory ceiling or a supervisor stops a converter, up to
+      `$RetryCount` attempts, & stops as soon as the output exists. A converter that ran to its
+      end & left nothing would leave nothing again, & one that crashed would crash again.
+      `pipelineRetryIsDue()` takes away what an attempt the time limit or a signal
+      ended left, because it may be part of one, so the loop needs nothing more. A command run any
+      other way hands its exit status & the path it writes to `discardInterruptedOutput()` before
+      the file is read. Never add a timeout to the command. `limitCommand()` gives every command the
+      time limit for its type, which `--Maximum Per Conversion Runtime--` sets, & it exits 124 when it
+      stops one. Sleep before every attempt but the first. Raise your error once, after the loop,
+      when the output still does not exist, & name the number of attempts made.
   8l. Log dependency output under `$Verbose`, but only when it is not blank.
   8m. Clean up every local in the cleanup line. Never null anything you return.
 

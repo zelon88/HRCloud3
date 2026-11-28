@@ -1,0 +1,6 @@
+# Every text file is stored & checked out with line feeds, on every system.
+* text=auto eol=lf
+*.png binary
+
+# The licence is kept byte for byte as it was published.
+LICENSE -text

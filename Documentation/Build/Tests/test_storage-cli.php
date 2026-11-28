@@ -1,5 +1,5 @@
 <?php
-// HRProprietary Engine v4.3.4ur, from HRCloud3 v1.0.0. The unit suite of the Storage Core, held to every rule ABOUT_STORAGE.txt says it has.
+// HRProprietary Engine v5.0.0. The unit suite of the Storage Core, held to every rule ABOUT_STORAGE.txt says it has.
 //
 //   sudo bash Documentation/Build/Tests/contained.sh php Documentation/Build/Tests/test_storage-cli.php
 // Run it from the root of the application under test. A tree named after it is tested instead, & must be that root.
@@ -9,7 +9,8 @@
 // any is copied into this file. Those that remove or rename are lifted
 // with unlink, rmdir & rename named as calls this suite expects, & every path they are handed is beneath the scratch folder.
 // It makes a data location, libraries, spaces, links that lead out of them & a trash, in the scratch folder, & asks the core of each.
-// An upload & a download need a web request, so test_hrcloud3-cli.php asks those of the loader, & this suite asks everything else.
+// An upload & a download need a web request, so an application's own suite asks those of its loader, as HRCloud3's does, & this suite asks
+// everything else.
 // It removes nothing itself. What the Storage Core removes is what it made, beneath the scratch folder.
 
 if (PHP_SAPI !== 'cli') { if (!headers_sent()) http_response_code(404); die(); }
@@ -20,14 +21,14 @@ require 'Documentation/Build/Tests/testlib-cli.php';
 $tree = testTree(isset($argv[1]) ? $argv[1] : (string)getcwd());
 requireContainment();
 $storageCoreFile = $tree.'/Resources/Engine/Cores/storageCore.php';
-if (!is_file($storageCoreFile)) testStop($tree.' has no Storage Core. This suite tests Resources/Engine/Cores/storageCore.php, from v4.3.4ur.');
+if (!is_file($storageCoreFile)) testStop($tree.' has no Storage Core. This suite tests Resources/Engine/Cores/storageCore.php, from v5.0.0.');
 
 // What the kernel, the Engine & the application would have set before the Storage Core was loaded.
 $EnableMemoryProtection = TRUE;
 $Verbose = TRUE;
 $LogFile = '';
 $CoreLoaded = TRUE;
-$EngineApplicationName = 'HRCloud3';
+$EngineApplicationName = 'TestApp';
 $base = makeFolder(scratchPath('storage'), 0700);
 $DataRootLoc = makeFolder($base.'/data', 0755);
 $InstLoc = makeFolder($base.'/install', 0755);
@@ -52,7 +53,8 @@ liftFunctions($storageCoreFile, array('storageNameIsUsable', 'libraryNameIsUsabl
 liftFunctions($storageCoreFile, array('placeStorageItem', 'renameStorageItem', 'moveStorageItem', 'removeStorageTree', 'trashStorageItem', 'restoreStorageItem', 'purgeStorageTrash',
   'sweepStorageFolders', 'removeAccountStorage', 'answerStorageAction', 'storeUploadedFile', 'writeStorageAuthors', 'forgetStorageAuthors'), array('unlink', 'rmdir', 'rename'));
 
-// Sets the administrator's settings for the checks that follow. Anything not named takes the value HRCloud3 ships with.
+// Sets the administrator's settings for the checks that follow. Anything not named takes the value HRCloud3 ships with, as an application
+// that offers libraries would.
 function testSettings($settings) {
   $GLOBALS['TestLibraries'] = array('Drive' => array('Kind' => 'personal', 'Location' => ''), 'Shared' => array('Kind' => 'shared', 'Location' => '', 'Writers' => 'admins'));
   $GLOBALS['TestTrashLifetime'] = 30;
@@ -161,8 +163,8 @@ $elsewhere = makeFolder($base.'/elsewhere', 0700);
 $linkedLibrary = storageLink($base.'/linked', $elsewhere);
 $storageSettings = testSettings(array('TestLibraries' => array('Drive' => array('Kind' => 'personal', 'Location' => ''), 'Mine' => array('Kind' => 'shared', 'Location' => $elsewhere, 'Writers' => 'everyone'),
   'Overlap' => array('Kind' => 'shared', 'Location' => $elsewhere), 'InData' => array('Kind' => 'shared', 'Location' => $DataRootLoc.'/Elsewhere'), 'HoldsData' => array('Kind' => 'shared', 'Location' => $base),
-  'Linked' => array('Kind' => 'shared', 'Location' => $linkedLibrary), 'Missing' => array('Kind' => 'shared', 'Location' => $base.'/nothing'), 'System' => array('Kind' => 'shared', 'Location' => '/etc/hrcloud3'),
-  'Temporary' => array('Kind' => 'shared', 'Location' => '/tmp/hrcloud3'), 'Boot' => array('Kind' => 'shared', 'Location' => '/boot'), 'Var' => array('Kind' => 'shared', 'Location' => '/var'), 'Served' => array('Kind' => 'shared', 'Location' => $documentRoot.'/files'), 'Relative' => array('Kind' => 'shared', 'Location' => 'files/here'),
+  'Linked' => array('Kind' => 'shared', 'Location' => $linkedLibrary), 'Missing' => array('Kind' => 'shared', 'Location' => $base.'/nothing'), 'System' => array('Kind' => 'shared', 'Location' => '/etc/testapp'),
+  'Temporary' => array('Kind' => 'shared', 'Location' => '/tmp/testapp'), 'Boot' => array('Kind' => 'shared', 'Location' => '/boot'), 'Var' => array('Kind' => 'shared', 'Location' => '/var'), 'Served' => array('Kind' => 'shared', 'Location' => $documentRoot.'/files'), 'Relative' => array('Kind' => 'shared', 'Location' => 'files/here'),
   'Climbs' => array('Kind' => 'shared', 'Location' => $elsewhere.'/../elsewhere'), 'Kindless' => array('Kind' => 'public', 'Location' => ''), 'Writable' => array('Kind' => 'shared', 'Location' => '', 'Writers' => 'all'),
   'Bad Name' => array('Kind' => 'personal', 'Location' => ''), 'Plain' => 'personal', 'Installed' => array('Kind' => 'shared', 'Location' => $InstLoc), 'Hosted' => array('Kind' => 'shared', 'Location' => $HostedLoc))));
 $refusals = $storageSettings['Refused'];
@@ -185,11 +187,11 @@ list ($quietSettings, $quietAreWhole) = storageSettings(FALSE);
 check('read for -v, the same settings warn about nothing', $GLOBALS['TestLog'] === array() && count($quietSettings['Refused']) === count($expectedRefusals) && $quietAreWhole === TRUE);
 $storageSettings = testSettings(array('TestLibraries' => array('System' => array('Kind' => 'shared', 'Location' => '/etc/x')), 'TestTrashLifetime' => 'forever'));
 check('where no library can be used, Drive is, which configuration cannot overwrite, & a trash lifetime that is not a whole number of days is 30', array_keys($storageSettings['Libraries']) === array('Drive')
-  && $storageSettings['Libraries']['Drive']['Kind'] === 'personal' && $storageSettings['TrashDays'] === 30 && logHolds('No library in --Libraries-- could be used')
-  && logHolds('--Trash Lifetime-- is not a whole number of days from 0 to 3650'), implode("\n", $GLOBALS['TestLog']));
+  && $storageSettings['Libraries']['Drive']['Kind'] === 'personal' && $storageSettings['TrashDays'] === 30 && logHolds('No library listed could be used')
+  && logHolds('The trash lifetime is not a whole number of days from 0 to 3650'), implode("\n", $GLOBALS['TestLog']));
 $storageSettings = testSettings(array('TestLibraries' => 'Drive', 'TestTrashLifetime' => '7'));
 check('a list of libraries that is not a list is the fallback, & a lifetime written as digits is read', array_keys($storageSettings['Libraries']) === array('Drive') && $storageSettings['TrashDays'] === 7
-  && logHolds('No library is listed in --Libraries--'));
+  && logHolds('No library is listed, so the library'));
 
 
 // Part 4. Spaces. A personal space is made the first time it is needed, & a shared library's own folder only where its user may write it.
@@ -204,10 +206,10 @@ check('bob only reads Shared, so nothing is made in it for him', $spaceIsReady =
   && namesIn($LibraryLoc.'/Shared') === array(),
   json_encode($bobShared));
 list ($spaceIsReady, $aliceShared, $spaceFinding) = storageSpace($storageSettings, 'Shared', $alice);
-check('alice, an administrator, writes Shared & empties its trash, which are kept with who added what in .hrcloud3, named for the application, at its top',
-  $spaceIsReady === TRUE && $aliceShared['MayWrite'] === TRUE && $aliceShared['MayPurge'] === TRUE && $aliceShared['Trash'] === $LibraryLoc.'/Shared/.hrcloud3/Trash'
-  && $aliceShared['Authors'] === $LibraryLoc.'/Shared/.hrcloud3/Authors' && $aliceShared['Account'] === 'aaaaaaaaaaaaaaaaaa'
-  && namesIn($LibraryLoc.'/Shared/.hrcloud3') === array('Authors', 'Incoming', 'Trash'), json_encode($aliceShared));
+check('alice, an administrator, writes Shared & empties its trash, which are kept with who added what in .testapp, named for the application, at its top',
+  $spaceIsReady === TRUE && $aliceShared['MayWrite'] === TRUE && $aliceShared['MayPurge'] === TRUE && $aliceShared['Trash'] === $LibraryLoc.'/Shared/.testapp/Trash'
+  && $aliceShared['Authors'] === $LibraryLoc.'/Shared/.testapp/Authors' && $aliceShared['Account'] === 'aaaaaaaaaaaaaaaaaa'
+  && namesIn($LibraryLoc.'/Shared/.testapp') === array('Authors', 'Incoming', 'Trash'), json_encode($aliceShared));
 list ($spaceIsReady, $unknownSpace, $spaceFinding) = storageSpace($storageSettings, 'Elsewhere', $bob);
 list ($signedOutReady, $signedOutSpace, $signedOutFinding) = storageSpace($storageSettings, 'Drive', array('Folder' => '../../etc'));
 check('a library that is not listed is unknown, & an account whose folder is not eighteen hexadecimal digits is signed out', $spaceFinding === 'library-unknown' && $signedOutFinding === 'signed-out'
@@ -243,7 +245,7 @@ list ($fileFound, $filePath, $fileFinding) = resolveStorageFolder($bobDrive, arr
 list ($missingFound, $missingPath, $missingFinding) = resolveStorageFolder($bobDrive, array('Nothing'));
 check('a folder is found by its names, & a link, a file or nothing in the way is said to be so, & no path is handed back', $found === TRUE && $path === $bobTree.'/Photos/2026'
   && $linkFound === FALSE && $linkFinding === 'link' && $linkPath === '' && $upFinding === 'link' && $fileFinding === 'not-folder' && $missingFinding === 'missing');
-list ($keptFound, $keptPath, $keptFinding) = resolveStorageFolder($aliceShared, array('.hrcloud3', 'Trash'));
+list ($keptFound, $keptPath, $keptFinding) = resolveStorageFolder($aliceShared, array('.testapp', 'Trash'));
 list ($deeperFound, $deeperPath, $deeperFinding) = resolveStorageFolder($aliceShared, array());
 check('the top of a shared library is found, & its own folder never is', $keptFound === FALSE && $keptFinding === 'missing' && $deeperFound === TRUE);
 for ($fileNumber = 1; $fileNumber <= 12; $fileNumber++) storageFile($bobTree.'/Photos/IMG '.$fileNumber.'.jpg', (string)$fileNumber);
@@ -279,7 +281,7 @@ check('& one with a free name is put in place, & is gone from where it was ready
   && !file_exists($readyFile));
 check('a folder is made where its name is free', makeStorageSubfolder($bobDrive, array(), 'New') === 'made' && makeStorageSubfolder($bobDrive, array(), 'New') === 'exists'
   && makeStorageSubfolder($bobDrive, array(), 'escape') === 'exists' && makeStorageSubfolder($bobDrive, array('Nothing'), 'New') === 'missing'
-  && makeStorageSubfolder($bobShared, array(), 'Mine') === 'read-only' && makeStorageSubfolder($aliceShared, array(), '.hrcloud3') === 'name-invalid');
+  && makeStorageSubfolder($bobShared, array(), 'Mine') === 'read-only' && makeStorageSubfolder($aliceShared, array(), '.testapp') === 'name-invalid');
 check('a rename never replaces, & a rename to another case of the same name is one', renameStorageItem($bobDrive, array(), 'notes.txt', 'ready.txt') === 'exists'
   && renameStorageItem($bobDrive, array(), 'notes.txt', 'Notes.txt') === 'renamed' && file_get_contents($bobTree.'/Notes.txt') === 'notes'
   && renameStorageItem($bobDrive, array(), 'secret.txt', 'mine.txt') === 'missing' && is_link($bobTree.'/secret.txt') && renameStorageItem($bobDrive, array(), 'Notes.txt', 'a/b') === 'name-invalid');
@@ -371,12 +373,12 @@ check('emptying takes every entry, & a link inside one is taken away as a link, 
 
 // Part 9. Who added what to a shared library. An administrator, or whoever alone added something, deletes it forever, & nobody else.
 $sharedRoot = $LibraryLoc.'/Shared';
-$authorsFolder = $sharedRoot.'/.hrcloud3/Authors';
-$foldedNames = (storageNameIsKept($bobEveryone, array(), '.HRCloud3') === TRUE && storageNameIsKept($bobEveryone, array(), '.hrcloud3') === TRUE
-  && storageNameIsKept($bobEveryone, array('Team'), '.hrcloud3') === FALSE && storageNameIsKept($bobDrive, array(), '.hrcloud3') === FALSE);
-$teamKeptOutcome = makeStorageSubfolder($bobEveryone, array('Team'), '.hrcloud3');
+$authorsFolder = $sharedRoot.'/.testapp/Authors';
+$foldedNames = (storageNameIsKept($bobEveryone, array(), '.TestApp') === TRUE && storageNameIsKept($bobEveryone, array(), '.testapp') === TRUE
+  && storageNameIsKept($bobEveryone, array('Team'), '.testapp') === FALSE && storageNameIsKept($bobDrive, array(), '.testapp') === FALSE);
+$teamKeptOutcome = makeStorageSubfolder($bobEveryone, array('Team'), '.testapp');
 check('the folder a shared library keeps is named for the application, no spelling of it may be used at the top, & it is an ordinary name anywhere else',
-  storageKeptName() === '.hrcloud3' && $foldedNames && makeStorageSubfolder($bobEveryone, array(), '.HRCLOUD3') === 'name-invalid' && $teamKeptOutcome === 'made');
+  storageKeptName() === '.testapp' && $foldedNames && makeStorageSubfolder($bobEveryone, array(), '.TESTAPP') === 'name-invalid' && $teamKeptOutcome === 'made');
 storageFile($bobTree.'/bobs.txt', 'by bob');
 storageFile($bobTree.'/bobs-too.txt', 'also by bob');
 storageFile($aliceDrive['Tree'].'/alices.txt', 'by alice');
@@ -400,7 +402,7 @@ list ($innerCopy, $innerName, $innerJudged) = copyStorageItem($storageSettings, 
 check('what bob copies into it & the folder he makes are recorded as his, by what each is, & his own library records nothing', $bobCopy === 'copied' && $madeOutcome === 'made' && $innerCopy === 'copied'
   && field($recordOf($sharedRoot.'/bobs.txt'), 'Author') === 'bbbbbbbbbbbbbbbbbb' && field($recordOf($sharedRoot.'/bobs.txt'), 'Size') === 6
   && field($recordOf($sharedRoot.'/Bobs Folder'), 'Author') === 'bbbbbbbbbbbbbbbbbb' && field($recordOf($sharedRoot.'/Bobs Folder'), 'Kind') === 'folder'
-  && field($recordOf($sharedRoot.'/Bobs Folder/bobs-too.txt'), 'Author') === 'bbbbbbbbbbbbbbbbbb' && namesIn($sharedRoot.'/.hrcloud3/Incoming') === array()
+  && field($recordOf($sharedRoot.'/Bobs Folder/bobs-too.txt'), 'Author') === 'bbbbbbbbbbbbbbbbbb' && namesIn($sharedRoot.'/.testapp/Incoming') === array()
   && !file_exists($LibraryLoc.'/Drive/bbbbbbbbbbbbbbbbbb/Authors'), json_encode($recordOf($sharedRoot.'/bobs.txt')));
 list ($aliceCopy, $aliceCopyName, $aliceCopyJudged) = copyStorageItem($storageSettings, $alice, $aliceDrive, array(), 'alices.txt', $aliceShared, array(), 'keep');
 list ($aliceInner, $aliceInnerName, $aliceInnerJudged) = copyStorageItem($storageSettings, $alice, $aliceDrive, array(), 'alices.txt', $aliceShared, array('Bobs Folder'), 'keep');
@@ -443,7 +445,7 @@ check('a file another program changed is no longer taken for what was recorded, 
   && field($purgeableIn($changedEntries), 'bobs-too.txt') === FALSE, json_encode($changedEntries));
 list ($aliceEmpty, $aliceEmptied) = purgeStorageTrash($aliceShared, '');
 check('alice empties the trash, & every record of what it held goes with it, leaving only the records of what is still there', $aliceEmpty === 'emptied' && $aliceEmptied === 5
-  && namesIn($aliceShared['Trash']) === array() && namesIn($authorsFolder) === array((string)(is_dir($sharedRoot.'/Team/.hrcloud3') ? lstat($sharedRoot.'/Team/.hrcloud3')['ino'] : -1)),
+  && namesIn($aliceShared['Trash']) === array() && namesIn($authorsFolder) === array((string)(is_dir($sharedRoot.'/Team/.testapp') ? lstat($sharedRoot.'/Team/.testapp')['ino'] : -1)),
   implode(' ', namesIn($authorsFolder)));
 list ($oldCopy, $oldName, $oldJudged) = copyStorageItem($storageSettings, $bob, $bobDrive, array(), 'bobs.txt', $bobEveryone, array(), 'keep');
 trashStorageItem($bobEveryone, array(), 'bobs.txt');

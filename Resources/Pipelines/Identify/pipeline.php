@@ -12,7 +12,7 @@
 // / a server for users of any web browser without authentication.
 // /
 // / File Information ...
-// / v4.3.0.
+// / v5.0.0.
 // / The Identify pipeline. pipelineCore.php loads it only to dispatch an Identify operation.
 // / Error block 37000 through 37004 belongs to this pipeline.
 // / Identify is an operation pipeline. It takes a selection of files & changes none of them.
@@ -46,6 +46,9 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRConvert2-34000,
 // / Past either bound the tool is killed, & the caller is told what it printed is partial.
 // / Standard error is read with standard output, because a tool reports trouble there.
 // / Nothing is written to standard input, so a tool asking a question reads an empty answer rather than waiting.
+// / The shell replaces itself with the command, from v5.0.0, so the process killed is the command's first program.
+// / The shell this host has does not do so of its own accord, & the Engine's time limit made timeout bubblewrap's
+// / parent, so killing the shell left timeout & the sandbox under it running until the limit.
 function identifyRunCommand($commandToRun, $outputLimit, $secondsLimit) {
   // / Set variables.
   global $EnableMemoryProtection;
@@ -59,7 +62,7 @@ function identifyRunCommand($commandToRun, $outputLimit, $secondsLimit) {
   $deadline = 0.0;
   $pipesReady = 0;
   // / Standard error is joined to standard output by the descriptor rather than by a redirection in the command, so it covers the whole command whatever its shape.
-  $commandProcess = @proc_open($commandToRun, array(0 => array('file', '/dev/null', 'r'), 1 => array('pipe', 'w'), 2 => array('redirect', 1)), $commandPipes);
+  $commandProcess = @proc_open('exec '.$commandToRun, array(0 => array('file', '/dev/null', 'r'), 1 => array('pipe', 'w'), 2 => array('redirect', 1)), $commandPipes);
   if (is_resource($commandProcess) && isset($commandPipes[1])) {
     $CommandRan = TRUE;
     stream_set_blocking($commandPipes[1], FALSE);
@@ -71,7 +74,7 @@ function identifyRunCommand($commandToRun, $outputLimit, $secondsLimit) {
         redeclare($outputChunk, (string)fread($commandPipes[1], 65536));
         redeclare($CommandOutput, $CommandOutput.$outputChunk); }
       if (strlen($CommandOutput) > (int)$outputLimit or microtime(TRUE) > $deadline) $OutputWasCut = TRUE; }
-    // / The shell is killed, & bubblewrap dies with its parent & takes the tool with it.
+    // / The command's first program is killed, & bubblewrap dies with its parent & takes the tool with it.
     if ($OutputWasCut) proc_terminate($commandProcess, 9);
     fclose($commandPipes[1]);
     $ExitStatus = proc_close($commandProcess); }

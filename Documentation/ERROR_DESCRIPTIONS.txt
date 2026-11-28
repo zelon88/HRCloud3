@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
 
 FILE INFORMATION ...
-v3.9.7ur.
+v3.9.7.
 This plain text file contains descriptions of all the native error messages contained in or produced by the HRConvert2 Diablo engine.
 These descriptions should give administrators a starting point for debugging problems with HRConvert2 installations.
 Each section in this file contains information about a different error message. The first one is an example to demonstrate the structure of this file.
@@ -70,8 +70,8 @@ The Authentication Core reserves 43000 through 43019 & the Email Core 43100 thro
 The Data pipeline reserves 44000 through 44019, the LaTeX pipeline 45000 through 45019, the Trace pipeline 46000 through 46019,
 the Email pipeline 47000 through 47019 & the Markup pipeline 48000 through 48019, from v4.2.5.
 The Graph pipeline reserves 49000 through 49019, from v4.2.6.
-The Page Core reserves 51000 through 51019, from v4.3.4ur.
-The Storage Core reserves 52000 through 52019, from v4.3.4ur as HRCloud3 v1.0.0 carries it.
+The Page Core reserves 51000 through 51019, from v5.0.0.
+The Storage Core reserves 52000 through 52019, from v5.0.0.
 
 <3 Open-Source
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -273,6 +273,7 @@ FILE
   /UI/Default/taskbar.php
   /UI/Default/launcherGui.php
   /UI/Default/settingsGui.php
+  /UI/Default/filesGui.php
   /UI/Default/engineGui.php
   /UI/Default/footer.php
   /UI/Default/Languages/en/languageStrings.php
@@ -4200,6 +4201,8 @@ WARNINGS ABOUT SCANNING FILES FOR A USER
       & names it in its result. A file also found infected or suspicious is named only as that. A file ScanCore cannot read at all it
       refuses before it scans, & that is the first warning above, that it could not scan the file. Nothing needs to change unless
       every file is named so, which can mean the PHP zlib extension is missing, without which ScanCore reads no compressed member.
+      From v5.0.1 ScanCore v2.0.0 writes Incomplete for a file it could not open or inspect as well, & error 640 for one it could
+      not finish inspecting, & PHP Zlib is declared, so -v names it where it is missing.
     WARNING!!! A scan was asked to write a report under a name that is not a plain text file's name, so it was written as <FILE_NAME>.
       From v4.1.6. The report is always a txt file, & a name for it that is not one is replaced rather than trusted.
       The core names every report User_Consolidated_Virus_Scan_Report.txt, so this means something other than the core
@@ -6212,7 +6215,8 @@ ERROR DESCRIPTION
   Re-run the command with sudo.
   This error was previously reported as 31008 & was separated so the two conditions can be told apart.
   ERROR 31008 is raised when permissions cannot be corrected for the same reason.
-  This error is not fatal. Per conversion limits simply remain unavailable & fall back to scheduling priority.
+  This error is not fatal. Per conversion limits simply remain unavailable & fall back to scheduling priority & a data limit
+  on each process.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -9004,7 +9008,7 @@ ERROR DESCRIPTION
   message, such as one with no relay configured, is the usual cause.
   Registering tells the user their code could not be sent. Sending a code again & recovering an account answer as they always
   do, so nobody learns whether an account exists.
-  From v4.2.0ur, asking to change an address tells the user the code could not be sent, & the account keeps its address. A notice
+  From v5.0.0, asking to change an address tells the user the code could not be sent, & the account keeps its address. A notice
   that could not be sent changes nothing, because the password or the address it reports was already changed.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -9031,7 +9035,7 @@ WARNINGS ABOUT ACCOUNTS
       many addresses at once. The limit is --Sign In Attempt Limit-- & the window --Sign In Attempt Window--.
       A visitor who reached it is told there were too many attempts. Many of these in a short time is somebody guessing.
     WARNING!!! The <PURPOSE> email for <USERNAME> was not sent, because the Email Core is not loaded. Confirming an address & recovering an account are impossible until it is restored.
-      <PURPOSE> is confirm, recover or address. address is from v4.2.3ur, & carries the code that confirms a new address.
+      <PURPOSE> is confirm, recover or address. address is from v5.0.0, & carries the code that confirms a new address.
       The Email Core is missing or does not report the version this application pins. Signing in with a correct password still
       works. Run  php convertCore.php -v  & read the Email Core line, then restore Resources/Engine/Cores/emailCore.php from the
       matching release. --config names it as a setting that contradicts another.
@@ -9057,20 +9061,20 @@ WARNINGS ABOUT ACCOUNTS
       could not be saved, & their files are kept as long as before. Run  sudo php convertCore.php -fp , which gives Accounts to
       the web server account. A full disk refuses it too.
     WARNING!!! The password of <USERNAME> could not be changed, because their account could not be written.
-      From v4.2.3ur. A signed in user gave the password they have & a new one, & their account could not be changed. They are
+      From v5.0.0. A signed in user gave the password they have & a new one, & their account could not be changed. They are
       told it could not be done right now, & the password they had still signs in. Run -fp as root, which gives Accounts to the
       web server account. A full disk refuses it too.
     WARNING!!! A code to change the address of <USERNAME> could not be kept, because the accounts folder could not be written.
-      From v4.2.3ur. A signed in user asked to change their address, & the code that confirms the new one could not be kept, so
+      From v5.0.0. A signed in user asked to change their address, & the code that confirms the new one could not be kept, so
       none was sent. They are told it could not be done right now, & the account keeps its address. Run -fp as root.
     WARNING!!! The address of <USERNAME> could not be changed, because their account could not be written.
-      From v4.2.3ur. The code was right & is spent, & the account could not be changed, so it keeps its address. The user is
+      From v5.0.0. The code was right & is spent, & the account could not be changed, so it keeps its address. The user is
       told it could not be done right now, & asks for another code once -fp has been run as root.
     WARNING!!! The notice email for <USERNAME> was not sent, because the Email Core is not loaded. Its owner was not told their account was changed.
-      From v4.2.3ur. A password or an address changed with the account's own password is reported to the owner by email, so a
+      From v5.0.0. A password or an address changed with the account's own password is reported to the owner by email, so a
       change they did not make is noticed. The change was made regardless. Restore the Email Core, which -v names.
     WARNING!!! A change to an account answered with an outcome no page names, so it is answered unavailable.
-      From v4.2.3ur. A change a signed in user asked for ended in an outcome the Engine never hands a page, which is a fault in
+      From v5.0.0. A change a signed in user asked for ended in an outcome the Engine never hands a page, which is a fault in
       the Engine rather than in the request. The user is told it could not be done right now, & the log lines before it say what ran.
     WARNING!!! This page was sent without Cross-Origin-Opener-Policy, because something was written before its headers. A page of another site could reach the key a signed in tab holds.
       From v4.2.1. While accounts are on, every response carries the policy, so a page of another site can neither name a
@@ -9952,7 +9956,7 @@ LOGGED
   YES
 
 ERROR DESCRIPTION
-  From v4.3.4ur. The Page Core tried the interface the request asked for, --Default Interface-- & the base interface the
+  From v5.0.0. The Page Core tried the interface the request asked for, DefaultInterface & the base interface the
   contract names, & none could be used. The warnings before this one say why each could not. The application answers the
   request with status 503 & one sentence of plain text. Restore the base interface's folder from the release, then run -v &
   read Installed interfaces. See Documentation/ABOUT_PAGES.txt.
@@ -9973,7 +9977,7 @@ LOGGED
   YES
 
 ERROR DESCRIPTION
-  From v4.3.4ur. Neither the interface chosen nor the base it inherits from carries a pack for the language asked for,
+  From v5.0.0. Neither the interface chosen nor the base it inherits from carries a pack for the language asked for,
   --Default Language-- or English. English is the last rung, so a base interface must carry Languages/en/languageStrings.php.
   The application answers the request with status 503 & one sentence of plain text. Restore the pack from the release.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -9993,7 +9997,7 @@ LOGGED
   YES
 
 ERROR DESCRIPTION
-  From v4.3.4ur. The application asked the Page Core to build a page its contract's $EnginePages does not name, or names
+  From v5.0.0. The application asked the Page Core to build a page its contract's $EnginePages does not name, or names
   with a component list the Page Core left out with a warning. The application chooses the page, so this is a fault in the
   application rather than in the request. Nothing is drawn, & the application answers with status 503.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -10013,7 +10017,7 @@ LOGGED
   YES
 
 ERROR DESCRIPTION
-  From v4.3.4ur. buildEnginePage() was called before preparePages() chose an interface & a language, or after it could not.
+  From v5.0.0. buildEnginePage() was called before preparePages() chose an interface & a language, or after it could not.
   preparePages() cannot choose them only after error 51000 or 51001, or a warning that the Page Core's settings could not be
   read whole, which come first. Where none of them did, the application called the two out of order.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -10029,7 +10033,7 @@ ERROR NUMBER RESERVATION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 WARNINGS ABOUT PAGES
   A warning carries no error number & never halts anything. Each says what happened & what was done about it.
-  Every one of these is from v4.3.4ur. Documentation/ABOUT_PAGES.txt says how a page is built.
+  Every one of these is from v5.0.0. Documentation/ABOUT_PAGES.txt says how a page is built.
   The Page Core raises these, from Resources/Engine/Cores/pageCore.php.
     WARNING!!! The page <PAGE> the contract declares is not a page name with a list of components, so it was left out.
       $EnginePages names each page, 1 to 32 lower case letters, digits, dashes & underscores beginning with a letter, with the
@@ -10051,15 +10055,15 @@ WARNINGS ABOUT PAGES
     WARNING!!! The interface <INTERFACE> could not be used, because its styleCore.php offers no color.
     WARNING!!! The interface <INTERFACE> could not be judged, so it was not used.
       An interface is checked before a page is drawn with it. One that cannot be used is passed over & the next is tried, which
-      is --Default Interface--, then the base interface the contract names. A user who asked for it is never told, because they
+      is DefaultInterface, then the base interface the contract names. A user who asked for it is never told, because they
       cannot choose their way out of a broken interface, & the page is drawn with the next one.
       An interface must report exactly the version the application requires, because an older or newer one may draw its pages
       wrongly. One that inherits from the base takes every file it lacks from the base, so the base must report it too. A name
       is 1 to 64 letters, digits & underscores. Correct the folder or the setting that names it, & run -v, which judges every
-      interface --Supported Interfaces-- offers.
+      interface SupportedInterfaces offers.
     WARNING!!! The interface <INTERFACE> carries no <LANGUAGE> language pack, so the next language was tried.
-      --Supported Languages-- offers a language that has no Languages/<LANGUAGE>/languageStrings.php in the interface or its base.
-      The page is drawn in --Default Language--, or else in English. -v counts the packs each interface carries.
+      SupportedLanguages offers a language that has no Languages/<LANGUAGE>/languageStrings.php in the interface or its base.
+      The page is drawn in DefaultLanguage, or else in English. -v counts the packs each interface carries.
     WARNING!!! The language pack <LANGUAGE> reports version <VERSION> & this application requires <VERSION>. Any string it lacks is taken from the <LANGUAGE> pack.
     WARNING!!! The language pack <LANGUAGE> reports version <VERSION> & this application requires <VERSION>, & no other pack is there to give a string it lacks.
       A pack must report exactly the version the application requires. One that does not is used with this warning rather than
@@ -10067,7 +10071,7 @@ WARNINGS ABOUT PAGES
       ladder is loaded under it, so a string it lacks reads in that language. With no pack under it, a string it lacks is missing
       from the page & PHP's own log names it.
     WARNING!!! The default color <COLOR> is not one the interface <INTERFACE> offers, so <COLOR> is used.
-      --Default Color-- names a color the interface's styleCore.php does not offer, so the first color it offers is used.
+      DefaultColor names a color the interface's styleCore.php does not offer, so the first color it offers is used.
     WARNING!!! A page data provider named <FUNCTION> was declared & does not exist. The page <PAGE> is drawn without the application's data.
       $EnginePageDataProvider names a function the application does not define, so $PageData is empty & the page shows none of
       the application's values. It is a fault in the application.
@@ -10092,7 +10096,7 @@ LOGGED
   YES
 
 ERROR DESCRIPTION
-  From v4.3.4ur, as HRCloud3 v1.0.0 carries it. A library --Libraries-- lists without a Location of its own is kept in Libraries
+  From v5.0.0. A library StorageLibraries lists without a Location of its own is kept in Libraries
   in the data location, which -fp makes & gives the web server account, because the application's contract declares LibraryLoc
   with the web role. It is missing, is a link, or the web server account cannot write it, so every such library answers that it
   is unavailable. A library given a Location of its own still works. Run  sudo php <ENTRY_POINT> -fp  & read Libraries in -v.
@@ -10110,14 +10114,14 @@ ERROR NUMBER RESERVATION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 WARNINGS ABOUT LIBRARIES
   A warning carries no error number & never halts anything. Each says what happened & what was done about it.
-  Every one of these is from v4.3.4ur, as HRCloud3 v1.0.0 carries it. Documentation/ABOUT_STORAGE.txt says how a library is kept.
+  Every one of these is from v5.0.0. Documentation/ABOUT_STORAGE.txt says how a library is kept.
   The Storage Core raises these, from Resources/Engine/Cores/storageCore.php.
-    WARNING!!! No library is listed in --Libraries--, so the library this installation falls back to, Drive, is used.
-    WARNING!!! No library in --Libraries-- could be used, so the library this installation falls back to, Drive, is used.
-      --Libraries-- is missing, is not a list, lists nothing, or lists only libraries that cannot be used, each of which is a
-      warning of its own. Drive is a personal library kept in Libraries in the data location, & no setting can change it, so a
-      signed in user always has somewhere to keep their files. Correct --Libraries-- & run -v, which names every library & why
-      one cannot be used.
+    WARNING!!! No library is listed, so the library this installation falls back to, Drive, is used.
+    WARNING!!! No library listed could be used, so the library this installation falls back to, Drive, is used.
+      The setting StorageLibraries names in $EngineSettingNames is missing, is not a list, lists nothing, or lists only libraries
+      that cannot be used, each of which is a warning of its own. Drive is a personal library kept in Libraries in the data
+      location, & no setting can change it, so a signed in user always has somewhere to keep their files. Correct the setting &
+      run -v, which names every library & why one cannot be used.
     WARNING!!! The library <LIBRARY> could not be used, because <REASON>.
       The library is left out, & every other is used. A page is never offered it. <REASON> is one of these.
         its name is not 1 to 32 letters, digits, dashes & underscores beginning with a letter or a digit
@@ -10137,9 +10141,9 @@ WARNINGS ABOUT LIBRARIES
         its location overlaps the library <LIBRARY>
       A library given a Location of its own is never a folder whatever a user stores there could be served, run or taken for the
       Engine's own or the host's from, so it is outside each of those & is a real folder that is there already.
-    WARNING!!! --Trash Lifetime-- is not a whole number of days from 0 to 3650, so the trash is emptied after <DAYS> days.
-      The setting in config.php is missing or holds something else. The default is used until it is corrected. 0 keeps a trash
-      until it is emptied.
+    WARNING!!! The trash lifetime is not a whole number of days from 0 to 3650, so the trash is emptied after <DAYS> days.
+      The setting TrashLifetime names in $EngineSettingNames is missing or holds something else. The default is used until it
+      is corrected. 0 keeps a trash until it is emptied.
     WARNING!!! The library <LIBRARY> at <FOLDER> is missing or cannot be read by the web server account.
       A library given a Location of its own is never made by the Engine. Make the folder, or mount what it is on, & let the web
       server account read it, & write it unless its Writers is none. Every request to it answers unavailable until then.
@@ -10149,7 +10153,7 @@ WARNINGS ABOUT LIBRARIES
       not be, usually because the folder above it is not the web server account's. Run  sudo php <ENTRY_POINT> -fp  for a library
       kept in the data location, or give a folder of your own to the web server account.
     WARNING!!! The shared library <LIBRARY> at <FOLDER> cannot be written by the web server account, so it is only read.
-      --Libraries-- lets the user write the library, & its own folder, named for the application, as .hrcloud3, which holds its trash,
+      StorageLibraries lets the user write the library, & its own folder, named for the application, as .hrcloud3, which holds its trash,
       what is being uploaded & who added what, could not be made at its top. Every user reads it until the web server account can
       write it.
     WARNING!!! An upload to the library <LIBRARY> could not be put in place from <PATH>.
@@ -10704,6 +10708,9 @@ WARNINGS ABOUT DATA LOCATIONS
     WARNING!!! Could not fully clean the data location. Some expired sessions may remain & will be retried next request. Serving this request anyway.
       A web request sweeps expired sessions before it is served, & this sweep could not remove all of them. A session it missed is
       retried by the next request. One that is never removed belongs to another account, which -fp gives back.
+    WARNING!!! --File Deletion Age Threshold-- is not a whole number of minutes, so sessions older than <NUMBER> minutes are swept. Set it in config.php, or set it to 0 to keep files forever.
+      From v5.0.0. A web request, a bare -c & the Resource Manager's sweep read the setting this way, & it holds a negative number,
+      a fraction or something other than a number, so the default of 60 is used until it is corrected. 0 sweeps nothing.
     WARNING!!! The session folder <NAME> the application contract names is not a name a global can carry, or is the Engine's, so it is not made.
       $EngineSessionFolders names the folders each session holds, & each is kept in a global of its name. This one does not begin with
       a capital letter, holds a character a name cannot, or is StreamTemp, which the Engine makes itself. Correct it in the contract.
@@ -10806,10 +10813,10 @@ WARNINGS ABOUT PER CONVERSION LIMITS
   A warning carries no error number & never halts anything. Each says what happened & what was done about it.
   The Engine raises these, from Resources/Engine/engine.php, & the Setup Core the last, from Resources/Engine/Cores/setupCore.php.
   --Enable Per Conversion Limits-- runs each conversion's sandbox in a transient systemd scope with a ceiling on processor & memory,
-  which --Maximum Per Conversion Resources-- sets for each type. Without a scope a conversion runs at a lower priority & is not
-  limited. ABOUT_RESOURCE_RATE_LIMITING says how a limit is chosen.
-    WARNING!!! systemd-run is not installed. Per conversion limits fall back to scheduling priority only.
-    WARNING!!! A resource scope could not be created. <ADDITIONAL_DATA> Per conversion limits fall back to scheduling priority alone.
+  which --Maximum Per Conversion Resources-- sets for each type. Without a scope a conversion runs at a lower priority, & from v5.0.0
+  each of its processes has a data limit of that memory, through prlimit. ABOUT_RESOURCE_RATE_LIMITING says how a limit is chosen.
+    WARNING!!! systemd-run is not installed. Per conversion limits fall back to scheduling priority & a data limit on each process.
+    WARNING!!! A resource scope could not be created. <ADDITIONAL_DATA> Per conversion limits fall back to scheduling priority & a data limit on each process.
       No scope could be made for the web server account. What follows says whether -fp can enable lingering for it, or whether this
       kernel does not delegate cgroup controllers, which many NAS & appliance kernels do not & nothing here can change.
     WARNING!!! Per conversion limits are using a SYSTEM scope. This account holds systemd manage-units, which is enough to start a unit as root. Enable lingering for <ACCOUNT> with the -fp argument & remove that permission.
@@ -10820,12 +10827,42 @@ WARNINGS ABOUT PER CONVERSION LIMITS
     WARNING!!! No usable per conversion limit could be resolved. This conversion runs unlimited.
       A conversion's ceiling is the listener's, scaled to how loaded the host is, or config.php's when no listener runs. <SOURCE> is
       the listener, config.php or this core's built-in table. The last means none could be read, so the conversion runs without a scope.
+    WARNING!!! The <PROFILE> sandbox profile asks for an address space limit & prlimit is not installed, so its conversion runs without one. util-linux provides prlimit.
+      From v5.0.0, a profile setting AddressSpaceLimit is held to the memory its type is allowed, through prlimit, & the conversion runs
+      without that ceiling where prlimit is missing, because a limit never refuses a conversion. Install util-linux.
+    WARNING!!! No resource scope can be made & prlimit is not installed, so this conversion runs with no memory ceiling. util-linux provides prlimit.
+      From v5.0.0, a conversion that runs without a scope is held to the memory its type is allowed as a data limit on each process, through
+      prlimit, & runs without it where prlimit is missing, because a limit never refuses a conversion. Install util-linux.
     WARNING!!! Per conversion resource limits could not be fully enabled. <NUMBER> step(s) completed.
       -fp gives the web server account a systemd manager of its own & the cgroup controllers a scope needs, & a step did not complete.
-      Root's log says which. Conversions fall back to scheduling priority until it does.
-    WARNING!!! This kernel delegates no cgroup controllers, so per conversion limits fall back to scheduling priority.
+      Root's log says which. Conversions fall back to scheduling priority & a data limit on each process until it does.
+    WARNING!!! This kernel delegates no cgroup controllers, so per conversion limits fall back to scheduling priority & a data limit on each process.
       -fp would give the web server account a systemd manager of its own, & this kernel gives it no controllers to limit with. Many
       NAS & appliance kernels do not, & nothing here can change that.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+WARNINGS ABOUT PER CONVERSION TIME LIMITS
+  A warning carries no error number & never halts anything. Each says what happened & what was done about it.
+  The Engine raises the first three, from Resources/Engine/engine.php, & the Pipeline Core the rest, from Resources/Engine/Cores/pipelineCore.php.
+  From v5.0.0 every conversion command runs inside timeout, for as many seconds as --Maximum Per Conversion Runtime-- gives its type, or
+  --Default Per Conversion Runtime-- gives a type it does not name. It applies whether or not --Enable Per Conversion Limits-- is TRUE.
+  ABOUT_RESOURCE_RATE_LIMITING says how it works.
+    WARNING!!! The <TYPE> time limit in --Maximum Per Conversion Runtime-- is not a whole number of seconds, so --Default Per Conversion Runtime-- is used.
+    WARNING!!! --Default Per Conversion Runtime-- is missing or is not a whole number of seconds, so 600 is used.
+      The figure in config.php holds something else, such as a unit, a fraction or a negative number. Each conversion of that type is given
+      the default, & says so, until it is corrected. A default that cannot be read is replaced by 600, which configuration cannot change.
+    WARNING!!! timeout is not installed, so this conversion runs with no time limit. coreutils provides timeout.
+      The conversion runs without a time limit, because a limit never refuses a conversion. Install coreutils.
+    WARNING!!! A converter ran out of time & was stopped. --Maximum Per Conversion Runtime-- sets how long each type of conversion may run.
+    WARNING!!! A converter ran out of time & was stopped, & what it left at <FILE_NAME> was removed. --Maximum Per Conversion Runtime-- sets how long each type of conversion may run.
+      A converter ran for as long as its type's time limit allows, & timeout stopped it. It is not asked again, because it would run out of
+      time again, & the pipeline's own error follows. A file it had begun is not the result, so it was removed. A crafted file can loop a
+      converter for ever, & a large real file may need more time than the limit. Raise that type's figure for the second.
+    WARNING!!! A converter ended on signal <NUMBER> before it finished, so what it left at <FILE_NAME> was removed.
+      A signal ended the converter part way through its file, so what it wrote is not the result. 9 is most often a memory ceiling, & a
+      converter it stopped is asked again where --File Operation Retry Count-- allows. 11, 6, 7, 8 & 4 are a crash, which is not.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -10922,7 +10959,8 @@ WARNINGS ABOUT COMMANDS
     WARNING!!! The dependency manifest could not be read, so nothing could be compared against it.
       --pipeline compares the tools each pipeline requires with the manifest, which could not be loaded. The command exits 1.
     WARNING!!! An unrecognized clean threshold was supplied. Using the configured default.
-      -c takes a whole number of minutes, or now, & what followed it was neither. --File Deletion Age Threshold-- is used.
+      -c takes a whole number of minutes, or now, & what followed it was neither. --File Deletion Age Threshold-- is used, & from
+      v5.0.0 nothing is swept where it is 0, which keeps files forever.
     WARNING!!! Command line invocation with an unrecognized argument.
       Nothing recognized the command. Where it is an option of another command, the command it belongs to is named. It exits 2.
     WARNING!!! The Resource Manager could not be reached, so no tracked worker was ended.
@@ -11261,6 +11299,10 @@ WARNINGS ABOUT AN APPLICATION'S OWN BUILDS
       The same, where the package manager's copy does not answer inside the window either. The first is an own build that is not root's
       alone, & the second one the account that runs conversions cannot run. The dependency is reported misconfigured, & what follows
       says what to do.
+    WARNING!!! <APPLICATION_NAME>'s own build of <NAME> <ADDITIONAL_DATA> Only the own build is used, so <NAME> is unavailable until then.
+      From v5.0.0, an entry whose Fallback says 'Always' never falls back to the package manager's copy. Its own build is not root's
+      alone, or the account that runs conversions cannot run it, so the dependency is reported misconfigured. What follows the name
+      says which, & what to do.
     WARNING!!! <APPLICATION_NAME>'s own build of <NAME> <STATE>. <ADDITIONAL_DATA>
       A build was made & is not ready. <STATE> is FAILED where it did not build, or is in service & not ready where the account that runs
       conversions cannot run it. What follows says why.
@@ -11527,7 +11569,8 @@ WARNINGS ABOUT SCANNING WITH CLAMAV & SCANCORE
     WARNING!!! ClamAV exited <NUMBER> scanning <FILE_NAME>, which is not a verdict.<ADDITIONAL_DATA>
     WARNING!!! ScanCore exited <NUMBER> scanning <FILE_NAME>, which is not a verdict.<ADDITIONAL_DATA>
       The scanner ended with a status that means neither clean nor found. 137 means it was killed, most often by its memory ceiling, &
-      what follows then says to raise the memory figure for Scan in --Maximum Per Conversion Resources--.
+      what follows then says to raise the memory figure for Scan in --Maximum Per Conversion Resources--. 124 means it reached its time
+      limit, from v5.0.0, which Scan's figure in --Maximum Per Conversion Runtime-- sets.
     WARNING!!! The chunk size configured for ScanCore is more than a quarter of its memory limit. ScanCore holds about three chunks at once, so a file larger than one chunk would exhaust its memory. A quarter is used instead. Set the chunk size to a quarter of the memory limit or less in config.php.
       The scan goes on with a chunk a quarter of the memory limit.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -11563,9 +11606,6 @@ WARNINGS ABOUT IMAGEMAGICK, OCR & MODELS
     WARNING!!! The ImageMagick policy the OCR pipeline carries is missing, so this page split runs under the host's own. Restore the pipeline from the release this installation came from.
       Each pipeline that runs ImageMagick carries a policy that names the coders it may use, & it is read before the host's. Without it
       the host's policy alone decides, & the sandbox still holds.
-    WARNING!!! Bubblewrap is unavailable. This OCR page split will run unsandboxed under the ImageMagick policy this pipeline carries, which is read first, so the host's own policy still decides any coder it names.
-      A page split runs without a sandbox where none can be built, under the pipeline's policy, rather than not at all. -v says why no
-      sandbox can be built.
     WARNING!!! PyMeshLab was found & could not be imported by <INTERPRETER>. It reported: <ADDITIONAL_DATA>
     WARNING!!! PyMeshLab is enabled & could not be used. Either no interpreter matching the bundled build is installed, or one is & the module did not import. Falling back to the MeshLab binary.
     WARNING!!! PyMeshLab could not be imported. A bundled build is compiled for one Python minor version, so check that the interpreter matches the cpython tag on the object in Resources/PyMeshLab/pymeshlab. Set --Use PyMeshLab Python Bindings-- to FALSE to use the meshlabserver binary instead.

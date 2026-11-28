@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 
 FILE INFORMATION ...
-v1.0.0.
+v1.0.1.
 This file contains a list of itemized changes made in each iteration of the application.
 Entries from v0.9.7 down are the prototype's development notes, kept as they were written.
 
@@ -24,6 +24,19 @@ The authoritative list of dependencies is Resources/Engine/depends.php & Resourc
 <3 Open-Source
 -----------------------------------------------------------------------------------
 
+
+--------------------
+COMMIT 11/27/2026
+v1.0.1 - HRCloud3 runs on the HRProprietary Engine v5.0.1.
+
+-v1.0.1.
+-The Engine is canon v5.0.1, which carries every Engine change HRCloud3 made, as its own from v5.0.0. No Engine file is changed.
+-ScanCore v2.0.0 is in the ScanCore pipeline's folder. -fp takes away Resources/ScanCore, where v1.0.0 kept it.
+-The kernel is pinned at v5.0.1, & the Engine & the Setup, Dependency, Pipeline, Authentication, Email, Page & Storage Cores at v5.0.0.
+-config.php is v1.0.1. --config --repair adds --Maximum Per Conversion Runtime-- & --Default Per Conversion Runtime--.
+-test_hrcloud3-cli.php reads every Engine version from the tree, sweeps every session with -c now, & checks that -fp takes the old ScanCore folder away.
+-ERROR_DESCRIPTIONS.txt names filesGui.php among the files raising error 2.
+-README.md says how to upgrade an installation & keep its config.php.
 
 --------------------
 COMMIT 11/27/2026

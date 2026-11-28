@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v1.0.0.
+// / v1.0.1.
 // / HRCloud3's Engine settings, loaded after engineConfig.php, so anything it sets wins.
 // / A package ships a configuration with working defaults, & the thing being configured drops a file beside it that overrides what it needs, as Apache & PHP do.
 // / engineConfig.php belongs to the Engine & is replaced wholesale when a newer Engine arrives, while this file belongs to the application & survives that.
@@ -194,6 +194,13 @@ $EngineManagedLocations = array(
 // / Whatever else shares the folder a release was unpacked into is never taken along & never removed.
 // / See Documentation/ABOUT_MANAGED_LOCATIONS.txt.
 $EngineApplicationLayout = array('cloudCore.php', 'README.md', 'LICENSE', 'Documentation', 'Resources', 'UI');
+
+// / Paths inside an installation that no release of HRCloud3 ships, by their path below it.
+// / -fp takes each one away as root, without following anything in it, once it has given the rest of the installation to root.
+// / So an installation an earlier release left one in is one root may run again.
+// / Resources/ScanCore is where ScanCore was until v1.0.1, which takes the Engine's v5.0.1, where it is kept in the ScanCore pipeline's folder.
+// / See Documentation/ABOUT_MANAGED_LOCATIONS.txt.
+$EngineRetiredPaths = array('Resources/ScanCore');
 
 // / The settings in config.php that each shared name reads, & the values the kernel & the Engine work
 // / out from them as they start. The shared layers ask for a value by a name that says nothing about

@@ -10,7 +10,7 @@ APPLICATION INFORMATION ...
 The HRProprietary Engine provides a coherent application environment. It is bundled with an application rather than installed beside one.
 
 FILE INFORMATION ...
-v4.2.0ur.
+v4.2.0.
 This file documents accounts. Signing in, the key a signed in page holds, registering, confirming an address, recovering an
 account, changing a password or an address while signed in, the files a signed in user keeps, the emails, the administrator's
 commands & the settings.
@@ -168,7 +168,7 @@ reads its owner's email.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 --Changing A Password Or An Address While Signed In--
 
-From v4.2.3ur, which HRCloud3 v0.9.9 added. A signed in user changes their own password or address
+From v5.0.0. A signed in user changes their own password or address
 with the password their account has now, which is the one way anybody proves who they are. A page
 left signed in is not enough on its own, because the person at it may not be its owner.
 
@@ -241,7 +241,7 @@ quota is kept by the listener, as the storage reserve is, so it is kept only whe
 --Enable Resource Awareness-- is TRUE & the listener runs. --config says so where it is not.
 An application that offers libraries keeps the quota itself for every write to a user's own library,
 listener or not, & counts the user's folder in Users & every personal space they keep, trash included,
-from v4.3.4ur. --config does not call the quota inert there. See ABOUT_STORAGE.txt.
+from v5.0.0. --config does not call the quota inert there. See ABOUT_STORAGE.txt.
 
 A USER CHOOSES HOW LONG THEIR FILES ARE KEPT, from v4.2.3. The account panel offers Never, 1 hour,
 1 day, 1 week & 30 days, & every account starts at Never, which keeps them until they are deleted.
@@ -252,15 +252,15 @@ date an archive gave it does not count. Only plain files at the top of the folde
 folder a workflow is running in is left for the next sweep, so nothing is deleted from under a
 workflow. A file that cannot be deleted is counted in a warning. Until v4.2.3 no sweep removed
 anything a user kept. An application offers fewer lifetimes, or only Never, by naming them in
-$EngineFileLifetimes in its contract, from v4.3.4ur. HRCloud3 offers only Never. The sweep never
-reaches a library, whose trash keeps what is deleted for --Trash Lifetime-- days instead.
+$EngineFileLifetimes in its contract, from v5.0.0. HRCloud3 offers only Never. The sweep never
+reaches a library, whose trash keeps what is deleted for the days TrashLifetime names instead.
 
 START OVER IS NOT OFFERED TO A SIGNED IN USER, from v4.2.3. Start Over deletes every file a page
 lists, & a signed in user's files are kept for them on purpose, so only a visitor who has not signed
 in is offered it. A file's own Delete still deletes it, & so does a workflow's Delete step.
 
 Removing an account removes its folder & every file in it, & where the application offers libraries,
-its space in every personal library, from v4.3.4ur. What it wrote in a shared library is kept.
+its space in every personal library, from v5.0.0. What it wrote in a shared library is kept.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -290,7 +290,7 @@ AN EMAIL IS PLAIN TEXT IN UTF-8. A subject that is not plain ASCII is encoded as
 THE TEXT IS THE ENGINE'S, THEN THE APPLICATION'S, THEN THE ADMINISTRATOR'S.
 The Engine's defaults are in Resources/Engine/engineConfig.php, the application's contract may
 replace them, & the administrator's --Email Confirmation Subject--, --Email Confirmation Body--,
---Email Recovery Subject-- & --Email Recovery Body-- replace both. From v4.2.0ur so do
+--Email Recovery Subject-- & --Email Recovery Body-- replace both. From v5.0.0 so do
 --Email Address Subject-- & --Email Address Body--, for the code that confirms a new address, &
 --Email Notice Subject-- & --Email Notice Body--, for the notice that an account was changed. An
 empty setting keeps the one before it. Each may name these, written in braces.

@@ -12,7 +12,7 @@
 // / It answers the Engine's commands, & draws its pages from the components of an interface through the Engine's Page Core.
 // /
 // / File information ...
-// / v1.0.0.
+// / v1.0.1.
 // / HRCloud3's entry point, begun from the HRProprietary Engine's Starter.
 // / It boots through the kernel as every application on the Engine does, & supplies only what the
 // / contract asks of an application: its pins, its name before config.php is read, its half of
@@ -55,35 +55,35 @@ function verifyInstallation() {
   $CoreLoaded = TRUE;
   // / This application's own version, which Resources/versionInfo.php must report as well.
   // / It is handed to the Engine here, where it is defined, so there is only ever one copy.
-  $HRCloud3Version = 'v1.0.0';
+  $HRCloud3Version = 'v1.0.1';
   $HRCloud3Version = ltrim($HRCloud3Version, 'vV');
   $EngineApplicationVersion = $HRCloud3Version;
   // / The oldest config.php this file accepts. A newer one carrying every setting it needs is fine.
   // / Raise it only when this application adds or removes a setting of its own, with $ConfigVersion in its half of the template.
-  $RequiredConfigVersion = 'v1.0.0';
+  $RequiredConfigVersion = 'v1.0.1';
   $RequiredConfigVersion = ltrim($RequiredConfigVersion, 'vV');
   // / Each Engine core, & this application's half of the dependency manifest, is an exact match.
   // / A component built for another release may not be called safely, so it is judged before it is loaded.
   // / php cloudCore.php --build --pins --write writes each of these from the file it names, so none is moved by hand.
-  $RequiredSetupCoreVersion = 'v4.3.3ur';
+  $RequiredSetupCoreVersion = 'v5.0.0';
   $RequiredSetupCoreVersion = ltrim($RequiredSetupCoreVersion, 'vV');
-  $RequiredDependencyCoreVersion = 'v4.3.4';
+  $RequiredDependencyCoreVersion = 'v5.0.0';
   $RequiredDependencyCoreVersion = ltrim($RequiredDependencyCoreVersion, 'vV');
   $RequiredDependsVersion = 'v0.9.8';
   $RequiredDependsVersion = ltrim($RequiredDependsVersion, 'vV');
-  $RequiredPipelineCoreVersion = 'v4.3.2';
+  $RequiredPipelineCoreVersion = 'v5.0.0';
   $RequiredPipelineCoreVersion = ltrim($RequiredPipelineCoreVersion, 'vV');
   $RequiredWorkflowCoreVersion = 'v4.3.1';
   $RequiredWorkflowCoreVersion = ltrim($RequiredWorkflowCoreVersion, 'vV');
-  $RequiredAuthenticationCoreVersion = 'v4.2.3ur';
+  $RequiredAuthenticationCoreVersion = 'v5.0.0';
   $RequiredAuthenticationCoreVersion = ltrim($RequiredAuthenticationCoreVersion, 'vV');
-  $RequiredEmailCoreVersion = 'v4.2.0ur';
+  $RequiredEmailCoreVersion = 'v5.0.0';
   $RequiredEmailCoreVersion = ltrim($RequiredEmailCoreVersion, 'vV');
   $RequiredEventCoreVersion = 'v4.3.1';
   $RequiredEventCoreVersion = ltrim($RequiredEventCoreVersion, 'vV');
-  $RequiredPageCoreVersion = 'v4.3.4ur';
+  $RequiredPageCoreVersion = 'v5.0.0';
   $RequiredPageCoreVersion = ltrim($RequiredPageCoreVersion, 'vV');
-  $RequiredStorageCoreVersion = 'v4.3.4ur';
+  $RequiredStorageCoreVersion = 'v5.0.0';
   $RequiredStorageCoreVersion = ltrim($RequiredStorageCoreVersion, 'vV');
   // / Every interface, & every language pack, this release ships.
   $RequiredInterfaceVersion = 'v1.0.0';
@@ -93,7 +93,7 @@ function verifyInstallation() {
   // / The Engine is an exact match as well. It is bundled with this application rather than installed
   // / beside it, so the pin & the file it points at are replaced together. The build runs inside the
   // / Engine & cannot write this pin, so it is moved by hand, with the version engine.php declares.
-  $RequiredEngineVersion = 'v4.3.4ur';
+  $RequiredEngineVersion = 'v5.0.0';
   $RequiredEngineVersion = ltrim($RequiredEngineVersion, 'vV');
   // / The bootstrap script & the install secret, each an exact match. The secret's is the format
   // / of a file the kernel writes, so no shipped file declares it & it is moved by hand.
@@ -299,7 +299,7 @@ function servePage($pageRequested, $interfaceRequested, $languageRequested, $col
 // / by hand, with the version each file declares.
 // / The name this application goes by until config.php names it. The kernel labels whatever it reports with it before config.php is read.
 $DefaultApplicationName = 'HRCloud3';
-$RequiredKernelVersion = 'v4.3.3';
+$RequiredKernelVersion = 'v5.0.1';
 $KernelFile = dirname(__FILE__).DIRECTORY_SEPARATOR.'Resources'.DIRECTORY_SEPARATOR.'Kernel'.DIRECTORY_SEPARATOR.'kernel.php';
 $KernelVersionMatch = array();
 if (!is_readable($KernelFile)) {

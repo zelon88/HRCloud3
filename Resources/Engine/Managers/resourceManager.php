@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.2.0.
+// / v5.0.0.
 // / This file is the Resource Manager. It is a manager subcomponent of the Engine.
 // / The Resource Manager polls the host, calculates the budget every operation is granted from & sweeps anything that has outlived its welcome.
 // / It watches the free space on every disk holding a data location, & refuses what would write into the reserve kept on one.
@@ -32,7 +32,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, A m
 
 // / -----------------------------------------------------------------------------------
 // / The version of this manager. Read by the Engine WITHOUT executing this file.
-$ManagerVersion = 'v4.2.0';
+$ManagerVersion = 'v5.0.0';
 // / -----------------------------------------------------------------------------------
 
 
@@ -514,28 +514,35 @@ function evaluateStorageQuota($quotaOwner, $dataLocation, $requestedBytes) {
 // / It uses cleanDataLocation(), as the core's own clean does, which is what an installation with no listener relies on.
 // / Only the shared data locations are swept.
 // / The temporary location lives inside the hosted location, so each front end cleans its own.
+// / A --File Deletion Age Threshold-- of 0 keeps files forever, so nothing is swept, from v5.0.0. Until then every location was
+// / swept of every session on the storage interval, as cleanDataLocation() expires everything at 0.
 function cleanEveryConvertLoc() {
   // / Set variables.
-  global $DeleteThreshold, $Verbose, $EnableMemoryProtection, $PrimaryConvertLoc, $AdditionalConvertLocs, $ProtectedRootDirs, $ConvertLoc;
+  global $Verbose, $EnableMemoryProtection, $PrimaryConvertLoc, $AdditionalConvertLocs, $ProtectedRootDirs, $ConvertLoc;
   $SweepCompleted = TRUE;
   $LocationsSwept = 0;
   $convertLocPool = $poolEntry = array();
-  $locationCleaned = $locationDeepCleaned = FALSE;
+  $locationCleaned = $locationDeepCleaned = $sessionsAreSwept = FALSE;
   $authorizedPoolPaths = array();
-  $convertLocPool = enumerateDataLocations($PrimaryConvertLoc, $ConvertLoc, $AdditionalConvertLocs);
-  // / The sweep may clean any location this installation declared & no other.
-  // / The pool it just enumerated is exactly that set, so it is the authorized list.
-  foreach ($convertLocPool as $poolEntry) array_push($authorizedPoolPaths, $poolEntry['Path']);
-  foreach ($convertLocPool as $poolEntry) {
-    if (!is_dir($poolEntry['Path'])) warningEntry('The '.$poolEntry['Type'].' data location at '.$poolEntry['Path'].' does not exist & was not swept.');
-    else {
-      list ($locationCleaned, $locationDeepCleaned) = cleanDataLocation($poolEntry['Path'], 'Pool location', $DeleteThreshold, $ProtectedRootDirs, $authorizedPoolPaths);
-      if (!$locationCleaned) $SweepCompleted = FALSE;
+  $thresholdMinutes = 0;
+  list ($sessionsAreSwept, $thresholdMinutes) = resolveDeleteThreshold();
+  if (!$sessionsAreSwept) {
+    if ($Verbose) logEntry('Scheduled sweep: --File Deletion Age Threshold-- is 0, so files are kept forever & nothing was swept.'); }
+  else {
+    $convertLocPool = enumerateDataLocations($PrimaryConvertLoc, $ConvertLoc, $AdditionalConvertLocs);
+    // / The sweep may clean any location this installation declared & no other.
+    // / The pool it just enumerated is exactly that set, so it is the authorized list.
+    foreach ($convertLocPool as $poolEntry) array_push($authorizedPoolPaths, $poolEntry['Path']);
+    foreach ($convertLocPool as $poolEntry) {
+      if (!is_dir($poolEntry['Path'])) warningEntry('The '.$poolEntry['Type'].' data location at '.$poolEntry['Path'].' does not exist & was not swept.');
       else {
-        $LocationsSwept++;
-        if ($Verbose) logEntry('Scheduled sweep: '.$poolEntry['Path'].', Type: '.$poolEntry['Type'].', Expired sessions removed: '.($locationDeepCleaned ? 'YES' : 'NO').'.'); } } }
+        list ($locationCleaned, $locationDeepCleaned) = cleanDataLocation($poolEntry['Path'], 'Pool location', $thresholdMinutes, $ProtectedRootDirs, $authorizedPoolPaths);
+        if (!$locationCleaned) $SweepCompleted = FALSE;
+        else {
+          $LocationsSwept++;
+          if ($Verbose) logEntry('Scheduled sweep: '.$poolEntry['Path'].', Type: '.$poolEntry['Type'].', Expired sessions removed: '.($locationDeepCleaned ? 'YES' : 'NO').'.'); } } } }
   // / Manually clean up sensitive memory. Helps to keep track of variable assignments.
-  purgeSensitiveMemory($EnableMemoryProtection, $authorizedPoolPaths, $convertLocPool, $poolEntry, $locationCleaned, $locationDeepCleaned);
+  purgeSensitiveMemory($EnableMemoryProtection, $authorizedPoolPaths, $convertLocPool, $poolEntry, $locationCleaned, $locationDeepCleaned, $sessionsAreSwept, $thresholdMinutes);
   return array($SweepCompleted, $LocationsSwept); }
 // / -----------------------------------------------------------------------------------
 

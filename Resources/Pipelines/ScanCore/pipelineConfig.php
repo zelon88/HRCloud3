@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.3.4.
+// / v5.0.1.
 // / This file declares the ScanCore scanner pipeline.
 // /
 // / A scanner declares no input or output formats & that is not an omission.
@@ -31,7 +31,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRConvert2-34000,
 // / -----------------------------------------------------------------------------------
 // / The version of this pipeline folder. Read without executing this file, then matched
 // / exactly against the pin in the application's contract.
-$PipelineVersion = 'v4.3.4';
+$PipelineVersion = 'v5.0.1';
 
 // / A scanner inspects a file & reports on it. It changes nothing.
 $PipelineKind = 'scanner';
@@ -71,8 +71,9 @@ $PipelineSharedModules = array();
 // / --check-depends learns that this pipeline uses it.
 // / What ScanCore runs is named too, from v4.3.4, because it runs on this pipeline's behalf. ScanCore runs PHP for
 // / itself & to check an update, & fetches an update with git, or with Curl where PHP cannot fetch it, by its UpdateMethod.
+// / PHP Zlib is named from v5.0.1, because ScanCore reads compressed members & png chunks with it, & reports them as incomplete without it.
 // / Bubblewrap is named because ScanCore runs in the sandbox.
-$PipelineDependencies = array('ScanCore', 'PHP', 'Curl', 'Git', 'Bubblewrap');
+$PipelineDependencies = array('ScanCore', 'PHP', 'PHP Zlib', 'Curl', 'Git', 'Bubblewrap');
 // / -----------------------------------------------------------------------------------
 
 

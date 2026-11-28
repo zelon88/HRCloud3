@@ -8,9 +8,9 @@ No cookies. No databases. No third party connections. No analytics.
 
 ## Where The Rebuild Stands
 
-v1.0.0 is HRCloud3 on the HRProprietary Engine v4.3.4, keeping files.
+v1.0.1 is HRCloud3 on the HRProprietary Engine v5.0.1, keeping files. It carries the Engine exactly as it is released, with ScanCore v2.0.0 in the ScanCore pipeline's folder.
 
-What v1.0.0 adds:
+What v1.0.0 added:
 - Libraries, kept by a new Engine core, the Storage Core. A personal library gives every user a space of their own. A shared library is read by every signed in user & written by admins, everyone or nobody, as you set. It records who added what, so an admin or whoever added something can delete it forever.
 - A Files page: folders, upload (or drop), download, rename, move, copy & delete.
 - A trash. Put things back, delete them forever, or let the trash empty itself after 30 days.
@@ -56,6 +56,15 @@ sudo php cloudCore.php --account --list
 ```
 
 Libraries are listed in `Resources/config.php` under `--Libraries--`. By default there is a personal library, Drive, & a shared one, Shared, both kept in the data location. `-v` names each library & whether it can be used.
+
+To upgrade an installation, unpack the new release into its application folder, `/DATA/HRCloud3/Application`. A release holds no `config.php`, so yours is kept. Then:
+
+```
+sudo php /DATA/HRCloud3/Application/cloudCore.php --config --repair
+sudo php /DATA/HRCloud3/Application/cloudCore.php -fp
+```
+
+`--config --repair` adds any setting the release needs & keeps every value you set, & `-fp` takes away anything no release ships any more, such as `Resources/ScanCore` from v1.0.1. A release unpacked where you unpacked the first one installs a new `config.php` of defaults, & is refused where it drops code, as v1.0.1 drops `Resources/ScanCore`. `Documentation/ABOUT_MANAGED_LOCATIONS.txt` describes every way to upgrade.
 
 ## Documentation
 

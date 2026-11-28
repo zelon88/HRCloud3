@@ -1,0 +1,340 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+ScanCore, Copyright on 3/31/2024 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+BSD or MIT licensing is available. Reach out to @zelon88 for more information.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+This application is designed to scan files & folders for viruses.
+
+FILE INFORMATION ...
+v2.0.0.
+This plain text file describes how ScanCore scans: how a folder is walked, how one file is read, matched, classified
+& inspected, how the virus definitions are written & what ScanCore does not look at.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+This application requires PHP 8.0 or later, run from a command line on Linux or Windows.
+The zlib extension reads compressed container members & png chunks, which are reported as incomplete without it.
+An update uses Git, or downloads each file with PHP, or with cURL where PHP may not open a URL. None of them is needed to scan.
+The posix extension hands new files to the owner of the installation when ScanCore is run as root.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--About A Scan--
+
+A scan answers three questions about every file it is shown, & reports each answer in its own words.
+
+  Is this file known to be bad?            The virus definitions answer. An Infected or a Suspicious line is written.
+  What is this file able to do?            The classifier answers. A Classified line is written.
+  Is this file built to hurt its reader?   The structure answers. An Infected or a Suspicious line is written.
+
+Where part of a file could not be looked at, a fourth line says so. That is the Incomplete line.
+Documentation/ABOUT_REPORTS.txt describes all four.
+
+A run goes through these steps, & stops with a numbered error at the first one that cannot be done.
+
+  1. The installation is verified. ScanCore runs from a command line on PHP 8.0 or later, & nowhere else.
+  2. ScanCore_Config.php is loaded. An entry that is missing or invalid falls back to a built in default.
+  3. The configuration file, the definitions file & the report file are settled, before anything is logged.
+  4. The arguments are read. Most of them override one entry of the configuration for this run.
+  5. The virus definitions are loaded, from a packed index where a valid one exists.
+  6. The classifier definitions are loaded. A scan goes ahead without them, with classification switched off.
+  7. The path is scanned, one file at a time & one chunk of a file at a time.
+  8. The summary is written.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--How A Folder Is Walked--
+
+A path that is a file is scanned. A path that is a folder has every file in it scanned, in the order of their names.
+
+  The folders inside a folder are opened only with -recursion.
+  A folder that sits deeper than MaxScanDepth is not opened. A warning names it, on the console & in the report.
+  A folder that cannot be read is skipped. A warning names it, on the console & in the report.
+  A symbolic link is skipped unless -followsymlinks is given, so a link cannot lead a scan out of its folder
+  & a link that points back up the tree cannot make a scan walk the same files without end.
+  Anything that is neither a file nor a folder, such as a socket or a link that leads nowhere, is passed over.
+
+THREE FILES ARE NEVER SCANNED
+  The definitions file in use.
+  A copy of the definitions file in use, byte for byte, wherever it is & whatever it is named.
+  The report file in use.
+  Each of them quotes signatures by design, so each would be reported for what it describes.
+  None of them is counted as a scanned file.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--How One File Is Scanned--
+
+A file is opened once, & everything below is done through that one handle.
+
+  1. The first 512 bytes say what the file is. An image & a container are known by their opening bytes,
+     whatever the file is named.
+  2. The file is read one chunk at a time, however large it is. Each chunk is added to an md5, a sha1 & a sha256
+     hash of the whole file, & is searched for data, host & url indicators.
+     It is searched for embedded code where the file is an image, & for handlers & languages where the
+     classifier asked for that.
+  3. The name of the file is tested against the name indicators.
+  4. The three hashes are looked up in the hash definitions. A file that could not be read to its end is not
+     looked up, because a hash of part of a file means nothing.
+  5. The structure is inspected. A png is walked chunk by chunk. A container is opened & each member is put
+     through steps 2 to 5 itself, as a block of data in memory.
+  6. The findings of the file are counted, & its Incomplete & Classified lines are written.
+
+A FAULT IN ONE FILE DOES NOT END A SCAN
+  A file that cannot be opened, & a file that cannot be read to its end, is reported as incomplete.
+  A fault inside ScanCore while it inspects a file is caught. Error 640 is raised with what the interpreter said,
+  the file is reported as incomplete & the scan goes on to the next file.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Join Between Two Chunks--
+
+A file larger than ChunkSize is read in pieces, & a signature may lie across the join between two of them.
+
+  The end of each chunk is carried into the next. It is as long as the longest data signature, host or url in the
+  definitions, & as long as the longest classifier token with the 256 bytes that may follow it.
+  Anything that spans a join is therefore whole in the chunk after it.
+
+A name must not be read in halves either, because half a name can be a different name.
+The host notevil.example is not evil.example, & evil.example.community is not evil.example.com.
+
+  A full chunk hands back the run of text that it ends inside, & the next chunk reads that run whole.
+  The end that is carried begins at a break in the text, so nothing in it is read from its middle.
+
+  A break is a space, a control character, a quote, a bracket, a backslash or a byte that is not text.
+  A run of more than 255 bytes with no break in it is longer than any host name, & is cut where the chunk ends.
+  The end of such a run is looked up from its first dot onward, so a label is still never read from its middle.
+
+None of this changes a hash. Every byte of a file is hashed once, in order.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Memory--
+
+ScanCore holds one chunk of one file at a time, & holds it twice while it is searched.
+
+  MemoryLimit              536870912    Handed to the interpreter as its memory limit.
+  ChunkSize                  8388608    Held to a quarter of MemoryLimit.
+  MaxArchiveEntrySize        8388608    Held to MemoryLimit, divided by four & by one more than MaxArchiveDepth.
+  MaxImageChunkSize          8388608    Held to a sixteenth of MemoryLimit.
+
+A budget that does not fit the memory limit is lowered for the run, & a warning that names both numbers is written.
+A member of a container is held in memory whole, up to MaxArchiveEntrySize, & a container inside a container holds
+one member for each level. That is why the entry size is divided by the depth.
+What is larger than a lowered budget is inspected in part & reported as incomplete. It does not stop the interpreter.
+
+A search for hosts & urls takes one match at a time, so the memory it needs does not grow with what it finds.
+The definitions cost little. A million hashes in a packed index hold 34 megabytes.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Virus Definitions--
+
+A definition is one indicator on one line of a plain text file.
+
+  <kind> <name> = <value> [attribute=value ...]
+
+  sha256 Trojan.Win32.DarkComet = 7d14bfe0...64 hexadecimal digits...  src=malwarebazaar
+  md5    Worm.Example           = 0123456789abcdef0123456789abcdef
+  name   Trojan.Win32.FormBook  = "Receipt.exe"            confidence=low
+  host   Malware.C2.Emotet      = "evil.example"
+  url    Malware.Dropper.Foo    = "http://evil.example/y.php"
+  data   Exploit.Example        = "\x4d\x5a\x90 payload"    scope=pdf
+
+A line that begins with a hash sign is a comment, & a blank line is ignored.
+Nothing is positional. The kind is named on every line, so a value can never be read as another kind.
+
+  KIND     WHAT THE VALUE IS                         HOW IT IS MATCHED
+  md5      32 hexadecimal digits.                    Against the md5 hash of a whole file or a whole member.
+  sha1     40 hexadecimal digits.                    Against the sha1 hash, likewise.
+  sha256   64 hexadecimal digits.                    Against the sha256 hash, likewise.
+  name     Text.                                     Anywhere in the name of a file or a member. Never in a path.
+  data     Text or bytes.                            Anywhere in the content. Never in a name.
+  host     A host name.                              As a whole host name in the content, or as the end of one.
+  url      A url, with its scheme.                   As a whole url in the content.
+
+  A hash is read in either case. One that is not hexadecimal, or is not the length of its kind, is malformed.
+  A name, a data signature, a host & a url are matched without regard to the case of a letter.
+  A host matches on a name boundary. evil.example matches www.evil.example, & matches neither notevil.example
+  nor evil.example.org.
+  A url matches a url that is the same from its scheme to its end. Punctuation that closes a sentence is not part of it.
+  A data signature shorter than MinimumDataSignatureLength is not searched for, because it matches ordinary content.
+
+THE VALUE
+  A value with no space in it may be written as it is. A value in double quotes may hold a space.
+  A quote inside a quoted value is written after a backslash.
+  A byte with no printable form is written as an escape, such as \x00, in a quoted value.
+
+THE ATTRIBUTES
+  confidence=high      The match is reported as Infected. This is the default for a hash.
+  confidence=medium    The match is reported as Suspicious. This is the default for every other kind.
+  confidence=low       The match is reported as Suspicious.
+  scope=<type>         The definition applies only to a file that is the classifier type named, such as pdf or scad.
+                       A definition with no scope, or with scope=any, applies to every file.
+  src=<text>           Where the indicator came from. It is carried for the maintainer & is not reported.
+  Any other attribute is ignored. A confidence that is none of the three falls back to the default of the kind.
+
+WHAT IS DONE WITH A BAD RECORD
+  A malformed record is left out, & one warning says how many were.
+  A file in the tab delimited format that ScanCore read before v1.8 is refused with error 540. It is not read as
+  nothing.
+  A file with no usable record stops the scan with errors 510 & 9.
+
+THE PACKED INDEX
+  A definitions file that holds HashIndexThreshold hashes or more gets a packed index beside it, named after it
+  with .idx on the end. Every scan after that loads the index & does not parse the definitions file at all,
+  until a hash matches & its name is wanted.
+  The index holds the hash of the definitions file it was built from, & that file is hashed again by every scan.
+  So the index is rebuilt whenever the file changes, & an index that is damaged or was built from another file
+  is never used.
+  -nohashindex scans without one, & -rebuildindex builds it again.
+
+Definitions are published at https://github.com/zelon88/ScanCore_Definitions & are installed with -updatedefinitions.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Classification--
+
+The classifier reports what a file is able to do if something opens it. It reports no threat.
+ScanCore_Classifiers.def declares everything it looks for, in plain text, & describes its own format.
+
+HOW A FILE IS CLASSIFIED
+  1. A magic signature is looked for in the opening bytes. A match settles the type, whatever the file is named.
+  2. Otherwise an extension that names a language settles it. The file is reported as code in that language.
+  3. Otherwise an extension that a type claims settles the type. The file is searched for the handlers of that type.
+  4. Otherwise the file is searched for the handlers of every type & for the signatures of every language.
+     It is reported as code where it carries MinimumLanguageSignatures signatures of one language, & for its
+     handlers where it does not.
+
+  An image is never searched this way. Compressed pixels hold every short token by chance.
+  A file that is reported as code is not reported for its handlers.
+
+WHAT A HANDLER IS
+  A handler is a construct that lets a data file reach another file or another host.
+  An OpenSCAD source names another file with include or surface. A playlist names other hosts by design.
+  A word processing document carries relationships that may point at an outside address.
+  Each handler is reported with what it can reach, which is file, url or exec.
+
+  A handler written as a bare word is matched as a call. It must not be part of a longer identifier, & what follows
+  it, past any whitespace & comments, must be an opening bracket, an angle bracket, an equals sign or a colon.
+  A handler written in quotes is matched as it is written, wherever it appears.
+
+A CONTAINER
+  A container is opened, & each member whose name suggests text is classified against the types that the
+  container claims. A handler that is found this way names the member it was found in.
+
+CLASSIFIERS ARE SWITCHED ON BY NAME
+  EnabledClassifiers, or -classifiers, names the classifiers that are loaded. One that is not named costs nothing.
+  Language switches the detection of code on & off. Every other name is a type.
+
+A Classified line says what a file could do. It does not stop the file from doing it.
+Whatever opens a reported file must be its own boundary.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Containers--
+
+A container is known by its opening bytes. It is opened, & every member is matched, classified & inspected.
+
+  zip      Read from the central directory at its end, zip64 included. Stored & deflated members are read.
+  gzip     The first stream is inflated. What it holds is inspected, so a gzipped tar is opened in turn.
+  tar      Read header by header. The ustar name prefix, the GNU long name & the pax path are all honoured.
+  bzip2    Recognised & not read. The file is reported as incomplete.
+
+  A container inside a container is opened in turn, as deep as MaxArchiveDepth.
+  A zip that is appended to a file of another format is found, opened & named as  appended archive.
+  A detection inside a container names the member, with every level of nesting in front of it.
+
+ScanCore reads every container itself & runs no other program to do it.
+What it reads stops at its own budgets, whatever the container declares about itself.
+
+FIVE LIMITS GOVERN A CONTAINER
+  MaxArchiveEntries             4096    The members that are inspected inside one scanned file.
+  MaxArchiveEntrySize        8388608    The bytes that are read from any one member.
+  MaxArchiveTotalSize       67108864    The bytes that are read from the members of one scanned file.
+  MaxArchiveCompressionRatio     200    The number of times that a member may expand.
+  MaxArchiveDepth                  5    The containers, one inside another, that are opened.
+
+  A file that reaches the first three is reported as incomplete, because a large backup is an ordinary thing.
+
+WHAT IS A BOMB
+  A bomb is reported as infected, because it exists to take down whatever opens it next.
+  A ratio alone is not a bomb. A small file of one repeated character expands by more than any ratio.
+
+  Bomb.Archive.CompressionRatio      A member declares more than MaxArchiveEntrySize & more than the ratio.
+                                     It is not read. A member whose headers understate it is caught by measuring:
+                                     it fills its budget from less than a two hundredth of that in stored bytes.
+  Bomb.Archive.TotalExpansion        The members of a zip declare more than MaxArchiveTotalSize between them,
+                                     & more than the ratio against the size of the archive.
+  Bomb.Archive.OverlappingEntries    Two members of a zip share the same stored bytes.
+  Bomb.Archive.NestingDepth          Containers are nested deeper than MaxArchiveDepth. An archive that holds
+                                     itself never ends, & depth is the one limit that stops it.
+
+  A size that is too large for an integer is compared as it is & is never wrapped around to a small or a negative one.
+
+WHAT ELSE IS REPORTED
+  Malformed.Archive.HeaderMismatch   The two headers that describe one member disagree about its name or its
+                                     method, so two readers would see two different files.
+  An encrypted member, a member in a compression method other than stored & deflate, & a member that is cut
+  short are each reported as incomplete.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Images--
+
+An image is known by its opening bytes. A png, a jpeg & a gif are recognised.
+
+EVERY IMAGE IS SEARCHED FOR EMBEDDED CODE
+  A decoder ignores code inside an image. An interpreter that is handed the same file does not.
+  The embed records of ScanCore_Classifiers.def say what is searched for. PHP is reported as infected, & markup
+  that runs script, a shell command & a call that runs a command are reported as suspicious.
+  A signature shorter than six bytes is searched for in the decoded text of a png alone, because so short a run
+  turns up by chance in compressed pixels.
+
+A PNG IS WALKED CHUNK BY CHUNK
+  Bomb.PNG.PixelFlood          The header declares more pixels than MaxImagePixels. Set that to the largest image
+                               that your own decoder can afford to open.
+  Bomb.PNG.ChunkExpansion      A compressed text chunk or profile chunk expands past MaxImageChunkSize.
+  Bomb.PNG.DataOverrun         The image data inflates MaxImageChunkSize past the size that the header declares.
+  Malformed.PNG                A chunk fails its checksum, runs past the end of the file, is not named with four
+                               letters, is a critical chunk that no decoder knows, or is out of place.
+                               The header, the image data or the end chunk is missing. The reason is given.
+  Polyglot.PNG.TrailingData    Bytes follow the end of the image.
+  Polyglot.Archive.Hidden      A zip archive sits behind the image. It is opened as well.
+  Masquerade.PNG               A file is named as a png & does not begin as one.
+
+  The image data is inflated to be counted & is never kept. The text chunks are inflated up to MaxImageChunkSize
+  & are searched for embedded code.
+  There is no compression ratio test for a png. A blank image compresses about 1030 times, which is as far as
+  deflate goes, so a ratio cannot tell an empty screenshot from a bomb. The pixel count can.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--What Is Not Inspected--
+
+ScanCore says so where it knows that it could not look. These are the things it does not look at.
+
+  7z, rar, xz & zstd containers are not recognised. Each is scanned as the one file that it is.
+  A bzip2 stream is recognised & not read. Its file is reported as incomplete.
+  A gzip file that holds more than one stream has its first stream read.
+  A tar archive from before the ustar format carries no signature & is not recognised.
+  A zip whose directory offset or directory size is wrong is reported as incomplete & is not repaired.
+  The frames of an animated png are checksummed & are not inflated.
+  The structure of a jpeg & of a gif is not checked. Both are searched for embedded code.
+  A signature is matched as bytes. Text in a sixteen bit encoding is not matched by a signature written in eight.
+  A url is matched as a whole url. One that is embedded in binary data with no break after it is not matched,
+  because what follows it reads as part of it.
+
+An update is trusted on the certificate of the host it comes from. Neither the core nor the definitions carry a
+signature of their own.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

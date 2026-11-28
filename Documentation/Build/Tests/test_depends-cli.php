@@ -98,15 +98,17 @@ function entryRunning($manifest, $programName) {
 
 // Gives the program each command written into a block of PHP code starts, by the first word of a command string it hands to exec,
 // shell_exec, proc_open, popen, system, passthru, sandboxCommand or limitCommand, or assigns to a variable whose name ends in Command or Prefix.
+// ScanCore's runShellCommand() is one of them from v5.0.1, because ScanCore v2.0.0 starts every command it runs through it.
 // An assignment of an environment variable before the program is passed over, as the shell passes over it.
 function programsWrittenInto($phpText) {
   $programs = array();
-  preg_match_all('/(?:\b(?:exec|shell_exec|proc_open|popen|system|passthru|sandboxCommand|limitCommand)\(\s*|\$[A-Za-z]*(?:Command|Prefix)\s*\.?=\s*)([\'"])((?:[A-Z_]+=\S*\s+)*)([a-z0-9\/][a-z0-9._+\/-]*)(?=[\s\'"])/', $phpText, $found, PREG_SET_ORDER);
+  preg_match_all('/(?:\b(?:exec|shell_exec|proc_open|popen|system|passthru|sandboxCommand|limitCommand|runShellCommand)\(\s*|\$[A-Za-z]*(?:Command|Prefix)\s*\.?=\s*)([\'"])((?:[A-Z_]+=\S*\s+)*)([a-z0-9\/][a-z0-9._+\/-]*)(?=[\s\'"])/', $phpText, $found, PREG_SET_ORDER);
   foreach ($found as $match) $programs[] = basename($match[3]);
   return array_values(array_unique($programs)); }
 
 // The shell's own builtins, which the Shell entry declares in its Purpose rather than as programs.
-$shellBuiltins = array('cd', 'command', 'echo', 'exit', 'export', 'kill', 'test', 'umask');
+// exec is one from v5.0.0, which Identify's runner starts its command with so the shell gives way to it.
+$shellBuiltins = array('cd', 'command', 'echo', 'exec', 'exit', 'export', 'kill', 'test', 'umask');
 
 
 // Part 1. The manifest, read by the Dependency Core's own functions.
@@ -161,7 +163,7 @@ foreach ($engineSources as $sourcePath) if (preg_match_all("/locateDependency\('
 foreach (array('apt-get', 'dnf', 'yum', 'apk', 'pacman') as $programName) if (entryRunning($engineHalf, $programName) === '') $undeclared[] = $programName.', a package manager the Dependency Core uses';
 check('every program the Engine runs by name is declared in its half, or is a builtin of its Shell', $undeclared === array() && count($programsSeen) >= 20, implode(', ', $undeclared).'. '.count($programsSeen).' seen.');
 check('sh is declared, because PHP hands every command the Engine runs to /bin/sh', entryRunning($engineHalf, 'sh') === 'Shell');
-check('& the Shell entry names each builtin the Engine relies on', array_diff($shellBuiltins, preg_match_all('/\b(cd|command|echo|exit|export|kill|test|umask)\b/', (string)field(entryNamed($engineHalf, 'Shell'), 'Purpose'), $builtinsNamed) ? $builtinsNamed[1] : array()) === array());
+check('& the Shell entry names each builtin the Engine relies on', array_diff($shellBuiltins, preg_match_all('/\b(cd|command|echo|exec|exit|export|kill|test|umask)\b/', (string)field(entryNamed($engineHalf, 'Shell'), 'Purpose'), $builtinsNamed) ? $builtinsNamed[1] : array()) === array());
 
 
 // Part 2. What each pipeline declares, against the manifest & against what its code runs.
@@ -173,7 +175,7 @@ if (preg_match('/\$EngineAcceptedPipelines\s*=\s*array\((.*?)\);/s', $contractTe
 // What an Engine function a pipeline calls runs on its behalf.
 $engineFunctionsRun = array('downloadRemoteFileForInspection' => 'Curl', 'waitForStream' => 'Procps');
 // What a program a pipeline starts runs for itself, from that program's own source, which is read & never changed.
-$scanCoreText = (string)@file_get_contents($tree.'/Resources/ScanCore/ScanCore.php');
+$scanCoreText = (string)@file_get_contents($tree.'/Resources/Pipelines/ScanCore/ScanCore/ScanCore.php');
 $scanCoreRuns = array();
 foreach (programsWrittenInto($scanCoreText) as $programName) if (entryRunning($manifest, $programName) !== '') $scanCoreRuns[] = entryRunning($manifest, $programName);
 if (strpos($scanCoreText, 'PHP_BINARY') !== FALSE) $scanCoreRuns[] = 'PHP';
@@ -206,6 +208,12 @@ check('every program a pipeline is seen to run, itself or through what it calls,
 if (isset($acceptedPipelines['ScanCore'])) check('ScanCore\'s pipeline declares what ScanCore runs, which is PHP, Curl & Git', array_diff(array('PHP', 'Curl', 'Git'), $scanCoreRuns) === array()
   && array_diff(array('ScanCore', 'PHP', 'Curl', 'Git'), (array)namesAssigned((string)@file_get_contents($tree.'/Resources/Pipelines/ScanCore/pipelineConfig.php'), 'PipelineDependencies')) === array(), implode(', ', $scanCoreRuns));
 if (isset($acceptedPipelines['ScanCore'])) check('& the application that ships ScanCore declares Git', field(entryNamed($manifest, 'Git'), 'Subsystem') === 'Virus Scanning');
+// ScanCore is in its pipeline's folder from v5.0.0, & nothing may look for it where it was.
+if (isset($acceptedPipelines['ScanCore'])) check('ScanCore is in its pipeline\'s folder, where the pipeline runs it & the manifest asks it its version',
+  is_file($tree.'/Resources/Pipelines/ScanCore/ScanCore/ScanCore.php') && !file_exists($tree.'/Resources/ScanCore')
+  && strpos((string)@file_get_contents($tree.'/Resources/Pipelines/ScanCore/pipeline.php'), "\$scanCoreDir = dirname(__FILE__).\$DirSep.'ScanCore';") !== FALSE
+  && strpos((string)field(entryNamed($manifest, 'ScanCore'), 'VersionCommand'), escapeshellarg($tree.'/Resources/Pipelines/ScanCore/ScanCore/ScanCore.php')) !== FALSE,
+  (string)field(entryNamed($manifest, 'ScanCore'), 'VersionCommand'));
 check('the version sources the application declares run nothing undeclared, & wget nowhere', array_filter($manifest, function ($entry) {
   return isset($entry['VersionSource']) && strpos((string)$entry['VersionSource'], 'wget') !== FALSE; }) === array());
 

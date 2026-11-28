@@ -12,7 +12,7 @@
 // / a server for users of any web browser without authentication.
 // /
 // / File Information ...
-// / v4.3.0.
+// / v5.0.0.
 // / The OCR pipeline. pipelineCore.php loads it only to dispatch an OCR operation.
 // / Error block 15000 through 15015 belongs to this pipeline.
 // / It also raises 8001 for ImageMagick.
@@ -44,8 +44,9 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRConvert2-34000,
 // / An image is read directly by Tesseract, or converted to PDF & read by pdftotext.
 // / Every route produces a text file, which is then converted to the requested output.
 // / Every binary comes from verifiedToolPath(), so the version verified is the version that runs.
-// / Every tool is sandboxed, & an operation that cannot be isolated is refused.
-// / The ImageMagick page split is the exception, because policy.xml is a native control it keeps.
+// / Every tool is sandboxed, & an operation a required sandbox cannot isolate is refused, the ImageMagick page split included,
+// / from v5.0.0. Where no sandbox is required & none can be built, every tool runs without one, & the page split still runs
+// / under the policy this pipeline carries, which is a native control it keeps.
 function ocrFiles($PDFWorkSelected, $UserFilename, $UserExtension, $Method) {
   // / Set variables.
   global $Verbose, $VirusScan, $ConvertTempDir, $Lol, $Lolol, $Append, $DirSep, $EnableMemoryProtection;
@@ -174,10 +175,14 @@ function ocrFiles($PDFWorkSelected, $UserFilename, $UserExtension, $Method) {
               // / The policy.xml the installed ImageMagick reads is covered too, wherever its build keeps it.
               if ($policyFolder !== '' && function_exists('coverResolvedImageMagickPolicy')) coverResolvedImageMagickPolicy('tesseract');
               list ($commandMayRun, $ocrCommand) = sandboxCommand($ocrCommand, $pathname, $pathnameTEMP1, FALSE, 'tesseract', $policyFolder, $policyVariables);
-              // / ImageMagick has a policy, so an unavailable sandbox is a downgrade to a
-              // / weaker control rather than to no control at all. The operation continues.
-              if (!$commandMayRun) warningEntry('Bubblewrap is unavailable. This OCR page split will run unsandboxed under the ImageMagick policy this pipeline carries, which is read first, so the host\'s own policy still decides any coder it names.');
-              $returnData = shell_exec($ocrCommand);
+              // / A command sandboxCommand() refuses is one a sandbox is required for & none could be built, & it is neither
+              // / sandboxed nor limited, so the page split is refused as every other OCR command is, from v5.0.0. Until then
+              // / it ran anyway. Where no sandbox is required the command it returns runs without one, under the policy, which
+              // / MAGICK_CONFIGURE_PATH has read first, & sandboxCommand() has warned that it runs unprotected.
+              if (!$commandMayRun) {
+                $OperationErrors = TRUE;
+                errorEntry('Bubblewrap is missing or non functional, so this OCR operation cannot be isolated!', 15012, FALSE); }
+              else $returnData = shell_exec($ocrCommand);
               // / Log the output of the operation to the logfile, if it is not blank.
               if ($Verbose && trim($returnData) !== '') logEntry('The converter (IM-1) returned the following: '.$Lol.'  '.str_replace($Lol, $Lol.'  ', str_replace($Lolol, $Lol, str_replace($Lolol, $Lol, trim($returnData)))));
               // / If a file doesn't exist there is a good chance it is because ImageMagick has split the pages up.

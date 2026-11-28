@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.2.3ur.
+// / v5.0.0.
 // / This file is the Authentication Manager. It looks after accounts over time, where the Authentication Core answers a request.
 // /
 // / It is not a manager in the sense the four the listener dispatches are. It opens no socket & runs as no role of its own.
@@ -17,7 +17,7 @@
 // / A web request loads it to sweep where no listener runs, at most once in ten minutes.
 // / The Engine loads it for --account, the administrator's command for accounts.
 // / Everything it reads & writes is the web server account's, below Accounts & Users, so root hands --account to that account.
-// / Removing an account removes its spaces in the libraries too, through the Engine, which are that account's as well, from HRCloud3 v1.0.0.
+// / Removing an account removes its spaces in the libraries too, through the Engine, which are that account's as well, from v5.0.0.
 // / It relies on the Authentication Core for every record, & is never loaded where that core is not.
 // / See Documentation/ABOUT_AUTHENTICATION.txt.
 // /
@@ -33,7 +33,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, A m
 
 // / -----------------------------------------------------------------------------------
 // / The version of this manager. Read by the Engine WITHOUT executing this file.
-$ManagerVersion = 'v4.2.3ur';
+$ManagerVersion = 'v5.0.0';
 // / -----------------------------------------------------------------------------------
 
 
@@ -346,7 +346,7 @@ function addAccountByAdministrator($accountUsername, $emailAddress) {
 // / Accepts the username. Returns TRUE when the account is gone.
 // / Its sign ins end with it, because a sign in whose account is gone signs nothing in. Its codes are left to expire & be swept.
 // / The files are removed through cleanFiles(), which refuses anything outside the users folder.
-// / What the user kept in an application's libraries goes too, through the Engine's removeAccountLibraries(), from HRCloud3 v1.0.0.
+// / What the user kept in an application's libraries goes too, through the Engine's removeAccountLibraries(), from v5.0.0.
 function removeAccountByAdministrator($accountUsername) {
   // / Set variables.
   global $EnableMemoryProtection;

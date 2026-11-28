@@ -8,8 +8,8 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.3.4ur.
-// / The Storage Core, one of the Engine's cores, from HRCloud3 v1.0.0.
+// / v5.0.0.
+// / The Storage Core, one of the Engine's cores, from v5.0.0.
 // / It keeps what signed in users store, in libraries an administrator names, & is the only part of the Engine that reaches them.
 // / A library is a folder an administrator lists, personal or shared. A personal library holds a space of its own for each user,
 // / named for the account's random identifier, which nobody else reaches. A shared library is one tree every signed in user reads,
@@ -41,7 +41,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, A c
 
 // / -----------------------------------------------------------------------------------
 // / The version of this component. Read by the application without executing this file.
-$StorageCoreVersion = 'v4.3.4ur';
+$StorageCoreVersion = 'v5.0.0';
 // / -----------------------------------------------------------------------------------
 
 
@@ -179,7 +179,8 @@ function readLibrarySettings($libraryName, $librarySettings, $librariesFolder, $
 // / Each setting is read through applicationSetting(), so this core never knows what the application calls one.
 // / A library that cannot be used is left out & named, & the others are kept. Where none can be used, the library this core falls
 // / back to is Drive, a personal library in the data location, which configuration cannot overwrite.
-// / The trash is emptied after --Trash Lifetime-- days, 0 for never, & a value that is not a whole number up to 3650 is 30.
+// / The trash is emptied after the days TrashLifetime names, 0 for never, & a value that is not a whole number up to 3650 is 30.
+// / Each message names a setting in plain words, from v5.0.0, because the Engine cannot know the label an application gives it.
 // / Returns a sanity check, because it is longer than 35 lines. The settings are whole when at least one library can be used.
 function storageSettings($reportProblems) {
   // / Set variables.
@@ -194,7 +195,7 @@ function storageSettings($reportProblems) {
   $librariesFolder = rtrim((string)applicationSetting('LibraryLocation', ''), DIRECTORY_SEPARATOR);
   $configuredLibraries = applicationSetting('StorageLibraries', $defaultLibraries);
   if (!is_array($configuredLibraries) or count($configuredLibraries) === 0) {
-    if ($reportProblems === TRUE) warningEntry('No library is listed in --Libraries--, so the library this installation falls back to, Drive, is used.');
+    if ($reportProblems === TRUE) warningEntry('No library is listed, so the library this installation falls back to, Drive, is used.');
     $configuredLibraries = $defaultLibraries; }
   $StorageSettings = array('LibraryLoc' => $librariesFolder, 'Libraries' => array(), 'Refused' => array(), 'UserLoc' => rtrim((string)applicationSetting('UserLocation', ''), DIRECTORY_SEPARATOR),
     'TrashDays' => $defaultTrashDays, 'QuotaBytes' => 0, 'ReserveBytes' => 0);
@@ -207,13 +208,13 @@ function storageSettings($reportProblems) {
       $StorageSettings['Libraries'][$libraryRecord['Name']] = $libraryRecord;
       $acceptedRoots[$libraryRecord['Name']] = $libraryRecord['Root']; } }
   if (count($StorageSettings['Libraries']) === 0 && $configuredLibraries !== $defaultLibraries) {
-    if ($reportProblems === TRUE) warningEntry('No library in --Libraries-- could be used, so the library this installation falls back to, Drive, is used.');
+    if ($reportProblems === TRUE) warningEntry('No library listed could be used, so the library this installation falls back to, Drive, is used.');
     list ($libraryProblem, $libraryRecord) = readLibrarySettings('Drive', $defaultLibraries['Drive'], $librariesFolder, array());
     if ($libraryProblem === '') $StorageSettings['Libraries']['Drive'] = $libraryRecord; }
   $trashSetting = applicationSetting('TrashLifetime', $defaultTrashDays);
   if (is_string($trashSetting) && ctype_digit($trashSetting)) $trashSetting = (int)$trashSetting;
   if (is_int($trashSetting) && $trashSetting >= 0 && $trashSetting <= 3650) $StorageSettings['TrashDays'] = $trashSetting;
-  else if ($reportProblems === TRUE) warningEntry('--Trash Lifetime-- is not a whole number of days from 0 to 3650, so the trash is emptied after '.$defaultTrashDays.' days.');
+  else if ($reportProblems === TRUE) warningEntry('The trash lifetime is not a whole number of days from 0 to 3650, so the trash is emptied after '.$defaultTrashDays.' days.');
   $quotaSetting = max(0, (int)applicationSetting('UserStorageQuota', 1024));
   $reserveSetting = max(0, (int)applicationSetting('StorageReserveMegabytes', 1024));
   $StorageSettings['QuotaBytes'] = $quotaSetting * 1048576;
@@ -1650,7 +1651,7 @@ function sweepStorageIfDue($sweepInterval) {
 // / A function to take away an account's space in every personal library, once the account is gone.
 // / Accepts the account's folder, its random identifier. Returns TRUE when no space of it is left.
 // / The Engine's removeAccountLibraries() calls it as an administrator removes the account, beside the account's folder in Users.
-// / A library that was taken off --Libraries-- is not reached, & what an account kept there stays where it is.
+// / A library that was taken off the list StorageLibraries names is not reached, & what an account kept there stays where it is.
 function removeAccountStorage($accountFolder) {
   // / Set variables.
   global $EnableMemoryProtection;

@@ -12,7 +12,7 @@
 // / a server for users of any web browser without authentication.
 // /
 // / File Information ...
-// / v4.3.0.
+// / v5.0.0.
 // / The LibreOffice shared module, which is not a pipeline & converts nothing on its own.
 // / It holds the code the Document & OCR pipelines both need, so neither depends on the other.
 // / It is version pinned exactly as a pipeline is, by the table in Resources/Contract/app-engine-config.php.
@@ -35,7 +35,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRConvert2-34000,
 // / -----------------------------------------------------------------------------------
 // / The version of this shared module. Read WITHOUT executing this file, then matched
 // / EXACTLY against the pin in getAcceptedSharedModules().
-$SharedModuleVersion = 'v4.3.0';
+$SharedModuleVersion = 'v5.0.0';
 // / -----------------------------------------------------------------------------------
 
 
@@ -253,7 +253,7 @@ function removeLibreOfficeProfile($profileFolder) {
 // / LibreOffice reads a copy of the input named after the output, so it writes the output's own name.
 // / Without that copy it reads the original only when the name it would write is free, & the result is renamed.
 // / The output directory is a bare dot, because sandboxCommand changes into the writable mount first.
-// / When no sandbox could be built the directory is named outright.
+// / When no sandbox could be built the directory is named outright. sandboxWasBuilt() says which, from v5.0.0.
 function convertWithLibreOffice($inputPath, $outputPath, $targetExtension) {
   // / Set variables.
   global $Verbose, $EnableMemoryProtection, $DirSep;
@@ -303,20 +303,24 @@ function convertWithLibreOffice($inputPath, $outputPath, $targetExtension) {
         .' --outdir .'
         .' '.escapeshellarg($readPath);
       list ($commandMayRun, $sandboxedCommand) = sandboxCommand($sofficeCommand, $readPath, $outputPath, FALSE, 'libreoffice');
-      // / sandboxCommand returns the command untouched when no sandbox could be built.
-      $commandIsSandboxed = ($sandboxedCommand !== $sofficeCommand);
+      // / sandboxCommand() limits a command it could not sandbox as well, so the two commands always differ, & the Engine is
+      // / asked instead, from v5.0.0. Until then a command run with per conversion limits was taken for a sandboxed one, so
+      // / LibreOffice wrote into the folder PHP was running in & used the shared profile.
+      $commandIsSandboxed = sandboxWasBuilt();
       if (!$commandMayRun) errorEntry('A document conversion was refused because no sandbox could be built!', 2004, FALSE);
       else if (!$commandIsSandboxed) {
         // / Without a sandbox the command is built again rather than edited, so neither the shared
         // / profile path nor a bare output directory can survive into it by a missed match.
         // / A bare output directory only works because the sandbox changes into it, so it is
         // / named outright here rather than writing wherever PHP happens to be.
+        // / The command built again is limited as sandboxCommand() limits every command, because the one it limited is not
+        // / the one that runs.
         list ($profileIsReady, $profileFolder) = makeLibreOfficeProfile();
-        if ($profileIsReady) $sandboxedCommand = escapeshellarg($sofficeBinary).$sofficeFlags.$importFlag
+        if ($profileIsReady) $sandboxedCommand = limitCommand(escapeshellarg($sofficeBinary).$sofficeFlags.$importFlag
           .' '.escapeshellarg('-env:UserInstallation=file://'.$profileFolder)
           .' --convert-to '.escapeshellarg($cleanExtension)
           .' --outdir '.escapeshellarg(dirname($outputPath))
-          .' '.escapeshellarg($readPath);
+          .' '.escapeshellarg($readPath), 'libreoffice');
         // / A conversion is never run on the shared path. A refusal costs this one document.
         else {
           $commandMayRun = FALSE;

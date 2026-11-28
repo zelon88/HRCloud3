@@ -8,7 +8,7 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.2.0ur.
+// / v5.0.0.
 // / The Email Core, one of the Engine's cores.
 // / It sends the emails the Authentication Core asks for, through the host's own mail system & nothing else.
 // / It never connects to a mail server itself, so it makes no third party connection of its own accord.
@@ -33,7 +33,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, A c
 
 // / -----------------------------------------------------------------------------------
 // / The version of this component. Read by the application without executing this file.
-$EmailCoreVersion = 'v4.2.0ur';
+$EmailCoreVersion = 'v5.0.0';
 // / -----------------------------------------------------------------------------------
 
 
@@ -44,7 +44,7 @@ $EmailCoreVersion = 'v4.2.0ur';
 // / This core's own text cannot be overwritten by configuration, so an email always has something to say.
 // / The sender is the administrator's, & an empty sender leaves the From line to the host's mail system.
 // / address confirms the new address a signed in user gave their account, & notice tells the owner of an account it was changed,
-// / from HRCloud3 v0.9.9. Each is layered as the first two are.
+// / from v5.0.0. Each is layered as the first two are.
 function emailSettings() {
   // / Set variables.
   global $EngineEmailConfirmationSubject, $EngineEmailConfirmationBody, $EngineEmailRecoverySubject, $EngineEmailRecoveryBody, $EngineEmailAddressSubject, $EngineEmailAddressBody, $EngineEmailNoticeSubject, $EngineEmailNoticeBody, $EnableMemoryProtection;

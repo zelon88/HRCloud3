@@ -10,7 +10,7 @@
 #   Example/<example>/<entry point>                      The root of the new folder. convertCore.php, or app.php for the Starter.
 #   Example/<example>/Resources/versionInfo.php          Resources.
 #   Example/<example>/Resources/Contract                 Resources/Contract.
-#   Resources/Kernel, Engine, Pipelines & ScanCore       Resources, with Resources/index.html.
+#   Resources/Kernel, Engine & Pipelines                 Resources, with Resources/index.html. ScanCore is in its pipeline's folder from v5.0.0.
 #   Documentation                                        Documentation, & an example's own build scripts in Documentation/Build.
 #   LICENSE & README.md                                  The root of the new folder.
 #
@@ -50,7 +50,7 @@ fi
 mkdir -p "$target/Resources" \
   && cp -a "Example/$example/$entry" "$target/" \
   && cp -a "Example/$example/Resources/versionInfo.php" "Example/$example/Resources/Contract" "$target/Resources/" \
-  && cp -a Resources/Kernel Resources/Engine Resources/Pipelines Resources/ScanCore Resources/index.html "$target/Resources/" \
+  && cp -a Resources/Kernel Resources/Engine Resources/Pipelines Resources/index.html "$target/Resources/" \
   && cp -a Documentation "$target/" \
   && { [ ! -d "Example/$example/Documentation/Build" ] || cp -a "Example/$example/Documentation/Build/." "$target/Documentation/Build/"; } \
   && cp -a LICENSE README.md "$target/" \

@@ -8,8 +8,8 @@
 // / https://www.gnu.org/licenses/gpl-3.0.html
 // /
 // / File Information ...
-// / v4.3.4ur.
-// / The Page Core, one of the Engine's cores, from HRCloud3 v0.9.9.
+// / v5.0.0.
+// / The Page Core, one of the Engine's cores, from v5.0.0.
 // / It builds a page for a browser from the components of an interface, & holds no markup of its own.
 // / An interface is a folder of components in the application's interface folder, which an administrator may add, choose or remove.
 // / Every interface inherits from the base interface the contract names, one level deep & no further. A component an interface
@@ -40,7 +40,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, A c
 
 // / -----------------------------------------------------------------------------------
 // / The version of this component. Read by the application without executing this file.
-$PageCoreVersion = 'v4.3.4ur';
+$PageCoreVersion = 'v5.0.0';
 // / -----------------------------------------------------------------------------------
 
 
@@ -502,7 +502,7 @@ function pageAssetAddresses($pageSelection) {
 // / A function to list what a page may offer a user to choose between.
 // / Accepts what preparePages() chose. Returns the interfaces, the languages, by their code & endonym, & the colors on offer, keyed by those names.
 // / Only what a user may choose is listed, so a page that draws the lists offers nothing an administrator turned off.
-// / An interface is listed only where it can be used, from HRCloud3 v1.0.0, so a user is never offered one that would fall back.
+// / An interface is listed only where it can be used, from v5.0.0, so a user is never offered one that would fall back.
 // / Each other interface offered is judged as a request for it would be, without a word, because -v says why one cannot be used.
 // / A language is listed only where the interface chosen carries its pack, or the base does.
 function pageChoices($pageSelection) {

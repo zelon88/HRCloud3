@@ -1,0 +1,199 @@
+# -----------------------------------------------------------------------------------
+# Copyright Information ...
+# ScanCore, Copyright on 3/31/2024 by Justin Grimes, www.github.com/zelon88
+#
+# License Information ...
+# This project is protected by the GNU GPLv3 Open-Source license.
+# BSD or MIT licensing is available. Reach out to @zelon88 for more information.
+# https://www.gnu.org/licenses/gpl-3.0.html
+#
+# Application Information ...
+# This application is designed to scan files & folders for viruses.
+#
+# File Information ...
+# v2.0.0.
+# ScanCore Classifier Definitions.
+# This file describes what a file is & what it is able to reach out to.
+# It describes no threat, because a threat is described in the virus definitions file.
+# It also holds the embedded code signatures that image inspection searches an image for.
+# A line that begins with a hash is a comment, & a blank line is ignored.
+# Documentation/ABOUT_SCANNING.txt says how a file is classified & what a Classified line means.
+#
+# <3 Open-Source
+# -----------------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------------
+# --Record Kinds--
+#
+#   type <name> = <extension>,<extension>,...
+#     Maps a type onto the file extensions that the type covers.
+#     A type with no type record covers the extension that is named after it.
+#
+#   lang <Display Name> = <extension>,<extension>,... : <signature>, <signature>, ...
+#     Declares an executable language.
+#     An extension that is listed here identifies the language by itself.
+#     The signatures identify the language by content, in a file whose extension nothing claims.
+#     A file that is identified as a language is reported as code & is not classified for handlers.
+#
+#   magic <type> = <offset>:<hex>, <offset>:<hex>, ...
+#     Declares the bytes that identify a type, whatever the file is named.
+#     An offset is decimal, the bytes are hexadecimal & every pair must match.
+#     A magic match outranks an extension.
+#
+#   <type> <handler>(<capabilities>), <handler>(<capabilities>), ...
+#     Declares what to look for inside a file of that type.
+#     The capabilities are file, url & exec, joined with a pipe where a handler has more than one.
+#
+#   embed <Name>(<confidence>) = <signature>, <signature>, ...
+#     Declares code that has no business inside an image.
+#     The confidence is high, medium or low, & is medium where none is written.
+#     A match of high confidence reports the file as infected, & any other match reports it as suspicious.
+#     A signature shorter than six bytes is only tested against the decoded text of a png.
+#     A byte with no printable form is written as an escape, such as \x0a.
+#     An embed record is read whenever image inspection is on, whichever classifiers are enabled.
+# -----------------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------------
+# --How A Handler Is Matched--
+#
+#   A bare word is matched as a call.
+#     The character before it must not be part of an identifier, so the handler include does not match include_lid or house_include.
+#     The next meaningful character must be one of  (  <  =  :
+#     Whitespace, line breaks & comments are skipped on the way to it, so a call that is split across lines is still found.
+#
+#   A quoted string is matched literally, wherever it appears.
+#     Quote a token that is distinctive by itself, or one that is followed by something other than a bracket.
+#     Quote a signature whose leading or trailing whitespace matters.
+# -----------------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------------
+# --How A Container Is Classified--
+#
+#   A container is opened & each member inside it is classified against the types that the container itself claims.
+#   A handler inside a docx is found this way, because a docx keeps its markup in compressed members.
+#   A member is classified where its name suggests text, such as xml, rels or html, or where its name has no extension.
+# -----------------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------------
+# --This File Reports & Does Not Protect--
+#
+#   Reporting that a file carries a handler does not stop the handler.
+#   A caller decides what to do with a file that is reported, & whatever opens that file must be its own boundary.
+#   HRConvert2, for one, rewrites an OpenSCAD source before it renders it, & renders it inside a sandbox.
+# -----------------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------------
+# Type declarations.
+# -----------------------------------------------------------------------------------
+type document = doc,docx,docm,dot,dotx,dotm,odt,ott,fodt,rtf,sxw,wps,abw,uot
+type spreadsheet = xls,xlsx,xlsm,xlt,xltx,ods,ots,fods,slk,dif,dbf
+type presentation = ppt,pptx,pptm,pps,ppsx,pot,potx,odp,otp,fodp
+type xps = xps,oxps
+type pdf = pdf
+type scad = scad
+type svg = svg,svgz
+type markup = html,htm,xhtml,xml,xsl,xslt,xsd,rss,atom,plist
+type stream = m3u8,m3u,mpd,f4m,ism,ismc
+type transport = ts,m2ts,mts,m2t,tsa,trp
+type model = obj,mtl,dae,gltf,glb,x3d,amf,3mf,ply,off,wrl
+type drawing = dxf,dwg,dia,vsd,vsdx,vdx,fig
+type ebook = epub,fb2,azw3,opf,ncx
+type subtitle = ass,ssa,vtt,srt,sub,sbv,ttml,dfxp
+
+# -----------------------------------------------------------------------------------
+# Executable languages.
+# A language is looked for before anything else.
+# -----------------------------------------------------------------------------------
+lang PHP = php,php3,php4,php5,php7,phtml,phps,phar : "<?php", "<?=", "$_GET", "$_POST", "$_REQUEST", "$_SERVER", "->", "::"
+lang JavaScript = js,mjs,cjs,jsx : "function(", "=>", "require(", "console.log", "document.", "window.", "typeof ", "prototype."
+lang TypeScript = ts,tsx : "interface ", ": string", ": number", "export class", "import {", "implements "
+lang C = c,h : "#include <", "int main(", "printf(", "malloc(", "sizeof(", "typedef struct"
+lang C++ = cpp,cxx,cc,hpp,hxx,hh : "#include <iostream>", "std::", "using namespace", "template<", "public:", "virtual "
+lang C# = cs,csx : "using System;", "namespace ", "public class ", "static void Main", "async Task", "get; set;"
+lang Java = java,jsp,jspx : "public class ", "import java.", "static void main", "System.out.println", "@Override", "extends "
+lang Python = py,pyw,pyi,pyx : "if __name__", "def ", "import ", "self.", "elif ", "__init__"
+lang Ruby = rb,erb,rake,gemspec : "require '", "attr_accessor", "puts ", "do |", "end", "module "
+lang Perl = pl,pm,cgi,pod : "use strict;", "my $", "sub ", "=~", "@ARGV", "qw("
+lang Shell = sh,bash,zsh,ksh,ash : "#!/bin/sh", "#!/bin/bash", "#!/usr/bin/env", "esac", "fi", "$(", "export "
+lang PowerShell = ps1,psm1,psd1 : "$PSScriptRoot", "Write-Host", "Get-ChildItem", "Invoke-Expression", "-ErrorAction", "param("
+lang Batch = bat,cmd : "@echo off", "%errorlevel%", "setlocal", "%~dp0", "goto :"
+lang VBScript = vbs,vbe,wsf,hta : "CreateObject(", "WScript.", "End Sub", "On Error Resume Next", "Dim ", "Set "
+lang Go = go : "package main", "func ", "import (", ":= ", "fmt.", "defer "
+lang Rust = rs : "fn main(", "let mut", "use std::", "impl ", "pub fn", "match "
+lang Lua = lua : "local ", "function ", "require(", "then", "elseif", "nil"
+lang SQL = sql : "SELECT ", "INSERT INTO", "CREATE TABLE", "DROP TABLE", "UPDATE ", "WHERE "
+lang Swift = swift : "import Foundation", "func ", "var ", "guard let", "@objc", "-> "
+lang Objective-C = m,mm : "#import ", "@interface", "@implementation", "NSString", "@end", "@property"
+lang Groovy = groovy,gradle : "def ", "@Grab", "println ", "closure", "it."
+lang R = r,rdata : "<- function", "library(", "data.frame", "%>%", "c("
+
+# -----------------------------------------------------------------------------------
+# OpenSCAD.
+# The tokens are the ones that the HRConvert2 SCAD sanitizer removes from an uploaded source before it renders.
+# -----------------------------------------------------------------------------------
+scad include(file), use(file), import(file|url), surface(file), import_stl(file), import_dxf(file), import_off(file), import_dwg(file), dxf_linear_extrude(file), dxf_rotate_extrude(file), dxf_dim(file), dxf_cross(file)
+
+# -----------------------------------------------------------------------------------
+# Portable Document Format.
+# Every token is quoted, because a PDF name is followed by a value & not by a bracket.
+# -----------------------------------------------------------------------------------
+pdf "/URI"(url), "/Launch"(file|exec), "/GoToR"(file), "/GoToE"(file), "/EmbeddedFile"(file), "/SubmitForm"(url), "/ImportData"(file), "/JavaScript"(exec), "/JS"(exec), "/OpenAction"(exec), "/AA"(exec), "/RichMedia"(file|url), "/Filespec"(file), "/URL"(url), "/Movie"(file|url), "/Sound"(file)
+
+# -----------------------------------------------------------------------------------
+# Word processing, spreadsheet & presentation documents.
+# The tokens cover the OOXML relationship form, the ODF link form & the RTF field form.
+# -----------------------------------------------------------------------------------
+document "xlink:href"(file|url), "Target="(file|url), "TargetMode=\"External\""(url), "oleObject"(file), "externalLink"(file|url), "INCLUDEPICTURE"(file|url), "INCLUDETEXT"(file|url), "DDEAUTO"(exec), "objdata"(file), "subDoc"(file), "r:embed"(file), "r:link"(file|url), "HYPERLINK"(url), "objupdate"(exec), "frameURL"(url)
+spreadsheet "xlink:href"(file|url), "Target="(file|url), "externalLink"(file|url), "DDEAUTO"(exec), "oleObject"(file), "table:table-source"(file|url), "WEBSERVICE("(url), "=HYPERLINK("(url), "RTD("(exec)
+presentation "xlink:href"(file|url), "Target="(file|url), "oleObject"(file), "videoFile"(file|url), "audioFile"(file|url), "r:link"(file|url), "HYPERLINK"(url)
+xps "Target="(file|url), "NavigateUri"(url), "ImageSource"(file|url), "FixedPage.Source"(file), "DocumentReference"(file)
+
+# -----------------------------------------------------------------------------------
+# Markup.
+# Scalable Vector Graphics is XML & reaches as far as HTML does.
+# -----------------------------------------------------------------------------------
+svg "xlink:href"(file|url), "href="(file|url), "<image"(file|url), "<use"(file), "<script"(exec), "<foreignObject"(exec), "@import"(file|url), "url("(file|url), "<!ENTITY"(file|url), "SYSTEM"(file|url), "<feImage"(file|url)
+markup "<script"(exec), "<iframe"(url), "<embed"(file|url), "<object"(file|url), "src="(file|url), "href="(file|url), "action="(url), "@import"(file|url), "<!ENTITY"(file|url), "SYSTEM"(file|url), "url("(file|url), "<link"(file|url), "data:"(file)
+ebook "href="(file|url), "src="(file|url), "@import"(file|url), "<!ENTITY"(file|url), "<script"(exec), "xlink:href"(file|url)
+
+# -----------------------------------------------------------------------------------
+# Streaming manifests.
+# A manifest exists to name other files & other hosts.
+# -----------------------------------------------------------------------------------
+stream "#EXT-X-KEY"(url), "#EXT-X-MAP"(url), "#EXT-X-MEDIA"(url), "#EXT-X-SESSION-KEY"(url), "#EXT-X-SESSION-DATA"(url), "#EXT-X-I-FRAME-STREAM-INF"(url), "#EXT-X-STREAM-INF"(url), "#EXT-X-DATERANGE"(url), "<BaseURL"(url), "sourceURL="(url), "initialization="(url), "media="(url), "<Location"(url)
+stream "http://"(url), "https://"(url), "rtmp://"(url), "rtsp://"(url), "udp://"(url), "file://"(file), "concat:"(file), "subfile:"(file), "data:"(file), "async:"(url), "cache:"(url), "crypto:"(file|url)
+
+# -----------------------------------------------------------------------------------
+# MPEG transport streams.
+# A transport stream is identified by its packet sync bytes, because TypeScript source is named with the ts extension as well.
+# It is searched for anything that ffmpeg would treat as a location, which is a URI scheme or an ffmpeg protocol prefix.
+# -----------------------------------------------------------------------------------
+magic transport = 0:47, 188:47, 376:47
+transport "http://"(url), "https://"(url), "rtmp://"(url), "rtmps://"(url), "rtsp://"(url), "udp://"(url), "rtp://"(url), "srt://"(url), "ftp://"(url), "sftp://"(url), "tcp://"(url), "tls://"(url), "mmsh://"(url), "mmst://"(url), "file://"(file), "unix://"(file), "concat:"(file), "subfile:"(file), "data:"(file), "pipe:"(file), "async:"(url), "cache:"(url), "crypto:"(file|url), "hls+"(url), "ffconcat"(file)
+
+# -----------------------------------------------------------------------------------
+# Three dimensional models.
+# A material library is a reference to a file.
+# -----------------------------------------------------------------------------------
+model "mtllib"(file), "usemtl"(file), "maplib"(file), "usemap"(file), "map_Kd"(file), "map_Ka"(file), "map_Ks"(file), "map_Bump"(file), "map_d"(file), "refl"(file), "<init_from"(file|url), "<image"(file|url), "uri"(file|url)
+
+# -----------------------------------------------------------------------------------
+# Vector drawings.
+# An external reference is an ordinary feature of a drawing.
+# -----------------------------------------------------------------------------------
+drawing "XREF"(file), "IMAGEDEF"(file|url), "ACAD_IMAGE"(file), "OLE2FRAME"(file), "ACAD_XREF"(file), "xlink:href"(file|url)
+
+# -----------------------------------------------------------------------------------
+# Subtitles.
+# An Advanced SubStation header names the media that the subtitles were timed against.
+# -----------------------------------------------------------------------------------
+subtitle "Video File:"(file), "Audio File:"(file), "<font"(file|url), "src="(file|url), "xlink:href"(file|url)
+
+# -----------------------------------------------------------------------------------
+# Code embedded in images.
+# A decoder ignores these bytes, & an interpreter that is handed the file does not.
+# -----------------------------------------------------------------------------------
+embed PHP(high) = "<?php ", "<?php\x0a", "<?php\x0d", "<?php\x09", "<?php", "<?=", "$_GET[", "$_POST[", "$_REQUEST[", "$_COOKIE[", "$_FILES[", "$_SERVER["
+embed Script(medium) = "<script>", "<script ", "javascript:", "<iframe "
+embed Shell(medium) = "#!/bin/sh", "#!/bin/bash", "#!/usr/bin/env ", "/bin/sh -c", "powershell -", "cmd.exe /c"
+embed Execution(medium) = "eval(base64_decode(", "base64_decode(", "shell_exec(", "passthru(", "proc_open(", "assert($_", "system($_", "exec($_"

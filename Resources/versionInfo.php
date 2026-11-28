@@ -11,7 +11,7 @@
 // / HRCloud3 is a home-hosted cloud storage platform built on the HRProprietary Engine.
 // /
 // / File Information ...
-// / v1.0.0.
+// / v1.0.1.
 // / This file contains the current HRCloud3 version for update verification purposes.
 // /
 // / Hardware Requirements ...
@@ -35,6 +35,6 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! HRCloud3-2: This 
 
 // / -----------------------------------------------------------------------------------
 // / The version of this HRCloud3 installation. cloudCore.php defines the same version & the kernel refuses an installation where the two differ.
-$Version = 'v1.0.0';
+$Version = 'v1.0.1';
 $Version = ltrim($Version, 'vV');
 // / -----------------------------------------------------------------------------------

@@ -1,0 +1,115 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+COPYRIGHT INFORMATION ...
+ScanCore, Copyright on 3/31/2024 by Justin Grimes, www.github.com/zelon88
+
+LICENSE INFORMATION ...
+This project is protected by the GNU GPLv3 Open-Source license.
+BSD or MIT licensing is available. Reach out to @zelon88 for more information.
+https://www.gnu.org/licenses/gpl-3.0.html
+
+APPLICATION INFORMATION ...
+This application is designed to scan files & folders for viruses.
+
+FILE INFORMATION ...
+v2.0.0.
+This plain text file is the security policy. It says which releases receive security fixes, how to report a vulnerability & how a reporter is credited.
+
+HARDWARE REQUIREMENTS ...
+This application requires at least a Raspberry Pi Model B+ or greater.
+This application will run on just about any x86 or x64 computer.
+
+DEPENDENCY REQUIREMENTS ...
+This application requires PHP 8.0 or later, run from a command line on Linux or Windows.
+The zlib extension reads compressed container members & png chunks, which are reported as incomplete without it.
+An update uses Git, or downloads each file with PHP, or with cURL where PHP may not open a URL. None of them is needed to scan.
+The posix extension hands new files to the owner of the installation when ScanCore is run as root.
+
+<3 Open-Source
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Supported Versions--
+
+Security fixes are made for two things & nothing else.
+
+  The latest tagged release      The newest vX.Y.Z tag.
+  Bleeding Edge                  The master branch, which is what  php ScanCore.php -updateapplication  installs.
+
+Every older tagged release is unsupported. A fix is never backported to one. Update to the latest tagged release to receive it.
+A copy of ScanCore that another application bundles is covered by the policy of that application as well. Report it to either.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Reporting A Vulnerability--
+
+Report a vulnerability privately, through GitHub.
+
+  1. Open the Security tab of https://github.com/zelon88/ScanCore.
+  2. Choose Report a vulnerability.
+  3. Describe the vulnerability in the private advisory that opens. Only the maintainer & the reporter can read it.
+
+Never report a vulnerability in a public issue, pull request or discussion. A public report puts every installation at risk before a fix exists.
+
+Every report is accepted & read, whatever its severity, & whether or not it carries a proof of concept.
+Every part of this repository is covered. That includes the core, the configuration file, the classifier definitions, the updater, the tools in
+Documentation/Build & the documentation.
+The virus definitions are published from https://github.com/zelon88/ScanCore_Definitions. A vulnerability in how they are built is reported there.
+
+A useful report says the following.
+  1. Which supported version it affects. A tag, or a commit on master.
+  2. The output of  php ScanCore.php -version  from the affected installation, where there is one.
+  3. The configuration entries & the switches involved, by their titles in ScanCore_Config.php.
+  4. The steps that reproduce it, & a proof of concept if there is one.
+  5. What an attacker gains.
+
+Send no live malware. A file that reproduces a fault in ScanCore is nearly always a harmless one, & the smallest such file is the most useful.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--How A Report Is Handled--
+
+  1. The report is acknowledged in its private advisory.
+  2. It is reproduced against every supported version.
+  3. A fix is made on Bleeding Edge & ships in the next tagged release.
+  4. The advisory is published once the fix has shipped. CHANGELOG.txt records the fix with the advisory's GHSA number.
+
+Nothing about a vulnerability is made public before it is patched.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Credit--
+
+Every reporter is credited publicly once the vulnerability is patched.
+Credit is given in the published advisory & in CHANGELOG.txt, under the name or handle the reporter chooses.
+A reporter who asks not to be named is not named.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+--The Security Model--
+
+ScanCore exists to open files that somebody hostile wrote. Every file it is handed is assumed to have been built to attack it.
+
+  It reads a file & changes nothing. A scanned file is never written to, moved, renamed or removed.
+  It runs nothing while it scans. No shell, no other program & no extractor is run. Only an update runs another program.
+  It reads every format itself, inside budgets. A header never decides how much is read, & a budget that is reached is reported.
+  It never calls a file clean that it could not read in full. Such a file is reported on an Incomplete line.
+  It escapes every name that it prints, so a name cannot forge a line of the report.
+  One file cannot end a scan. A fault while one file is inspected is reported as error 640 & the scan goes on.
+
+Each of these is a promise, & a way to break one is a vulnerability. So is a file that makes ScanCore run code or write outside its report, a
+known sample that is read as clean, a file that takes more memory than the memory limit allows, & an update that installs anything from
+outside the repository it is configured for.
+
+ScanCore is not a sandbox. An application that scans what strangers upload should run it as an account that can write nothing but its report,
+or inside a sandbox, as HRConvert2 & HRProtect both do. A way past ScanCore is still a vulnerability & is still credited, even where such a
+sandbox contains it.
+
+What ScanCore is known not to do is listed under --Known Gaps-- in DEVELOPMENT_NOTES.txt. A gap that is listed there is not a vulnerability
+by itself. A way to make one worse than it is described is.
+
+These documents describe the protections in detail.
+  ABOUT_SCANNING.txt          How a file is read, what is inspected & what is not.
+  ABOUT_REPORTS.txt           What every line of output means, & what a calling program may rely on.
+  ABOUT_QUALITY_CONTROL.txt   How each of these promises is tested.
+  DEVELOPMENT_NOTES.txt       Why each part is shaped the way it is, & the gaps that are known.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------

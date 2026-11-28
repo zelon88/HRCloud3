@@ -12,7 +12,7 @@
 // / on a server for users of any web browser without authentication.
 // /
 // / Fileinformation ...
-// / v4.3.3ur.
+// / v5.0.0.
 // / HRConvert2 Setup Core.
 // / A detachable installation & configuration component. convertCore.php runs without it.
 // / This file defines functions only. convertCore.php dispatches into them.
@@ -39,7 +39,7 @@ if (!isset($CoreLoaded) or $CoreLoaded !== TRUE) die('ERROR!!! Engine-35000, A c
 
 // / -----------------------------------------------------------------------------------
 // / The component version. convertCore.php reads this without executing the file.
-$SetupCoreVersion = 'v4.3.3ur';
+$SetupCoreVersion = 'v5.0.0';
 // / -----------------------------------------------------------------------------------
 
 
@@ -232,7 +232,7 @@ function validateConfigDependencies($configModel, $detectedSections) {
 // / recovering an account are impossible, & signing in with valid credentials still works.
 // / Requiring confirmation where no email can be sent leaves every account a visitor registers unconfirmed until an administrator confirms it.
 // / A quota where the listener is off, & accounts this application does not offer, have no effect.
-// / An application that offers libraries keeps the quota for every write to one, listener or not, so its quota is never named, from HRCloud3 v1.0.0.
+// / An application that offers libraries keeps the quota for every write to one, listener or not, so its quota is never named, from v5.0.0.
 // / The Email Core is judged by its file & its pin, & loaded only to ask whether the host can send, so --config needs no account of its own.
 function findEngineConfigContradictions($detectedSections) {
   // / Set variables.
@@ -825,7 +825,8 @@ function enableConversionLimits() {
   else if (!systemdIsUsable()[0]) {
     list ($limitsSystemdUsable, $limitsSystemdReason) = systemdIsUsable();
     print('  Skipped    '.$limitsSystemdReason.$Lol);
-    print('             Per conversion limits fall back to scheduling priority.'.$Lol); }
+    print('             Per conversion limits fall back to scheduling priority & a data limit'.$Lol);
+    print('             on each process.'.$Lol); }
   else {
     // / Lingering starts a user manager for the account at boot, with no login session.
     // / Without it there is no user bus for systemd-run --user to reach.
@@ -847,8 +848,9 @@ function enableConversionLimits() {
     // / saying it in a log they read after a conversion behaved oddly.
     if (function_exists('cgroupDelegationIsAvailable') && !cgroupDelegationIsAvailable()) {
       print('  Note       No cgroup controllers are delegated. Per conversion limits cannot'.$Lol);
-      print('             apply. Conversions are bounded by scheduling priority.'.$Lol);
-      warningEntry('This kernel delegates no cgroup controllers, so per conversion limits fall back to scheduling priority.'); }
+      print('             apply. Conversions are bounded by scheduling priority & a data limit'.$Lol);
+      print('             on each process.'.$Lol);
+      warningEntry('This kernel delegates no cgroup controllers, so per conversion limits fall back to scheduling priority & a data limit on each process.'); }
     // / A user manager is given the memory & pids controllers by default. The processor
     // / controller has to be delegated explicitly or CPUQuota is silently ignored.
     $dropInDirectory = '/etc/systemd/system/user@.service.d';
@@ -1624,7 +1626,7 @@ function runConfigUtility($suppliedPath, $utilityMode, $modeTarget, $operatorCon
             foreach ($configModel as $sectionName => $sectionModel) {
               // / A section this utility only displays is never reset, & a repair adds to it all the same, from v4.2.5, because adding
               // / a missing setting changes no value already there. Each format list v4.2.5 added is in such a section.
-              // / A section the file does not hold is added by a repair too, from HRCloud3 v1.0.0, because appendConfigAssignment() gives it its
+              // / A section the file does not hold is added by a repair too, from v5.0.0, because appendConfigAssignment() gives it its
               // / header, & a release that adds a section would otherwise leave every older file unable to start until it was edited by hand.
               if ((!$sectionModel['Writable'] && $utilityMode !== 'repair') or (!isset($detectedSections[$sectionName]) && $utilityMode !== 'repair')) continue;
               if ($utilityMode === 'reset-section' && strtolower($sectionName) !== strtolower((string)$modeTarget)) continue;
